@@ -7,6 +7,37 @@
 #include <Windows.h>
 #include <string>
 
+void outputstring(const char *pstrText)
+{
+	printf(pstrText);
+}
+
+class CTest
+{
+public: 
+	CTest(){;}
+	void outputstring(const char *pstr)
+	{
+		printf(pstr);
+	}
+};
+
+extern "C" int luabind_outputstring(lua_State *l)
+{
+	luabind::module(l)
+		[
+			luabind::def("outputstring", &outputstring)
+		];
+	return 0;
+}
+
+int getstring(int strValue)
+{
+	strValue = 99999;
+	//strValue = "getstring";
+	return 0;
+}
+
 int _tmain(int argc, _TCHAR* argv[])
 {
 	char szCurrentDir[MAX_PATH] = {0}, szLuaFileName[MAX_PATH] = {0};
@@ -33,6 +64,18 @@ int _tmain(int argc, _TCHAR* argv[])
 		strValue = boost::lexical_cast<std::string>(*i);
 		nKey = boost::lexical_cast<int>(i.key());
 	}
+	luabind_outputstring(luaVM);
+	const char *pstrText = "kingmax";
+	luabind::call_function<int>(luaVM, "testoutput", pstrText);
+
+	luabind::module(luaVM)
+		[
+			luabind::def("getstring", &getstring)
+		];
+
+	//std::string strValue2;
+	DWORD strValue2 = 0;
+	//luabind::call_function<int>(luaVM, "testquote", strValue2);
 	return 0;
 }
 

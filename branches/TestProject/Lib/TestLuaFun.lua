@@ -13,3 +13,13 @@ function testable()
 	l[1]="def456";
 	return l;
 end
+
+function testoutput(text)
+	outputstring(text);
+	return 0;
+end
+
+function testquote(p)
+	getstring(p);
+	return 0;
+end
