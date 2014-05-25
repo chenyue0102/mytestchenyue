@@ -7,6 +7,7 @@
 #include <Windows.h>
 #include <string>
 
+using namespace luabind;
 void outputstring(const char *pstrText)
 {
 	printf(pstrText);
@@ -15,11 +16,13 @@ void outputstring(const char *pstrText)
 class CTest
 {
 public: 
-	CTest(){;}
-	void outputstring(const char *pstr)
+	CTest():m_nValue(0){;}
+	void TestOutput(const char *pstr)
 	{
 		printf(pstr);
+		printf("%d", m_nValue);
 	}
+	int	m_nValue;
 };
 
 extern "C" int luabind_outputstring(lua_State *l)
@@ -46,7 +49,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	_snprintf(szLuaFileName, MAX_PATH, "%s%s", szCurrentDir, "\\TestLuaFun.lua");
 
 	CLuaVM luaVM;
-
+	
 	if( 0 != luaL_dofile(luaVM, szLuaFileName))
 	{
 		return 1;
@@ -74,8 +77,24 @@ int _tmain(int argc, _TCHAR* argv[])
 		];
 
 	//std::string strValue2;
-	DWORD strValue2 = 0;
+	std::string strValue2;
 	//luabind::call_function<int>(luaVM, "testquote", strValue2);
+
+	CTest t1, t2;
+	t1.m_nValue = 100;
+	t2.m_nValue = 200;
+	module(luaVM)
+		[
+			class_<CTest>("CTest")
+			.def(constructor<>())
+			.def("ClassTestOutput", &CTest::TestOutput)
+		];
+	luabind::call_function<int>(luaVM, "LuaTestOutput");
+	/*luabind::module(luaVM)
+		[
+			luabind::def("ClassTestOutput", &CTest::TestOutput)
+		];
+	luabind::call_function<int>(luaVM, "LuaTestOutput", &t1, strValue2.c_str());*/
 	return 0;
 }
 

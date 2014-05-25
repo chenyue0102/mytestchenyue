@@ -23,3 +23,9 @@ function testquote(p)
 	getstring(p);
 	return 0;
 end
+
+function LuaTestOutput()
+	 a=CTest();
+	a:ClassTestOutput("abc100");
+	return 0;
+end
