@@ -29,3 +29,15 @@ function LuaTestOutput()
 	a:ClassTestOutput("abc100");
 	return 0;
 end
+
+function ClassPointerTestOutput(c,s)
+	LuaCallClassPointer(c,s);
+	return 0;
+end
+
+function LuaTestCreateText()
+	test=CreateText();
+	test:ClassTestOutput("defggg");
+	TestClassPointer(test);
+	return 0;
+end

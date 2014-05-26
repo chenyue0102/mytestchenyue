@@ -4,6 +4,7 @@
 #include "stdafx.h"
 #include "LuaUtil.h"
 #include "boost/lexical_cast.hpp"
+#include <luabind/adopt_policy.hpp>
 #include <Windows.h>
 #include <string>
 
@@ -16,7 +17,14 @@ void outputstring(const char *pstrText)
 class CTest
 {
 public: 
-	CTest():m_nValue(0){;}
+	CTest():m_nValue(0)
+	{
+		printf("CTest constructor\n");
+	}
+	virtual ~CTest()
+	{
+		printf("CTest destructor\n");
+	}
 	void TestOutput(const char *pstr)
 	{
 		printf(pstr);
@@ -39,6 +47,12 @@ int getstring(int strValue)
 	strValue = 99999;
 	//strValue = "getstring";
 	return 0;
+}
+
+
+void CallClassPointer(CTest *p, const char *pstr)
+{
+	return p->TestOutput(pstr);
 }
 
 int _tmain(int argc, _TCHAR* argv[])
@@ -80,9 +94,6 @@ int _tmain(int argc, _TCHAR* argv[])
 	std::string strValue2;
 	//luabind::call_function<int>(luaVM, "testquote", strValue2);
 
-	CTest t1, t2;
-	t1.m_nValue = 100;
-	t2.m_nValue = 200;
 	module(luaVM)
 		[
 			class_<CTest>("CTest")
@@ -90,11 +101,44 @@ int _tmain(int argc, _TCHAR* argv[])
 			.def("ClassTestOutput", &CTest::TestOutput)
 		];
 	luabind::call_function<int>(luaVM, "LuaTestOutput");
-	/*luabind::module(luaVM)
+
+	
+
+	luabind::module(luaVM)
 		[
-			luabind::def("ClassTestOutput", &CTest::TestOutput)
+			luabind::def("ClassPointerTestOutput", &CTest::TestOutput)
 		];
-	luabind::call_function<int>(luaVM, "LuaTestOutput", &t1, strValue2.c_str());*/
+	
+	
+	extern CTest* CreateText();
+	luabind::module(luaVM)
+		[
+			luabind::def("CreateText", &CreateText, luabind::adopt(result))
+		];
+	extern void TestClassPointer(CTest *p);
+	extern CTest& GetRef();
+	luabind::module(luaVM)
+		[
+			luabind::def("TestClassPointer", &TestClassPointer),
+			class_<CTest>("CTest")
+.def("GetRef", &GetRef, luabind::dependency(result,_1))
+		];
+	luabind::call_function<int>(luaVM, "LuaTestCreateText");
 	return 0;
 }
 
+CTest* CreateText()
+{
+	return new CTest;
+}
+
+void TestClassPointer(CTest *p)
+{
+	p->TestOutput("kef");
+}
+
+CTest& GetRef()
+{
+	static CTest c;
+	return c;
+}
