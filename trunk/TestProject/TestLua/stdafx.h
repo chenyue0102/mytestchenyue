@@ -10,6 +10,16 @@
 #include <stdio.h>
 #include <tchar.h>
 
-
+//lua 库
+extern "C" 
+{
+#include "lua\lua.h"
+#include "lua\lualib.h"
+#include "lua\lauxlib.h"
+}
+//LuaBind 库
+#include "luabind\luabind.hpp"
+#include "luabind\tag_function.hpp"
+#include "LuaUtil.h"
 
 // TODO: 在此处引用程序需要的其他头文件
