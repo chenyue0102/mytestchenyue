@@ -605,7 +605,7 @@ template<> struct lua_op_t<double>
 		return 0;
 	}
 };
-/*template<> struct lua_op_t<long>
+template<> struct lua_op_t<long>
 {
 
 	static void push_stack(lua_State* ls_, long arg_)
@@ -626,7 +626,29 @@ template<> struct lua_op_t<double>
 		param_ = (long)luaL_checknumber(ls_, pos_);
 		return 0;
 	}
-};*/
+};
+template<> struct lua_op_t<unsigned long>
+{
+
+	static void push_stack(lua_State* ls_, unsigned long arg_)
+	{
+		lua_pushnumber(ls_, (lua_Number)arg_);
+	}
+	static int get_ret_value(lua_State* ls_, int pos_, unsigned long& param_)
+	{
+		if (!lua_isnumber(ls_, pos_))
+		{
+			return -1;
+		}
+		param_ = (unsigned long)lua_tonumber(ls_, pos_);
+		return 0;
+	}
+	static int lua_to_value(lua_State* ls_, int pos_, unsigned long& param_)
+	{
+		param_ = (unsigned long)luaL_checknumber(ls_, pos_);
+		return 0;
+	}
+};
 template<>
 struct lua_op_t<void*>
 {

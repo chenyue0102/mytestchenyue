@@ -259,7 +259,7 @@ RET_V fflua_t::call(const char* func_name_) throw (lua_exception_t)
     {
         lua_pop(m_ls, 1);
         char buff[512];
-        snprintf(buff, sizeof(buff), "callfunc [arg0] get_ret_value failed  func_name<%s>", func_name_);
+        _snprintf(buff, sizeof(buff), "callfunc [arg0] get_ret_value failed  func_name<%s>", func_name_);
         throw lua_exception_t(buff);
     }
 
@@ -321,7 +321,7 @@ RET_V fflua_t::call(const char* func_name_, const ARG1& arg1_, const ARG2& arg2_
     {
         lua_pop(m_ls, 1);
         char buff[512];
-        snprintf(buff, sizeof(buff), "callfunc [arg2] get_ret_value failed  func_name<%s>", func_name_);
+        _snprintf(buff, sizeof(buff), "callfunc [arg2] get_ret_value failed  func_name<%s>", func_name_);
         throw lua_exception_t(buff);
     }
 
@@ -353,7 +353,7 @@ RET_V fflua_t::call(const char* func_name_, const ARG1& arg1_, const ARG2& arg2_
     {
         lua_pop(m_ls, 1);
         char buff[512];
-        snprintf(buff, sizeof(buff), "callfunc [arg3] get_ret_value failed  func_name<%s>", func_name_);
+        _snprintf(buff, sizeof(buff), "callfunc [arg3] get_ret_value failed  func_name<%s>", func_name_);
         throw lua_exception_t(buff);
     }
 
@@ -386,7 +386,7 @@ RET_V fflua_t::call(const char* func_name_, const ARG1& arg1_, const ARG2& arg2_
     {
         lua_pop(m_ls, 1);
         char buff[512];
-        snprintf(buff, sizeof(buff), "callfunc [arg4] get_ret_value failed  func_name<%s>", func_name_);
+        _snprintf(buff, sizeof(buff), "callfunc [arg4] get_ret_value failed  func_name<%s>", func_name_);
         throw lua_exception_t(buff);
     }
 
@@ -420,7 +420,7 @@ RET_V fflua_t::call(const char* func_name_, const ARG1& arg1_, const ARG2& arg2_
     {
         lua_pop(m_ls, 1);
         char buff[512];
-        snprintf(buff, sizeof(buff), "callfunc [arg5] get_ret_value failed  func_name<%s>", func_name_);
+        _snprintf(buff, sizeof(buff), "callfunc [arg5] get_ret_value failed  func_name<%s>", func_name_);
         throw lua_exception_t(buff);
     }
 
@@ -456,7 +456,7 @@ RET_V fflua_t::call(const char* func_name_, const ARG1& arg1_, const ARG2& arg2_
     {
         lua_pop(m_ls, 1);
         char buff[512];
-        snprintf(buff, sizeof(buff), "callfunc [arg6] get_ret_value failed  func_name<%s>", func_name_);
+        _snprintf(buff, sizeof(buff), "callfunc [arg6] get_ret_value failed  func_name<%s>", func_name_);
         throw lua_exception_t(buff);
     }
 
@@ -495,7 +495,7 @@ RET_V fflua_t::call(const char* func_name_, const ARG1& arg1_, const ARG2& arg2_
     {
         lua_pop(m_ls, 1);
         char buff[512];
-        snprintf(buff, sizeof(buff), "callfunc [arg7] get_ret_value failed  func_name<%s>", func_name_);
+        _snprintf(buff, sizeof(buff), "callfunc [arg7] get_ret_value failed  func_name<%s>", func_name_);
         throw lua_exception_t(buff);
     }
 
@@ -535,7 +535,7 @@ RET_V fflua_t::call(const char* func_name_, const ARG1& arg1_, const ARG2& arg2_
     {
         lua_pop(m_ls, 1);
         char buff[512];
-        snprintf(buff, sizeof(buff), "callfunc [arg8] get_ret_value failed  func_name<%s>", func_name_);
+        _snprintf(buff, sizeof(buff), "callfunc [arg8] get_ret_value failed  func_name<%s>", func_name_);
         throw lua_exception_t(buff);
     }
 
@@ -576,7 +576,7 @@ RET_V fflua_t::call(const char* func_name_, const ARG1& arg1_, const ARG2& arg2_
     {
         lua_pop(m_ls, 1);
         char buff[512];
-        snprintf(buff, sizeof(buff), "callfunc [arg9] get_ret_value failed func_name<%s>", func_name_);
+        _snprintf(buff, sizeof(buff), "callfunc [arg9] get_ret_value failed func_name<%s>", func_name_);
         throw lua_exception_t(buff);
     }
 
