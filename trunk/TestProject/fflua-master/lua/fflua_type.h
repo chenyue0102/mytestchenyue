@@ -1,4 +1,4 @@
-#ifndef _FF_LUA_TYPE_H_
+﻿#ifndef _FF_LUA_TYPE_H_
 #define _FF_LUA_TYPE_H_
 
 #include <stdint.h>
@@ -104,7 +104,7 @@ public:
         va_end(argp);
 
         ret = buff;
-        snprintf(buff, sizeof(buff), " tracback:%s", lua_tostring(ls_, -1));
+        _snprintf(buff, sizeof(buff), " tracback:%s", lua_tostring(ls_, -1));
         ret += buff;
 
         return ret;
@@ -290,7 +290,7 @@ struct lua_op_t<int64_t>
 
         size_t len  = 0;
         const char* src = lua_tolstring(ls_, pos_, &len);
-        param_ = (int64_t)strtoll(src, NULL, 10);
+        param_ = (int64_t)strtol(src, NULL, 10);
         return 0;
     }
 
@@ -298,7 +298,7 @@ struct lua_op_t<int64_t>
     {
         size_t len = 0;
         const char* str = luaL_checklstring(ls_, pos_, &len);
-        param_ = (int64_t)strtoll(str, NULL, 10);
+        param_ = (int64_t)strtol(str, NULL, 10);
         return 0;
     }
 };
@@ -322,7 +322,7 @@ template<> struct lua_op_t<uint64_t>
 
         size_t len  = 0;
         const char* src = lua_tolstring(ls_, pos_, &len);
-        param_ = (uint64_t)strtoull(src, NULL, 10);
+        param_ = (uint64_t)strtol(src, NULL, 10);
         return 0;
     }
 
@@ -330,7 +330,7 @@ template<> struct lua_op_t<uint64_t>
     {
         size_t len = 0;
         const char* str = luaL_checklstring(ls_, pos_, &len);
-        param_ = (uint64_t)strtoull(str, NULL, 10);
+        param_ = (uint64_t)strtol(str, NULL, 10);
         return 0;
     }
 };
@@ -640,7 +640,7 @@ struct lua_op_t<void*>
         if (!lua_isuserdata(ls_, pos_))
         {
             char buff[128];
-            snprintf(buff, sizeof(buff), "userdata param expected, but type<%s> provided",
+            _snprintf(buff, sizeof(buff), "userdata param expected, but type<%s> provided",
                                          lua_typename(ls_, lua_type(ls_, pos_)));
             printf("%s\n", buff);
             return -1;
@@ -731,7 +731,7 @@ struct lua_op_t<T*>
         if (NULL == arg_data || 0 == lua_getmetatable(ls_, pos_))
 		{
 			char buff[128];
-			snprintf(buff, sizeof(buff), "`%s` arg1 connot be null",
+			_snprintf(buff, sizeof(buff), "`%s` arg1 connot be null",
 										 lua_type_info_t<T>::get_name());
 			luaL_argerror(ls_, pos_, buff);
 		}
@@ -744,7 +744,7 @@ struct lua_op_t<T*>
 			{
 				lua_pop(ls_, 3);
 				char buff[128];
-				snprintf(buff, sizeof(buff), "`%s` arg1 type not equal",
+				_snprintf(buff, sizeof(buff), "`%s` arg1 type not equal",
 											 lua_type_info_t<T>::get_name());
 				luaL_argerror(ls_, pos_, buff);
 			}
@@ -759,7 +759,7 @@ struct lua_op_t<T*>
         if (NULL == ret_ptr)
         {
             char buff[128];
-            snprintf(buff, sizeof(buff), "`%s` object ptr can't be null",
+            _snprintf(buff, sizeof(buff), "`%s` object ptr can't be null",
                                          lua_type_info_t<T>::get_name());
             luaL_argerror(ls_, pos_, buff);
         }

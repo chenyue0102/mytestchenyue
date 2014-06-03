@@ -289,7 +289,7 @@ RET_V fflua_t::call(const char* func_name_, const ARG1& arg1_) throw (lua_except
     {
         lua_pop(m_ls, 1);
         char buff[512];
-        snprintf(buff, sizeof(buff), "callfunc [arg1] get_ret_value failed  func_name<%s>", func_name_);
+        _snprintf(buff, sizeof(buff), "callfunc [arg1] get_ret_value failed  func_name<%s>", func_name_);
         throw lua_exception_t(buff);
     }
 
