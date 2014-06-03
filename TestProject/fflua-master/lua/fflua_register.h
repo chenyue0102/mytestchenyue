@@ -1,4 +1,4 @@
-#ifndef _FF_LUA_REGISTER_H_
+﻿#ifndef _FF_LUA_REGISTER_H_
 #define _FF_LUA_REGISTER_H_
 
 #include <lua.hpp>
@@ -36,7 +36,7 @@ struct class_property_info_t
     T property_pos;
 };
 
-//! 记录类中字段的指针
+// ! 记录类中字段的指针
 struct real_class_property_processor_t
 {
     real_class_property_processor_t():
