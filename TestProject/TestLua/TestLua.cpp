@@ -55,6 +55,86 @@ void CallClassPointer(CTest *p, const char *pstr)
 	return p->TestOutput(pstr);
 }
 
+template<typename T>
+class CMyVector : public std::vector<T>
+{
+public:
+	CMyVector()
+	{
+		printf("CMyVector\n");
+	}
+	virtual ~CMyVector()
+	{
+		printf("~CMyVector\n");
+	}
+	void Test()
+	{
+		printf("size=%u\n", size());
+	}
+	void push_back(const T &value)
+	{
+		const T *p = &value;
+		return __super::push_back(value);
+	}
+	typedef void (CMyVector::*PushBackFunType)(const T &Value);
+};
+
+template<typename T>
+void TestEnumVector(const CMyVector<T> &v)
+{
+	printf("TestEnumVector size=%u\n", v.size());
+}
+
+template<typename T>
+void TestEnumVectorPointer(const CMyVector<T> *v)
+{
+	printf("TestEnumVector size=%u\n", v->size());
+}
+
+struct TestTLV
+{
+	DWORD	dwID;			// 属性ID
+	DWORD	dwType;			// 属性类型
+	std::string 	strValue;		// 属性值
+	
+	TestTLV(const TestTLV &other)	//拷贝构造
+	{
+		printf("TestTLV\n");
+		dwID = other.dwID;
+		dwType = other.dwType;
+		strValue = other.strValue;
+	}
+	TestTLV()//构造函数
+	{
+		printf("TestTLV\n");
+	}
+	~TestTLV()
+	{
+		printf("~TestTLV\n");
+	}
+	void TestTLV::SetDword(DWORD dwPropertyID, DWORD dwPropertyValue)
+	{
+		strValue.clear();
+		dwID = dwPropertyID;
+		dwType = 1;
+		strValue.append((char*)&dwPropertyValue, sizeof(DWORD));
+	}
+
+	void TestTLV::SetString(DWORD dwPropertyID, const std::string &PropertyValue)
+	{
+		strValue.clear();
+		dwID = dwPropertyID;
+		dwType = 2;
+		DWORD dwLen = (DWORD)strlen(PropertyValue.c_str()) + 1;
+		strValue.append(PropertyValue.c_str(), dwLen);
+	}
+
+	bool operator==(const TestTLV &other)const
+	{
+		return false;
+	}
+};
+
 int _tmain(int argc, _TCHAR* argv[])
 {
 	char szCurrentDir[MAX_PATH] = {0}, szLuaFileName[MAX_PATH] = {0};
@@ -117,13 +197,42 @@ int _tmain(int argc, _TCHAR* argv[])
 		];
 	extern void TestClassPointer(CTest *p);
 	extern CTest& GetRef();
-	luabind::module(luaVM)
+	/*luabind::module(luaVM)
 		[
 			luabind::def("TestClassPointer", &TestClassPointer),
 			class_<CTest>("CTest")
-.def("GetRef", &GetRef, luabind::dependency(result,_1))
+			.def("GetRef", &GetRef, luabind::dependency(result,_1))
 		];
-	luabind::call_function<int>(luaVM, "LuaTestCreateText");
+	luabind::call_function<int>(luaVM, "LuaTestCreateText");*/
+
+	luabind::module(luaVM)
+	[
+		class_<TestTLV>("TestTLV")
+		.def(constructor<>())
+		.def("SetDword", &TestTLV::SetDword)
+		.def("SetString", &TestTLV::SetString)
+	];
+
+	luabind::module(luaVM)
+	[
+		luabind::def("TestEnumVector", &TestEnumVector<TestTLV>),
+		luabind::def("TestEnumVectorPointer", &TestEnumVectorPointer<TestTLV>),
+		class_<CMyVector<TestTLV> >("CMyVector")
+		.def(constructor<>())
+		.def("push_back",/* (CMyVector<TestTLV>::PushBackFunType)*/&CMyVector<TestTLV>::push_back)
+		.def("Test", &CMyVector<TestTLV>::Test)
+	];
+
+	
+	//luabind::call_function<void>(luaVM, "LuaTestVector");
+
+	CMyVector<TestTLV> *pTemp = new CMyVector<TestTLV>;
+	
+	luabind::call_function<void>(luaVM, "LuaTestVectorParam", pTemp);
+	int nSize = pTemp->size();
+	printf("nsize=%d", nSize);
+	pTemp->clear();
+	delete pTemp;
 	return 0;
 }
 
