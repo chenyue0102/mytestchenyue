@@ -41,3 +41,21 @@ function LuaTestCreateText()
 	TestClassPointer(test);
 	return 0;
 end
+
+function LuaTestVector()
+	local v = CMyVector();
+	v:push_back(123456);
+	v:Test();
+	TestEnumVector(v);
+	TestEnumVectorPointer(v);
+end
+
+function LuaTestVectorParam(p)
+	local v=TestTLV();
+	local str="local123";
+	local v2=TestTLV();
+	
+	v:SetDword(100,200);
+	v:SetString(988,str);
+	p:push_back(v)
+end
