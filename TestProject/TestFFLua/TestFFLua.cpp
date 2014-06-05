@@ -15,21 +15,21 @@ int	AddFun(int a, int b)
 	return a+b;
 }
 
-struct TKSnsClientTLV
+struct TestTLV
 {
 	DWORD	dwID;			// 属性ID
-	DWORD	dwType;			// 属性类型(见eDicGlobalSnsMebMarkT)
+	DWORD	dwType;
 	DWORD	dwLen;			// 属性长度
 	std::string	strValue;		// 属性值
-	TKSnsClientTLV()
+	TestTLV()
 	{
-		printf("TKSnsClientTLV\n");
+		printf("TestTLV\n");
 	}
-	~TKSnsClientTLV()
+	~TestTLV()
 	{
-		printf("~TKSnsClientTLV\n");
+		printf("~TestTLV\n");
 	}
-	void TKSnsClientTLV::SetDword(DWORD dwPropertyID, DWORD dwPropertyValue)
+	void TestTLV::SetDword(DWORD dwPropertyID, DWORD dwPropertyValue)
 	{
 		strValue.clear();
 		dwID = dwPropertyID;
@@ -38,7 +38,7 @@ struct TKSnsClientTLV
 		strValue.append((char*)&dwPropertyValue, dwLen);
 	}
 
-	void TKSnsClientTLV::SetString(DWORD dwPropertyID, const char* pPropertyValue)
+	void TestTLV::SetString(DWORD dwPropertyID, const char* pPropertyValue)
 	{
 		strValue.clear();
 		dwID = dwPropertyID;
@@ -63,9 +63,10 @@ public:
 	}
 };
 
-void WriteData(const std::vector<TKSnsClientTLV*> &Array)
+BOOL WriteData(const std::vector<TestTLV*> &Array)
 {
 	printf("WriteData\n");
+	return TRUE;
 }
 
 static void lua_reg(lua_State* ls)
@@ -76,13 +77,13 @@ static void lua_reg(lua_State* ls)
 	fflua_register_t<>(ls)  
 		.def(&WriteData, "WriteData");    
 
-	fflua_register_t<TKSnsClientTLV,ctor()>(ls,"TKSnsClientTLV")
-		.def(&TKSnsClientTLV::SetDword, "SetDword")
-		//.def(&TKSnsClientTLV::SetString, "SetString")
-		.def(&TKSnsClientTLV::dwID,"dwID")
-		.def(&TKSnsClientTLV::dwType,"dwType")
-		.def(&TKSnsClientTLV::dwLen,"dwLen")
-		.def(&TKSnsClientTLV::strValue,"strValue");
+	fflua_register_t<TestTLV,ctor()>(ls,"TestTLV")
+		.def(&TestTLV::SetDword, "SetDword")
+		//.def(&TestTLV::SetString, "SetString")
+		.def(&TestTLV::dwID,"dwID")
+		.def(&TestTLV::dwType,"dwType")
+		.def(&TestTLV::dwLen,"dwLen")
+		.def(&TestTLV::strValue,"strValue");
 }
 
 
@@ -107,17 +108,17 @@ int _tmain(int argc, _TCHAR* argv[])
 	//fflua.call<void>("LuaTestNewObject"); 
 	
 	//测试类指针
-	TKSnsClientTLV Tlv;
+	TestTLV Tlv;
 	Tlv.strValue = "test class pointer";
 	//fflua.call<int>("LuaTestClassPointer", &Tlv);
 
 	//测试vecotr
-	typedef std::vector<TKSnsClientTLV*>	TKSnsClientTLVArray;
-	TKSnsClientTLVArray TlvArray;
+	typedef std::vector<TestTLV*>	TestTLVArray;
+	TestTLVArray TlvArray;
 	Tlv.SetDword(100, 200);
-	TlvArray.push_back(new TKSnsClientTLV(Tlv));
+	TlvArray.push_back(new TestTLV(Tlv));
 	Tlv.SetString(300, "test300");
-	TlvArray.push_back(new TKSnsClientTLV(Tlv));
+	TlvArray.push_back(new TestTLV(Tlv));
 
 	fflua.call<void>("LuaTestVector", TlvArray); 
 	return 0;
