@@ -9,9 +9,9 @@ function LuaTestCallFun(str)
 end
 
 function LuaTestNewObject()
-	local obj1 = TKSnsClientTLV:new();
+	local obj1 = TestTLV:new();
 	obj1:SetDword(1111, 222 );
-	local obj2 = TKSnsClientTLV:new();
+	local obj2 = TestTLV:new();
 	obj1:delete();
 	obj2:delete();
 end
