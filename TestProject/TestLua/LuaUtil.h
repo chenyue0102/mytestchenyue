@@ -20,7 +20,7 @@ public:
 		) throw(...)
 	{
 		//创建 lua 实例
-		if( !(m_luaVM = lua_open()) ) throw std::exception("lua_open 失败");
+		if( !(m_luaVM = /*lua_open()*/luaL_newstate()) ) throw std::exception("lua_open 失败");
 
 		//打开 lua 库
 		lua_State* L = m_luaVM;

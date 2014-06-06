@@ -7,6 +7,7 @@
 #include <luabind/adopt_policy.hpp>
 #include <Windows.h>
 #include <string>
+#include "luabind/operator.hpp"
 
 using namespace luabind;
 void outputstring(const char *pstrText)
@@ -131,9 +132,39 @@ struct TestTLV
 
 	bool operator==(const TestTLV &other)const
 	{
-		return false;
+		if (dwID == other.dwID
+			&& dwType == other.dwType
+			&& strValue == other.strValue)
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
 	}
 };
+
+void InitTlvValue(TestTLV &value)
+{
+	const TestTLV *p = &value;
+	value.SetString(98765, "InitTlvValue");
+}
+
+BOOL GetTlvValue(const CMyVector<TestTLV> &Array, DWORD dwID, TestTLV &value)
+{
+	BOOL bRes = FALSE;
+	for (CMyVector<TestTLV>::const_iterator itor = Array.begin(); itor != Array.end(); ++itor)
+	{
+		if (itor->dwID == dwID)
+		{
+			value = *itor;
+			bRes = TRUE;
+			break;
+		}
+	}
+	return bRes;
+}
 
 int _tmain(int argc, _TCHAR* argv[])
 {
@@ -211,6 +242,12 @@ int _tmain(int argc, _TCHAR* argv[])
 		.def(constructor<>())
 		.def("SetDword", &TestTLV::SetDword)
 		.def("SetString", &TestTLV::SetString)
+		.def(self == other<TestTLV>())		//TestTLV变量在lua中可以执行比较操作
+	];
+	luabind::module(luaVM)
+	[
+		luabind::def("InitTlvValue", &InitTlvValue),
+		luabind::def("GetTlvValue", &GetTlvValue)
 	];
 
 	luabind::module(luaVM)
