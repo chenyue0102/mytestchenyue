@@ -13,14 +13,8 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Lua">
+    <Filter Include="luabind">
       <UniqueIdentifier>{8fb032ed-9655-4c4b-97dc-63c60e495d93}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Lua\Lua">
-      <UniqueIdentifier>{369058a5-cf48-46e7-bfeb-e7d998e15c5c}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Lua\LuaBind">
-      <UniqueIdentifier>{4a5a81eb-54d2-4aab-bbe8-a808b3dffe42}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -45,155 +39,56 @@
     <ClCompile Include="TestLua.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="..\luabind-0.8.1\src\wrapper_base.cpp">
-      <Filter>Lua\LuaBind</Filter>
+    <ClCompile Include="..\luabind-0.9\src\class.cpp">
+      <Filter>luabind</Filter>
     </ClCompile>
-    <ClCompile Include="..\luabind-0.8.1\src\class.cpp">
-      <Filter>Lua\LuaBind</Filter>
+    <ClCompile Include="..\luabind-0.9\src\class_info.cpp">
+      <Filter>luabind</Filter>
     </ClCompile>
-    <ClCompile Include="..\luabind-0.8.1\src\class_info.cpp">
-      <Filter>Lua\LuaBind</Filter>
+    <ClCompile Include="..\luabind-0.9\src\class_registry.cpp">
+      <Filter>luabind</Filter>
     </ClCompile>
-    <ClCompile Include="..\luabind-0.8.1\src\class_registry.cpp">
-      <Filter>Lua\LuaBind</Filter>
+    <ClCompile Include="..\luabind-0.9\src\class_rep.cpp">
+      <Filter>luabind</Filter>
     </ClCompile>
-    <ClCompile Include="..\luabind-0.8.1\src\class_rep.cpp">
-      <Filter>Lua\LuaBind</Filter>
+    <ClCompile Include="..\luabind-0.9\src\create_class.cpp">
+      <Filter>luabind</Filter>
     </ClCompile>
-    <ClCompile Include="..\luabind-0.8.1\src\create_class.cpp">
-      <Filter>Lua\LuaBind</Filter>
+    <ClCompile Include="..\luabind-0.9\src\error.cpp">
+      <Filter>luabind</Filter>
     </ClCompile>
-    <ClCompile Include="..\luabind-0.8.1\src\error.cpp">
-      <Filter>Lua\LuaBind</Filter>
+    <ClCompile Include="..\luabind-0.9\src\exception_handler.cpp">
+      <Filter>luabind</Filter>
     </ClCompile>
-    <ClCompile Include="..\luabind-0.8.1\src\exception_handler.cpp">
-      <Filter>Lua\LuaBind</Filter>
+    <ClCompile Include="..\luabind-0.9\src\function.cpp">
+      <Filter>luabind</Filter>
     </ClCompile>
-    <ClCompile Include="..\luabind-0.8.1\src\find_best_match.cpp">
-      <Filter>Lua\LuaBind</Filter>
+    <ClCompile Include="..\luabind-0.9\src\inheritance.cpp">
+      <Filter>luabind</Filter>
     </ClCompile>
-    <ClCompile Include="..\luabind-0.8.1\src\function.cpp">
-      <Filter>Lua\LuaBind</Filter>
+    <ClCompile Include="..\luabind-0.9\src\link_compatibility.cpp">
+      <Filter>luabind</Filter>
     </ClCompile>
-    <ClCompile Include="..\luabind-0.8.1\src\implicit_cast.cpp">
-      <Filter>Lua\LuaBind</Filter>
+    <ClCompile Include="..\luabind-0.9\src\object_rep.cpp">
+      <Filter>luabind</Filter>
     </ClCompile>
-    <ClCompile Include="..\luabind-0.8.1\src\link_compatibility.cpp">
-      <Filter>Lua\LuaBind</Filter>
+    <ClCompile Include="..\luabind-0.9\src\open.cpp">
+      <Filter>luabind</Filter>
     </ClCompile>
-    <ClCompile Include="..\luabind-0.8.1\src\object_rep.cpp">
-      <Filter>Lua\LuaBind</Filter>
+    <ClCompile Include="..\luabind-0.9\src\pcall.cpp">
+      <Filter>luabind</Filter>
     </ClCompile>
-    <ClCompile Include="..\luabind-0.8.1\src\open.cpp">
-      <Filter>Lua\LuaBind</Filter>
+    <ClCompile Include="..\luabind-0.9\src\scope.cpp">
+      <Filter>luabind</Filter>
     </ClCompile>
-    <ClCompile Include="..\luabind-0.8.1\src\overload_rep.cpp">
-      <Filter>Lua\LuaBind</Filter>
+    <ClCompile Include="..\luabind-0.9\src\stack_content_by_name.cpp">
+      <Filter>luabind</Filter>
     </ClCompile>
-    <ClCompile Include="..\luabind-0.8.1\src\pcall.cpp">
-      <Filter>Lua\LuaBind</Filter>
+    <ClCompile Include="..\luabind-0.9\src\weak_ref.cpp">
+      <Filter>luabind</Filter>
     </ClCompile>
-    <ClCompile Include="..\luabind-0.8.1\src\ref.cpp">
-      <Filter>Lua\LuaBind</Filter>
-    </ClCompile>
-    <ClCompile Include="..\luabind-0.8.1\src\scope.cpp">
-      <Filter>Lua\LuaBind</Filter>
-    </ClCompile>
-    <ClCompile Include="..\luabind-0.8.1\src\stack_content_by_name.cpp">
-      <Filter>Lua\LuaBind</Filter>
-    </ClCompile>
-    <ClCompile Include="..\luabind-0.8.1\src\weak_ref.cpp">
-      <Filter>Lua\LuaBind</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua-5.1.4\lua\lfunc.c">
-      <Filter>Lua\Lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua-5.1.4\lua\lapi.c">
-      <Filter>Lua\Lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua-5.1.4\lua\lauxlib.c">
-      <Filter>Lua\Lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua-5.1.4\lua\lbaselib.c">
-      <Filter>Lua\Lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua-5.1.4\lua\lcode.c">
-      <Filter>Lua\Lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua-5.1.4\lua\ldblib.c">
-      <Filter>Lua\Lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua-5.1.4\lua\ldebug.c">
-      <Filter>Lua\Lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua-5.1.4\lua\ldo.c">
-      <Filter>Lua\Lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua-5.1.4\lua\ldump.c">
-      <Filter>Lua\Lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua-5.1.4\lua\print.c">
-      <Filter>Lua\Lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua-5.1.4\lua\lgc.c">
-      <Filter>Lua\Lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua-5.1.4\lua\linit.c">
-      <Filter>Lua\Lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua-5.1.4\lua\liolib.c">
-      <Filter>Lua\Lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua-5.1.4\lua\llex.c">
-      <Filter>Lua\Lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua-5.1.4\lua\lmathlib.c">
-      <Filter>Lua\Lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua-5.1.4\lua\lmem.c">
-      <Filter>Lua\Lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua-5.1.4\lua\loadlib.c">
-      <Filter>Lua\Lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua-5.1.4\lua\lobject.c">
-      <Filter>Lua\Lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua-5.1.4\lua\lopcodes.c">
-      <Filter>Lua\Lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua-5.1.4\lua\loslib.c">
-      <Filter>Lua\Lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua-5.1.4\lua\lparser.c">
-      <Filter>Lua\Lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua-5.1.4\lua\lstate.c">
-      <Filter>Lua\Lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua-5.1.4\lua\lstring.c">
-      <Filter>Lua\Lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua-5.1.4\lua\lstrlib.c">
-      <Filter>Lua\Lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua-5.1.4\lua\ltable.c">
-      <Filter>Lua\Lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua-5.1.4\lua\ltablib.c">
-      <Filter>Lua\Lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua-5.1.4\lua\ltm.c">
-      <Filter>Lua\Lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua-5.1.4\lua\lundump.c">
-      <Filter>Lua\Lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua-5.1.4\lua\lvm.c">
-      <Filter>Lua\Lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lua-5.1.4\lua\lzio.c">
-      <Filter>Lua\Lua</Filter>
+    <ClCompile Include="..\luabind-0.9\src\wrapper_base.cpp">
+      <Filter>luabind</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

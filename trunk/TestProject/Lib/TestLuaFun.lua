@@ -54,8 +54,19 @@ function LuaTestVectorParam(p)
 	local v=TestTLV();
 	local str="local123";
 	local v2=TestTLV();
-	
+	InitTlvValue(v2)
+	v2:SetString(2323,"local123sdadfw2eqrewr");
+	if v==v2
+	then 
+	print("equal")
+	else
+	print("not equal")
+	end
 	v:SetDword(100,200);
 	v:SetString(988,str);
 	p:push_back(v)
+
+	local f = nil;
+	f=GetTlvValue(p, 988, v);
+	v:SetDword(0, 0);
 end
