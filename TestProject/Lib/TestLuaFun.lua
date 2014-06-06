@@ -65,8 +65,24 @@ function LuaTestVectorParam(p)
 	v:SetDword(100,200);
 	v:SetString(988,str);
 	p:push_back(v)
+	p:push_back(v2)
 
 	local f = nil;
 	f=GetTlvValue(p, 988, v);
+	if 0~=f
+	then 
+	print("find");
+	else
+	print("not find");
+	end
 	v:SetDword(0, 0);
+end
+
+function LuaTestiterator(p)
+	local it=p:Begin()
+	while it ~=p:End() do
+		local retvalue=it:GetValue();
+		retvalue:Test();
+		it:increment();
+	end
 end

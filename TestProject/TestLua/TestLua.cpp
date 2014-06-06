@@ -8,6 +8,7 @@
 #include <Windows.h>
 #include <string>
 #include "luabind/operator.hpp"
+#include <map>
 
 using namespace luabind;
 void outputstring(const char *pstrText)
@@ -130,6 +131,11 @@ struct TestTLV
 		strValue.append(PropertyValue.c_str(), dwLen);
 	}
 
+	void Test()
+	{
+		printf("TestTlv\n");
+	}
+
 	bool operator==(const TestTLV &other)const
 	{
 		if (dwID == other.dwID
@@ -181,20 +187,20 @@ int _tmain(int argc, _TCHAR* argv[])
 	}
 
 	int nfirst = 1, nsecond = 2;
-	int nResult = luabind::call_function<int>(luaVM, "testadd", nfirst, nsecond);
-	std::string str = luabind::call_function<std::string>(luaVM, "teststring");
+	//int nResult = luabind::call_function<int>(luaVM, "testadd", nfirst, nsecond);
+	//std::string str = luabind::call_function<std::string>(luaVM, "teststring");
 
-	luabind::object obj = luabind::call_function<luabind::object>(luaVM, "testable");
+	/*luabind::object obj = luabind::call_function<luabind::object>(luaVM, "testable");
 	std::string strValue;
 	int nKey = 0;
 	for(luabind::iterator i(obj); i != luabind::iterator(); ++i)
 	{
 		strValue = boost::lexical_cast<std::string>(*i);
 		nKey = boost::lexical_cast<int>(i.key());
-	}
+	}*/
 	luabind_outputstring(luaVM);
 	const char *pstrText = "kingmax";
-	luabind::call_function<int>(luaVM, "testoutput", pstrText);
+	//luabind::call_function<int>(luaVM, "testoutput", pstrText);
 
 	luabind::module(luaVM)
 		[
@@ -211,7 +217,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			.def(constructor<>())
 			.def("ClassTestOutput", &CTest::TestOutput)
 		];
-	luabind::call_function<int>(luaVM, "LuaTestOutput");
+	//luabind::call_function<int>(luaVM, "LuaTestOutput");
 
 	
 
@@ -242,6 +248,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		.def(constructor<>())
 		.def("SetDword", &TestTLV::SetDword)
 		.def("SetString", &TestTLV::SetString)
+		.def("Test", &TestTLV::Test)
 		.def(self == other<TestTLV>())		//TestTLV变量在lua中可以执行比较操作
 	];
 	luabind::module(luaVM)
@@ -252,24 +259,45 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	luabind::module(luaVM)
 	[
+		class_<CMyVector<TestTLV>::iterator >("iterator")
+		.def(constructor<>())
+		.def(self == other<CMyVector<TestTLV>::iterator>())		//变量在lua中可以执行比较操作
+		.def("increment", (CMyVector<TestTLV>::iterator&(CMyVector<TestTLV>::iterator::*)())&(CMyVector<TestTLV>::iterator::operator++))
+		.def("GetValue", &(CMyVector<TestTLV>::iterator::operator *))
+	];
+
+	luabind::module(luaVM)
+	[
 		luabind::def("TestEnumVector", &TestEnumVector<TestTLV>),
 		luabind::def("TestEnumVectorPointer", &TestEnumVectorPointer<TestTLV>),
 		class_<CMyVector<TestTLV> >("CMyVector")
 		.def(constructor<>())
 		.def("push_back",/* (CMyVector<TestTLV>::PushBackFunType)*/&CMyVector<TestTLV>::push_back)
 		.def("Test", &CMyVector<TestTLV>::Test)
+		.def("Begin", (CMyVector<TestTLV>::iterator(CMyVector<TestTLV>::*)())&CMyVector<TestTLV>::begin)
+		.def("End", (CMyVector<TestTLV>::iterator(CMyVector<TestTLV>::*)())&CMyVector<TestTLV>::end)
 	];
 
 	
 	//luabind::call_function<void>(luaVM, "LuaTestVector");
 
 	CMyVector<TestTLV> *pTemp = new CMyVector<TestTLV>;
-	
-	luabind::call_function<void>(luaVM, "LuaTestVectorParam", pTemp);
+	//luabind::call_function<void>(luaVM, "LuaTestVectorParam", pTemp);
 	int nSize = pTemp->size();
 	printf("nsize=%d", nSize);
+
+	for (int a = 1; a < 10;a++)
+	{
+		TestTLV t1;
+		t1.dwID = a;
+		pTemp->push_back(t1);
+	}
+
+	luabind::call_function<void>(luaVM, "LuaTestiterator", pTemp);
+
 	pTemp->clear();
 	delete pTemp;
+
 	return 0;
 }
 
