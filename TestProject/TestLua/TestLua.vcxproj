@@ -81,6 +81,7 @@
     <None Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="IText.h" />
     <ClInclude Include="LuaUtil.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />

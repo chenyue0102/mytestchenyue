@@ -9,6 +9,7 @@
 #include <string>
 #include "luabind/operator.hpp"
 #include <map>
+#include "IText.h"
 
 using namespace luabind;
 void outputstring(const char *pstrText)
@@ -293,11 +294,27 @@ int _tmain(int argc, _TCHAR* argv[])
 		pTemp->push_back(t1);
 	}
 
-	luabind::call_function<void>(luaVM, "LuaTestiterator", pTemp);
+	//luabind::call_function<void>(luaVM, "LuaTestiterator", pTemp);
 
 	pTemp->clear();
 	delete pTemp;
 
+	ITest *pITest = NULL;
+	//luabind::call_function<void>(luaVM, "LuaTestInterface", pITest);
+
+	luabind::module(luaVM)
+	[
+		luabind::def("CreateITest", &CreateITest),
+		luabind::def("CreateITest2", &CreateITest2)
+	];
+
+	luabind::module(luaVM)
+	[
+		class_<test_wrapper>("test_wrapper")
+		.def(constructor<ITest*>())
+		.def("Test", &test_wrapper::Test)
+	];
+	luabind::call_function<void>(luaVM, "LuaTestInterface2");
 	return 0;
 }
 

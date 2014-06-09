@@ -31,6 +31,9 @@
     <ClInclude Include="LuaUtil.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="IText.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
