@@ -97,7 +97,8 @@ function LuaTestInterface(p)
 end
 
 function LuaTestInterface2()
-	local i1=test_wrapper(CreateITest());
+	local icreate = CreateITest();
+	local i1=test_wrapper(icreate);
 	local i2=test_wrapper(CreateITest2());
 	i1:Test();
 	i2:Test();
