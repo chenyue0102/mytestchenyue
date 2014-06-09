@@ -86,3 +86,19 @@ function LuaTestiterator(p)
 		it:increment();
 	end
 end
+
+function LuaTestInterface(p)
+	if p==nil
+	then
+		print("interface null")
+	else
+		print("interface not null")
+	end
+end
+
+function LuaTestInterface2()
+	local i1=test_wrapper(CreateITest());
+	local i2=test_wrapper(CreateITest2());
+	i1:Test();
+	i2:Test();
+end
