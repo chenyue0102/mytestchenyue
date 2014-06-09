@@ -10,6 +10,7 @@
 #include "luabind/operator.hpp"
 #include <map>
 #include "IText.h"
+#include "luabind/error.hpp"
 
 using namespace luabind;
 void outputstring(const char *pstrText)
@@ -173,6 +174,12 @@ BOOL GetTlvValue(const CMyVector<TestTLV> &Array, DWORD dwID, TestTLV &value)
 	return bRes;
 }
 
+void LuaErrorCallbackFun(lua_State* e)
+{
+	const char *pstrError = lua_tostring(e, -1);
+	printf(pstrError);
+}
+
 int _tmain(int argc, _TCHAR* argv[])
 {
 	char szCurrentDir[MAX_PATH] = {0}, szLuaFileName[MAX_PATH] = {0};
@@ -186,7 +193,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	{
 		return 1;
 	}
-
+	luabind::set_error_callback(&LuaErrorCallbackFun);
 	int nfirst = 1, nsecond = 2;
 	//int nResult = luabind::call_function<int>(luaVM, "testadd", nfirst, nsecond);
 	//std::string str = luabind::call_function<std::string>(luaVM, "teststring");
@@ -231,17 +238,17 @@ int _tmain(int argc, _TCHAR* argv[])
 	extern CTest* CreateText();
 	luabind::module(luaVM)
 		[
-			luabind::def("CreateText", &CreateText, luabind::adopt(result))
+			luabind::def("CreateText", &CreateText, luabind::adopt(result))			//lua会释放此指针
 		];
 	extern void TestClassPointer(CTest *p);
 	extern CTest& GetRef();
-	/*luabind::module(luaVM)
+	luabind::module(luaVM)
 		[
-			luabind::def("TestClassPointer", &TestClassPointer),
-			class_<CTest>("CTest")
-			.def("GetRef", &GetRef, luabind::dependency(result,_1))
+			luabind::def("TestClassPointer", &TestClassPointer)
+			/*class_<CTest>("CTest")
+			.def("GetRef", &GetRef, luabind::dependency(result,_1))*/
 		];
-	luabind::call_function<int>(luaVM, "LuaTestCreateText");*/
+	//luabind::call_function<int>(luaVM, "LuaTestCreateText");
 
 	luabind::module(luaVM)
 	[
@@ -304,14 +311,14 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	luabind::module(luaVM)
 	[
-		luabind::def("CreateITest", &CreateITest),
-		luabind::def("CreateITest2", &CreateITest2)
+		luabind::def("CreateITest", &CreateITest, luabind::dependency(result,_1)),		//引用形式，lua不管释放指针
+		luabind::def("CreateITest2", &CreateITest2, luabind::dependency(result,_1))	//引用形式，lua不管释放指针
 	];
 
 	luabind::module(luaVM)
 	[
 		class_<test_wrapper>("test_wrapper")
-		.def(constructor<ITest*>())
+		.def(constructor<int>())
 		.def("Test", &test_wrapper::Test)
 	];
 	luabind::call_function<void>(luaVM, "LuaTestInterface2");

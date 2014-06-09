@@ -11,11 +11,11 @@ class CBaseText
 public:
 	CBaseText()
 	{
-
+		printf("CBaseText\n");
 	}
 	virtual ~CBaseText()
 	{
-
+		printf("~CBaseText\n");
 	}
 	virtual void Test()
 	{
@@ -29,11 +29,11 @@ class CBaseText2
 public:
 	CBaseText2()
 	{
-
+		printf("CBaseText2\n");
 	}
 	virtual ~CBaseText2()
 	{
-
+		printf("~CBaseText2\n");
 	}
 	virtual void Test()
 	{
@@ -41,22 +41,26 @@ public:
 	}
 };
 
-inline ITest* CreateITest()
+inline int CreateITest()
 {
-	return new CBaseText();
+	return (int) new CBaseText();
 }
 
-inline ITest* CreateITest2()
+inline int CreateITest2()
 {
-	return new CBaseText2();
+	return (int)  new CBaseText2();
 }
 
 class test_wrapper
 {
 public:
-	test_wrapper(ITest *p)
+	test_wrapper( int p)
 	{
-		m_pITest = p;
+		m_pITest = (ITest*)(p);
+	}
+	virtual ~test_wrapper()
+	{
+		printf("~test_wrapper\n");
 	}
 	void Test()
 	{
