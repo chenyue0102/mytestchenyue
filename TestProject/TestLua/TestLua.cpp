@@ -5,12 +5,12 @@
 #include "LuaUtil.h"
 #include "boost/lexical_cast.hpp"
 #include <luabind/adopt_policy.hpp>
-#include <Windows.h>
 #include <string>
 #include "luabind/operator.hpp"
 #include <map>
 #include "IText.h"
 #include "luabind/error.hpp"
+#include "teststl.h"
 
 using namespace luabind;
 void outputstring(const char *pstrText)
@@ -80,6 +80,14 @@ public:
 		const T *p = &value;
 		return __super::push_back(value);
 	}
+	iterator erase(const_iterator _Where)
+	{
+		return __super::erase(_Where);
+	}
+	iterator insert(const_iterator _Where, const T& _Val)
+	{
+		return __super::insert(_Where, _Val);
+	}
 	typedef void (CMyVector::*PushBackFunType)(const T &Value);
 };
 
@@ -94,64 +102,6 @@ void TestEnumVectorPointer(const CMyVector<T> *v)
 {
 	printf("TestEnumVector size=%u\n", v->size());
 }
-
-struct TestTLV
-{
-	DWORD	dwID;			// 属性ID
-	DWORD	dwType;			// 属性类型
-	std::string 	strValue;		// 属性值
-	
-	TestTLV(const TestTLV &other)	//拷贝构造
-	{
-		printf("TestTLV\n");
-		dwID = other.dwID;
-		dwType = other.dwType;
-		strValue = other.strValue;
-	}
-	TestTLV()//构造函数
-	{
-		printf("TestTLV\n");
-	}
-	~TestTLV()
-	{
-		printf("~TestTLV\n");
-	}
-	void TestTLV::SetDword(DWORD dwPropertyID, DWORD dwPropertyValue)
-	{
-		strValue.clear();
-		dwID = dwPropertyID;
-		dwType = 1;
-		strValue.append((char*)&dwPropertyValue, sizeof(DWORD));
-	}
-
-	void TestTLV::SetString(DWORD dwPropertyID, const std::string &PropertyValue)
-	{
-		strValue.clear();
-		dwID = dwPropertyID;
-		dwType = 2;
-		DWORD dwLen = (DWORD)strlen(PropertyValue.c_str()) + 1;
-		strValue.append(PropertyValue.c_str(), dwLen);
-	}
-
-	void Test()
-	{
-		printf("TestTlv\n");
-	}
-
-	bool operator==(const TestTLV &other)const
-	{
-		if (dwID == other.dwID
-			&& dwType == other.dwType
-			&& strValue == other.strValue)
-		{
-			return true;
-		}
-		else
-		{
-			return false;
-		}
-	}
-};
 
 void InitTlvValue(TestTLV &value)
 {
@@ -267,7 +217,16 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	luabind::module(luaVM)
 	[
-		class_<CMyVector<TestTLV>::iterator >("iterator")
+		class_<CMyVector<TestTLV>::const_iterator >("const_iterator")
+		.def(constructor<>())
+		.def(self == other<CMyVector<TestTLV>::const_iterator>())		//变量在lua中可以执行比较操作
+		.def("increment", (CMyVector<TestTLV>::const_iterator&(CMyVector<TestTLV>::const_iterator::*)())&(CMyVector<TestTLV>::const_iterator::operator++))
+		.def("GetValue", &(CMyVector<TestTLV>::const_iterator::operator *))
+	];
+
+	luabind::module(luaVM)
+	[
+		class_<CMyVector<TestTLV>::iterator, CMyVector<TestTLV>::const_iterator>("iterator")
 		.def(constructor<>())
 		.def(self == other<CMyVector<TestTLV>::iterator>())		//变量在lua中可以执行比较操作
 		.def("increment", (CMyVector<TestTLV>::iterator&(CMyVector<TestTLV>::iterator::*)())&(CMyVector<TestTLV>::iterator::operator++))
@@ -284,6 +243,12 @@ int _tmain(int argc, _TCHAR* argv[])
 		.def("Test", &CMyVector<TestTLV>::Test)
 		.def("Begin", (CMyVector<TestTLV>::iterator(CMyVector<TestTLV>::*)())&CMyVector<TestTLV>::begin)
 		.def("End", (CMyVector<TestTLV>::iterator(CMyVector<TestTLV>::*)())&CMyVector<TestTLV>::end)
+		.def("Erase", (CMyVector<TestTLV>::iterator(CMyVector<TestTLV>::*)(CMyVector<TestTLV>::const_iterator))
+					&CMyVector<TestTLV>::erase)
+		.def("Insert", (CMyVector<TestTLV>::iterator 
+							(CMyVector<TestTLV>::*)
+							(CMyVector<TestTLV>::const_iterator _Where, const TestTLV& _Val))
+							&CMyVector<TestTLV>::insert)
 	];
 
 	
@@ -297,14 +262,12 @@ int _tmain(int argc, _TCHAR* argv[])
 	for (int a = 1; a < 10;a++)
 	{
 		TestTLV t1;
-		t1.dwID = a;
+		t1.SetDword(a,a);
 		pTemp->push_back(t1);
 	}
 
-	//luabind::call_function<void>(luaVM, "LuaTestiterator", pTemp);
 
-	pTemp->clear();
-	delete pTemp;
+	//luabind::call_function<void>(luaVM, "LuaTestiterator", pTemp);
 
 	ITest *pITest = NULL;
 	//luabind::call_function<void>(luaVM, "LuaTestInterface", pITest);
@@ -321,7 +284,14 @@ int _tmain(int argc, _TCHAR* argv[])
 		.def(constructor<int>())
 		.def("Test", &test_wrapper::Test)
 	];
-	luabind::call_function<void>(luaVM, "LuaTestInterface2");
+	//luabind::call_function<void>(luaVM, "LuaTestInterface2");
+	
+	//luabind::call_function<void>(luaVM, "LuaTestInsertErase", pTemp);
+
+	pTemp->clear();
+	delete pTemp;
+
+	TestStl(luaVM);
 	return 0;
 }
 
