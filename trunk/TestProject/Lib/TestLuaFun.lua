@@ -103,3 +103,29 @@ function LuaTestInterface2()
 	i1:Test();
 	i2:Test();
 end
+
+function LuaTestInsertErase(p)
+	local it=p:Begin()
+	if it ~= p:End()
+	then
+		p:Erase(it)
+	end
+	local v=TestTLV();
+	v:SetDword(9999,9999);
+	p:Insert(p:Begin(),v);
+	p:Insert(p:End(),v);
+end
+
+function LuaTestMap(p)
+	local it=p:Begin();
+	while it~=p:End() do
+		local retvalue=it:GetValue();
+		retvalue.second:Test();
+
+		it:increment();
+	end
+	--local pairValue=PairDwordTestTlv();
+	--pairValue.first=9999;
+	--pairValue.second:SetDword(9999,9999);
+	--p:Insert(pairValue)
+end
