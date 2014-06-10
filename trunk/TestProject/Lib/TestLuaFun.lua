@@ -120,12 +120,24 @@ function LuaTestMap(p)
 	local it=p:Begin();
 	while it~=p:End() do
 		local retvalue=it:GetValue();
+		print(retvalue.first);
 		retvalue.second:Test();
-
 		it:increment();
 	end
-	--local pairValue=PairDwordTestTlv();
-	--pairValue.first=9999;
-	--pairValue.second:SetDword(9999,9999);
-	--p:Insert(pairValue)
+	it=p:Begin();
+	p:Erase(it);
+
+	local v=TestTLV();
+	v:SetString(9999,"9999");
+	local pairValue=PairDwordTestTlv(9999, v);
+	p:Insert(pairValue);
+
+	it=p:Find(5);
+	if it~=p:End()
+	then
+		p:Erase(it)
+		print("erase ok")
+	else
+		print("not erase")
+	end
 end
