@@ -137,161 +137,164 @@ int _tmain(int argc, _TCHAR* argv[])
 	*strrchr(szCurrentDir,'\\') = '\0';
 	_snprintf(szLuaFileName, MAX_PATH, "%s%s", szCurrentDir, "\\TestLuaFun.lua");
 
-	CLuaVM luaVM;
-	
-	if( 0 != luaL_dofile(luaVM, szLuaFileName))
 	{
-		return 1;
-	}
-	luabind::set_error_callback(&LuaErrorCallbackFun);
-	int nfirst = 1, nsecond = 2;
-	//int nResult = luabind::call_function<int>(luaVM, "testadd", nfirst, nsecond);
-	//std::string str = luabind::call_function<std::string>(luaVM, "teststring");
+		CLuaVM luaVM;
 
-	/*luabind::object obj = luabind::call_function<luabind::object>(luaVM, "testable");
-	std::string strValue;
-	int nKey = 0;
-	for(luabind::iterator i(obj); i != luabind::iterator(); ++i)
-	{
+		if( 0 != luaL_dofile(luaVM, szLuaFileName))
+		{
+			return 1;
+		}
+		luabind::set_error_callback(&LuaErrorCallbackFun);
+		int nfirst = 1, nsecond = 2;
+		//int nResult = luabind::call_function<int>(luaVM, "testadd", nfirst, nsecond);
+		//std::string str = luabind::call_function<std::string>(luaVM, "teststring");
+
+		/*luabind::object obj = luabind::call_function<luabind::object>(luaVM, "testable");
+		std::string strValue;
+		int nKey = 0;
+		for(luabind::iterator i(obj); i != luabind::iterator(); ++i)
+		{
 		strValue = boost::lexical_cast<std::string>(*i);
 		nKey = boost::lexical_cast<int>(i.key());
-	}*/
-	luabind_outputstring(luaVM);
-	const char *pstrText = "kingmax";
-	//luabind::call_function<int>(luaVM, "testoutput", pstrText);
+		}*/
+		luabind_outputstring(luaVM);
+		const char *pstrText = "kingmax";
+		//luabind::call_function<int>(luaVM, "testoutput", pstrText);
 
-	luabind::module(luaVM)
-		[
-			luabind::def("getstring", &getstring)
-		];
+		luabind::module(luaVM)
+			[
+				luabind::def("getstring", &getstring)
+			];
 
-	//std::string strValue2;
-	std::string strValue2;
-	//luabind::call_function<int>(luaVM, "testquote", strValue2);
+		//std::string strValue2;
+		std::string strValue2;
+		//luabind::call_function<int>(luaVM, "testquote", strValue2);
 
-	module(luaVM)
-		[
-			class_<CTest>("CTest")
-			.def(constructor<>())
-			.def("ClassTestOutput", &CTest::TestOutput)
-		];
-	//luabind::call_function<int>(luaVM, "LuaTestOutput");
+		module(luaVM)
+			[
+				class_<CTest>("CTest")
+				.def(constructor<>())
+				.def("ClassTestOutput", &CTest::TestOutput)
+			];
+		//luabind::call_function<int>(luaVM, "LuaTestOutput");
 
-	
 
-	luabind::module(luaVM)
-		[
-			luabind::def("ClassPointerTestOutput", &CTest::TestOutput)
-		];
-	
-	
-	extern CTest* CreateText();
-	luabind::module(luaVM)
-		[
-			luabind::def("CreateText", &CreateText, luabind::adopt(result))			//lua会释放此指针
-		];
-	extern void TestClassPointer(CTest *p);
-	extern CTest& GetRef();
-	luabind::module(luaVM)
-		[
-			luabind::def("TestClassPointer", &TestClassPointer)
-			/*class_<CTest>("CTest")
-			.def("GetRef", &GetRef, luabind::dependency(result,_1))*/
-		];
-	//luabind::call_function<int>(luaVM, "LuaTestCreateText");
 
-	luabind::module(luaVM)
-	[
-		class_<TestTLV>("TestTLV")
-		.def(constructor<>())
-		.def("SetDword", &TestTLV::SetDword)
-		.def("SetString", &TestTLV::SetString)
-		.def("Test", &TestTLV::Test)
-		.def(self == other<TestTLV>())		//TestTLV变量在lua中可以执行比较操作
-	];
-	luabind::module(luaVM)
-	[
-		luabind::def("InitTlvValue", &InitTlvValue),
-		luabind::def("GetTlvValue", &GetTlvValue)
-	];
+		luabind::module(luaVM)
+			[
+				luabind::def("ClassPointerTestOutput", &CTest::TestOutput)
+			];
 
-	luabind::module(luaVM)
-	[
-		class_<CMyVector<TestTLV>::const_iterator >("const_iterator")
-		.def(constructor<>())
-		.def(self == other<CMyVector<TestTLV>::const_iterator>())		//变量在lua中可以执行比较操作
-		.def("increment", (CMyVector<TestTLV>::const_iterator&(CMyVector<TestTLV>::const_iterator::*)())&(CMyVector<TestTLV>::const_iterator::operator++))
-		.def("GetValue", &(CMyVector<TestTLV>::const_iterator::operator *))
-	];
 
-	luabind::module(luaVM)
-	[
-		class_<CMyVector<TestTLV>::iterator, CMyVector<TestTLV>::const_iterator>("iterator")
-		.def(constructor<>())
-		.def(self == other<CMyVector<TestTLV>::iterator>())		//变量在lua中可以执行比较操作
-		.def("increment", (CMyVector<TestTLV>::iterator&(CMyVector<TestTLV>::iterator::*)())&(CMyVector<TestTLV>::iterator::operator++))
-		.def("GetValue", &(CMyVector<TestTLV>::iterator::operator *))
-	];
+		extern CTest* CreateText();
+		luabind::module(luaVM)
+			[
+				luabind::def("CreateText", &CreateText, luabind::adopt(result))			//lua会释放此指针
+			];
+		extern void TestClassPointer(CTest *p);
+		extern CTest& GetRef();
+		luabind::module(luaVM)
+			[
+				luabind::def("TestClassPointer", &TestClassPointer)
+				/*class_<CTest>("CTest")
+				.def("GetRef", &GetRef, luabind::dependency(result,_1))*/
+			];
+		//luabind::call_function<int>(luaVM, "LuaTestCreateText");
 
-	luabind::module(luaVM)
-	[
-		luabind::def("TestEnumVector", &TestEnumVector<TestTLV>),
-		luabind::def("TestEnumVectorPointer", &TestEnumVectorPointer<TestTLV>),
-		class_<CMyVector<TestTLV> >("CMyVector")
-		.def(constructor<>())
-		.def("push_back",/* (CMyVector<TestTLV>::PushBackFunType)*/&CMyVector<TestTLV>::push_back)
-		.def("Test", &CMyVector<TestTLV>::Test)
-		.def("Begin", (CMyVector<TestTLV>::iterator(CMyVector<TestTLV>::*)())&CMyVector<TestTLV>::begin)
-		.def("End", (CMyVector<TestTLV>::iterator(CMyVector<TestTLV>::*)())&CMyVector<TestTLV>::end)
-		.def("Erase", (CMyVector<TestTLV>::iterator(CMyVector<TestTLV>::*)(CMyVector<TestTLV>::const_iterator))
-					&CMyVector<TestTLV>::erase)
-		.def("Insert", (CMyVector<TestTLV>::iterator 
-							(CMyVector<TestTLV>::*)
-							(CMyVector<TestTLV>::const_iterator _Where, const TestTLV& _Val))
-							&CMyVector<TestTLV>::insert)
-	];
+		luabind::module(luaVM)
+			[
+				class_<TestTLV>("TestTLV")
+				.def(constructor<>())
+				.def("SetDword", &TestTLV::SetDword)
+				.def("SetString", &TestTLV::SetString)
+				.def("Test", &TestTLV::Test)
+				.def(self == other<TestTLV>())		//TestTLV变量在lua中可以执行比较操作
+			];
+		luabind::module(luaVM)
+			[
+				luabind::def("InitTlvValue", &InitTlvValue),
+				luabind::def("GetTlvValue", &GetTlvValue)
+			];
 
-	
-	//luabind::call_function<void>(luaVM, "LuaTestVector");
+		luabind::module(luaVM)
+			[
+				class_<CMyVector<TestTLV>::const_iterator >("const_iterator")
+				.def(constructor<>())
+				.def(self == other<CMyVector<TestTLV>::const_iterator>())		//变量在lua中可以执行比较操作
+				.def("increment", (CMyVector<TestTLV>::const_iterator&(CMyVector<TestTLV>::const_iterator::*)())&(CMyVector<TestTLV>::const_iterator::operator++))
+				.def("GetValue", &(CMyVector<TestTLV>::const_iterator::operator *))
+			];
 
-	CMyVector<TestTLV> *pTemp = new CMyVector<TestTLV>;
-	//luabind::call_function<void>(luaVM, "LuaTestVectorParam", pTemp);
-	int nSize = pTemp->size();
-	printf("nsize=%d", nSize);
+		luabind::module(luaVM)
+			[
+				class_<CMyVector<TestTLV>::iterator, CMyVector<TestTLV>::const_iterator>("iterator")
+				.def(constructor<>())
+				.def(self == other<CMyVector<TestTLV>::iterator>())		//变量在lua中可以执行比较操作
+				.def("increment", (CMyVector<TestTLV>::iterator&(CMyVector<TestTLV>::iterator::*)())&(CMyVector<TestTLV>::iterator::operator++))
+				.def("GetValue", &(CMyVector<TestTLV>::iterator::operator *))
+			];
 
-	for (int a = 1; a < 10;a++)
-	{
-		TestTLV t1;
-		t1.SetDword(a,a);
-		pTemp->push_back(t1);
+		luabind::module(luaVM)
+			[
+				luabind::def("TestEnumVector", &TestEnumVector<TestTLV>),
+				luabind::def("TestEnumVectorPointer", &TestEnumVectorPointer<TestTLV>),
+				class_<CMyVector<TestTLV> >("CMyVector")
+				.def(constructor<>())
+				.def("push_back",/* (CMyVector<TestTLV>::PushBackFunType)*/&CMyVector<TestTLV>::push_back)
+				.def("Test", &CMyVector<TestTLV>::Test)
+				.def("Begin", (CMyVector<TestTLV>::iterator(CMyVector<TestTLV>::*)())&CMyVector<TestTLV>::begin)
+				.def("End", (CMyVector<TestTLV>::iterator(CMyVector<TestTLV>::*)())&CMyVector<TestTLV>::end)
+				.def("Erase", (CMyVector<TestTLV>::iterator(CMyVector<TestTLV>::*)(CMyVector<TestTLV>::const_iterator))
+				&CMyVector<TestTLV>::erase)
+				.def("Insert", (CMyVector<TestTLV>::iterator 
+				(CMyVector<TestTLV>::*)
+				(CMyVector<TestTLV>::const_iterator _Where, const TestTLV& _Val))
+				&CMyVector<TestTLV>::insert)
+			];
+
+
+		//luabind::call_function<void>(luaVM, "LuaTestVector");
+
+		CMyVector<TestTLV> *pTemp = new CMyVector<TestTLV>;
+		//luabind::call_function<void>(luaVM, "LuaTestVectorParam", pTemp);
+		int nSize = pTemp->size();
+		printf("nsize=%d", nSize);
+
+		for (int a = 1; a < 10;a++)
+		{
+			TestTLV t1;
+			t1.SetDword(a,a);
+			pTemp->push_back(t1);
+		}
+
+
+		//luabind::call_function<void>(luaVM, "LuaTestiterator", pTemp);
+
+		ITest *pITest = NULL;
+		//luabind::call_function<void>(luaVM, "LuaTestInterface", pITest);
+
+		luabind::module(luaVM)
+			[
+				luabind::def("CreateITest", &CreateITest, luabind::dependency(result,_1)),		//引用形式，lua不管释放指针
+				luabind::def("CreateITest2", &CreateITest2, luabind::dependency(result,_1))	//引用形式，lua不管释放指针
+			];
+
+		luabind::module(luaVM)
+			[
+				class_<test_wrapper>("test_wrapper")
+				.def(constructor<int>())
+				.def("Test", &test_wrapper::Test)
+			];
+		//luabind::call_function<void>(luaVM, "LuaTestInterface2");
+
+		//luabind::call_function<void>(luaVM, "LuaTestInsertErase", pTemp);
+
+		pTemp->clear();
+		delete pTemp;
+
+		TestStl(luaVM);
 	}
-
-
-	//luabind::call_function<void>(luaVM, "LuaTestiterator", pTemp);
-
-	ITest *pITest = NULL;
-	//luabind::call_function<void>(luaVM, "LuaTestInterface", pITest);
-
-	luabind::module(luaVM)
-	[
-		luabind::def("CreateITest", &CreateITest, luabind::dependency(result,_1)),		//引用形式，lua不管释放指针
-		luabind::def("CreateITest2", &CreateITest2, luabind::dependency(result,_1))	//引用形式，lua不管释放指针
-	];
-
-	luabind::module(luaVM)
-	[
-		class_<test_wrapper>("test_wrapper")
-		.def(constructor<int>())
-		.def("Test", &test_wrapper::Test)
-	];
-	//luabind::call_function<void>(luaVM, "LuaTestInterface2");
-	
-	//luabind::call_function<void>(luaVM, "LuaTestInsertErase", pTemp);
-
-	pTemp->clear();
-	delete pTemp;
-
-	TestStl(luaVM);
+	assert(0 == TestTLV::g_lCount);
 	return 0;
 }
 

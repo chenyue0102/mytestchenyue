@@ -38,14 +38,17 @@ struct TestTLV
 		dwID = other.dwID;
 		dwType = other.dwType;
 		strValue = other.strValue;
+		InterlockedIncrement(&g_lCount);
 	}
 	TestTLV()//¹¹Ôìº¯Êý
 	{
 		printf("TestTLV\n");
+		InterlockedIncrement(&g_lCount);
 	}
 	~TestTLV()
 	{
 		printf("~TestTLV\n");
+		InterlockedDecrement(&g_lCount);
 	}
 	void TestTLV::SetDword(DWORD dwPropertyID, DWORD dwPropertyValue)
 	{
@@ -82,4 +85,5 @@ struct TestTLV
 			return false;
 		}
 	}
+	static volatile long g_lCount;
 };
