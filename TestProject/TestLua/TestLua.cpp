@@ -140,11 +140,15 @@ int _tmain(int argc, _TCHAR* argv[])
 	{
 		CLuaVM luaVM;
 
+		luabind::set_error_callback(&LuaErrorCallbackFun);
+		extern void RegisterTestSharePointer(lua_State *luaVM);
+		RegisterTestSharePointer(luaVM);
+		
 		if( 0 != luaL_dofile(luaVM, szLuaFileName))
 		{
 			return 1;
 		}
-		luabind::set_error_callback(&LuaErrorCallbackFun);
+		
 		int nfirst = 1, nsecond = 2;
 		//int nResult = luabind::call_function<int>(luaVM, "testadd", nfirst, nsecond);
 		//std::string str = luabind::call_function<std::string>(luaVM, "teststring");
@@ -292,7 +296,10 @@ int _tmain(int argc, _TCHAR* argv[])
 		pTemp->clear();
 		delete pTemp;
 
-		TestStl(luaVM);
+		//TestStl(luaVM);
+
+		extern void TestSharePointer(lua_State *luaVM);
+		TestSharePointer(luaVM);	
 	}
 	assert(0 == TestTLV::g_lCount);
 	return 0;

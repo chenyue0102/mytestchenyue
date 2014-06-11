@@ -37,6 +37,9 @@
     <ClInclude Include="TestStl.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="TestSharePointer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -95,6 +98,9 @@
     </ClCompile>
     <ClCompile Include="..\luabind-0.9\src\wrapper_base.cpp">
       <Filter>luabind</Filter>
+    </ClCompile>
+    <ClCompile Include="TestSharePointer.cpp">
+      <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

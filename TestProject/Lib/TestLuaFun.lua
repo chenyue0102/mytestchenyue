@@ -141,3 +141,49 @@ function LuaTestMap(p)
 		print("not erase")
 	end
 end
+
+class 'lua_testclass'
+
+function lua_testclass:__init(name)
+    self.name = name
+end
+
+function lua_testclass:print()
+    print(self.name)
+end
+
+class 'derived' (lua_testclass)
+
+function derived:__init()
+    lua_testclass.__init(self, 'derived name')
+end
+
+function derived:print()
+    print('Derived:print() -> ')
+    lua_testclass.print(self)
+end
+
+class 'LuaTestClass' (CTestSharePointer)
+function LuaTestClass:__init() 
+	CTestSharePointer.__init(self)
+end
+
+function LuaTestClass:Test()
+	print("LuaTestClass:Test")
+	CTestSharePointer.Test(self)
+end
+
+function LuaTestClass:SetValue(nValue)
+	self.m_nValue=nValue;
+end
+
+
+function LuaTestSharedPointer()
+	local v=LuaTestClass()
+	v:Test()
+	v.m_nValue = 987654321
+	v:SetValue(123456)
+	g_TestSharePointerVector:push_back(v);
+end
+
+
