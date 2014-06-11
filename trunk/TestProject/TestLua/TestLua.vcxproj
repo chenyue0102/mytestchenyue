@@ -78,6 +78,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <None Include="..\Lib\TestLuaFun.lua" />
+    <None Include="..\Lib\TestLuaFun2.lua" />
     <None Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
