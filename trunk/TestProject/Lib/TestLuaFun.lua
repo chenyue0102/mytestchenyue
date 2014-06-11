@@ -179,6 +179,13 @@ function LuaTestClass:SetValue(nValue)
 	self.m_nValue=nValue;
 end
 
+function LuaTestClass:SetLuaName(str)
+	self.strLuaName = str;
+end
+
+function LuaTestClass:GetLuaName()
+	return self.strLuaName
+end
 
 function LuaTestSharedPointer()
 	local v=LuaTestClass()
@@ -187,6 +194,9 @@ function LuaTestSharedPointer()
 	v:SetValue(123456)
 	g_TestSharePointerVector:push_back(v);
 	Lua2Output()
+	print(v:GetLuaName())
+	v:SetLuaName("abc1111");
+	print(v.strLuaName)
 end
 
 
