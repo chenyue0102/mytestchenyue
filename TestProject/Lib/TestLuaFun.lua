@@ -1,3 +1,5 @@
+require "TestLuaFun2"
+
 function testadd(a, b)
 	return a+b;
 end
@@ -184,6 +186,7 @@ function LuaTestSharedPointer()
 	v.m_nValue = 987654321
 	v:SetValue(123456)
 	g_TestSharePointerVector:push_back(v);
+	Lua2Output()
 end
 
 
