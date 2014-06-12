@@ -57,7 +57,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <OutputFile>..\Lib\TestLuaD.exe</OutputFile>
-      <AdditionalDependencies>..\Lib\luaD.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>..\Lib\lua5.2.3D.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
