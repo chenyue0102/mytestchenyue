@@ -28,7 +28,7 @@
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='withLua51_Debug|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='withLua50_Release|Win32'" Label="Configuration">
@@ -63,7 +63,7 @@
     <OutDir Condition="'$(Configuration)|$(Platform)'=='withLua50_Release|Win32'">Release\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='withLua50_Release|Win32'">Release\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='withLua50_Release|Win32'">false</LinkIncremental>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='withLua51_Debug|Win32'">$(Configuration)\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='withLua51_Debug|Win32'">../../../Lib</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='withLua51_Debug|Win32'">$(Configuration)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='withLua51_Debug|Win32'">true</LinkIncremental>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='withLua51_Release|Win32'">$(Configuration)\</OutDir>
@@ -83,6 +83,9 @@
     <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='withLua51_Release|Win32'" />
     <IncludePath Condition="'$(Configuration)|$(Platform)'=='withLua51_Release|Win32'">../../../lua-5.1.4\lua;$(IncludePath)</IncludePath>
     <LibraryPath Condition="'$(Configuration)|$(Platform)'=='withLua51_Release|Win32'">../../../Lib;$(LibraryPath)</LibraryPath>
+    <IncludePath Condition="'$(Configuration)|$(Platform)'=='withLua51_Debug|Win32'">../../../lua-5.1.4\lua;$(IncludePath)</IncludePath>
+    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='withLua51_Debug|Win32'">../../../Lib;$(LibraryPath)</LibraryPath>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='withLua51_Debug|Win32'">$(ProjectName)D</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='withLua50_Debug|Win32'">
     <ClCompile>
@@ -142,8 +145,8 @@
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>Lua5.1.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>..\..\bin\tolua++_d.exe</OutputFile>
+      <AdditionalDependencies>lua5.1.4D.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>..\..\..\Lib\tolua++_d.exe</OutputFile>
       <AdditionalLibraryDirectories>..\..\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>$(OutDir)tolua++.pdb</ProgramDatabaseFile>
@@ -173,7 +176,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\bin\tolua.c" />
     <ClCompile Include="..\..\src\lib\tolua_event.c" />
     <ClCompile Include="..\..\src\lib\tolua_is.c" />
     <ClCompile Include="..\..\src\lib\tolua_map.c" />
