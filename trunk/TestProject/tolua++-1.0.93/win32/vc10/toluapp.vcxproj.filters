@@ -29,6 +29,9 @@
     <ClCompile Include="..\..\src\bin\toluabind.c">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\bin\tolua.c">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\lib\tolua_event.h">
