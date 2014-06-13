@@ -165,9 +165,11 @@ function derived:print()
     lua_testclass.print(self)
 end
 
+--------------------------------------------------
 class 'LuaTestClass' (CTestSharePointer)
 function LuaTestClass:__init() 
 	CTestSharePointer.__init(self)
+	self.strClassName="LuaTestClass"
 end
 
 function LuaTestClass:Test()
@@ -187,6 +189,22 @@ function LuaTestClass:GetLuaName()
 	return self.strLuaName
 end
 
+function LuaTestClass:Compare(str,str2)
+	print("LuaTestClass:Compare",str,str2)
+end
+
+-------
+
+class 'LuaAnotherClass' (CTestSharePointer)
+function LuaAnotherClass:__init()
+	CTestSharePointer.__init(self)
+	self.strClassName="LuaAnotherClass"
+end
+
+function LuaAnotherClass:Compare(nValue)
+	print("LuaAnotherClass:Compare",nValue)
+end
+-------------------------------------------
 function LuaTestSharedPointer()
 	local v=LuaTestClass()
 	v:Test()
@@ -199,4 +217,70 @@ function LuaTestSharedPointer()
 	print(v.strLuaName)
 end
 
+function LuaTestChildClass()
+	LuaTestChildClass2()
+	LuaTestChildClass2()
+	LuaEmptyFun()
+end
 
+function LuaEmptyFun()
+	local lEmpty=LuaTestClass
+	if lEmpty==nil
+	then
+		print("lEmpty==nil")
+	end
+end
+
+function LuaTestChildClass2()
+	local vss1=LuaTestClass()
+	vss1:Test()
+end
+
+function LuaTestInitAnotherClass()
+	local c1=LuaTestClass();
+	g_TestSharePointerVector:push_back(c1)
+	local c2=LuaAnotherClass();
+	g_TestSharePointerVector:push_back(c2)
+end
+
+function LuaEnumAnotherClass()
+	local i1=g_TestSharePointerVector:Begin()
+
+	if nil==g_TestSharePointerVector
+	then
+		print("nil g_TestSharePointerVector")
+	end
+
+	if nil==i1
+	then
+		print("nil i1-------------------")
+	end
+
+	while i1 ~= g_TestSharePointerVector:End() do
+		local i2=i1:GetValue();
+		if i2==nil
+		then
+			print("i2 nil")
+		else
+			print("i2 not nil")
+			if "LuaAnotherClass"==i2.strClassName
+			then 
+				--print(" find LuaAnotherClass -------------")
+				--i2:Compare(1)
+			else
+				--print("not find --------------" ,i2.strClassName)
+				--i2:Compare("aasdfwer234")
+			end
+		end
+		i1:increment()
+		i2=nil
+	end
+end
+
+function LuaEnumAnotherClass2()
+	local i1=g_TestSharePointerVector:Begin()
+
+	while i1 ~= g_TestSharePointerVector:End() do
+		i1:increment()
+	end
+end
