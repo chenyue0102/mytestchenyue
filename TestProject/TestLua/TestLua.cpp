@@ -204,7 +204,8 @@ int _tmain(int argc, _TCHAR* argv[])
 				.def("GetRef", &GetRef, luabind::dependency(result,_1))*/
 			];
 		//luabind::call_function<int>(luaVM, "LuaTestCreateText");
-
+		//lua_gc(luaVM, LUA_GCSETPAUSE, 100);
+		//lua_gc(luaVM, LUA_GCSETSTEPMUL, 100);
 		luabind::module(luaVM)
 			[
 				class_<TestTLV>("TestTLV")

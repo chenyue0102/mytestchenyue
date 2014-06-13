@@ -7,6 +7,7 @@ class CTestSharePointer
 {
 public:
 	CTestSharePointer(void);
+	CTestSharePointer(const CTestSharePointer &other);
 	virtual ~CTestSharePointer(void);
 public:
 	virtual void Test();
