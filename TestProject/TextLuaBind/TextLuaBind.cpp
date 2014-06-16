@@ -3,6 +3,7 @@
 
 #include "stdafx.h"
 #include "TestNewCount.h"
+#include "luabind/class_info.hpp"
 
 void LuaErrorCallbackFun(lua_State* e);
 void TestOverloadedFun(int nValue);
@@ -25,6 +26,16 @@ int _tmain(int argc, _TCHAR* argv[])
 
 		luabind::set_error_callback(&LuaErrorCallbackFun);
 		RegisterAll(luaVM);
+		module(luaVM)
+			[
+				class_<class_info>("class_info_data")
+				.def_readonly("name", &class_info::name)
+				.def_readonly("methods", &class_info::methods)
+				.def_readonly("attributes", &class_info::attributes),
+
+				def("class_info", &get_class_info),
+				def("class_names", &get_class_names)
+			];
 		if( 0 != luaL_dofile(luaVM, szLuaFileName))
 		{
 			return 1;
@@ -46,11 +57,20 @@ int _tmain(int argc, _TCHAR* argv[])
 			def("TestOverloadedFun", (void(*)(const std::string &))&TestOverloadedFun)
 		];
 		//luabind::call_function<void>(luaVM, "LuaTestOverloadedFun");
-		
+		lua_gc(luaVM, LUA_GCCOLLECT, 0);		//发起一次完整的垃圾收集循环
+		int nCount = lua_gettop(luaVM);
+
 		extern void TestCTestNewCount(lua_State *luaVM);
 		TestCTestNewCount(luaVM);
+		extern void DestroyGlobalCTestNewCount();
+		DestroyGlobalCTestNewCount();
+
+		lua_gc(luaVM, LUA_GCCOLLECT, 0);		//发起一次完整的垃圾收集循环
+		int nNewCount = lua_gettop(luaVM);
+		printf("gcCont=%d new= %d \n", nCount, nNewCount);
+		CTestNewCount::TestCount();
 	}
- 	CTestNewCount::TestCount();
+	
 	return 0;
 }
 
