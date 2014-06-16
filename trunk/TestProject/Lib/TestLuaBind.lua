@@ -28,6 +28,34 @@ function LuaTestCopyObject()
 	end
 end
 
+function LuaTestTransObject(cObject)
+	cObject:Test()
+end
+
+function LuaInitVector(v)
+	for i=1,1000 do
+		local cObject = CTestNewCountChild()
+		cObject.m_dwID = i
+		v:PushBack(cObject)
+	end
+end
+
+function LuaEraseVector(v, id)
+	local it = v:Begin()
+	
+	while it ~= v:End() do
+		local l = it:GetValue()
+		print(type(l), class_info(l).name);
+		--local valueid=l:GetID()
+		--if l.valueid==id
+		--then 
+			--v:Erase(it)
+			--break;
+		--end
+		it:Increment()
+	end
+end
+
 --◊”¿‡CTestNewCountChild
 class 'CTestNewCountChild' (namespacetest.CTestNewCount)
 function CTestNewCountChild:__init()
