@@ -1,0 +1,1 @@
+"..\Lib\toluappD.exe" -o ".\Output.cpp" ".\TestToLua.pkg"
