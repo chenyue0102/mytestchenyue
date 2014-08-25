@@ -55,6 +55,22 @@ namespace luabind { namespace detail
 
 #else
 
+#if _MSC_VER >= 1400			//MS VC++ 8.0
+	template<class U>
+	char_array<sizeof(U)> indirect_sizeof_test(by_reference<U>);
+
+	template<class U>
+	char_array<sizeof(U)> indirect_sizeof_test(by_const_reference<U>);
+
+	template<class U>
+	char_array<sizeof(U)> indirect_sizeof_test(by_pointer<U>);
+
+	template<class U>
+	char_array<sizeof(U)> indirect_sizeof_test(by_const_pointer<U>);
+
+	template<class U>
+	char_array<sizeof(U)> indirect_sizeof_test(by_value<U>);
+#else
 	template<class U>
 	char_array<sizeof(typename identity<U>::type)> indirect_sizeof_test(by_reference<U>);
 
@@ -69,8 +85,8 @@ namespace luabind { namespace detail
 
 	template<class U>
 	char_array<sizeof(typename identity<U>::type)> indirect_sizeof_test(by_value<U>);
-
-#endif
+#endif	//#if MSC_VER >= 1600
+#endif	//#if defined(__GNUC__) && ( __GNUC__ == 3 && __GNUC_MINOR__ == 1 )
 
 	template<class T>
 	struct indirect_sizeof

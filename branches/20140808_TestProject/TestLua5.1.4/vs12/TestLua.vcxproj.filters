@@ -1,0 +1,163 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="luabind-0.8.1">
+      <UniqueIdentifier>{6e39806f-783e-4811-bf64-20765f97ec3c}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\ColumnListContainerElementUI.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\FrameWindow.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\FrameWindow_wrapper.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ListElementUI_wrapper.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\LuaUtil.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\RegisterDuilib.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Serialization.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\stdafx.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\targetver.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\TestLua.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\TestLuaClass.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Resource.h">
+      <Filter>资源文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\LuaSerialize.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\TestLuaClass.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\TestLua.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\stdafx.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Serialization.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\RegisterDuilib.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ListElementUI_wrapper.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\FrameWindow_wrapper.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\FrameWindow.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ColumnListContainerElementUI.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\luabind-0.8.1\src\class.cpp">
+      <Filter>luabind-0.8.1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\luabind-0.8.1\src\class_info.cpp">
+      <Filter>luabind-0.8.1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\luabind-0.8.1\src\class_registry.cpp">
+      <Filter>luabind-0.8.1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\luabind-0.8.1\src\class_rep.cpp">
+      <Filter>luabind-0.8.1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\luabind-0.8.1\src\create_class.cpp">
+      <Filter>luabind-0.8.1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\luabind-0.8.1\src\error.cpp">
+      <Filter>luabind-0.8.1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\luabind-0.8.1\src\find_best_match.cpp">
+      <Filter>luabind-0.8.1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\luabind-0.8.1\src\function.cpp">
+      <Filter>luabind-0.8.1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\luabind-0.8.1\src\implicit_cast.cpp">
+      <Filter>luabind-0.8.1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\luabind-0.8.1\src\link_compatibility.cpp">
+      <Filter>luabind-0.8.1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\luabind-0.8.1\src\object_rep.cpp">
+      <Filter>luabind-0.8.1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\luabind-0.8.1\src\open.cpp">
+      <Filter>luabind-0.8.1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\luabind-0.8.1\src\overload_rep.cpp">
+      <Filter>luabind-0.8.1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\luabind-0.8.1\src\pcall.cpp">
+      <Filter>luabind-0.8.1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\luabind-0.8.1\src\ref.cpp">
+      <Filter>luabind-0.8.1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\luabind-0.8.1\src\scope.cpp">
+      <Filter>luabind-0.8.1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\luabind-0.8.1\src\stack_content_by_name.cpp">
+      <Filter>luabind-0.8.1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\luabind-0.8.1\src\weak_ref.cpp">
+      <Filter>luabind-0.8.1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\luabind-0.8.1\src\wrapper_base.cpp">
+      <Filter>luabind-0.8.1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\LuaSerialize.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\src\TestLua.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="..\src\small.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="..\src\TestLua.rc">
+      <Filter>资源文件</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>

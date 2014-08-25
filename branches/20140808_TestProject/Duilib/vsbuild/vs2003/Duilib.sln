@@ -1,0 +1,23 @@
+Microsoft Visual Studio Solution File, Format Version 8.00
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Duilib", "Duilib.vcproj", "{7CDD5336-644F-4060-ADF7-FF5D59051893}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfiguration) = preSolution
+		Debug_Dll = Debug_Dll
+		Release_Dll = Release_Dll
+	EndGlobalSection
+	GlobalSection(ProjectDependencies) = postSolution
+	EndGlobalSection
+	GlobalSection(ProjectConfiguration) = postSolution
+		{7CDD5336-644F-4060-ADF7-FF5D59051893}.Debug_Dll.ActiveCfg = Debug_Dll|Win32
+		{7CDD5336-644F-4060-ADF7-FF5D59051893}.Debug_Dll.Build.0 = Debug_Dll|Win32
+		{7CDD5336-644F-4060-ADF7-FF5D59051893}.Release_Dll.ActiveCfg = Release_Dll|Win32
+		{7CDD5336-644F-4060-ADF7-FF5D59051893}.Release_Dll.Build.0 = Release_Dll|Win32
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+	EndGlobalSection
+	GlobalSection(ExtensibilityAddIns) = postSolution
+	EndGlobalSection
+EndGlobal
