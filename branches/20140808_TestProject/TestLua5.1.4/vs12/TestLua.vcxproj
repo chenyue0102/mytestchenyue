@@ -170,6 +170,10 @@
   <ItemGroup>
     <ResourceCompile Include="..\src\TestLua.rc" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\Lib\Serialize.lua" />
+    <None Include="..\..\Lib\TestLuaBind.lua" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

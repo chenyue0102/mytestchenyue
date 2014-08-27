@@ -160,4 +160,8 @@
       <Filter>资源文件</Filter>
     </ResourceCompile>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\Lib\TestLuaBind.lua" />
+    <None Include="..\..\Lib\Serialize.lua" />
+  </ItemGroup>
 </Project>

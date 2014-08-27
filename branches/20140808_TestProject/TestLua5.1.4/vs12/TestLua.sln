@@ -9,11 +9,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TestLua", "TestLua.vcxproj"
 		{E9657CE5-8C5B-4D76-8029-C4BBF0ED0EF0} = {E9657CE5-8C5B-4D76-8029-C4BBF0ED0EF0}
 	EndProjectSection
 EndProject
-Project("{5697748A-77EF-44CA-8824-4F5637E5945B}") = "temp_TestLua5.1.4", "C:\Users\chenyue\Documents\BabeLua\Project\temp_TestLua5.1.4\temp_TestLua5.1.4.luaproj", "{E439935D-B2A2-46AE-856D-2AA408428F33}"
-	ProjectSection(ProjectDependencies) = postProject
-		{3B4F9288-6DEB-4929-A513-01DD73EF9C3B} = {3B4F9288-6DEB-4929-A513-01DD73EF9C3B}
-	EndProjectSection
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Duilib", "..\..\Duilib\vsbuild\vs2013\Duilib.vcxproj", "{E9657CE5-8C5B-4D76-8029-C4BBF0ED0EF0}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "lua", "..\..\lua-5.1.4\vc12\lua.vcxproj", "{E00B9B66-7983-48B0-90C6-9A7407B24D4B}"
@@ -38,16 +33,6 @@ Global
 		{3B4F9288-6DEB-4929-A513-01DD73EF9C3B}.Release|Mixed Platforms.Build.0 = Release|Win32
 		{3B4F9288-6DEB-4929-A513-01DD73EF9C3B}.Release|Win32.ActiveCfg = Release|Win32
 		{3B4F9288-6DEB-4929-A513-01DD73EF9C3B}.Release|Win32.Build.0 = Release|Win32
-		{E439935D-B2A2-46AE-856D-2AA408428F33}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E439935D-B2A2-46AE-856D-2AA408428F33}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E439935D-B2A2-46AE-856D-2AA408428F33}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
-		{E439935D-B2A2-46AE-856D-2AA408428F33}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
-		{E439935D-B2A2-46AE-856D-2AA408428F33}.Debug|Win32.ActiveCfg = Debug|Any CPU
-		{E439935D-B2A2-46AE-856D-2AA408428F33}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E439935D-B2A2-46AE-856D-2AA408428F33}.Release|Any CPU.Build.0 = Release|Any CPU
-		{E439935D-B2A2-46AE-856D-2AA408428F33}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
-		{E439935D-B2A2-46AE-856D-2AA408428F33}.Release|Mixed Platforms.Build.0 = Release|Any CPU
-		{E439935D-B2A2-46AE-856D-2AA408428F33}.Release|Win32.ActiveCfg = Release|Any CPU
 		{E9657CE5-8C5B-4D76-8029-C4BBF0ED0EF0}.Debug|Any CPU.ActiveCfg = Debug|Win32
 		{E9657CE5-8C5B-4D76-8029-C4BBF0ED0EF0}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
 		{E9657CE5-8C5B-4D76-8029-C4BBF0ED0EF0}.Debug|Mixed Platforms.Build.0 = Debug|Win32

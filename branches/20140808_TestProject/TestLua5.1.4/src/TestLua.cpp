@@ -10,7 +10,6 @@
 #include "luabind/error.hpp"
 #include <GdiPlus.h>
 #pragma comment(lib, "gdiplus.lib")
-#include <TKSnsUniversalDic.h>
 #include "FrameWindow.h"
 #include "LuaSerialize.h"
 
@@ -48,8 +47,8 @@ public:
 		case MSGID_LuaCreateInviteDialog:
 			{
 				TKSnsClientSnsIndex stSnsIndex;
-				stSnsIndex.wSnsCID = TK_SNS_ENUM_SNSCLASS_PVT;
-				stSnsIndex.wSnsTID = TK_SNS_ENUM_SNSTYPE_FRIEND;
+				stSnsIndex.wSnsCID = 1;
+				stSnsIndex.wSnsTID = 1;
 				stSnsIndex.dwPID = 12345678;
 				luabind::call_function<void>(luaVM, "LuaCreateInviteDialog", boost::ref(stSnsIndex));
 			}
@@ -57,8 +56,8 @@ public:
 		case MSGID_LuaFindAndBringWindowToTop:
 			{
 				TKSnsClientSnsIndex stSnsIndex;
-				stSnsIndex.wSnsCID = TK_SNS_ENUM_SNSCLASS_PVT;
-				stSnsIndex.wSnsTID = TK_SNS_ENUM_SNSTYPE_FRIEND;
+				stSnsIndex.wSnsCID = 1;
+				stSnsIndex.wSnsTID = 1;
 				stSnsIndex.dwPID = lParam;
 				luabind::call_function<void>(luaVM, "LuaFindAndBringWindowToTop", static_cast<DWORD>(wParam), boost::ref(stSnsIndex));
 			}
@@ -248,7 +247,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			break;
 		case 6:
 			{
-				 g_pMyWindow.SendMessage(MSGID_LuaTestSerialize);
+				  g_pMyWindow.SendMessage(MSGID_LuaTestSerialize);
 			}
 			break;
 		default:
