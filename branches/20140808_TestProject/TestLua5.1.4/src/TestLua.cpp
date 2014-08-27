@@ -111,6 +111,9 @@ unsigned int __stdcall ThreadProc(void *)
 	char szCurrentDir[MAX_PATH] = {0}, szLuaFileName[MAX_PATH] = {0};
 	GetModuleFileNameA(NULL, szCurrentDir, MAX_PATH);
 	*strrchr(szCurrentDir,'\\') = '\0';
+	//≥ı ºªØDuilib
+	DuiLib::CPaintManagerUI::SetInstance(GetModuleHandle(NULL));
+	DuiLib::CPaintManagerUI::SetResourcePath(DuiLib::CPaintManagerUI::GetInstancePath() + _T("\\Skin"));
 	_snprintf(szLuaFileName, MAX_PATH, "%s%s", szCurrentDir, "\\TestLuaBind.lua");
 
 	CLuaVM luaVM;
