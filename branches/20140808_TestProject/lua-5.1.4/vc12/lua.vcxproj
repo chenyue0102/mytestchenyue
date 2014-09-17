@@ -53,6 +53,7 @@
     <ClCompile Include="..\lua\lmem.c" />
     <ClCompile Include="..\lua\loadlib.c" />
     <ClCompile Include="..\lua\lobject.c" />
+    <ClCompile Include="..\lua\lock.c" />
     <ClCompile Include="..\lua\lopcodes.c" />
     <ClCompile Include="..\lua\loslib.c" />
     <ClCompile Include="..\lua\lparser.c" />

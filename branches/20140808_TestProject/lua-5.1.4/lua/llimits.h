@@ -107,8 +107,8 @@ typedef lu_int32 Instruction;
 
 
 #ifndef lua_lock
-#define lua_lock(L)     ((void) 0) 
-#define lua_unlock(L)   ((void) 0)
+#define lua_lock(L)     MyEnterCriticalSection(G(L)->pcs)		//((void) 0) 
+#define lua_unlock(L)   MyLeaveCriticalSection(G(L)->pcs)		//((void) 0)
 #endif
 
 #ifndef luai_threadyield

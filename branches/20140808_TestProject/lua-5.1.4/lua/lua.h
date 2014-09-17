@@ -46,6 +46,10 @@
 #define LUA_ERRMEM	4
 #define LUA_ERRERR	5
 
+void* MyMallocAndInitializeCriticalSection();
+void MyFreeAndDeleteCriticalSection(void *lp);
+void MyEnterCriticalSection(void *lp);
+void MyLeaveCriticalSection(void *lp);
 
 typedef struct lua_State lua_State;
 

@@ -112,6 +112,9 @@ static void close_state (lua_State *L) {
   luaZ_freebuffer(L, &g->buff);
   freestack(L, L);
   lua_assert(g->totalbytes == sizeof(LG));
+  MyFreeAndDeleteCriticalSection(g->pcs);
+  g->pcs = NULL;
+  
   (*g->frealloc)(g->ud, fromstate(L), state_size(LG), 0);
 }
 
@@ -178,6 +181,7 @@ LUA_API lua_State *lua_newstate (lua_Alloc f, void *ud) {
   g->gcpause = LUAI_GCPAUSE;
   g->gcstepmul = LUAI_GCMUL;
   g->gcdept = 0;
+  g->pcs = MyMallocAndInitializeCriticalSection();
   for (i=0; i<NUM_TAGS; i++) g->mt[i] = NULL;
   if (luaD_rawrunprotected(L, f_luaopen, NULL) != 0) {
     /* memory allocation error: free partial state */
