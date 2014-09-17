@@ -17,6 +17,7 @@
 
 void LuaErrorCallbackFun(lua_State* e);
 class CMyWindow;
+int TestLuaMulThead();
 
 enum 
 {
@@ -26,6 +27,9 @@ enum
 	MSGID_LuaFindAndBringWindowToTop,
 	MSGID_LuaDealMessage,
 	MSGID_LuaTestSerialize,
+	MSGID_LuaOutputHotUpdateString,
+	MSGID_LuaHotUpdate,
+	MSGId_TestLuaMulThead,
 	MSGID_End,
 };
 class CMyWindow 
@@ -84,6 +88,17 @@ public:
 				luabind::call_function<void>(luaVM, "LuaTestSerialize", strBuffer);
 			}
 			break;
+		case MSGID_LuaOutputHotUpdateString:
+			{
+				luabind::call_function<void>(luaVM, "LuaOutputHotUpdateString");
+			}
+			break;
+		case MSGID_LuaHotUpdate:
+			luabind::call_function<void>(luaVM, "LuaHotUpdate");
+			break;
+		case MSGId_TestLuaMulThead:
+			TestLuaMulThead();
+			break;
 		}
 
 		return lRet;
@@ -98,6 +113,63 @@ public:
 
 CMyWindow g_pMyWindow;
 
+unsigned int __stdcall LuaThead(void *p)
+{
+	lua_State *luaVM = reinterpret_cast<lua_State*>(p);
+	
+	luabind::call_function<void>(lua_newthread(luaVM), "LuaStartTestMulThead", GetCurrentThreadId());
+	return 0;
+}
+
+int TestLuaMulThead()
+{
+	Gdiplus::GdiplusStartupInput gdiplusStartupInput;
+	ULONG_PTR m_GDIPlusToken = 0;
+	Gdiplus::GdiplusStartup(&m_GDIPlusToken, &gdiplusStartupInput, NULL);
+
+	char szTempDir[MAX_PATH] = { 0 }, szCurrentDir[MAX_PATH] = { 0 }, szLuaFileName[MAX_PATH] = { 0 };
+	GetModuleFileNameA(NULL, szTempDir, MAX_PATH);
+	PathCanonicalize(szCurrentDir, szTempDir);
+	*strrchr(szCurrentDir, '\\') = '\0';
+	//初始化Duilib
+	DuiLib::CPaintManagerUI::SetInstance(GetModuleHandle(NULL));
+	DuiLib::CPaintManagerUI::SetResourcePath(DuiLib::CStdString(szCurrentDir) + "\\Skin");
+	_snprintf(szLuaFileName, MAX_PATH, "%s%s", szCurrentDir, "\\TestMulThead.lua");
+
+	CLuaVM luaVM;
+	g_pMyWindow.luaVM = luaVM;
+	luabind::set_error_callback(&LuaErrorCallbackFun);
+
+	//Lua中可以打印变量的类型
+	module(luaVM)
+		[
+			class_<class_info>("class_info_data")
+			.def_readonly("name", &class_info::name)
+			.def_readonly("methods", &class_info::methods)
+			.def_readonly("attributes", &class_info::attributes),
+
+			def("class_info", &get_class_info)/*,
+											  def("class_names", &get_class_names)*/
+		];
+
+	RegisterDuilib::RegisterDuiWindow(luaVM);
+	RegisterTestLuaClass(luaVM);
+
+	if (0 != luaL_dofile(luaVM, szLuaFileName))
+	{
+		return 1;
+	}
+	luabind::call_function<void>(luaVM, "LuaInit");
+
+	HANDLE hThreads[40] = { NULL };
+	for (size_t i = 0; i < _countof(hThreads); i++)
+	{
+		hThreads[i] = (HANDLE)_beginthreadex(NULL, 0, &LuaThead, luaVM, 0, NULL);
+	}
+	WaitForMultipleObjects(_countof(hThreads), hThreads, TRUE, INFINITE);
+	return 0;
+}
+
 unsigned int __stdcall ThreadProc(void *)
 {
 	//g_pMyWindow = new CMyWindow;
@@ -107,12 +179,13 @@ unsigned int __stdcall ThreadProc(void *)
 	ULONG_PTR m_GDIPlusToken = 0;
 	Gdiplus::GdiplusStartup(&m_GDIPlusToken, &gdiplusStartupInput, NULL);
 
-	char szCurrentDir[MAX_PATH] = {0}, szLuaFileName[MAX_PATH] = {0};
-	GetModuleFileNameA(NULL, szCurrentDir, MAX_PATH);
+	char szTempDir[MAX_PATH] = { 0 }, szCurrentDir[MAX_PATH] = { 0 }, szLuaFileName[MAX_PATH] = { 0 };
+	GetModuleFileNameA(NULL, szTempDir, MAX_PATH);
+	PathCanonicalize(szCurrentDir, szTempDir);
 	*strrchr(szCurrentDir,'\\') = '\0';
 	//初始化Duilib
 	DuiLib::CPaintManagerUI::SetInstance(GetModuleHandle(NULL));
-	DuiLib::CPaintManagerUI::SetResourcePath(DuiLib::CPaintManagerUI::GetInstancePath() + _T("\\Skin"));
+	DuiLib::CPaintManagerUI::SetResourcePath(DuiLib::CStdString(szCurrentDir) + "\\Skin");
 	_snprintf(szLuaFileName, MAX_PATH, "%s%s", szCurrentDir, "\\TestLuaBind.lua");
 
 	CLuaVM luaVM;
@@ -199,6 +272,9 @@ int GetInput()
 	printf("------------------------------4 BringWindowToTopInviteDialog\n");
 	printf("------------------------------5 SetTheme\n");
 	printf("------------------------------6 TestSerialize\n");
+	printf("------------------------------7 OutputHotUpdateString\n");
+	printf("------------------------------8 HotUpdate\n");
+	printf("------------------------------9 TestLuaMulThead\n");
 	scanf("%d", &nInput);
 	return nInput;
 }
@@ -249,6 +325,15 @@ int _tmain(int argc, _TCHAR* argv[])
 			{
 				  g_pMyWindow.SendMessage(MSGID_LuaTestSerialize);
 			}
+			break;
+		case 7:
+			g_pMyWindow.SendMessage(MSGID_LuaOutputHotUpdateString);
+			break;
+		case 8:
+			g_pMyWindow.SendMessage(MSGID_LuaHotUpdate);
+			break;
+		case 9:
+			g_pMyWindow.SendMessage(MSGId_TestLuaMulThead);
 			break;
 		default:
 			bContinue = FALSE;

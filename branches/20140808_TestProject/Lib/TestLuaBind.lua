@@ -1,9 +1,41 @@
 require "Serialize"
+require "TestHotUpdate"
 
 function LuaInit()
 	_G.m_WindowArray={}
     _G._class = {}
 	DuiLib.CPaintManagerUI.SetResourcePath("D:\\SnsCode\\Test\\chenyue\\Lib\\Skin")
+end
+
+function LuaOutputHotUpdateString()
+    print(TestHotUpdate.LuaTestHotUpdate())
+    LuaPrintTable(_G,"_G")
+    print("---------------------------")
+    LuaPrintTable(_G,"_G")
+end
+
+function LuaPrintTable(tb,parentpath)
+     for key, value in pairsByKeys(tb) do  
+		print(parentpath,type(key),type(value),key,value)
+        if type(value)=="table" then
+            if key ~= "_G" and  parentpath ~= "_G>>package>>loaded" and key ~= "_M" and key ~= "_G._G" and key ~= "__index" then
+                LuaPrintTable(value,parentpath..">>"..key)
+            end
+        end
+	end
+end
+
+function LuaHotUpdate()
+    package.loaded.TestHotUpdate=nil
+    _G.TestHotUpdate=nil
+    TestHotUpdate = nil
+    print("****************************")
+    LuaPrintTable(_G)
+    print("****************************")
+    for key, value in pairsByKeys(package.loaded) do  
+		print(type(key),type(value),key,value)
+	end
+    require("TestHotUpdate")
 end
 
 CLuaSnsIndex = {wSnsCID = 0, wSnsTID = 0, dwPID = 0}
@@ -55,6 +87,8 @@ end
 function CLuaTimeStamp:__tostring()
     return tostring(self.stSnsClientSnsIndex).."dwTimeStamp="..self.dwTimeStamp.."\n"
 end
+
+CLuaSnsClientTLV = {dwID = 0, dwType = 0,strValue = ""}
 
 function LuaTestSerialize(buffer)
     local seri = Serialize.CSerializeHelper:new()
@@ -413,7 +447,7 @@ function CInviteSnsMember:Init()
 	local plistcontainer=Conver.ToCContainerUI(plistitemcontrol)
 	
 	for i=1,10,1 do
-		local poneitemroot=BuilderCControlUI(listitemxml,nil,self, pmanager,plistitemcontrol)
+		local poneitemroot=BuilderCControlUI(listitemxml,"",self, pmanager,plistitemcontrol)
 		local poneitemlabelcontrol=LuaFindSubControlByName(pmanager,poneitemroot,"LabelName")
 		poneitemlabelcontrol:SetText("’≈¥Û±¶"..i)
 	end	
