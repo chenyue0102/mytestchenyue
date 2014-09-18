@@ -1,6 +1,6 @@
 #include <Windows.h>
 
-void* MyMallocAndInitializeCriticalSection()
+CRITICAL_SECTION* MyMallocAndInitializeCriticalSection()
 {
 	CRITICAL_SECTION *lpCriticalSection = malloc(sizeof(CRITICAL_SECTION));
 	memset(lpCriticalSection, 0, sizeof(CRITICAL_SECTION));
@@ -8,23 +8,20 @@ void* MyMallocAndInitializeCriticalSection()
 	return lpCriticalSection;
 }
 
-void MyFreeAndDeleteCriticalSection(void *lp)
+void MyFreeAndDeleteCriticalSection(CRITICAL_SECTION *lpCriticalSection)
 {
-	CRITICAL_SECTION *lpCriticalSection = (CRITICAL_SECTION*)(lp);
 	DeleteCriticalSection(lpCriticalSection);
-	free(lp);
+	free(lpCriticalSection);
 }
 
 
-void MyEnterCriticalSection(void *lp)
+void MyEnterCriticalSection(CRITICAL_SECTION *lpCriticalSection)
 {
-	CRITICAL_SECTION *lpCriticalSection = (CRITICAL_SECTION*)(lp);
 	EnterCriticalSection(lpCriticalSection);
 }
 
-void MyLeaveCriticalSection(CRITICAL_SECTION *lp)
+void MyLeaveCriticalSection(CRITICAL_SECTION *lpCriticalSection)
 {
-	CRITICAL_SECTION *lpCriticalSection = (CRITICAL_SECTION*)(lp);
 	LeaveCriticalSection(lpCriticalSection);
 }
 

@@ -107,7 +107,9 @@ typedef lu_int32 Instruction;
 
 
 #ifndef lua_lock
+void MyEnterCriticalSection(struct CRITICAL_SECTION *lpCriticalSection);
 #define lua_lock(L)     MyEnterCriticalSection(G(L)->pcs)		//((void) 0) 
+void MyLeaveCriticalSection(struct CRITICAL_SECTION *lpCriticalSection);
 #define lua_unlock(L)   MyLeaveCriticalSection(G(L)->pcs)		//((void) 0)
 #endif
 
