@@ -1,6 +1,8 @@
 #pragma once
 #include "QObject"
 #include <QMessageBox>
+#include <QAbstractListModel>
+
 struct TKUserInfo
         : public QObject
 {
@@ -53,4 +55,21 @@ public:
 		}
 private:
 	Q_DISABLE_COPY(QUINotify)
+};
+
+class QContectModel 
+	: public QAbstractListModel
+{
+	Q_OBJECT
+public:
+	explicit QContectModel(QObject *parent = 0)
+		: QAbstractListModel(parent)
+	{
+
+	}
+
+private:
+	QHash<int, QByteArray>	m_roleNames;
+	typedef QVector<QVariant>	QContectItem;
+	QVector<QContectItem>	m_ContectItemArray;
 };

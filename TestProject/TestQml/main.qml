@@ -2,6 +2,7 @@ import QtQuick 2.2
 import QtQuick.Controls 1.1
 import QtQuick.Window 2.0
 import test.QUINotify 1.0
+import QtQuick.Layouts 1.1
 
 Window {
     id:windowInstance
@@ -160,7 +161,146 @@ Window {
                 uiNotify.notifyEvent(1, "kingmax");
             }
         }
+
+
+        ListView{
+            id:contentList
+            anchors.left: parent.left
+            anchors.leftMargin: 4
+            anchors.top: parent.top
+            anchors.topMargin: 20
+            width:parent.width / 2
+            height:parent.height - 30
+            clip:true
+            focus:true;
+            property var grayImageCache:[]
+            highlight: Rectangle{
+                color:"#fffdeba8"
+            }
+            section.property:"groupid"
+            section.criteria:ViewSection.FullString
+            section.delegate:sectionHeader;
+            Component{
+                id:sectionHeader;
+                Rectangle{
+                    width:parent.width
+                    height:childrenRect.height
+                    color:"lightsteelblue"
+                    Text{
+                        text:section
+                    }
+                }
+            }
+
+            model:ListModel{
+                id:contentModel
+                Component.onCompleted:{
+                    append({name:"张三",groupid:"0",gray:true,headImage:"file:///D:\\JJ比赛外网测试\\LobbyTheme\\HeadImage\\H00016.jpg"});
+                    append({name:"李四",groupid:"0",gray:true,headImage:"file:///D:\\JJ比赛外网测试\\LobbyTheme\\HeadImage\\H00017.jpg"});
+                    append({name:"朱武",groupid:"1",gray:true,headImage:"file:///D:\\JJ比赛外网测试\\LobbyTheme\\HeadImage\\H00018.jpg"});
+                    append({name:"杨柳",groupid:"1",gray:true,headImage:"file:///D:\\JJ比赛外网测试\\LobbyTheme\\HeadImage\\H00019.jpg"});
+                    append({name:"侯七",groupid:"2",gray:false,headImage:"file:///D:\\JJ比赛外网测试\\LobbyTheme\\HeadImage\\H00020.jpg"});
+                    append({name:"马八",groupid:"2",gray:false,headImage:"file:///D:\\JJ比赛外网测试\\LobbyTheme\\HeadImage\\H00021.jpg"});
+                }
+            }
+            delegate:Item{
+                id:wrapper
+                height:50
+                width:parent.width
+
+                Canvas{
+                    id:itemHeadImage
+                    height: 42
+                    width: 42
+                    //fillMode: Image.PreserveAspectCrop
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.left: parent.left
+                    anchors.leftMargin: 4
+                    //source: headImage
+                    onPaint:{
+                        var ctx = getContext("2d");
+                        var bDrawImage = false, bDrawGrayImage = false;
+                        if (gray)
+                        {
+                            var grayImageFileName = headImage + ".gray";
+                            if (!wrapper.ListView.view.grayImageCache.hasOwnProperty(grayImageFileName))
+                            {
+                                if (!wrapper.ListView.view.grayImageCache.hasOwnProperty(headImage))
+                                {
+                                    bDrawImage = true;
+                                }
+                                else
+                                {
+                                    var sourceImage = wrapper.ListView.view.grayImageCache[headImage];
+                                    var grayImageData = ctx.createImageData(sourceImage.width, sourceImage.height);
+                                    var limit = sourceImage.width * sourceImage.height * 4;
+                                    for (var i = 0; i < limit; i += 4)
+                                    {
+                                        //(r * 11 + g * 16 + b * 5) / 32
+                                        var grayvalue = (sourceImage.data[i] * 11 + sourceImage.data[i + 1] * 16 + sourceImage.data[i + 2] * 5) / 32;
+                                        grayImageData.data[i] = grayImageData.data[i + 1] = grayImageData.data[i + 2] = grayvalue;
+                                        grayImageData.data[i + 3] = sourceImage.data[i + 3];
+                                    }
+                                    wrapper.ListView.view.grayImageCache[grayImageFileName] = grayImageData;
+                                    bDrawGrayImage = true;
+                                }
+                            }
+                            else
+                            {
+                                bDrawGrayImage = true;
+                            }
+                        }
+                        else
+                        {
+                            bDrawImage = true;
+                        }
+
+                        if (bDrawGrayImage)
+                        {
+                            ctx.drawImage(wrapper.ListView.view.grayImageCache[grayImageFileName], 0, 0,42,42);
+                        }
+                        if (bDrawImage)
+                        {
+                            if (wrapper.ListView.view.grayImageCache.hasOwnProperty(headImage))
+                            {
+                                ctx.drawImage(wrapper.ListView.view.grayImageCache[headImage], 0, 0,42,42);
+                            }
+                            else
+                            {
+                                ctx.drawImage(headImage, 0, 0,42,42);
+                            }
+                        }
+
+                        ctx = null;
+                    }
+                    onImageLoaded:{
+                        if (!wrapper.ListView.view.grayImageCache.hasOwnProperty(headImage))
+                        {
+                            wrapper.ListView.view.grayImageCache[headImage] = getContext("2d").createImageData(headImage);
+                        }
+
+                        requestPaint();
+                    }
+                    Image{
+                        id:itemHeadImageBorder
+                        opacity:0.5
+                        visible:wrapper.ListView.isCurrentItem ? true : false;
+                        source:"file:///E:\\mytestchenyue\\trunk\\TestProject\\TestQml\\PanelListBorder.png"
+                    }
+                 }
+                Text{
+                    anchors.left: itemHeadImage.right
+                    anchors.leftMargin: 8
+                    height:24
+                    text:name
+                }
+                MouseArea{
+                    anchors.fill:parent;
+                    onClicked: {
+                        wrapper.ListView.view.currentIndex = index;
+                    }
+                }
+            }
+        }
     }
-
-
 }
