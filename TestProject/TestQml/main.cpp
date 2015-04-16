@@ -5,8 +5,9 @@
 #include <QQmlContext>
 #include <qqml.h>
 
-TKUserInfo UserInfo;
 
+TKUserInfo UserInfo;
+QContectModel ContectModel;
 int main(int argc, char *argv[])
 {
 	QApplication a(argc, argv);
@@ -22,9 +23,11 @@ int main(int argc, char *argv[])
 	if (1)
 	{
 		qmlRegisterType<QUINotify>("test.QUINotify", 1, 0, "QUINotify");
+		qmlRegisterType<QContectModel>("test.QContectModel", 1, 0, "QContectModel");
 		UserInfo._userID = 123456;
 		UserInfo._userNickName = QString::fromLocal8Bit("ÓÃ»§êÇ³Æ123456");
 		engine.rootContext()->setContextProperty("UserInfo", &UserInfo);
+		engine.rootContext()->setContextProperty("ContectModel", &ContectModel);
 		QUrl url = QUrl::fromLocalFile("main.qml");
 		engine.load(url);
 

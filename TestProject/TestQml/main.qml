@@ -3,6 +3,7 @@ import QtQuick.Controls 1.1
 import QtQuick.Window 2.0
 import test.QUINotify 1.0
 import QtQuick.Layouts 1.1
+import test.QContectModel 1.0
 
 Window {
     id:windowInstance
@@ -153,12 +154,57 @@ Window {
             }
         }
 
-        Button {
-            text: qsTr("Hello World")
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.verticalCenter: parent.verticalCenter
-			onClicked: {
-                uiNotify.notifyEvent(1, "kingmax");
+        Grid{
+            anchors.right: parent.right
+            anchors.top:parent.top
+            anchors.topMargin: 30
+            anchors.bottom: parent.bottom
+            width:parent.width / 2
+            height:parent.height
+            columnSpacing:4
+            rowSpacing:4
+            Button {
+                text: qsTr("改变标题")
+                onClicked: {
+                    uiNotify.notifyEvent(1, "改变标题");
+                }
+            }
+            Button {
+                text: qsTr("删除选中行")
+                onClicked: {
+                    var curIndex = contentList.currentIndex;
+                    uiNotify.notifyEvent(2, curIndex.toString());
+                }
+            }
+            Button {
+                text: qsTr("增加行")
+                onClicked: {
+                    var curIndex = contentList.currentIndex;
+                    uiNotify.notifyEvent(3, curIndex.toString());
+                }
+            }
+            Button {
+                text: qsTr("头像变灰")
+                onClicked: {
+                    var curIndex = contentList.currentIndex;
+                    uiNotify.notifyEvent(4, curIndex.toString());
+                }
+            }
+            Button {
+                text: qsTr("头像变亮")
+                onClicked: {
+                    var curIndex = contentList.currentIndex;
+                    uiNotify.notifyEvent(5, curIndex.toString());
+                }
+            }
+            Button {
+                text: qsTr("log ")
+                onClicked: {
+                    var curIndex = contentList.currentIndex;
+                    var item = ContectModel[contentList.currentIndex];
+                    console.log(typeof(item));
+                    //uiNotify.notifyEvent(5, curIndex.toString());
+                }
             }
         }
 
@@ -192,7 +238,9 @@ Window {
                 }
             }
 
-            model:ListModel{
+            model:ContectModel
+
+            /*model:ListModel{
                 id:contentModel
                 Component.onCompleted:{
                     append({name:"张三",groupid:"0",gray:true,headImage:"file:///D:\\JJ比赛外网测试\\LobbyTheme\\HeadImage\\H00016.jpg"});
@@ -202,13 +250,21 @@ Window {
                     append({name:"侯七",groupid:"2",gray:false,headImage:"file:///D:\\JJ比赛外网测试\\LobbyTheme\\HeadImage\\H00020.jpg"});
                     append({name:"马八",groupid:"2",gray:false,headImage:"file:///D:\\JJ比赛外网测试\\LobbyTheme\\HeadImage\\H00021.jpg"});
                 }
-            }
+            }*/
             delegate:Item{
                 id:wrapper
                 height:50
                 width:parent.width
 
+
                 Canvas{
+                    property var myState:headImage + gray
+                    onMyStateChanged:
+                    {
+                        console.log("onMyStateChanged");
+                        requestPaint();
+                    }
+
                     id:itemHeadImage
                     height: 42
                     width: 42
@@ -218,6 +274,14 @@ Window {
                     anchors.leftMargin: 4
                     //source: headImage
                     onPaint:{
+                        console.log("nickname:" + name + " gray:" + gray);
+                        if (headImage == undefined)
+                        {
+                            console.log("headimage undefined");
+                            return;
+                        }
+
+
                         var ctx = getContext("2d");
                         var bDrawImage = false, bDrawGrayImage = false;
                         if (gray)
