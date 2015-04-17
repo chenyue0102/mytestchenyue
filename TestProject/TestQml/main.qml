@@ -4,6 +4,7 @@ import QtQuick.Window 2.0
 import test.QUINotify 1.0
 import QtQuick.Layouts 1.1
 import test.QContectModel 1.0
+//import "Controls"
 
 Window {
     id:windowInstance
@@ -219,6 +220,59 @@ Window {
             height:parent.height - 30
             clip:true
             focus:true;
+            highlightMoveDuration: 0
+
+            //垂直滚动条
+            ScrollBar {
+                id: verticalScrollBar
+                width: 12; height: contentList.height
+                anchors.right: contentList.right
+                opacity: 0
+                orientation: Qt.Vertical
+                position: contentList.visibleArea.yPosition
+                pageSize: contentList.visibleArea.heightRatio
+            }
+            //移动到滚动条上的鼠标事件
+            MouseArea{
+                id:verticalScrollBarMouseArea
+                anchors.fill: verticalScrollBar
+                hoverEnabled:true
+                propagateComposedEvents:true
+                onEntered: {
+                    console.log("onEntered");
+                    if (contentList.visibleArea.heightRatio < 1.0)
+                    {
+                        verticalScrollBar.opacity = 1;
+                    }
+                }
+                onExited: {
+                    console.log("onExited");
+                    verticalScrollBar.opacity = 0;
+                }
+            }
+
+
+            Connections{
+                target:verticalScrollBar
+                onButtonClicked:{
+                    console.log(buttonName);
+                }
+            }
+
+             states: State {
+                name:"showScrollBar";
+                when:contentList.flicking
+                PropertyChanges { target: verticalScrollBar; opacity: 1 }
+             }
+             transitions: Transition {
+                 NumberAnimation { properties: "opacity"; duration: 500; easing.type: Easing.InOutQuad }
+             }
+
+            //动画
+//            addDisplaced: Transition {
+//                    NumberAnimation { properties: "x,y"; duration: 300 }
+//                }
+
             property var grayImageCache:[]
             highlight: Rectangle{
                 color:"#fffdeba8"
@@ -261,7 +315,7 @@ Window {
                     property var myState:headImage + gray
                     onMyStateChanged:
                     {
-                        console.log("onMyStateChanged");
+                        //console.log("onMyStateChanged");
                         requestPaint();
                     }
 
@@ -274,7 +328,7 @@ Window {
                     anchors.leftMargin: 4
                     //source: headImage
                     onPaint:{
-                        console.log("nickname:" + name + " gray:" + gray);
+                        //console.log("nickname:" + name + " gray:" + gray);
                         if (headImage == undefined)
                         {
                             console.log("headimage undefined");
