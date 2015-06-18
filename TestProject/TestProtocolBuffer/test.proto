@@ -1,0 +1,19 @@
+syntax = "proto3";
+package google.protobuf;
+
+
+
+message Test
+{
+	optional string name=1;
+	optional int32 id=2;
+	repeated string propertyvalues=3;
+
+	message Staff
+	{
+		optional int32 staffid=1;
+		optional string staffname=2;
+		optional int32 stafflevel=3; 
+	}
+	repeated Staff StaffArray=4;
+}

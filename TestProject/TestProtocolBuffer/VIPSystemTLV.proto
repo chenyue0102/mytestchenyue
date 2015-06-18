@@ -1,0 +1,9 @@
+syntax = "proto3";
+package google.protobuf;
+
+message VIPSystemTLV
+{
+	optional int32 dwID = 1;
+	optional int32 Type = 2;
+	optional string strValue = 3;
+}
