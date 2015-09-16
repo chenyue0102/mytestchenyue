@@ -33,12 +33,21 @@
     <ClInclude Include="EnumSerialize.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="Serialize.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="UnknownImp.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="TestSerialize.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Serialize.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

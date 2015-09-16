@@ -115,6 +115,10 @@ void SerializeImp(std::string &strValue, ISerialize *pSerialize)
 	}
 	if (0 != ulSize)
 	{
+		if (EnumSerializeTypeRead == pSerialize->GetSerializeType())
+		{
+			strValue.resize(ulSize);
+		}
 		if (!pSerialize->Serialize(&*strValue.begin(), ulSize))
 		{
 			throw -1;

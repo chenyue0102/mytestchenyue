@@ -4,6 +4,8 @@
 #include "stdafx.h"
 #include "ISerialize.h"
 #include "SerializeImp.h"
+#include "Serialize.h"
+#include <atlcomcli.h>
 
 struct TestInner
 {
@@ -47,48 +49,23 @@ struct Test
 	}
 };
 
-class CSerialize
-	: public ISerialize
-{
-public:
-	virtual EnumSerializeType GetSerializeType()
-	{
-		return EnumSerializeTypeWrite;
-	}
-
-	virtual bool Serialize(bool Value)
-	{
-		return true;
-	}
-
-	virtual bool Serialize(unsigned long Value)
-	{
-		return true;
-	}
-
-	virtual bool Serialize(std::string &Value)
-	{
-		return true;
-	}
-
-	virtual bool Serialize(char *pstr, unsigned long ulBufferLen)
-	{
-		return true;
-	}
-public:
-	EnumSerializeType m_SerializeType;
-};
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	std::string strkk;
 	Test t;
 	t.Keys.push_back(1);
 	t.Keys.push_back(2);
-	//t.strValue = "abc123";
+	t.strValue = "abc123";
 	t.inner.strText = "1";
-	CSerialize aSerialize;
-	t.Serialize(&aSerialize);
+	CComPtr<ISerialize> pSerialize(new CSerialize);
+	pSerialize->SetSerializeType(EnumSerializeTypeWrite);
+	t.Serialize(pSerialize);
+
+	Test t2;
+	CComPtr<ISerialize> pSerializeRead(new CSerialize);
+	pSerializeRead->SetSerializeType(EnumSerializeTypeRead);
+	pSerializeRead->SetSerializeReadBuffer(pSerialize->GetWriteBuffer(), pSerialize->GetWriteBufferLength());
+	t2.Serialize(pSerializeRead);
 	return 0;
 }
 

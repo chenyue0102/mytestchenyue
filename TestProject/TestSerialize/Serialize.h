@@ -1,22 +1,23 @@
 #pragma once
-#include <string>
 #include "EnumSerialize.h"
-#include <unknwn.h>
+#include "ISerialize.h"
+#include <sstream>
+#include "UnknownImp.h"
 
-#ifndef interface
-#define interface struct
-#endif
-
-
-interface ISerializeStream : public IUnknown
+class CSerialize
+	: public CUnknownImp<ISerialize>
 {
+public:
+	CSerialize(void);
+	~CSerialize(void);
+public:
 	// $_FUNCTION_BEGIN *******************************************************
 	// 函数名称：GetSerializeType
 	// 函数参数：
 	// 返 回 值：当前序列化所对应的类型，参照枚举EnumSerializeType
 	// 函数说明：获取当前序列化所对应的类型
 	// $_FUNCTION_END *********************************************************
-	virtual EnumSerializeType GetSerializeType() = 0;
+	virtual EnumSerializeType GetSerializeType();
 
 	// $_FUNCTION_BEGIN *******************************************************
 	// 函数名称：SetSerializeType
@@ -25,7 +26,7 @@ interface ISerializeStream : public IUnknown
 	// 返 回 值：true or false
 	// 函数说明：设置当前序列化所对应的类型
 	// $_FUNCTION_END *********************************************************
-	virtual bool SetSerializeType(EnumSerializeType SerializeType) = 0;
+	virtual bool SetSerializeType(EnumSerializeType SerializeType);
 
 	// $_FUNCTION_BEGIN *******************************************************
 	// 函数名称：SetSerializeReadBuffer
@@ -35,7 +36,7 @@ interface ISerializeStream : public IUnknown
 	// 返 回 值：true or false
 	// 函数说明：设置序列化读取的缓冲区
 	// $_FUNCTION_END *********************************************************
-	virtual bool SetSerializeReadBuffer(const void *pBuffer, unsigned long ulBufferLength) = 0;
+	virtual bool SetSerializeReadBuffer(const void *pBuffer, unsigned long ulBufferLength);
 
 	// $_FUNCTION_BEGIN *******************************************************
 	// 函数名称：GetWriteBuffer
@@ -43,7 +44,7 @@ interface ISerializeStream : public IUnknown
 	// 返 回 值：缓冲区地址
 	// 函数说明：获取写序列化缓冲区
 	// $_FUNCTION_END *********************************************************
-	virtual const void * GetWriteBuffer() = 0;
+	virtual const void * GetWriteBuffer();
 
 	// $_FUNCTION_BEGIN *******************************************************
 	// 函数名称：GetWriteBufferLength
@@ -51,11 +52,8 @@ interface ISerializeStream : public IUnknown
 	// 返 回 值：缓冲区长度
 	// 函数说明：获取写序列化缓冲区长度
 	// $_FUNCTION_END *********************************************************
-	virtual unsigned long GetWriteBufferLength() = 0;
-};
-
-interface ISerialize : public ISerializeStream
-{
+	virtual unsigned long GetWriteBufferLength();
+public:
 	// $_FUNCTION_BEGIN *******************************************************
 	// 函数名称：Serialize
 	// 函数参数：
@@ -63,7 +61,7 @@ interface ISerialize : public ISerializeStream
 	// 返 回 值：true or false
 	// 函数说明：序列化bool
 	// $_FUNCTION_END *********************************************************
-	virtual bool Serialize(bool &Value) = 0;
+	virtual bool Serialize(bool &Value);
 
 	// $_FUNCTION_BEGIN *******************************************************
 	// 函数名称：Serialize
@@ -72,7 +70,7 @@ interface ISerialize : public ISerializeStream
 	// 返 回 值：true or false
 	// 函数说明：序列化char
 	// $_FUNCTION_END *********************************************************
-	virtual bool Serialize(char &Value) = 0;
+	virtual bool Serialize(char &Value);
 
 	// $_FUNCTION_BEGIN *******************************************************
 	// 函数名称：Serialize
@@ -81,7 +79,7 @@ interface ISerialize : public ISerializeStream
 	// 返 回 值：true or false
 	// 函数说明：序列化unsigned char
 	// $_FUNCTION_END *********************************************************
-	virtual bool Serialize(unsigned char &Value) = 0;
+	virtual bool Serialize(unsigned char &Value);
 
 	// $_FUNCTION_BEGIN *******************************************************
 	// 函数名称：Serialize
@@ -90,7 +88,7 @@ interface ISerialize : public ISerializeStream
 	// 返 回 值：true or false
 	// 函数说明：序列化short
 	// $_FUNCTION_END *********************************************************
-	virtual bool Serialize(short &Value) = 0;
+	virtual bool Serialize(short &Value);
 
 	// $_FUNCTION_BEGIN *******************************************************
 	// 函数名称：Serialize
@@ -99,7 +97,7 @@ interface ISerialize : public ISerializeStream
 	// 返 回 值：true or false
 	// 函数说明：序列化unsigned short
 	// $_FUNCTION_END *********************************************************
-	virtual bool Serialize(unsigned short &Value) = 0;
+	virtual bool Serialize(unsigned short &Value);
 
 	// $_FUNCTION_BEGIN *******************************************************
 	// 函数名称：Serialize
@@ -108,7 +106,7 @@ interface ISerialize : public ISerializeStream
 	// 返 回 值：true or false
 	// 函数说明：序列化int
 	// $_FUNCTION_END *********************************************************
-	virtual bool Serialize(int &Value) = 0;
+	virtual bool Serialize(int &Value);
 
 	// $_FUNCTION_BEGIN *******************************************************
 	// 函数名称：Serialize
@@ -117,7 +115,7 @@ interface ISerialize : public ISerializeStream
 	// 返 回 值：true or false
 	// 函数说明：序列化unsigned int
 	// $_FUNCTION_END *********************************************************
-	virtual bool Serialize(unsigned int &Value) = 0;
+	virtual bool Serialize(unsigned int &Value);
 
 	// $_FUNCTION_BEGIN *******************************************************
 	// 函数名称：Serialize
@@ -126,7 +124,7 @@ interface ISerialize : public ISerializeStream
 	// 返 回 值：true or false
 	// 函数说明：序列化long
 	// $_FUNCTION_END *********************************************************
-	virtual bool Serialize(long &Value) = 0;
+	virtual bool Serialize(long &Value);
 
 	// $_FUNCTION_BEGIN *******************************************************
 	// 函数名称：Serialize
@@ -135,7 +133,7 @@ interface ISerialize : public ISerializeStream
 	// 返 回 值：true or false
 	// 函数说明：序列化unsigned long
 	// $_FUNCTION_END *********************************************************
-	virtual bool Serialize(unsigned long &Value) = 0;
+	virtual bool Serialize(unsigned long &Value);
 
 	// $_FUNCTION_BEGIN *******************************************************
 	// 函数名称：Serialize
@@ -144,7 +142,7 @@ interface ISerialize : public ISerializeStream
 	// 返 回 值：true or false
 	// 函数说明：序列化long long
 	// $_FUNCTION_END *********************************************************
-	virtual bool Serialize(long long &Value) = 0;
+	virtual bool Serialize(long long &Value);
 
 	// $_FUNCTION_BEGIN *******************************************************
 	// 函数名称：Serialize
@@ -153,7 +151,7 @@ interface ISerialize : public ISerializeStream
 	// 返 回 值：true or false
 	// 函数说明：序列化unsigned long long
 	// $_FUNCTION_END *********************************************************
-	virtual bool Serialize(unsigned long long &Value) = 0;
+	virtual bool Serialize(unsigned long long &Value);
 
 	// $_FUNCTION_BEGIN *******************************************************
 	// 函数名称：Serialize
@@ -162,7 +160,7 @@ interface ISerialize : public ISerializeStream
 	// 返 回 值：true or false
 	// 函数说明：序列化float
 	// $_FUNCTION_END *********************************************************
-	virtual bool Serialize(float &Value) = 0;
+	virtual bool Serialize(float &Value);
 
 	// $_FUNCTION_BEGIN *******************************************************
 	// 函数名称：Serialize
@@ -171,7 +169,7 @@ interface ISerialize : public ISerializeStream
 	// 返 回 值：true or false
 	// 函数说明：序列化double
 	// $_FUNCTION_END *********************************************************
-	virtual bool Serialize(double &Value) = 0;
+	virtual bool Serialize(double &Value);
 
 	// $_FUNCTION_BEGIN *******************************************************
 	// 函数名称：Serialize
@@ -181,5 +179,18 @@ interface ISerialize : public ISerializeStream
 	// 返 回 值：true or false
 	// 函数说明：序列化缓冲区
 	// $_FUNCTION_END *********************************************************
-	virtual bool Serialize(void *pBuffer, unsigned long ulBufferLen) = 0;
+	virtual bool Serialize(void *pBuffer, unsigned long ulBufferLen);
+private:
+	bool SerializeRead(void *pBuffer, unsigned long ulBufferLen);
+	bool SerializeWrite(const void *pBuffer, unsigned long ulBufferLen);
+private:
+	EnumSerializeType	m_EnumSerializeType;
+	
+	const void			*m_pReadBuffer;
+	unsigned long		m_ulReadBufferLength;
+	unsigned long		m_ulReadBufferOffset;
+
+	void				*m_pWriteBuffer;
+	unsigned long		m_ulWriteBufferLength;
+	unsigned long		m_ulWriteBufferOffset;
 };

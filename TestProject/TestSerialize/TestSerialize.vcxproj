@@ -79,11 +79,14 @@
   <ItemGroup>
     <ClInclude Include="EnumSerialize.h" />
     <ClInclude Include="ISerialize.h" />
+    <ClInclude Include="Serialize.h" />
     <ClInclude Include="SerializeImp.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="UnknownImp.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Serialize.cpp" />
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="TestSerialize.cpp" />
   </ItemGroup>
