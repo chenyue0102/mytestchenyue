@@ -164,15 +164,13 @@ HCURSOR CTestTimerDlg::OnQueryDragIcon()
 void CTestTimerDlg::OnBnClickedButtonStartTimer()
 {
 	m_dwTickCount = GetTickCount();
-	CTimerQueue::Instance().CreateTimer(1000, 0, this, 123456, m_lKey);
-	CTimerQueue::Instance().DestroyTimer(m_lKey, true);
+	CTimerQueue::Instance().CreateTimer(5000, 4000, this, 123456, m_lKey);
 }
 
 void STDMETHODCALLTYPE CTestTimerDlg::OnTimer(DWORD dwUserData)
 {
 	CString strText;
 	strText.Format(_T("CTestTimerDlg::OnTimer dwUserData=%u tickcount=%u\n"), dwUserData, GetTickCount() - m_dwTickCount);
-	CTimerQueue::Instance().DestroyTimer(m_lKey, true);
 	OutputDebugString(strText);
 	m_dwTickCount = GetTickCount();
 }

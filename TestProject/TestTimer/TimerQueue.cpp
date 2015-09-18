@@ -52,6 +52,14 @@ bool CTimerQueue::Close()
 			break;
 		}
 		assert(0 == m_TimerInfoArray.size());
+		TimerInfoArray InfoArray = m_TimerInfoArray;
+		for each(auto &OneInfo in InfoArray)
+		{
+			DestroyTimer(OneInfo.first, false);
+		}
+		InfoArray.clear();
+		m_TimerInfoArray.clear();
+
 		if (!DeleteTimerQueue(m_hTimeQueque))
 		{
 			assert(false);
