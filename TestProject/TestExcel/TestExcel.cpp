@@ -50,7 +50,7 @@ BOOL CTestExcelApp::InitInstance()
 	InitCommonControlsEx(&InitCtrls);
 
 	CWinApp::InitInstance();
-
+	OleInitialize(NULL);
 
 	AfxEnableControlContainer();
 
