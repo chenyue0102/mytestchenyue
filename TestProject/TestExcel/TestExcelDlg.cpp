@@ -331,7 +331,7 @@ void CTestExcelDlg::OnBnClickedButtonLoadToDatabase()
 	BOOL bNeedQuit = FALSE;
 	do 
 	{
-		_beginthreadex(nullptr, 0, &CTestExcelDlg::ThreadProc, this, 0, nullptr);
+		//_beginthreadex(nullptr, 0, &CTestExcelDlg::ThreadProc, this, 0, nullptr);
 		if (!app.CreateDispatch(L"ET.APPLICATION"))
 		{
 			assert(false);
@@ -350,10 +350,10 @@ void CTestExcelDlg::OnBnClickedButtonLoadToDatabase()
 		long lCount = Worksheets.get_Count();
 		CWorksheet worksheet(Worksheets.get_Item(_variant_t(1)));
 		CRange range(worksheet.get_Cells());
-		int nBeginRow = 5, nBeginColumn = 1;
+		int nBeginRow = 8000, nBeginColumn = 1;
 		int nEndRow = 14081, nEndColumn = 24;
 
-		//m_pSQLite->BeginTransaction();
+		m_pSQLite->BeginTransaction();
 
 		DWORD dwTickCount = GetTickCount();
 		for (int nRowIndex = nBeginRow; nRowIndex <= nEndRow; nRowIndex++)
@@ -368,15 +368,10 @@ void CTestExcelDlg::OnBnClickedButtonLoadToDatabase()
 			{
 				DWORD dwTickCount2 = GetTickCount() - dwTickCount;
 				dwTickCount = GetTickCount();
+				m_pSQLite->CommitTransaction();
+				m_pSQLite->BeginTransaction();
 			}
-			CString strDalei, strXiaoLei, strDaZu, strXiaoZu;
-			CString strXuHao, strFenLeiDaiMa, strFenLeiMingCheng, strShiShiMingCheng, strJiLiangDanWei;
-			CString strXuHao2, strZiChanLeiBie, strZiChanBianMa, strZiChanMingCheng, strGuiGeXingHao, strYuanZhi, strRiQi;
-			CString strWeiZhi, strNianXian, strDengJi, strZhuangTai, strWanHao, strWeiTuo;
-			CString strWeiTuoDanWei, strBeiZhu;
-
-			InsertInfo *pInsertInfo = new InsertInfo;
-			//CString strArray[50];
+			CString strArray[50];
 
 			for (int nColumnIndex = nBeginColumn; nColumnIndex <= nEndColumn; nColumnIndex++)
 			{
@@ -384,14 +379,62 @@ void CTestExcelDlg::OnBnClickedButtonLoadToDatabase()
 				CRange rangeResult(vtDispatch);
 				CString strResult = rangeResult.get_Formula();
 				strResult.Trim();
-				pInsertInfo->strArray[nColumnIndex - 1] = strResult;
+				strArray[nColumnIndex - 1] = strResult;
 			}
 			{
-				CAutoLock AutoLock(m_NormalLock);
-				m_InsertInfoArray.push_back(pInsertInfo);
+				//CAutoLock AutoLock(m_NormalLock);
+				//m_InsertInfoArray.push_back(pInsertInfo);
 			}
+			CString strSQL;
+			strSQL = L"insert into [Equipment] values(";
+			for (int nIndex = 0; nIndex < _countof(g_FieldInfos); nIndex++)
+			{
+				if (0 != nIndex)
+				{
+					strSQL += ",";
+				}
+				switch (g_FieldInfos[nIndex].Type)
+				{
+				case FieldTypeInt64:
+					{
+						if (strArray[nIndex].IsEmpty())
+						{
+							strSQL += L"0";
+						}
+						else
+						{
+							strSQL += strArray[nIndex];
+						}
+					}
+					break;
+				case FieldTypeString:
+					{
+						strSQL += L"'";
+						strSQL += strArray[nIndex];
+						strSQL += L"'";
+					}
+					break;
+				default:
+					{
+						MessageBox(L"false");
+						assert(false);
+					}
+					break;
+				}
+			}
+			strSQL += L")";
+
+			CSQLiteCommand SQLiteCommand(m_pSQLite, TranslateString((const WCHAR*)strSQL, CP_UTF8).c_str());
+			
+			if (!SQLiteCommand.Excute())
+			{
+				MessageBox(L"false");
+				assert(false);
+				break;
+			}
+			SQLiteCommand.Clear();
 		}
-		//m_pSQLite->CommitTransaction();
+		m_pSQLite->CommitTransaction();
 	} while (false);
 	if (bNeedQuit)
 	{
@@ -426,74 +469,7 @@ unsigned __stdcall CTestExcelDlg::ThreadProc(void *pArgument)
 			Sleep(1);
 			continue;
 		}
-		CString strSQL;
-		strSQL = L"insert into [Equipment] values(";
-		for (int nIndex = 0; nIndex < _countof(g_FieldInfos); nIndex++)
-		{
-			if (0 != nIndex)
-			{
-				strSQL += ",";
-			}
-			switch (g_FieldInfos[nIndex].Type)
-			{
-			case FieldTypeInt64:
-				{
-					if (pInserInfo->strArray[nIndex].IsEmpty())
-					{
-						strSQL += L"0";
-					}
-					else
-					{
-						strSQL += pInserInfo->strArray[nIndex];
-					}
-				}
-				break;
-			case FieldTypeString:
-				{
-					strSQL += L"'";
-					strSQL += pInserInfo->strArray[nIndex];
-					strSQL += L"'";
-				}
-				break;
-			default:
-				{
-					pThis->MessageBox(L"false");
-					assert(false);
-				}
-				break;
-			}
-		}
-		strSQL += L")";
-
-		CSQLiteCommand SQLiteCommand(pThis->m_pSQLite, TranslateString((const WCHAR*)strSQL, CP_UTF8).c_str());
-		/*std::string strData[50];
-		for (int nIndex = 0; nIndex < _countof(g_FieldInfos); nIndex++)
-		{
-		if (FieldTypeString == g_FieldInfos[nIndex].Type)
-		{
-		CStringA strIndex;
-		strIndex.Format(":FieldIndex%d", nIndex);
-		int iParamIndex = 0;
-		if (0 == (iParamIndex = SQLiteCommand.GetParamIndex(strIndex)))
-		{
-		assert(false);
-		break;
-		}
-		strData[nIndex] = TranslateString((const WCHAR*)strArray[nIndex], CP_ACP);
-		if (!SQLiteCommand.BindParam(iParamIndex, (const unsigned char*)strData[nIndex].data(), strData[nIndex].length()))
-		{
-		assert(false);
-		break;
-		}
-		}
-		}*/
-		if (!SQLiteCommand.Excute())
-		{
-			pThis->MessageBox(L"false");
-			assert(false);
-			break;
-		}
-		SQLiteCommand.Clear();
+		
 
 		delete pInserInfo;
 		Sleep(1);
