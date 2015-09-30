@@ -39,9 +39,11 @@ public:
 	CEdit m_editFileName;
 	afx_msg void OnBnClickedButtonSelectFile();
 	CString			m_strExcelFileName;
+	CString			m_strSaveExcelFileName;
 	void InitSqliteDatabase();
 	CSQLite		*m_pSQLite;
 	afx_msg void OnBnClickedButtonLoadToDatabase();
+	void LoadToDatabase(int nBeginRow, int nBeginColumn, int nRowCount, int nColumnCount);
 	CNormalLock	m_NormalLock;
 	static unsigned __stdcall ThreadProc(void *pArgument);
 
@@ -51,4 +53,7 @@ public:
 	};
 	typedef std::list<InsertInfo*>	InsertInfoArray;
 	InsertInfoArray	m_InsertInfoArray;
+	afx_msg void OnBnClickedButtonSelectExcel();
+	CEdit m_editSaveExcel;
+	afx_msg void OnBnClickedButtonSaveExcel();
 };

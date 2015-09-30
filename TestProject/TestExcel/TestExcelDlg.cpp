@@ -16,6 +16,7 @@
 #include "sqlite3.h"
 #include "Sqlite3Connect.h"
 #include <assert.h>
+#include <sstream>
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -136,6 +137,7 @@ void CTestExcelDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_EDIT_FILENAME, m_editFileName);
+	DDX_Control(pDX, IDC_EDIT_SAVE_EXCEL, m_editSaveExcel);
 }
 
 BEGIN_MESSAGE_MAP(CTestExcelDlg, CDialogEx)
@@ -144,6 +146,8 @@ BEGIN_MESSAGE_MAP(CTestExcelDlg, CDialogEx)
 	ON_WM_QUERYDRAGICON()
 	ON_BN_CLICKED(IDC_BUTTON_SELECT_FILE, &CTestExcelDlg::OnBnClickedButtonSelectFile)
 	ON_BN_CLICKED(IDC_BUTTON_LOAD_TO_DATABASE, &CTestExcelDlg::OnBnClickedButtonLoadToDatabase)
+	ON_BN_CLICKED(IDC_BUTTON_SELECT_EXCEL, &CTestExcelDlg::OnBnClickedButtonSelectExcel)
+	ON_BN_CLICKED(IDC_BUTTON_SAVE_EXCEL, &CTestExcelDlg::OnBnClickedButtonSaveExcel)
 END_MESSAGE_MAP()
 
 
@@ -327,17 +331,32 @@ void CTestExcelDlg::InitSqliteDatabase()
 
 void CTestExcelDlg::OnBnClickedButtonLoadToDatabase()
 {
+	int nStep = 1000;
+	int nRowBegin = 10606;//5;
+	int nMaxRow = 14081;
+	while (nRowBegin < nMaxRow)
+	{
+		int nRowCount = nStep;
+		if (nRowBegin + nRowCount > nMaxRow)
+		{
+			nRowCount = nMaxRow - nRowBegin + 1;
+		}
+		LoadToDatabase(nRowBegin, 1, nRowCount, 24);
+		nRowBegin += nStep;
+	}
+}
+
+void CTestExcelDlg::LoadToDatabase(int nTempBeginRow, int nTempBeginColumn, int nRowCount, int nColumnCount)
+{
 	CApplication app;
 	BOOL bNeedQuit = FALSE;
 	do 
 	{
-		//_beginthreadex(nullptr, 0, &CTestExcelDlg::ThreadProc, this, 0, nullptr);
 		if (!app.CreateDispatch(L"ET.APPLICATION"))
 		{
 			assert(false);
 			break;
 		}
-		//m_pApplication->put_Visible(TRUE);
 		bNeedQuit = TRUE;
 
 		CWorkbooks workbooks(app.get_Workbooks());
@@ -347,16 +366,15 @@ void CTestExcelDlg::OnBnClickedButtonLoadToDatabase()
 		CWorkbook workbook(workbooks.Open(vtFileName, vtEmpty, vtEmpty, vtEmpty, vtEmpty, vtEmpty, vtEmpty, vtEmpty, vtEmpty, vtEmpty, vtEmpty, vtEmpty, vtEmpty));
 
 		CWorksheets Worksheets(workbook.get_Worksheets());
-		long lCount = Worksheets.get_Count();
 		CWorksheet worksheet(Worksheets.get_Item(_variant_t(1)));
 		CRange range(worksheet.get_Cells());
-		int nBeginRow = 8000, nBeginColumn = 1;
-		int nEndRow = 14081, nEndColumn = 24;
+		int nBeginRow = nTempBeginRow, nBeginColumn = nTempBeginColumn;
+		int nEndRow = nRowCount + nBeginRow, nEndColumn = nColumnCount + nBeginColumn;
 
 		m_pSQLite->BeginTransaction();
 
 		DWORD dwTickCount = GetTickCount();
-		for (int nRowIndex = nBeginRow; nRowIndex <= nEndRow; nRowIndex++)
+		for (int nRowIndex = nBeginRow; nRowIndex < nEndRow; nRowIndex++)
 		{
 			/*L"([大类] int, [小类] int,[大组] int, [小组] int"
 			L",[序号] int, [设备实施分类与代码] int, [设备实施分类名称] text, [设备实施名称] text,[计量单位] text"
@@ -373,17 +391,13 @@ void CTestExcelDlg::OnBnClickedButtonLoadToDatabase()
 			}
 			CString strArray[50];
 
-			for (int nColumnIndex = nBeginColumn; nColumnIndex <= nEndColumn; nColumnIndex++)
+			for (int nColumnIndex = nBeginColumn; nColumnIndex < nEndColumn; nColumnIndex++)
 			{
 				_variant_t vtDispatch = range.get_Item(_variant_t(nRowIndex), _variant_t(nColumnIndex));
 				CRange rangeResult(vtDispatch);
 				CString strResult = rangeResult.get_Formula();
 				strResult.Trim();
 				strArray[nColumnIndex - 1] = strResult;
-			}
-			{
-				//CAutoLock AutoLock(m_NormalLock);
-				//m_InsertInfoArray.push_back(pInsertInfo);
 			}
 			CString strSQL;
 			strSQL = L"insert into [Equipment] values(";
@@ -397,14 +411,10 @@ void CTestExcelDlg::OnBnClickedButtonLoadToDatabase()
 				{
 				case FieldTypeInt64:
 					{
-						if (strArray[nIndex].IsEmpty())
-						{
-							strSQL += L"0";
-						}
-						else
-						{
-							strSQL += strArray[nIndex];
-						}
+						INT64 i64Value = _ttoi64(strArray[nIndex]);
+						std::wstringstream ss;
+						ss << i64Value;
+						strSQL += ss.str().c_str();
 					}
 					break;
 				case FieldTypeString:
@@ -441,38 +451,138 @@ void CTestExcelDlg::OnBnClickedButtonLoadToDatabase()
 		app.Quit();
 	}
 }
+//
+//unsigned __stdcall CTestExcelDlg::ThreadProc(void *pArgument)
+//{
+//	CTestExcelDlg *pThis = reinterpret_cast<CTestExcelDlg*>(pArgument);
+//	pThis->m_pSQLite->BeginTransaction();
+//	int nCommitCount = 0;
+//	while(true)
+//	{
+//		if (++nCommitCount > 1000)
+//		{
+//			nCommitCount = 0;
+//			pThis->m_pSQLite->CommitTransaction();
+//			pThis->m_pSQLite->BeginTransaction();
+//		}
+//		InsertInfo *pInserInfo = nullptr;
+//		{
+//			CAutoLock AutoLock(pThis->m_NormalLock);
+//			if (0 != pThis->m_InsertInfoArray.size())
+//			{
+//				pInserInfo = *(pThis->m_InsertInfoArray.begin());
+//				pThis->m_InsertInfoArray.pop_front();
+//			}
+//		}
+//		if (nullptr == pInserInfo)
+//		{
+//			Sleep(1);
+//			continue;
+//		}
+//		
+//
+//		delete pInserInfo;
+//		Sleep(1);
+//	}
+//	return 0;
+//}
 
-unsigned __stdcall CTestExcelDlg::ThreadProc(void *pArgument)
+
+
+
+void CTestExcelDlg::OnBnClickedButtonSelectExcel()
 {
-	CTestExcelDlg *pThis = reinterpret_cast<CTestExcelDlg*>(pArgument);
-	pThis->m_pSQLite->BeginTransaction();
-	int nCommitCount = 0;
-	while(true)
+	CFileDialog openFile(FALSE, L"xls", nullptr, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, L"xls (*.xls)|*.xls||", this);
+	if (IDOK == openFile.DoModal())
 	{
-		if (++nCommitCount > 1000)
+		m_strSaveExcelFileName = openFile.GetPathName();
+		m_editSaveExcel.SetWindowText(m_strSaveExcelFileName);
+	}
+	
+}
+
+
+void CTestExcelDlg::OnBnClickedButtonSaveExcel()
+{
+	CApplication app;
+	BOOL bNeedQuit = FALSE;
+
+	do 
+	{
+		if (!app.CreateDispatch(L"ET.APPLICATION"))
 		{
-			nCommitCount = 0;
-			pThis->m_pSQLite->CommitTransaction();
-			pThis->m_pSQLite->BeginTransaction();
+			assert(false);
+			break;
 		}
-		InsertInfo *pInserInfo = nullptr;
-		{
-			CAutoLock AutoLock(pThis->m_NormalLock);
-			if (0 != pThis->m_InsertInfoArray.size())
-			{
-				pInserInfo = *(pThis->m_InsertInfoArray.begin());
-				pThis->m_InsertInfoArray.pop_front();
-			}
-		}
-		if (nullptr == pInserInfo)
-		{
-			Sleep(1);
-			continue;
-		}
+		bNeedQuit = TRUE;
+
+		CWorkbooks workbooks(app.get_Workbooks());
+
+		_variant_t vtFileName(m_strSaveExcelFileName);
+		_variant_t vtReadOnly(FALSE);
+		_variant_t vtEditable(TRUE);
+		_variant_t vtEmpty;
+		CWorkbook workbook(workbooks.Open(vtFileName, vtEmpty, vtReadOnly, vtEmpty, vtEmpty, vtEmpty, vtEmpty, 
+			vtEmpty, vtEmpty, vtEditable, vtEmpty, vtEmpty, vtEmpty));
+		
+		CWorksheets Worksheets(workbook.get_Worksheets());
+		CWorksheet worksheet(Worksheets.get_Item(_variant_t(1)));
+		CRange range(worksheet.get_Cells());
+
 		
 
-		delete pInserInfo;
-		Sleep(1);
+		CSQLite Sqlite;
+		if (!Sqlite.Open("C:\\1.db3"))
+		{
+			ASSERT(FALSE);
+			break;
+		}
+		std::wstring strWSql;
+		strWSql = L"select * from equipment limit 5,10";
+		std::string strSQL = TranslateString(strWSql, CP_UTF8);
+		CSQLiteDataReader SQLiteDataReade = Sqlite.ExcuteQuery(strSQL.c_str());
+		int nRowIndex = 1;
+		while (SQLiteDataReade.Read())
+		{
+			for (int nIndex = 0; nIndex < _countof(g_FieldInfos); nIndex++)
+			{
+				CString strValue;
+				switch(g_FieldInfos[nIndex].Type)
+				{
+				case FieldTypeInt64:
+					{
+						INT64 i64Value = SQLiteDataReade.GetInt64Value(nIndex);
+						strValue.Format(L"%I64d", i64Value);
+					}
+					break;
+				case FieldTypeString:
+					{
+						int nLength = 0;
+						const unsigned char *pstrUTF8 = SQLiteDataReade.GetStringValue(nIndex, nLength);
+						std::string strUTF8;
+						strUTF8.append(reinterpret_cast<const char*>(pstrUTF8), nLength);
+						strValue = TranslateString(strUTF8, CP_UTF8).c_str();
+					}
+					break;
+				default:
+					{
+						assert(false);
+					}
+					break;
+				}
+				_variant_t vtDispatch = range.get_Item(_variant_t(nRowIndex), _variant_t(nIndex + 1));
+				CRange rangeWrite(vtDispatch);
+				rangeWrite.put_Formula(strValue);
+			}
+			nRowIndex++;
+		}
+		workbook.Save();
+		SQLiteDataReade.Close();
+		Sqlite.Close();
+	} while (false);
+
+	if (bNeedQuit)
+	{
+		app.Quit();
 	}
-	return 0;
 }
