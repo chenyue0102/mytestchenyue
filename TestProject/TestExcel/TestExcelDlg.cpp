@@ -90,6 +90,7 @@ struct FieldInfo
 {
 	FieldType	Type;
 	WCHAR		FieldName[32];
+	int			nNumberLength;
 };
 
 /*
@@ -101,13 +102,14 @@ L",[受托（委托）单位] text, [备注] text"
 */
 FieldInfo g_FieldInfos[] = 
 {
-	{FieldTypeInt64, L"大类"}, {FieldTypeInt64, L"小类"}, {FieldTypeInt64, L"大组"}, {FieldTypeInt64, L"小组"},
-	{FieldTypeInt64, L"序号"}, {FieldTypeInt64, L"设备实施分类与代码"}, {FieldTypeString, L"设备实施分类名称"}, {FieldTypeString, L"设备实施名称"}, {FieldTypeString, L"计量单位"},
-	{FieldTypeInt64, L"序号2"}, {FieldTypeString, L"资产类别"}, {FieldTypeInt64, L"资产编码"}, {FieldTypeString, L"资产名称"}, 
-	{FieldTypeString, L"规格型号"}, {FieldTypeString, L"原值"}, {FieldTypeString, L"开始使用日期"},
-	{FieldTypeString, L"具体位置"}, {FieldTypeString, L"使用年限"}, {FieldTypeString, L"重要等级"},
-	{FieldTypeString, L"设备状态"}, {FieldTypeString, L"在用状态是否完好"}, {FieldTypeString, L"是否委托（受委托）"},
-	{FieldTypeString, L"受托（委托）单位"}, {FieldTypeString, L"备注"}, 
+	{FieldTypeInt64, L"大类", 0}, {FieldTypeInt64, L"小类", 0}, {FieldTypeInt64, L"大组", 0}, {FieldTypeInt64, L"小组", 0},
+	{FieldTypeInt64, L"序号（子）", 0}, {FieldTypeInt64, L"设备实施分类与代码", 8}, {FieldTypeString, L"设备实施分类名称", 0}, 
+	{FieldTypeString, L"设备实施名称", 0}, {FieldTypeString, L"计量单位", 0},
+	{FieldTypeInt64, L"序号2", 0}, {FieldTypeString, L"资产类别", 0}, {FieldTypeInt64, L"资产编码", 12}, {FieldTypeString, L"资产名称", 0}, 
+	{FieldTypeString, L"规格型号", 0}, {FieldTypeString, L"原值", 0}, {FieldTypeString, L"开始使用日期", 0},
+	{FieldTypeString, L"具体位置", 0}, {FieldTypeString, L"车站", 0}, {FieldTypeString, L"使用年限", 0}, {FieldTypeString, L"重要等级", 0},
+	{FieldTypeString, L"设备状态", 0}, {FieldTypeString, L"在用状态是否完好", 0}, {FieldTypeString, L"是否委托（受委托）", 0},
+	{FieldTypeString, L"受托（委托）单位", 0}, {FieldTypeString, L"备注", 0} , {FieldTypeString, L"备注2", 0}, {FieldTypeString, L"备注3", 0}
 };
 
 
@@ -183,6 +185,7 @@ BOOL CTestExcelDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
 	InitSqliteDatabase();
+
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -255,12 +258,12 @@ void CTestExcelDlg::InitSqliteDatabase()
 		//"select count(*) from sqlite_master where type = 'table' and name = ''",
 		const char *pstrCheckTableName[] = 
 		{
-			"\'Equipment\'",
+			"\'e\'",
 		};
 
 		/*const WCHAR *pstrCreateTable[] = 
 		{
-			L"create table [Equipment]"
+			L"create table [e]"
 			L"([大类] int, [小类] int,[大组] int, [小组] int"
 			L",[序号] int, [设备实施分类与代码] int, [设备实施分类名称] text, [设备实施名称] text,[计量单位] text"
 			L",[序号2] int,[资产类别] text,[资产编码] int,[资产名称] text,[规格型号] text,[原值] text,[开始使用日期] text"
@@ -269,7 +272,7 @@ void CTestExcelDlg::InitSqliteDatabase()
 			L")",
 		};*/
 		CString strCreateTable;
-		strCreateTable = L"create table [Equipment](";
+		strCreateTable = L"create table [e](";
 		for (int nIndex = 0; nIndex < _countof(g_FieldInfos); nIndex++)
 		{
 			if (0 != nIndex)
@@ -332,7 +335,7 @@ void CTestExcelDlg::InitSqliteDatabase()
 void CTestExcelDlg::OnBnClickedButtonLoadToDatabase()
 {
 	int nStep = 1000;
-	int nRowBegin = 10606;//5;
+	int nRowBegin = 5 + 13000;
 	int nMaxRow = 14081;
 	while (nRowBegin < nMaxRow)
 	{
@@ -341,7 +344,7 @@ void CTestExcelDlg::OnBnClickedButtonLoadToDatabase()
 		{
 			nRowCount = nMaxRow - nRowBegin + 1;
 		}
-		LoadToDatabase(nRowBegin, 1, nRowCount, 24);
+		LoadToDatabase(nRowBegin, 1, nRowCount, _countof(g_FieldInfos));
 		nRowBegin += nStep;
 	}
 }
@@ -352,7 +355,7 @@ void CTestExcelDlg::LoadToDatabase(int nTempBeginRow, int nTempBeginColumn, int 
 	BOOL bNeedQuit = FALSE;
 	do 
 	{
-		if (!app.CreateDispatch(L"ET.APPLICATION"))
+		if (!app.CreateDispatch(L"Excel.Application"))
 		{
 			assert(false);
 			break;
@@ -363,7 +366,7 @@ void CTestExcelDlg::LoadToDatabase(int nTempBeginRow, int nTempBeginColumn, int 
 		
 		_variant_t vtFileName(m_strExcelFileName);
 		_variant_t vtEmpty;
-		CWorkbook workbook(workbooks.Open(vtFileName, vtEmpty, vtEmpty, vtEmpty, vtEmpty, vtEmpty, vtEmpty, vtEmpty, vtEmpty, vtEmpty, vtEmpty, vtEmpty, vtEmpty));
+		CWorkbook workbook(workbooks.Open(m_strExcelFileName, vtEmpty, vtEmpty, vtEmpty, vtEmpty, vtEmpty, vtEmpty, vtEmpty, vtEmpty, vtEmpty, vtEmpty, vtEmpty, vtEmpty, vtEmpty, vtEmpty));
 
 		CWorksheets Worksheets(workbook.get_Worksheets());
 		CWorksheet worksheet(Worksheets.get_Item(_variant_t(1)));
@@ -400,7 +403,7 @@ void CTestExcelDlg::LoadToDatabase(int nTempBeginRow, int nTempBeginColumn, int 
 				strArray[nColumnIndex - 1] = strResult;
 			}
 			CString strSQL;
-			strSQL = L"insert into [Equipment] values(";
+			strSQL = L"insert into [e] values(";
 			for (int nIndex = 0; nIndex < _countof(g_FieldInfos); nIndex++)
 			{
 				if (0 != nIndex)
@@ -509,7 +512,7 @@ void CTestExcelDlg::OnBnClickedButtonSaveExcel()
 
 	do 
 	{
-		if (!app.CreateDispatch(L"ET.APPLICATION"))
+		if (!app.CreateDispatch(L"Excel.Application"))
 		{
 			assert(false);
 			break;
@@ -522,8 +525,8 @@ void CTestExcelDlg::OnBnClickedButtonSaveExcel()
 		_variant_t vtReadOnly(FALSE);
 		_variant_t vtEditable(TRUE);
 		_variant_t vtEmpty;
-		CWorkbook workbook(workbooks.Open(vtFileName, vtEmpty, vtReadOnly, vtEmpty, vtEmpty, vtEmpty, vtEmpty, 
-			vtEmpty, vtEmpty, vtEditable, vtEmpty, vtEmpty, vtEmpty));
+		CWorkbook workbook(workbooks.Open(m_strSaveExcelFileName, vtEmpty, vtReadOnly, vtEmpty, vtEmpty, vtEmpty, vtEmpty, 
+			vtEmpty, vtEmpty, vtEditable, vtEmpty, vtEmpty, vtEmpty, vtEmpty, vtEmpty));
 		
 		CWorksheets Worksheets(workbook.get_Worksheets());
 		CWorksheet worksheet(Worksheets.get_Item(_variant_t(1)));
@@ -538,7 +541,7 @@ void CTestExcelDlg::OnBnClickedButtonSaveExcel()
 			break;
 		}
 		std::wstring strWSql;
-		strWSql = L"select * from equipment limit 5,10";
+		strWSql = L"select * from e limit 5,10";
 		std::string strSQL = TranslateString(strWSql, CP_UTF8);
 		CSQLiteDataReader SQLiteDataReade = Sqlite.ExcuteQuery(strSQL.c_str());
 		int nRowIndex = 1;
@@ -552,7 +555,16 @@ void CTestExcelDlg::OnBnClickedButtonSaveExcel()
 				case FieldTypeInt64:
 					{
 						INT64 i64Value = SQLiteDataReade.GetInt64Value(nIndex);
-						strValue.Format(L"%I64d", i64Value);
+						if (0 == g_FieldInfos[nIndex].nNumberLength)
+						{
+							strValue.Format(L"%I64d", i64Value);
+						}
+						else
+						{
+							CString strFormatParam;
+							strFormatParam.Format(L"%%0%dI64d", g_FieldInfos[nIndex].nNumberLength);
+							strValue.Format(strFormatParam, i64Value);
+						}
 					}
 					break;
 				case FieldTypeString:
@@ -572,7 +584,7 @@ void CTestExcelDlg::OnBnClickedButtonSaveExcel()
 				}
 				_variant_t vtDispatch = range.get_Item(_variant_t(nRowIndex), _variant_t(nIndex + 1));
 				CRange rangeWrite(vtDispatch);
-				rangeWrite.put_Formula(strValue);
+				rangeWrite.put_Formula(_variant_t(strValue));
 			}
 			nRowIndex++;
 		}
