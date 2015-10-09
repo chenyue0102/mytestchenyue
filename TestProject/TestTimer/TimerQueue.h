@@ -10,12 +10,13 @@
 #include "InterfaceTimer.h"
 #include "NormalLock.h"
 
+#define MAX_TIME_KEY		(65535)
+
 class CTimerQueue
 {
 	struct TimerInfo
 	{
 		HANDLE hTimer;
-		DWORD dwUserData;
 		CComPtr<ITimerCallback> pTimerCallback;
 #ifdef _DEBUG
 		DWORD dwCallbackThreadID;
@@ -23,7 +24,6 @@ class CTimerQueue
 
 		TimerInfo()
 			: hTimer(nullptr)
-			, dwUserData(0)
 #ifdef _DEBUG
 			, dwCallbackThreadID(0)
 #endif
@@ -62,16 +62,15 @@ public:
 	// $_FUNCTION_BEGIN *******************************************************
 	// 函数名称：CreateTimer
 	// 函数参数：
-	//			 DueTime				[输入]	第一次触发OnTimer的时间，如果是0，则立即触发OnTimer
-	//			 Period					[输入]	第一次触发OnTimer后，定时触发OnTimer的间隔，如果为0，则第一次触发后，就不会再触发
+	//			 DueTime				[输入]	第一次触发OnTimer的时间，如果是0，则立即触发OnTimer，单位：毫秒
+	//			 Period					[输入]	第一次触发OnTimer后，定时触发OnTimer的间隔，如果为0，则第一次触发后，就不会再触发，单位：毫秒
 	//			 pTimerCallback			[输入]	OnTimer时，调用的接口函数
-	//			 dwUserData				[输入]	OnTimer时，调用接口的参数
-	//			 lTimerKey				[输出]	定时器的Key，销毁定时器的时候，使用
+	//			 lTimerKey				[输入/输出]	定时器的Key，销毁定时器的时候，
+	//												如果为0，则内部会分配一个ID，否则使用外部指定的值，外部指定值必须小于MAX_TIME_KEY
 	// 返 回 值：true or false
 	// 函数说明：开启一个定时器
 	// $_FUNCTION_END *********************************************************
-	bool CreateTimer(DWORD DueTime, DWORD Period, 
-			ITimerCallback *pTimerCallback, DWORD dwUserData, long &lTimerKey);
+	bool CreateTimer(DWORD DueTime, DWORD Period, ITimerCallback *pTimerCallback, long &lTimerKey);
 
 	// $_FUNCTION_BEGIN *******************************************************
 	// 函数名称：DestroyTimer

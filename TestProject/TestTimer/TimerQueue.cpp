@@ -2,7 +2,7 @@
 #include <assert.h>
 
 CTimerQueue::CTimerQueue()
-	: m_lKey(1)
+	: m_lKey(MAX_TIME_KEY)
 	, m_hTimeQueque(nullptr)
 {
 
@@ -51,14 +51,17 @@ bool CTimerQueue::Close()
 			bRes = true;
 			break;
 		}
-		assert(0 == m_TimerInfoArray.size());
-		TimerInfoArray InfoArray = m_TimerInfoArray;
+		TimerInfoArray InfoArray;
+		{
+			CAutoLock AutoLock(m_NormalLock);
+			assert(0 == m_TimerInfoArray.size());
+			InfoArray = m_TimerInfoArray;
+		}
 		for each(auto &OneInfo in InfoArray)
 		{
 			DestroyTimer(OneInfo.first, false);
 		}
 		InfoArray.clear();
-		m_TimerInfoArray.clear();
 
 		if (!DeleteTimerQueue(m_hTimeQueque))
 		{
@@ -71,7 +74,7 @@ bool CTimerQueue::Close()
 	return bRes;
 }
 
-bool CTimerQueue::CreateTimer(DWORD DueTime, DWORD Period, ITimerCallback *pTimerCallback, DWORD dwUserData, long &lTimerKey)
+bool CTimerQueue::CreateTimer(DWORD DueTime, DWORD Period, ITimerCallback *pTimerCallback, long &lTimerKey)
 {
 	bool bRes = false;
 
@@ -93,7 +96,26 @@ bool CTimerQueue::CreateTimer(DWORD DueTime, DWORD Period, ITimerCallback *pTime
 			assert(false);
 			break;
 		}
-		lTimerKey = GetKey();
+		if (0 != lTimerKey)
+		{
+			if (lTimerKey > MAX_TIME_KEY)
+			{
+				assert(false);
+				break;
+			}
+			CAutoLock AutoLock(m_NormalLock);
+			auto itor = m_TimerInfoArray.find(lTimerKey);
+			if (itor != m_TimerInfoArray.end())
+			{
+				//已经被使用
+				assert(false);
+				break;
+			}
+		}
+		else
+		{
+			lTimerKey = GetKey();
+		}
 
 		CAutoLock AutoLock(m_NormalLock);
 		HANDLE hTimer = nullptr;
@@ -106,7 +128,6 @@ bool CTimerQueue::CreateTimer(DWORD DueTime, DWORD Period, ITimerCallback *pTime
 		TimerInfo Info;
 		Info.hTimer = hTimer;
 		Info.pTimerCallback = pTimerCallback;
-		Info.dwUserData = dwUserData;
 		m_TimerInfoArray.insert(std::make_pair(lTimerKey, Info));
 
 		bRes = true;
@@ -178,6 +199,7 @@ void CTimerQueue::InnerWaitOrTimerCallback(long lKey)
 	do 
 	{
 		TimerInfo Info;
+		long lItemKey = 0;
 		{
 			CAutoLock AutoLock(m_NormalLock);
 			auto itor = m_TimerInfoArray.find(lKey);
@@ -189,6 +211,7 @@ void CTimerQueue::InnerWaitOrTimerCallback(long lKey)
 #ifdef _DEBUG
 			itor->second.dwCallbackThreadID = GetCurrentThreadId();
 #endif
+			lItemKey = itor->first;
 			Info = itor->second;
 		}
 		if (!Info.pTimerCallback)
@@ -196,6 +219,6 @@ void CTimerQueue::InnerWaitOrTimerCallback(long lKey)
 			assert(false);
 			break;
 		}
-		Info.pTimerCallback->OnTimer(Info.dwUserData);
+		Info.pTimerCallback->OnTimer(lItemKey);
 	} while (false);
 }
