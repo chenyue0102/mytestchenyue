@@ -3,141 +3,173 @@
 #include <string>
 #include "ISerialize.h"
 
-void SerializeImp(bool &Value, ISerialize *pSerialize)
+void SerializeImp(ISerialize *pSerialize, bool &Value, const char *psrName)
 {
 	if (nullptr == pSerialize ||
-		!pSerialize->Serialize(Value))
+		!pSerialize->Serialize(Value, psrName))
 	{
 		throw -1;
 	}
 }
 
-void SerializeImp(char &Value, ISerialize *pSerialize)
+void SerializeImp(ISerialize *pSerialize, char &Value, const char *psrName)
 {
 	if (nullptr == pSerialize ||
-		!pSerialize->Serialize(Value))
+		!pSerialize->Serialize(Value, psrName))
 	{
 		throw -1;
 	}
 }
 
-void SerializeImp(unsigned char &Value, ISerialize *pSerialize)
+void SerializeImp(ISerialize *pSerialize, unsigned char &Value, const char *psrName)
 {
 	if (nullptr == pSerialize ||
-		!pSerialize->Serialize(Value))
+		!pSerialize->Serialize(Value, psrName))
 	{
 		throw -1;
 	}
 }
 
-void SerializeImp(int &Value, ISerialize *pSerialize)
+void SerializeImp(ISerialize *pSerialize, int &Value, const char *psrName)
 {
 	if (nullptr == pSerialize ||
-		!pSerialize->Serialize(Value))
+		!pSerialize->Serialize(Value, psrName))
 	{
 		throw -1;
 	}
 }
 
-void SerializeImp(unsigned int &Value, ISerialize *pSerialize)
+void SerializeImp(ISerialize *pSerialize, unsigned int &Value, const char *psrName)
 {
 	if (nullptr == pSerialize ||
-		!pSerialize->Serialize(Value))
+		!pSerialize->Serialize(Value, psrName))
 	{
 		throw -1;
 	}
 }
 
-void SerializeImp(long &Value, ISerialize *pSerialize)
+void SerializeImp(ISerialize *pSerialize, long &Value, const char *psrName)
 {
 	if (nullptr == pSerialize ||
-		!pSerialize->Serialize(Value))
+		!pSerialize->Serialize(Value, psrName))
 	{
 		throw -1;
 	}
 }
 
-void SerializeImp(unsigned long &Value, ISerialize *pSerialize)
+void SerializeImp(ISerialize *pSerialize, unsigned long &Value, const char *psrName)
 {
 	if (nullptr == pSerialize ||
-		!pSerialize->Serialize(Value))
+		!pSerialize->Serialize(Value, psrName))
 	{
 		throw -1;
 	}
 }
 
-void SerializeImp(long long &Value, ISerialize *pSerialize)
+void SerializeImp(ISerialize *pSerialize, long long &Value, const char *psrName)
 {
 	if (nullptr == pSerialize ||
-		!pSerialize->Serialize(Value))
+		!pSerialize->Serialize(Value, psrName))
 	{
 		throw -1;
 	}
 }
 
-void SerializeImp(unsigned long long &Value, ISerialize *pSerialize)
+void SerializeImp(ISerialize *pSerialize, unsigned long long &Value, const char *psrName)
 {
 	if (nullptr == pSerialize ||
-		!pSerialize->Serialize(Value))
+		!pSerialize->Serialize(Value, psrName))
 	{
 		throw -1;
 	}
 }
 
-void SerializeImp(float &Value, ISerialize *pSerialize)
+void SerializeImp(ISerialize *pSerialize, float &Value, const char *psrName)
 {
 	if (nullptr == pSerialize ||
-		!pSerialize->Serialize(Value))
+		!pSerialize->Serialize(Value, psrName))
 	{
 		throw -1;
 	}
 }
 
-void SerializeImp(double &Value, ISerialize *pSerialize)
+void SerializeImp(ISerialize *pSerialize, double &Value, const char *psrName)
 {
 	if (nullptr == pSerialize ||
-		!pSerialize->Serialize(Value))
+		!pSerialize->Serialize(Value, psrName))
 	{
 		throw -1;
 	}
 }
 
-void SerializeImp(std::string &strValue, ISerialize *pSerialize)
+template<typename T>
+void SerializeImp(ISerialize *pSerialize, T &t, const char *psrName)
+{
+	ISerializeObject *p = nullptr;
+	if (!p->SerializeObject(psrName))
+	{
+		throw -1;
+	}
+
+	if (!t.Serialize(pSerialize))
+	{
+		throw -1;
+	}
+}
+
+
+void SerializeImp(ISerialize *pSerialize, std::string &Value, const char *psrName)
 {
 	if (nullptr == pSerialize)
 	{
 		throw -1;
 	}
-	unsigned long ulSize = strValue.size();
-	if (!pSerialize->Serialize(ulSize))
+	unsigned long ulSize = Value.size();
+
+	ISerializeObject *p = nullptr;
+	if (!p->SerializeMultiObject(psrName, ulSize))
 	{
 		throw -1;
 	}
-	if (0 != ulSize)
+	if (EnumSerializeTypeRead == pSerialize->GetSerializeType())
 	{
-		if (EnumSerializeTypeRead == pSerialize->GetSerializeType())
+		Value.resize(ulSize);
+		pSerialize->Serialize(&*Value.begin(), ulSize, psrName);
+		for (unsigned long ulIndex = 0; ulIndex < ulSize; ulIndex++)
 		{
-			strValue.resize(ulSize);
+			T t = T();
+			SerializeImp(t, pSerialize);
+			tArray.push_back(t);
 		}
-		if (!pSerialize->Serialize(&*strValue.begin(), ulSize))
+	}
+	else if (EnumSerializeTypeWrite == pSerialize->GetSerializeType())
+	{
+		for (unsigned long ulIndex = 0; ulIndex < ulSize; ulIndex++)
 		{
-			throw -1;
+			SerializeImp(tArray[ulIndex], pSerialize);
 		}
+	}
+	else
+	{
+		throw -1;
 	}
 }
 
 template<typename T>
-void SerializeImp(std::vector<T> &tArray, ISerialize *pSerialize)
+void SerializeImp(ISerialize *pSerialize, std::vector<T> &tArray, const char *psrName)
 {
 	if (nullptr == pSerialize)
 	{
 		throw -1;
 	}
 	unsigned long ulSize = tArray.size();
-	if (!pSerialize->Serialize(ulSize))
+
+	ISerializeObject *p = nullptr;
+	if (!p->SerializeMultiObject(psrName, ulSize))
 	{
 		throw -1;
 	}
+
 	if (EnumSerializeTypeRead == pSerialize->GetSerializeType())
 	{
 		for (unsigned long ulIndex = 0; ulIndex < ulSize; ulIndex++)
@@ -160,11 +192,62 @@ void SerializeImp(std::vector<T> &tArray, ISerialize *pSerialize)
 	}
 }
 
-template<typename T>
-void SerializeImp(T &t, ISerialize *pSerialize)
-{
-	if (!t.Serialize(pSerialize))
-	{
-		throw -1;
-	}
-}
+
+//void SerializeImp(std::string &strValue, ISerialize *pSerialize)
+//{
+//	if (nullptr == pSerialize)
+//	{
+//		throw -1;
+//	}
+//	unsigned long ulSize = strValue.size();
+//	if (!pSerialize->Serialize(ulSize))
+//	{
+//		throw -1;
+//	}
+//	if (0 != ulSize)
+//	{
+//		if (EnumSerializeTypeRead == pSerialize->GetSerializeType())
+//		{
+//			strValue.resize(ulSize);
+//		}
+//		if (!pSerialize->Serialize(&*strValue.begin(), ulSize))
+//		{
+//			throw -1;
+//		}
+//	}
+//}
+//
+//template<typename T>
+//void SerializeImp(std::vector<T> &tArray, ISerialize *pSerialize)
+//{
+//	if (nullptr == pSerialize)
+//	{
+//		throw -1;
+//	}
+//	unsigned long ulSize = tArray.size();
+//	if (!pSerialize->Serialize(ulSize))
+//	{
+//		throw -1;
+//	}
+//	if (EnumSerializeTypeRead == pSerialize->GetSerializeType())
+//	{
+//		for (unsigned long ulIndex = 0; ulIndex < ulSize; ulIndex++)
+//		{
+//			T t = T();
+//			SerializeImp(t, pSerialize);
+//			tArray.push_back(t);
+//		}
+//	}
+//	else if (EnumSerializeTypeWrite == pSerialize->GetSerializeType())
+//	{
+//		for (unsigned long ulIndex = 0; ulIndex < ulSize; ulIndex++)
+//		{
+//			SerializeImp(tArray[ulIndex], pSerialize);
+//		}
+//	}
+//	else
+//	{
+//		throw -1;
+//	}
+//}
+
