@@ -42,6 +42,11 @@ ENUM_SERIALIZATION_TYPE CSerialization::GetSerializationType()
 	return m_iSerializationType;
 }
 
+EnumSerializeFormat CSerialization::GetSerializeFormat()
+{
+	return EnumSerializeFormatBinary;
+}
+
 bool CSerialization::SetData(const char *pstrText, unsigned long ulDataLength)
 {
 	if (m_iBufferCreateType == enum_Buffer_Create_Type_Inside)

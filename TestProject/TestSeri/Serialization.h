@@ -49,6 +49,14 @@ public:
 	virtual ENUM_SERIALIZATION_TYPE GetSerializationType()override;
 
 	// $_FUNCTION_BEGIN *******************************************************
+	// 函数名称：GetSerializeFormat
+	// 函数参数：
+	// 返 回 值：序列化的格式
+	// 函数说明：获取序列化的格式
+	// $_FUNCTION_END *********************************************************
+	virtual EnumSerializeFormat GetSerializeFormat()override;
+
+	// $_FUNCTION_BEGIN *******************************************************
 	// 函数名称：SetData
 	// 函数参数：
 	//					pstrText			[输入]		缓冲区

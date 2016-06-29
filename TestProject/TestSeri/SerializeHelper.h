@@ -8,9 +8,7 @@
 #include <vector>
 #include "ISerialize.h"
 
-#ifdef CONVER_STRING_CODE
-class CUTF8_GBK_Convert;
-#endif
+
 /************************************************************************/
 /* 序列化宏                                                              */
 /************************************************************************/
@@ -69,7 +67,7 @@ bool SerializeStruct(ISerialize *pSerialize, Tlv &Value)
 	return true;
 }
 */
-//#define USER_CLASS_MEMBER_SERIALIZE
+#define USER_CLASS_MEMBER_SERIALIZE
 
 /************************************************************************/
 /* 序列化的一些帮助函数，使得使用序列化的时候，简化统一方式，                   */
@@ -79,9 +77,24 @@ namespace SerializeHelper
 {
 void test();
 
-#ifdef CONVER_STRING_CODE
-void SetConverStringCode(CUTF8_GBK_Convert &Conver);
-#endif
+//调用void Serialize(ISerialize *pSerialize, std::string& Value, const char *pstrName);的时候
+//Value中字符串的字符编码，序列化Json的时候，如果Value是GB2312，帮助类会转换为utf8，然后在传递给Json序列化类
+//默认是EnumStringCodeNone。EnumStringCodeNone与EnumStringCodeGB2312逻辑相等
+enum EnumStringCode
+{
+	EnumStringCodeNone,
+	EnumStringCodeGB2312,
+	EnumStringCodeUtf8,
+};
+
+// $_FUNCTION_BEGIN *******************************************************
+// 函数名称：Serialize
+// 函数参数：
+//					StringCode			[输入]		序列化std::string的时候，字符串编码
+// 返 回 值：
+// 函数说明：设置序列化std::string的时候
+// $_FUNCTION_END *********************************************************
+void SetStringCode(EnumStringCode StringCode);
 
 // $_FUNCTION_BEGIN *******************************************************
 // 函数名称：Serialize

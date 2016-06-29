@@ -1,13 +1,47 @@
 #include "stdafx.h"
 #include "SerializeHelper.h"
 #include <cassert>
-
-
-#ifdef CONVER_STRING_CODE
-//需要将输出的字符串从GB2312转换成UTF-8格式，输入的时候，将UTF-8转换成GB2312
-#include "UTF8_GBK_Convert.h"
-static CUTF8_GBK_Convert *g_CUTF8_GBK_Convert = nullptr;
+#if _MSC_VER >= 1700//MS VC++ 11.0
+#include <atomic>
 #endif
+#include "UTF8_GBK_Convert.h"
+
+
+//SerializeHelper使用存储数据的内部类
+class CSerializeHelperData
+{
+public:
+	CSerializeHelperData()
+		: m_CodeConvert()
+	{
+		m_CodeConvert.Open();
+	}
+public:
+	static CSerializeHelperData& GetInstance()
+	{
+		static CSerializeHelperData HelperData;
+		return HelperData;
+	}
+	CUTF8_GBK_Convert& GetCodeConvert()
+	{
+		return m_CodeConvert;
+	}
+	SerializeHelper::EnumStringCode GetStringCode()const
+	{
+		return m_StringCode;
+	}
+	void SetStringCode(SerializeHelper::EnumStringCode StringCode)
+	{
+		m_StringCode = StringCode;
+	}
+private:
+	CUTF8_GBK_Convert m_CodeConvert;
+#if _MSC_VER >= 1700//MS VC++ 11.0
+	std::atomic<SerializeHelper::EnumStringCode> m_StringCode;
+#else
+	SerializeHelper::EnumStringCode m_StringCode;
+#endif
+};
 
 namespace SerializeHelper
 {
@@ -16,12 +50,11 @@ void test()
 
 }
 
-#ifdef CONVER_STRING_CODE
-void SetConverStringCode(CUTF8_GBK_Convert &Conver)
+void SetStringCode(EnumStringCode StringCode)
 {
-	g_CUTF8_GBK_Convert = &Conver;
+	auto &HelpData = CSerializeHelperData::GetInstance();
+	HelpData.SetStringCode(StringCode);
 }
-#endif
 
 void Serialize(ISerialize *pSerialization, unsigned char& Value, const char *pstrName)
 {
@@ -85,59 +118,79 @@ void Serialize(ISerialize *pSerialization, double &Value, const char *pstrName)
 
 void Serialize(ISerialize *pSerialization, std::string& Value, const char *pstrName)
 {
-#ifdef CONVER_STRING_CODE
-	if (nullptr != g_CUTF8_GBK_Convert && g_CUTF8_GBK_Convert->IsOpen())
+	switch (pSerialization->GetSerializeFormat())
 	{
-		if (enum_Serialization_Type_Read == pSerialization->GetSerializationType())
+	case EnumSerializeFormatBinary:
+		return pSerialization->Serialization(Value, pstrName);
+		break;
+	case EnumSerializeFormatJson:
+	case EnumSerializeFormatXml:
 		{
-			//将Json中的字符串从UTF8转换成GB2312
-			std::string strUTF8;
-			pSerialization->Serialization(strUTF8, pstrName);
-			if (!strUTF8.empty())
+			CSerializeHelperData &HelpData = CSerializeHelperData::GetInstance();
+			EnumStringCode StringCode = HelpData.GetStringCode();
+			if (EnumStringCodeNone == StringCode
+				|| EnumStringCodeGB2312 == StringCode)
 			{
-				std::string strGB2312;
-				strGB2312.resize(strUTF8.size() * 2, '\0');	//2倍大小认为够了
-				unsigned long ulGB2312 = strGB2312.size();
-				if (g_CUTF8_GBK_Convert->ConvertCode(CHARSET_CONVERT_TYPE_UTF8_TO_GBK, strUTF8.c_str(), strUTF8.size(),
-					&*strGB2312.begin(), ulGB2312) < 0)
+				CUTF8_GBK_Convert &CodeConvert = HelpData.GetCodeConvert();
+				if (enum_Serialization_Type_Read == pSerialization->GetSerializationType())
 				{
-					assert(false);
+					//将Json中的字符串从UTF8转换成GB2312
+					std::string strUTF8;
+					pSerialization->Serialization(strUTF8, pstrName);
+					if (!strUTF8.empty())
+					{
+						std::string strGB2312;
+						strGB2312.resize(strUTF8.size() * 2, '\0');	//2倍大小认为够了
+						unsigned long ulGB2312 = strGB2312.size();
+						if (CodeConvert.ConvertCode(CHARSET_CONVERT_TYPE_UTF8_TO_GBK, strUTF8.c_str(), strUTF8.size(),
+							&*strGB2312.begin(), ulGB2312) < 0)
+						{
+							assert(false);
+						}
+						else
+						{
+							Value.append(strGB2312.data(), ulGB2312);
+						}
+					}
 				}
 				else
 				{
-					Value.append(strGB2312.data(), ulGB2312);
+					//写入Json之前，将GB2312转换成UTF8
+					std::string strUTF8;
+					if (!Value.empty())
+					{
+						std::string strTemp;
+						strTemp.resize(Value.size() * 2, '\0');
+						unsigned long ulUTF8 = strTemp.size();
+						if (CodeConvert.ConvertCode(CHARSET_CONVERT_TYPE_GBK_TO_UTF8,
+							Value.c_str(), Value.size(), &*strTemp.begin(), ulUTF8) < 0)
+						{
+							assert(false);
+						}
+						else
+						{
+							strUTF8.append(strTemp.data(), ulUTF8);
+						}
+					}
+					pSerialization->Serialization(strUTF8, pstrName);
 				}
 			}
-		}
-		else
-		{
-			//写入Json之前，将GB2312转换成UTF8
-			std::string strUTF8;
-			if (!Value.empty())
+			else if (EnumStringCodeUtf8 == StringCode)
 			{
-				std::string strTemp;
-				strTemp.resize(Value.size() * 2, '\0');
-				unsigned long ulUTF8 = strTemp.size();
-				if (g_CUTF8_GBK_Convert->ConvertCode(CHARSET_CONVERT_TYPE_GBK_TO_UTF8,
-					Value.c_str(), Value.size(), &*strTemp.begin(), ulUTF8) < 0)
-				{
-					assert(false);
-				}
-				else
-				{
-					strUTF8.append(strTemp.data(), ulUTF8);
-				}
+				return pSerialization->Serialization(Value, pstrName);
 			}
-			pSerialization->Serialization(strUTF8, pstrName);
+			else
+			{
+				assert(false);
+				return pSerialization->Serialization(Value, pstrName);
+			}
 		}
-	}
-	else
-	{
+		break;
+	default:
 		assert(false);
+		return pSerialization->Serialization(Value, pstrName);
+		break;
 	}
-#else
-	return pSerialization->Serialization(Value, pstrName);
-#endif
 }
 
 void Serialize(ISerialize *pSerialization, char *Value, unsigned long ulValueBufferSize, const char *pstrName)
