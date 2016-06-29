@@ -9,6 +9,7 @@
 #include <type_traits>
 #include <cassert>
 #include "UTF8_GBK_Convert.h"
+#include "XmlSerialize.h"
 #pragma comment(lib, "lib_json.lib")
 
 void TestFunc();
@@ -41,6 +42,192 @@ struct Tlv
 		return TRUE;
 	}
 };
+struct MyXml
+{
+	Tlv t;
+	int i;
+	MyXml()
+	{
+		//t.ID = 22222;
+		//t.strValue = "你好";
+		i = 0;
+	}
+	BOOL Serialization(ISerialize *pSerialize)
+	{
+		try
+		{
+			SERIALIZE_VALUE(t);
+			SERIALIZE_VALUE(i);
+		}
+		catch (...)
+		{
+			return FALSE;
+		}
+		return TRUE;
+	}
+};
+
+struct TXml
+{
+	int ID;
+	std::string strKey;
+	Tlv t;
+	MyXml mx;
+	std::vector<int> v;
+	std::vector<Tlv> tArray;
+	std::vector<std::vector<int>> vvt;
+	BOOL Serialization(ISerialize *pSerialize)
+	{
+		try
+		{
+			SERIALIZE_VALUE(vvt);
+			SERIALIZE_VALUE(tArray);
+			SERIALIZE_VALUE(v);
+			SERIALIZE_VALUE(ID);
+			SERIALIZE_VALUE(strKey);
+			SERIALIZE_VALUE(mx);
+			SERIALIZE_VALUE(t);
+		}
+		catch (...)
+		{
+			return FALSE;
+		}
+		return TRUE;
+	}
+};
+
+struct XMLBool
+{
+	bool bb = false;
+	BOOL Serialization(ISerialize *pSerialize)
+	{
+		try
+		{
+			SERIALIZE_VALUE(bb);
+		}
+		catch (...)
+		{
+			return FALSE;
+		}
+		return TRUE;
+	}
+};
+
+struct TXmlType
+{
+	XMLBool bStruct;
+	std::vector<int> vt = {1,2,3,4};
+	std::vector<std::vector<int>> vvt = { {1,2,3},{},{4,5,6} };
+	bool b = true;
+	unsigned char uc = 1;
+	short s = SHRT_MAX;
+	unsigned short us = USHRT_MAX;
+	int i = INT_MAX;
+	unsigned int ui = UINT_MAX;
+	long l = LONG_MAX;
+	unsigned long ul = ULONG_MAX;
+	long long ll = LLONG_MAX;
+	unsigned long long ull = ULLONG_MAX;
+	float f = 123.456f;
+	double d = 456.789;
+	std::string ss = "<你好，世界>";
+
+	BOOL Serialization(ISerialize *pSerialize)
+	{
+		try
+		{
+			SERIALIZE_VALUE(b);
+			SERIALIZE_VALUE(bStruct);
+			SERIALIZE_VALUE(vt);
+			SERIALIZE_VALUE(vvt);
+			SERIALIZE_VALUE(uc);
+			SERIALIZE_VALUE(s);
+			SERIALIZE_VALUE(us);
+			SERIALIZE_VALUE(i);
+			SERIALIZE_VALUE(ui);
+			SERIALIZE_VALUE(l);
+			SERIALIZE_VALUE(ul);
+			SERIALIZE_VALUE(ll);
+			SERIALIZE_VALUE(ull);
+			SERIALIZE_VALUE(f);
+			SERIALIZE_VALUE(d);
+			SERIALIZE_VALUE(ss);
+		}
+		catch (...)
+		{
+			return FALSE;
+		}
+		return TRUE;
+	}
+};
+
+void TestXml()
+{
+	{
+		CXmlSerialize XmlWrite;
+		XmlWrite.SetSerializationType(enum_Serialization_Type_Write);
+		TXmlType x;
+		x.Serialization(&XmlWrite);
+		std::string strData(XmlWrite.GetData(), XmlWrite.GetDataLen());
+		OutputDebugStringA(strData.c_str());
+	}
+
+	int a = 0;
+	int &b = a;
+	CXmlSerialize XmlSerialize;
+	XmlSerialize.SetSerializationType(enum_Serialization_Type_Read);
+	const char *pstrXml = u8R"(<?xml version="1.0" encoding="UTF-8" ?>
+		<root>
+			<ID>4444</ID>
+			<strKey>strKey你好世界</strKey>
+			<t>
+				<ID>123</ID>
+				<strValue>strValue你好世界</strValue>
+			</t>
+			<mx>
+				<t>
+					<ID>77777</ID>
+					<strValue>XMan</strValue>
+				</t>
+				<i>66</i>
+			</mx>
+			<v>
+				<item>1</item>
+				<item>2</item>
+				<item>3</item>
+			</v>
+			<tArray>
+				<t>
+					<ID>333333</ID>
+					<strValue>ArrayValue33333</strValue>
+				</t>
+				<t>
+					<ID>4444444</ID>
+					<strValue>ArrayValue444444</strValue>
+				</t>
+			</tArray>
+			<vvt>
+				<item>
+					<item>1122</item>
+					<item>2233</item>
+				</item>
+				<item>
+					
+				</item>
+				<item>
+					<item>9</item>
+					<item>8</item>
+					<item>7</item>
+				</item>
+			</vvt>
+		</root>)";
+	//const char *pstrXml = R"(<?xml version="1.0" encoding="gb2312" ?><root><ID>123</ID><strValue>你好世界</strValue></root>)";
+	XmlSerialize.SetData(pstrXml, strlen(pstrXml));
+	//Tlv t;
+	//t.Serialization(&XmlSerialize);
+	TXml t;
+	t.Serialization(&XmlSerialize);
+}
 
 bool SerializeStruct(ISerialize *pSerialize, Tlv &Value)
 {
@@ -59,6 +246,7 @@ bool SerializeStruct(ISerialize *pSerialize, Tlv &Value)
 
 struct UserInfo
 {
+	bool bValue;
 	int UserID;
 	std::string strValue;
 	Tlv t;
@@ -72,6 +260,7 @@ struct UserInfo
 	}
 	void init()
 	{
+		bValue = true;
 		UserID = 123456;
 		unsigned char szTemp[] = { 'a',0x00,'b',0xFF };
 		strValue.append((char*)szTemp, _countof(szTemp));
@@ -81,7 +270,7 @@ struct UserInfo
 		TlvArray.push_back(t1);
 
 		t1.ID = 8888;
-		t1.strValue = "king king";
+		t1.strValue = "king king，你好世界";
 		TlvArray.push_back(t1);
 
 		ArrayInt.push_back(1);
@@ -103,6 +292,7 @@ struct UserInfo
 	{
 		try
 		{
+			SERIALIZE_VALUE(bValue);
 			SERIALIZE_VALUE(UserID);
 			SERIALIZE_VALUE(strValue);
 			SERIALIZE_VALUE(t);
@@ -122,6 +312,7 @@ bool SerializeStruct(ISerialize *pSerialize, UserInfo &Value)
 {
 	try
 	{
+		SERIALIZE_STRUCT_VALUE(bValue);
 		SERIALIZE_STRUCT_VALUE(UserID);
 		SERIALIZE_STRUCT_VALUE(strValue);
 		SERIALIZE_STRUCT_VALUE(t);
@@ -451,10 +642,14 @@ public:
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	CUTF8_GBK_Convert c;
-	c.Open();
-	SerializeHelper::SetConverStringCode(c);
+	std::map<DWORD, DWORD> mp = { {1,2} , {2,3} };
+	//CUTF8_GBK_Convert c;
+	//c.Open();
+	//SerializeHelper::SetConverStringCode(c);
 
+	{
+		TestXml();
+	}
 
 	TestFunc();
 	CB<CA> cccb(1), cb2(1.1);

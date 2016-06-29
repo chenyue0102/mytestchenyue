@@ -105,8 +105,10 @@ void CJsonSerialize::BeginSerlizeStruct(const char *pstrName)
 		{
 			//这个元素应存入数组
 			assert(m_pCurValue->isNull());
-			//将当前结构体调整为Object，结束的时候，再置回去
-			m_pCurValue.reset(new Json::Value(Json::objectValue));
+			//将当前结构体调整为Object
+			//此逻辑是BeginSerlizeArrayItem的时候，不知道接下来要序列化的东西类型，
+			//所以BeginSerlizeArrayItem先创建了一个未知元素类型，此时需要将其调整为数组
+			*m_pCurValue = Json::Value(Json::objectValue);
 		}
 		else
 		{
@@ -135,7 +137,7 @@ void CJsonSerialize::EndSerlizeStruct(const char *pstrName)
 	{
 		if (nullptr == pstrName)
 		{
-
+			//do nothing
 		}
 		else
 		{
@@ -183,8 +185,10 @@ void CJsonSerialize::BeginSerlizeArray(unsigned long &ulCount, const char *pstrN
 		{
 			//这个元素应存入数组
 			assert(m_pCurValue->isNull());
-			//将当前结构体调整为array，结束的时候，再置回去
-			m_pCurValue.reset(new Json::Value(Json::arrayValue));
+			//将当前结构体调整为array
+			//此逻辑是BeginSerlizeArrayItem的时候，不知道接下来要序列化的东西类型，
+			//所以BeginSerlizeArrayItem先创建了一个未知元素类型，此时需要将其调整为数组
+			*m_pCurValue = Json::Value(Json::arrayValue);
 		}
 		else
 		{
@@ -213,7 +217,7 @@ void CJsonSerialize::EndSerlizeArray(const char *pstrName)
 	{
 		if (nullptr == pstrName)
 		{
-
+			//do nothing
 		}
 		else
 		{

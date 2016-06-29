@@ -39,6 +39,9 @@
     <ClInclude Include="UTF8_GBK_Convert.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="XmlSerialize.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -57,6 +60,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="UTF8_GBK_Convert.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="XmlSerialize.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

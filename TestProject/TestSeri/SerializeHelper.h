@@ -20,7 +20,7 @@
 #define SERIALIZE_CHAR(value) \
                 Serialize(pSerialize, value, _countof(value), #value); \
 
-//序列化除了字符数组以外的宏定义
+//序列化除了字符数组以外的宏定义，使用外部的序列化函数时的帮助函数
 #define SERIALIZE_STRUCT_VALUE(value) \
                 Serialize(pSerialize, Value.value, #value); \
 
@@ -70,7 +70,7 @@ bool SerializeStruct(ISerialize *pSerialize, Tlv &Value)
 #define USER_CLASS_MEMBER_SERIALIZE
 
 /************************************************************************/
-/* 序列化的一些帮助函数，使得使用序列化的时候，简化统一方式，                   */
+/* 序列化的一些帮助函数，使得使用序列化的时候，简化统一方式，           */
 /* pSerialize指针这里不会判空，外部判断                                 */
 /************************************************************************/
 namespace SerializeHelper
@@ -307,7 +307,7 @@ void Serialize(ISerialize *pSerialize, std::vector<T> &tArray, const char *pstrN
 	}
 	catch (int)
 	{
-		//没有结构体，认为是正常
+		// Json，Xml没有结构体，认为是正常。
 		return;
 	}
 	
