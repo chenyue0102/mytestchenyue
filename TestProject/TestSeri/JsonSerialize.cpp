@@ -5,7 +5,7 @@ CJsonSerialize::CJsonSerialize()
 	: m_iSerializationType(enum_Serialization_Type_Default)
 	, m_pRootValue(new Json::Value(Json::objectValue))
 	, m_pCurValue(nullptr)
-	, m_StackJsonValue()
+	, m_StackValue()
 	, m_bHaveWriteToBuffer(false)
 {
 	m_pCurValue = m_pRootValue;
@@ -34,6 +34,11 @@ ENUM_SERIALIZATION_TYPE CJsonSerialize::GetSerializationType()
 		assert(false);
 	}
 	return m_iSerializationType;
+}
+
+EnumSerializeFormat CJsonSerialize::GetSerializeFormat()
+{
+	return EnumSerializeFormatJson;
 }
 
 bool CJsonSerialize::SetData(const char *pstrText, unsigned long ulDataLength)
@@ -90,7 +95,7 @@ void CJsonSerialize::BeginSerlizeStruct(const char *pstrName)
 				assert(false);
 				throw - 1;
 			}
-			m_StackJsonValue.push(m_pCurValue);
+			m_StackValue.push(m_pCurValue);
 			m_pCurValue.reset(new Json::Value(NewValue));
 		}
 	}
@@ -105,7 +110,7 @@ void CJsonSerialize::BeginSerlizeStruct(const char *pstrName)
 		}
 		else
 		{
-			m_StackJsonValue.push(m_pCurValue);
+			m_StackValue.push(m_pCurValue);
 			m_pCurValue.reset(new Json::Value(Json::objectValue));
 		}
 	}
@@ -122,8 +127,8 @@ void CJsonSerialize::EndSerlizeStruct(const char *pstrName)
 		else
 		{
 			assert(m_pCurValue->isObject());
-			m_pCurValue = m_StackJsonValue.top();
-			m_StackJsonValue.pop();
+			m_pCurValue = m_StackValue.top();
+			m_StackValue.pop();
 		}
 	}
 	else
@@ -134,8 +139,8 @@ void CJsonSerialize::EndSerlizeStruct(const char *pstrName)
 		}
 		else
 		{
-			std::shared_ptr<Json::Value> pOldCurValue = m_StackJsonValue.top();
-			m_StackJsonValue.pop();
+			std::shared_ptr<Json::Value> pOldCurValue = m_StackValue.top();
+			m_StackValue.pop();
 
 			(*pOldCurValue)[pstrName] = *m_pCurValue;
 			m_pCurValue = pOldCurValue;
@@ -168,7 +173,7 @@ void CJsonSerialize::BeginSerlizeArray(unsigned long &ulCount, const char *pstrN
 				throw (-1);
 			}
 			ulCount = TempValue.size();
-			m_StackJsonValue.push(m_pCurValue);
+			m_StackValue.push(m_pCurValue);
 			m_pCurValue.reset(new Json::Value(TempValue));
 		}
 	}
@@ -183,7 +188,7 @@ void CJsonSerialize::BeginSerlizeArray(unsigned long &ulCount, const char *pstrN
 		}
 		else
 		{
-			m_StackJsonValue.push(m_pCurValue);
+			m_StackValue.push(m_pCurValue);
 			m_pCurValue.reset(new Json::Value(Json::arrayValue));
 		}
 	}
@@ -200,8 +205,8 @@ void CJsonSerialize::EndSerlizeArray(const char *pstrName)
 		else
 		{
 			assert(m_pCurValue->isArray());
-			m_pCurValue = m_StackJsonValue.top();
-			m_StackJsonValue.pop();
+			m_pCurValue = m_StackValue.top();
+			m_StackValue.pop();
 		}
 	}
 	else
@@ -212,8 +217,8 @@ void CJsonSerialize::EndSerlizeArray(const char *pstrName)
 		}
 		else
 		{
-			std::shared_ptr<Json::Value> pOldCurValue = m_StackJsonValue.top();
-			m_StackJsonValue.pop();
+			std::shared_ptr<Json::Value> pOldCurValue = m_StackValue.top();
+			m_StackValue.pop();
 
 			if (nullptr == pstrName)
 			{
@@ -247,12 +252,12 @@ void CJsonSerialize::BeginSerlizeArrayItem(unsigned long ulIndex, const char *ps
 		}
 		Json::Value Item = (*m_pCurValue)[Json::ArrayIndex(ulIndex)];
 		assert(!Item.isNull());
-		m_StackJsonValue.push(m_pCurValue);
+		m_StackValue.push(m_pCurValue);
 		m_pCurValue.reset(new Json::Value(Item));
 	}
 	else
 	{
-		m_StackJsonValue.push(m_pCurValue);
+		m_StackValue.push(m_pCurValue);
 		//未知元素类型
 		m_pCurValue.reset(new Json::Value());
 	}
@@ -262,14 +267,14 @@ void CJsonSerialize::EndSerlizeArrayItem(unsigned long ulIndex, const char *pstr
 {
 	if (enum_Serialization_Type_Read == m_iSerializationType)
 	{
-		m_pCurValue = m_StackJsonValue.top();
-		m_StackJsonValue.pop();
+		m_pCurValue = m_StackValue.top();
+		m_StackValue.pop();
 		assert(m_pCurValue->isArray());
 	}
 	else
 	{
-		std::shared_ptr<Json::Value> pOldCurValue = m_StackJsonValue.top();
-		m_StackJsonValue.pop();
+		std::shared_ptr<Json::Value> pOldCurValue = m_StackValue.top();
+		m_StackValue.pop();
 
 		//这个元素应存入数组
 		pOldCurValue->append(*m_pCurValue);

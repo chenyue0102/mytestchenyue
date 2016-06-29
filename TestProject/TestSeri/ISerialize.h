@@ -19,6 +19,16 @@ enum ENUM_SERIALIZATION_TYPE
 	enum_Serialization_Type_Write,		// 写入数据
 };
 
+// 序列化的格式
+enum EnumSerializeFormat
+{
+	EnumSerializeFormatNone,
+	EnumSerializeFormatBinary,	// 二进制，
+	EnumSerializeFormatJson,	// Json格式，序列化std::string的时候，Json格式只接受utf8字符串
+	EnumSerializeFormatXml,		// Xml格式，序列化std::string的时候，只接受utf8字符串
+
+};
+
 /************************************************************************/
 /* 序列化的接口，统一二进制与Json序列化方式                                  */
 /************************************************************************/
@@ -41,6 +51,14 @@ public://缓冲区设置函数
 	// 函数说明：获取序列化方式
 	// $_FUNCTION_END *********************************************************
 	virtual ENUM_SERIALIZATION_TYPE GetSerializationType() = 0;
+
+	// $_FUNCTION_BEGIN *******************************************************
+	// 函数名称：GetSerializeFormat
+	// 函数参数：
+	// 返 回 值：序列化的格式
+	// 函数说明：获取序列化的格式
+	// $_FUNCTION_END *********************************************************
+	virtual EnumSerializeFormat GetSerializeFormat() = 0;
 
 	// $_FUNCTION_BEGIN *******************************************************
 	// 函数名称：SetData

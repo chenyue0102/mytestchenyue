@@ -2,7 +2,7 @@
 // 文件名称：JsonSerialize.h
 // 创建日期：2016-04-08
 // 创建人：陈月
-// 文件说明：序列化类,将数据读出或写入到Json
+// 文件说明：序列化类,将数据读出或写入到Json，Json中，字符串格式为utf8
 // $_FILEHEADER_END ***********************************************************
 #pragma once
 #include <memory>
@@ -38,9 +38,17 @@ public:
 	virtual ENUM_SERIALIZATION_TYPE GetSerializationType()override;
 
 	// $_FUNCTION_BEGIN *******************************************************
+	// 函数名称：GetSerializeFormat
+	// 函数参数：
+	// 返 回 值：序列化的格式
+	// 函数说明：获取序列化的格式
+	// $_FUNCTION_END *********************************************************
+	virtual EnumSerializeFormat GetSerializeFormat()override;
+
+	// $_FUNCTION_BEGIN *******************************************************
 	// 函数名称：SetData
 	// 函数参数：
-	//					pstrText			[输入]		缓冲区
+	//					pstrText			[输入]		缓冲区，字符串格式为utf8
 	//					ulDataLength		[输入]		缓冲区长度
 	// 返 回 值：bool
 	// 函数说明：设置需要序列化读的缓冲区
@@ -50,7 +58,7 @@ public:
 	// $_FUNCTION_BEGIN *******************************************************
 	// 函数名称：GetData
 	// 函数参数：
-	// 返 回 值：序列化缓冲区
+	// 返 回 值：序列化缓冲区，字符串格式为utf8
 	// 函数说明：获取序列化缓冲区
 	// $_FUNCTION_END *********************************************************
 	virtual const char* GetData()override;
@@ -241,7 +249,7 @@ public:
 	// $_FUNCTION_BEGIN *******************************************************
 	// 函数名称：EndSerlizeArrayItem
 	// 函数参数：
-	//					Value				[输入/输出]	需要序列化的参数
+	//					Value				[输入/输出]	需要序列化的参数，字符串格式为utf8
 	//					pstrName			[输入]		参数的名字,nullptr表示此参数没有名字
 	// 返 回 值：
 	// 函数说明：序列化变量
@@ -258,7 +266,7 @@ private:
 	//Json当前的节点
 	std::shared_ptr<Json::Value> m_pCurValue;
 	//递归已经入栈的节点
-	std::stack<std::shared_ptr<Json::Value>> m_StackJsonValue;
+	std::stack<std::shared_ptr<Json::Value>> m_StackValue;
 	//序列化结果缓冲区
 	std::string	m_strBuffer;
 	//是否已经将结果打入缓冲区了。
