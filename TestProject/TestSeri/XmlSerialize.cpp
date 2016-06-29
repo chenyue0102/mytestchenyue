@@ -313,7 +313,6 @@ void CXmlSerialize::Serialization(bool & Value, const char * pstrName)
 	}
 	else
 	{
-		const char *pstrValue = nullptr;
 		TiXmlText *pXmlText = new TiXmlText(Value ? "true" : "false");
 		if (nullptr == pstrName)
 		{
@@ -403,7 +402,6 @@ void CXmlSerialize::Serialization(long long & Value, const char * pstrName)
 	}
 	else
 	{
-		const char *pstrValue = nullptr;
 		TiXmlText *pXmlText = new TiXmlText(std::to_string(Value).c_str());
 		if (nullptr == pstrName)
 		{
@@ -451,7 +449,6 @@ void CXmlSerialize::Serialization(unsigned long long & Value, const char * pstrN
 	}
 	else
 	{
-		const char *pstrValue = nullptr;
 		TiXmlText *pXmlText = new TiXmlText(std::to_string(Value).c_str());
 		if (nullptr == pstrName)
 		{
@@ -506,7 +503,6 @@ void CXmlSerialize::Serialization(double & Value, const char * pstrName)
 	}
 	else
 	{
-		const char *pstrValue = nullptr;
 		TiXmlText *pXmlText = new TiXmlText(std::to_string(Value).c_str());
 		if (nullptr == pstrName)
 		{
@@ -553,7 +549,6 @@ void CXmlSerialize::Serialization(std::string & Value, const char * pstrName)
 	}
 	else
 	{
-		const char *pstrValue = nullptr;
 		TiXmlText *pXmlText = new TiXmlText(Value.c_str());
 		if (nullptr == pstrName)
 		{
