@@ -34,13 +34,16 @@ void Test2()
 }
 int _tmain(int argc, _TCHAR* argv[])
 {
+	//序列化函数为结构体成员函数形式
 	Test<CXmlSerialize>();
 	Test<CJsonSerialize>();
 	Test<CSerialization>();
 
+	//序列化函数为全局函数形式
 	Test2<CXmlSerialize>();
 	Test2<CJsonSerialize>();
 	Test2<CSerialization>();
+	
 	return 0;
 }
 

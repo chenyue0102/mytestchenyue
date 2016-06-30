@@ -48,16 +48,15 @@ void DoTest2(ISerialize * pSerializeWrite, ISerialize * pSerializeRead)
 		assert(false);
 	}
 
-	std::string strUTF8Xml;
+	std::string strBuffer(pSerializeWrite->GetData(), pSerializeWrite->GetDataLen());
 	std::wstring strWText;
 	if (pSerializeWrite->GetSerializeFormat() != EnumSerializeFormatBinary)
 	{
-		strUTF8Xml.append(pSerializeWrite->GetData(), pSerializeWrite->GetDataLen());
-		strWText = UTF8ToWChar(strUTF8Xml);
+		strWText = UTF8ToWChar(strBuffer);
 	}
 
 	pSerializeRead->SetSerializationType(enum_Serialization_Type_Read);
-	pSerializeRead->SetData(strUTF8Xml.data(), strUTF8Xml.size());
+	pSerializeRead->SetData(strBuffer.data(), strBuffer.size());
 	T AllTypeRead;
 	if (!SerializeStruct(pSerializeRead, AllTypeRead))
 	{
