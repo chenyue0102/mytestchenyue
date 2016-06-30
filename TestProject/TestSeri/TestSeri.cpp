@@ -20,11 +20,27 @@ void Test()
 		DoTest<TestContainer>(&XmlSerializeWrite, &XmlSerializeRead);
 	}
 }
+template<typename T>
+void Test2()
+{
+	{
+		T XmlSerializeWrite, XmlSerializeRead;
+		DoTest2<TestAllType>(&XmlSerializeWrite, &XmlSerializeRead);
+	}
+	{
+		T XmlSerializeWrite, XmlSerializeRead;
+		DoTest2<TestContainer>(&XmlSerializeWrite, &XmlSerializeRead);
+	}
+}
 int _tmain(int argc, _TCHAR* argv[])
 {
 	Test<CXmlSerialize>();
 	Test<CJsonSerialize>();
 	Test<CSerialization>();
+
+	Test2<CXmlSerialize>();
+	Test2<CJsonSerialize>();
+	Test2<CSerialization>();
 	return 0;
 }
 

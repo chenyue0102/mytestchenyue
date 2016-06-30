@@ -6,6 +6,7 @@
 // $_FILEHEADER_END ***********************************************************
 #pragma once
 #include <vector>
+#include <windows.h>
 #include "ISerialize.h"
 
 
@@ -24,50 +25,6 @@
 #define SERIALIZE_STRUCT_VALUE(value) \
                 SerializeHelper::Serialize(pSerialize, Value.value, #value); \
 
-
-/*
-序列化结构体的时候，使用成员变量序列化函数，否则使用外部的序列化函数。示例如下
-使用成员变量序列化函数
-struct Tlv
-{
-	DWORD dwID;
-	std::string strValue;
-	BOOL Serialization(ISerialize *pSerialize)
-	{
-		try
-		{
-			Serialize(pSerialize, ID, "ID");
-			Serialize(pSerialize, strValue, "strValue");
-		}
-		catch (...)
-		{
-			return FALSE;
-		}
-		return TRUE;
-	}
-};
-使用外部的序列化函数
-struct Tlv
-{
-	DWORD dwID;
-	std::string strValue;
-}
-bool SerializeStruct(ISerialize *pSerialize, Tlv &Value)
-{
-	try
-	{
-		SERIALIZE_STRUCT_VALUE(ID);
-		SERIALIZE_STRUCT_VALUE(strValue);
-	}
-	catch (...)
-	{
-		assert(false);
-		return false;
-	}
-	return true;
-}
-*/
-#define USER_CLASS_MEMBER_SERIALIZE
 
 /************************************************************************/
 /* 序列化的一些帮助函数，使得使用序列化的时候，简化统一方式，           */
@@ -284,6 +241,23 @@ void Serialize(ISerialize *pSerialize, char *Value, unsigned long ulValueBufferS
 // 函数说明：序列化结构体变量
 // $_FUNCTION_END *********************************************************
 template<typename T>
+inline BOOL SerializeStruct(ISerialize *pSerialize, T &Value)
+{
+	//T类型必须是结构体或者类
+	static_assert(std::is_class<T>::value, "Serialize T must be struct or class");
+	return Value.Serialization(pSerialize);
+}
+
+// $_FUNCTION_BEGIN *******************************************************
+// 函数名称：Serialize
+// 函数参数：
+//					pSerialize			[输入]		序列化接口
+//					Value				[输入/输出]	需要序列化的参数
+//					pstrName			[输入]		参数的名字,nullptr表示此参数没有名字
+// 返 回 值：
+// 函数说明：序列化结构体变量
+// $_FUNCTION_END *********************************************************
+template<typename T>
 void Serialize(ISerialize *pSerialize, T &Value, const char *pstrName)
 {
 	//T类型必须是结构体或者类
@@ -299,12 +273,10 @@ void Serialize(ISerialize *pSerialize, T &Value, const char *pstrName)
 		return;
 	}
 	
-#ifdef USER_CLASS_MEMBER_SERIALIZE
-	if (!Value.Serialization(pSerialize))
-		throw(-1);
-#else
-	SerializeStruct(pSerialize, Value);
-#endif
+	if (!SerializeStruct(pSerialize, Value))
+	{
+		throw - 1;
+	}
 
 	pSerialize->EndSerlizeStruct(pstrName);
 }

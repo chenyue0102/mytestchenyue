@@ -21,6 +21,32 @@ bool operator==(const std::vector<T> &left, const std::vector<T> &right)
 	return true;
 }
 
+bool SerializeStruct(ISerialize *pSerialize, TestAllType &Value)
+{
+	try
+	{
+		SERIALIZE_STRUCT_VALUE(b);
+		SERIALIZE_STRUCT_VALUE(c);
+		SERIALIZE_STRUCT_VALUE(uc);
+		SERIALIZE_STRUCT_VALUE(s);
+		SERIALIZE_STRUCT_VALUE(us);
+		SERIALIZE_STRUCT_VALUE(i);
+		SERIALIZE_STRUCT_VALUE(ui);
+		SERIALIZE_STRUCT_VALUE(l);
+		SERIALIZE_STRUCT_VALUE(ul);
+		SERIALIZE_STRUCT_VALUE(ll);
+		SERIALIZE_STRUCT_VALUE(ull);
+		SERIALIZE_STRUCT_VALUE(f);
+		SERIALIZE_STRUCT_VALUE(d);
+		SERIALIZE_STRUCT_VALUE(ld);
+		SERIALIZE_STRUCT_VALUE(ss);
+	}
+	catch (...)
+	{
+		return false;
+	}
+	return true;
+}
 
 void TestAllType::init()
 {
@@ -108,6 +134,20 @@ BOOL TestStruct::Serialization(ISerialize * pSerialize)
 	return TRUE;
 }
 
+bool SerializeStruct(ISerialize *pSerialize, TestStruct &Value)
+{
+	try
+	{
+		SERIALIZE_STRUCT_VALUE(id);
+		SERIALIZE_STRUCT_VALUE(strValue);
+	}
+	catch (...)
+	{
+		return false;
+	}
+	return true;
+}
+
 bool TestStruct::operator==(const TestStruct & other) const
 {
 	return (id == other.id
@@ -156,6 +196,24 @@ BOOL TestArray::Serialization(ISerialize *pSerialize)
 	return TRUE;
 }
 
+bool SerializeStruct(ISerialize * pSerialize, TestArray & Value)
+{
+	try
+	{
+		SERIALIZE_STRUCT_VALUE(idarray);
+		SERIALIZE_STRUCT_VALUE(ts);
+		SERIALIZE_STRUCT_VALUE(vt);
+		SERIALIZE_STRUCT_VALUE(vvs);
+		SERIALIZE_STRUCT_VALUE(vts);
+		SERIALIZE_STRUCT_VALUE(vvts);
+	}
+	catch (...)
+	{
+		return false;
+	}
+	return true;
+}
+
 bool TestArray::operator==(const TestArray & other) const
 {
 	return (idarray == other.idarray
@@ -186,6 +244,21 @@ BOOL TestContainer::Serialization(ISerialize * pSerialize)
 		return FALSE;
 	}
 	return TRUE;
+}
+
+bool SerializeStruct(ISerialize * pSerialize, TestContainer & Value)
+{
+	try
+	{
+		SERIALIZE_STRUCT_VALUE(idcontainer);
+		SERIALIZE_STRUCT_VALUE(ts);
+		SERIALIZE_STRUCT_VALUE(ta);
+	}
+	catch (...)
+	{
+		return false;
+	}
+	return true;
 }
 
 bool TestContainer::operator==(const TestContainer & other) const

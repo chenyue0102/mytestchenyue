@@ -37,6 +37,36 @@ void DoTest(ISerialize * pSerializeWrite, ISerialize * pSerializeRead)
 	assert(AllTypeWrite == AllTypeRead);
 }
 
+template<typename T>
+void DoTest2(ISerialize * pSerializeWrite, ISerialize * pSerializeRead)
+{
+	T AllTypeWrite;
+	AllTypeWrite.init();
+	pSerializeWrite->SetSerializationType(enum_Serialization_Type_Write);
+	if (!SerializeStruct(pSerializeWrite, AllTypeWrite))
+	{
+		assert(false);
+	}
+
+	std::string strUTF8Xml;
+	std::wstring strWText;
+	if (pSerializeWrite->GetSerializeFormat() != EnumSerializeFormatBinary)
+	{
+		strUTF8Xml.append(pSerializeWrite->GetData(), pSerializeWrite->GetDataLen());
+		strWText = UTF8ToWChar(strUTF8Xml);
+	}
+
+	pSerializeRead->SetSerializationType(enum_Serialization_Type_Read);
+	pSerializeRead->SetData(strUTF8Xml.data(), strUTF8Xml.size());
+	T AllTypeRead;
+	if (!SerializeStruct(pSerializeRead, AllTypeRead))
+	{
+		assert(false);
+	}
+
+	assert(AllTypeWrite == AllTypeRead);
+}
+
 struct TestAllType
 {
 	bool b = false;
@@ -60,6 +90,8 @@ struct TestAllType
 	bool operator==(const TestAllType &other)const;
 };
 
+bool SerializeStruct(ISerialize *pSerialize, TestAllType &Value);
+
 struct TestStruct
 {
 	int id = 0;
@@ -69,6 +101,8 @@ struct TestStruct
 	BOOL Serialization(ISerialize *pSerialize);
 	bool operator==(const TestStruct &other)const;
 };
+
+bool SerializeStruct(ISerialize *pSerialize, TestStruct &Value);
 
 struct TestArray
 {
@@ -84,6 +118,8 @@ struct TestArray
 	bool operator==(const TestArray &other)const;
 };
 
+bool SerializeStruct(ISerialize *pSerialize, TestArray &Value);
+
 struct TestContainer
 {
 	int idcontainer = 0;
@@ -94,3 +130,5 @@ struct TestContainer
 	BOOL Serialization(ISerialize *pSerialize);
 	bool operator==(const TestContainer &other)const;
 };
+
+bool SerializeStruct(ISerialize *pSerialize, TestContainer &Value);
