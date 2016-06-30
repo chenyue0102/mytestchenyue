@@ -29,7 +29,6 @@ distribution.
 
 #include <assert.h>
 #include <string.h>
-#include "tinyxmlexport.h"
 
 /*	The support for explicit isn't that universal, and it isn't really
 	required - it is used to check that the TiXmlString class isn't incorrectly
@@ -53,7 +52,7 @@ distribution.
    The buffer allocation is made by a simplistic power of 2 like mechanism : if we increase
    a string and there's no more room, we allocate a buffer twice as big as we need.
 */
-class TINYXML_EXPORTS TiXmlString
+class TiXmlString
 {
   public :
 	// The size type used
@@ -282,7 +281,7 @@ TiXmlString operator + (const char* a, const TiXmlString & b);
    TiXmlOutStream is an emulation of std::ostream. It is based on TiXmlString.
    Only the operators that we need for TinyXML have been developped.
 */
-class TINYXML_EXPORTS TiXmlOutStream : public TiXmlString
+class TiXmlOutStream : public TiXmlString
 {
 public :
 

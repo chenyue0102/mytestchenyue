@@ -43,14 +43,6 @@ distribution.
 #define DEBUG
 #endif
 
-//VS2010±àÒë³öµÄ¾²Ì¬¿â
-#ifdef _DEBUG
-	#pragma comment(lib,"tinyxmlMDd.lib")
-#else		//_DEBUG	
-	#pragma comment(lib,"tinyxmlMdR.lib")
-#endif		//_DEBUG
-
-
 #ifdef TIXML_USE_STL
 	#include <string>
  	#include <iostream>
@@ -60,7 +52,6 @@ distribution.
 	#include "tinystr.h"
 	#define TIXML_STRING		TiXmlString
 #endif
-#include "tinyxmlexport.h"
 
 // Deprecated library function hell. Compilers want to use the
 // new safe versions. This probably doesn't fully address the problem,
@@ -105,7 +96,7 @@ const int TIXML_PATCH_VERSION = 2;
 /*	Internal structure for tracking location of items 
 	in the XML file.
 */
-struct TINYXML_EXPORTS TiXmlCursor
+struct TiXmlCursor
 {
 	TiXmlCursor()		{ Clear(); }
 	void Clear()		{ row = col = -1; }
@@ -134,7 +125,7 @@ struct TINYXML_EXPORTS TiXmlCursor
 
 	@sa TiXmlNode::Accept()
 */
-class TINYXML_EXPORTS TiXmlVisitor
+class TiXmlVisitor
 {
 public:
 	virtual ~TiXmlVisitor() {}
@@ -200,7 +191,7 @@ const TiXmlEncoding TIXML_DEFAULT_ENCODING = TIXML_ENCODING_UNKNOWN;
 	A Decleration contains: Attributes (not on tree)
 	@endverbatim
 */
-class TINYXML_EXPORTS TiXmlBase
+class TiXmlBase
 {
 	friend class TiXmlNode;
 	friend class TiXmlElement;
@@ -429,7 +420,7 @@ private:
 	in a document, or stand on its own. The type of a TiXmlNode
 	can be queried, and it can be cast to its more defined type.
 */
-class TINYXML_EXPORTS TiXmlNode : public TiXmlBase
+class TiXmlNode : public TiXmlBase
 {
 	friend class TiXmlDocument;
 	friend class TiXmlElement;
@@ -785,7 +776,7 @@ private:
 		  part of the tinyXML document object model. There are other
 		  suggested ways to look at this problem.
 */
-class TINYXML_EXPORTS TiXmlAttribute : public TiXmlBase
+class TiXmlAttribute : public TiXmlBase
 {
 	friend class TiXmlAttributeSet;
 
@@ -909,7 +900,7 @@ private:
 		- I like circular lists
 		- it demonstrates some independence from the (typical) doubly linked list.
 */
-class TINYXML_EXPORTS TiXmlAttributeSet
+class TiXmlAttributeSet
 {
 public:
 	TiXmlAttributeSet();
@@ -946,7 +937,7 @@ private:
 	and can contain other elements, text, comments, and unknowns.
 	Elements also contain an arbitrary number of attributes.
 */
-class TINYXML_EXPORTS TiXmlElement : public TiXmlNode
+class TiXmlElement : public TiXmlNode
 {
 public:
 	/// Construct an element.
@@ -1168,7 +1159,7 @@ private:
 
 /**	An XML comment.
 */
-class TINYXML_EXPORTS TiXmlComment : public TiXmlNode
+class TiXmlComment : public TiXmlNode
 {
 public:
 	/// Constructs an empty comment.
@@ -1218,7 +1209,7 @@ private:
 	you generally want to leave it alone, but you can change the output mode with 
 	SetCDATA() and query it with CDATA().
 */
-class TINYXML_EXPORTS TiXmlText : public TiXmlNode
+class TiXmlText : public TiXmlNode
 {
 	friend class TiXmlElement;
 public:
@@ -1291,7 +1282,7 @@ private:
 	handled as special cases, not generic attributes, simply
 	because there can only be at most 3 and they are always the same.
 */
-class TINYXML_EXPORTS TiXmlDeclaration : public TiXmlNode
+class TiXmlDeclaration : public TiXmlNode
 {
 public:
 	/// Construct an empty declaration.
@@ -1360,7 +1351,7 @@ private:
 
 	DTD tags get thrown into TiXmlUnknowns.
 */
-class TINYXML_EXPORTS TiXmlUnknown : public TiXmlNode
+class TiXmlUnknown : public TiXmlNode
 {
 public:
 	TiXmlUnknown() : TiXmlNode( TiXmlNode::TINYXML_UNKNOWN )	{}
@@ -1399,7 +1390,7 @@ private:
 	XML pieces. It can be saved, loaded, and printed to the screen.
 	The 'value' of a document node is the xml file name.
 */
-class TINYXML_EXPORTS TiXmlDocument : public TiXmlNode
+class TiXmlDocument : public TiXmlNode
 {
 public:
 	/// Create an empty document, that has no name.
@@ -1644,7 +1635,7 @@ private:
 	}
 	@endverbatim
 */
-class TINYXML_EXPORTS TiXmlHandle
+class TiXmlHandle
 {
 public:
 	/// Create a handle from any node (at any depth of the tree.) This can be a null pointer.
@@ -1743,7 +1734,7 @@ private:
 	fprintf( stdout, "%s", printer.CStr() );
 	@endverbatim
 */
-class TINYXML_EXPORTS TiXmlPrinter : public TiXmlVisitor
+class TiXmlPrinter : public TiXmlVisitor
 {
 public:
 	TiXmlPrinter() : depth( 0 ), simpleTextPrint( false ),
