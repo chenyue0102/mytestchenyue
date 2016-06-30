@@ -40,6 +40,8 @@ bool SerializeStruct(ISerialize *pSerialize, TestAllType &Value)
 		SERIALIZE_STRUCT_VALUE(d);
 		SERIALIZE_STRUCT_VALUE(ld);
 		SERIALIZE_STRUCT_VALUE(ss);
+		SERIALIZE_STRUCT_CHAR(szText);
+		SERIALIZE_STRUCT_ARRAY(Keys);
 	}
 	catch (...)
 	{
@@ -65,6 +67,13 @@ void TestAllType::init()
 	d = 456.789;
 	ld = 789.123;
 	ss = R"(hello,world,ÄãºÃ£¬ÊÀ½ç,~!@#$%^&*()_+|}{": ? > < , . / ;'`[]-=\)";
+	strcpy(szText, "hello, world,szText");
+	int nBegin = 2000;
+	for (auto &OneKey : Keys)
+	{
+		OneKey = nBegin++;
+	}
+	
 }
 
 BOOL TestAllType::Serialization(ISerialize *pSerialize)
@@ -86,6 +95,8 @@ BOOL TestAllType::Serialization(ISerialize *pSerialize)
 		SERIALIZE_VALUE(d);
 		SERIALIZE_VALUE(ld);
 		SERIALIZE_VALUE(ss);
+		SERIALIZE_CHAR(szText);
+		SERIALIZE_ARRAY(Keys);
 	}
 	catch (...)
 	{
@@ -176,6 +187,15 @@ void TestArray::init()
 
 	vvts.push_back(vtsTemp);
 	vvts.push_back(std::vector<TestStruct>());
+
+	tsArray[1].id = 6565;
+	tsArray[1].strValue = "tsArray1,6565";
+
+	tsArray[2].id = 7878;
+	tsArray[2].strValue = "tsArray2,7878";
+
+	vtArray[0] = { 111,222,333 };
+	vtArray[2] = { 44,55,66 };
 }
 
 BOOL TestArray::Serialization(ISerialize *pSerialize)
@@ -188,6 +208,8 @@ BOOL TestArray::Serialization(ISerialize *pSerialize)
 		SERIALIZE_VALUE(vvs);
 		SERIALIZE_VALUE(vts);
 		SERIALIZE_VALUE(vvts);
+		SERIALIZE_ARRAY(tsArray);
+		SERIALIZE_ARRAY(vtArray);
 	}
 	catch (...)
 	{
@@ -206,6 +228,8 @@ bool SerializeStruct(ISerialize * pSerialize, TestArray & Value)
 		SERIALIZE_STRUCT_VALUE(vvs);
 		SERIALIZE_STRUCT_VALUE(vts);
 		SERIALIZE_STRUCT_VALUE(vvts);
+		SERIALIZE_STRUCT_ARRAY(tsArray);
+		SERIALIZE_STRUCT_ARRAY(vtArray);
 	}
 	catch (...)
 	{

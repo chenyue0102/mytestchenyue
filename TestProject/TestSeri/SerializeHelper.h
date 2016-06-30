@@ -10,19 +10,34 @@
 
 
 /************************************************************************/
-/* 序列化宏                                                              */
+/* 序列化宏 Serialization                                                */
 /************************************************************************/
 //序列化除了字符数组以外的宏定义
 #define SERIALIZE_VALUE(value) \
-                SerializeHelper::Serialize(pSerialize, value, #value); \
+                SerializeHelper::Serialize(pSerialize, value, #value); 
 
 //序列化字符串数组宏定义
 #define SERIALIZE_CHAR(value) \
-                SerializeHelper::Serialize(pSerialize, value, _countof(value), #value); \
+                SerializeHelper::Serialize(pSerialize, value, _countof(value), #value); 
 
+//序列化数组
+#define SERIALIZE_ARRAY(value) \
+				SerializeHelper::Serialize(pSerialize, value, _countof(value), #value); 
+
+/************************************************************************/
+/* 使用全局序列化函数时的宏 SerializeStruct                                */
+/************************************************************************/
 //序列化除了字符数组以外的宏定义，使用外部的序列化函数时的帮助函数
 #define SERIALIZE_STRUCT_VALUE(value) \
-                SerializeHelper::Serialize(pSerialize, Value.value, #value); \
+                SerializeHelper::Serialize(pSerialize, Value.value, #value); 
+
+//序列化字符串数组宏定义
+#define SERIALIZE_STRUCT_CHAR(value) \
+                SerializeHelper::Serialize(pSerialize, Value.value, _countof(Value.value), #value); 
+
+//序列化数组
+#define SERIALIZE_STRUCT_ARRAY(value) \
+				SerializeHelper::Serialize(pSerialize, Value.value, _countof(Value.value), #value); 
 
 
 /************************************************************************/
@@ -229,6 +244,42 @@ void Serialize(ISerialize *pSerialize, std::string& Value, const char *pstrName)
 // $_FUNCTION_END *********************************************************
 void Serialize(ISerialize *pSerialize, char *Value, unsigned long ulValueBufferSize, const char *pstrName);
 
+// $_FUNCTION_BEGIN *******************************************************
+// 函数名称：Serialize
+// 函数参数：
+//					pSerialize			[输入]		序列化接口
+//					Value				[输入/输出]	需要序列化的参数数组，
+//					ulValueBufferSize	[输入/输出]	_countof(Value)大小，序列化函数会序列化
+//					pstrName			[输入]		参数的名字,nullptr表示此参数没有名字
+// 返 回 值：
+// 函数说明：序列化变量数组
+// $_FUNCTION_END *********************************************************
+template<typename T>
+void Serialize(ISerialize *pSerialize, T Value[], unsigned long ulValueCount, const char *pstrName)
+{
+	//T 类型
+	static_assert(!std::is_pointer<T>::value, "Serialize T must be not pointer");
+	unsigned long ulCount = ulValueCount;
+	try
+	{
+		//如果Json中没有这个结构体，则序列化函数会抛出异常
+		pSerialize->BeginSerlizeArray(ulCount, pstrName);
+	}
+	catch (int)
+	{
+		// Json，Xml没有结构体，认为是正常。
+		return;
+	}
+
+	assert(ulValueCount == ulCount);
+	for (unsigned long ulIndex = 0; ulIndex < ulCount && ulIndex < ulValueCount; ulIndex++)
+	{
+		pSerialize->BeginSerlizeArrayItem(ulIndex, pstrName);
+		Serialize(pSerialize, Value[ulIndex], nullptr);
+		pSerialize->EndSerlizeArrayItem(ulIndex, pstrName);
+	}
+	pSerialize->EndSerlizeArray(pstrName);
+}
 
 // $_FUNCTION_BEGIN *******************************************************
 // 函数名称：Serialize

@@ -85,6 +85,8 @@ struct TestAllType
 	double d = 0.0;
 	long double ld = 0.0;
 	std::string ss;
+	char	szText[32] = { 0 };
+	int		Keys[4] = { 0 };
 
 	void init();
 	BOOL Serialization(ISerialize *pSerialize);
@@ -113,6 +115,8 @@ struct TestArray
 	std::vector<std::vector<std::string>> vvs;
 	std::vector<TestStruct> vts;
 	std::vector<std::vector<TestStruct>> vvts;
+	TestStruct tsArray[3];
+	std::vector<int> vtArray[3];
 
 	void init();
 	BOOL Serialization(ISerialize *pSerialize);
