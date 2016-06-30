@@ -267,3 +267,65 @@ bool TestContainer::operator==(const TestContainer & other) const
 		&& ts == other.ts
 		&& ta == other.ta);
 }
+
+void TestMiss::init()
+{
+	nID = 987321;
+	strKey = "hello,world,key";
+	strMiss = "hello,world,miss";
+	strValue = "hello,world,value";
+}
+
+BOOL TestMiss::Serialization(ISerialize * pSerialize)
+{
+	try
+	{
+		SERIALIZE_VALUE(nID);
+		SERIALIZE_VALUE(strKey);
+		//SERIALIZE_VALUE(strMiss);
+		SERIALIZE_VALUE(strValue);
+	}
+	catch (...)
+	{
+		return FALSE;
+	}
+	return TRUE;
+}
+
+bool SerializeStruct(ISerialize * pSerialize, TestMiss & Value)
+{
+	try
+	{
+		SERIALIZE_STRUCT_VALUE(nID);
+		SERIALIZE_STRUCT_VALUE(strKey);
+		SERIALIZE_STRUCT_VALUE(strMiss);
+		SERIALIZE_STRUCT_VALUE(strValue);
+	}
+	catch (...)
+	{
+		return false;
+	}
+	return true;
+}
+
+void DoTestMiss(ISerialize * pSerializeWrite, ISerialize * pSerializeRead)
+{
+	//二进制不支持缺少字段
+	assert(pSerializeWrite->GetSerializeFormat() != EnumSerializeFormatBinary);
+	TestMiss MissWrite;
+	MissWrite.init();
+	pSerializeWrite->SetSerializationType(enum_Serialization_Type_Write);
+	MissWrite.Serialization(pSerializeWrite);
+
+	std::string strBuffer(pSerializeWrite->GetData(), pSerializeWrite->GetDataLen());
+	std::wstring strWText;
+	if (pSerializeWrite->GetSerializeFormat() != EnumSerializeFormatBinary)
+	{
+		strWText = UTF8ToWChar(strBuffer);
+	}
+
+	TestMiss MissRead;
+	pSerializeRead->SetSerializationType(enum_Serialization_Type_Read);
+	pSerializeRead->SetData(strBuffer.data(), strBuffer.size());
+	SerializeStruct(pSerializeRead, MissRead);
+}

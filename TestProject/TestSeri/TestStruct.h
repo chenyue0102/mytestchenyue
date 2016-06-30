@@ -22,15 +22,15 @@ void DoTest(ISerialize * pSerializeWrite, ISerialize * pSerializeRead)
 	pSerializeWrite->SetSerializationType(enum_Serialization_Type_Write);
 	AllTypeWrite.Serialization(pSerializeWrite);
 
-	std::string strUTF8Xml(pSerializeWrite->GetData(), pSerializeWrite->GetDataLen());
+	std::string strBuffer(pSerializeWrite->GetData(), pSerializeWrite->GetDataLen());
 	std::wstring strWText;
 	if (pSerializeWrite->GetSerializeFormat() != EnumSerializeFormatBinary)
 	{
-		strWText = UTF8ToWChar(strUTF8Xml);
+		strWText = UTF8ToWChar(strBuffer);
 	}
 
 	pSerializeRead->SetSerializationType(enum_Serialization_Type_Read);
-	pSerializeRead->SetData(strUTF8Xml.data(), strUTF8Xml.size());
+	pSerializeRead->SetData(strBuffer.data(), strBuffer.size());
 	T AllTypeRead;
 	AllTypeRead.Serialization(pSerializeRead);
 
@@ -65,6 +65,8 @@ void DoTest2(ISerialize * pSerializeWrite, ISerialize * pSerializeRead)
 
 	assert(AllTypeWrite == AllTypeRead);
 }
+
+void DoTestMiss(ISerialize * pSerializeWrite, ISerialize * pSerializeRead);
 
 struct TestAllType
 {
@@ -131,3 +133,16 @@ struct TestContainer
 };
 
 bool SerializeStruct(ISerialize *pSerialize, TestContainer &Value);
+
+struct TestMiss
+{
+	int nID = 0;
+	std::string strKey;
+	std::string strMiss;
+	std::string strValue;
+
+	void init();
+	BOOL Serialization(ISerialize *pSerialize);
+};
+
+bool SerializeStruct(ISerialize *pSerialize, TestMiss &Value);

@@ -32,6 +32,13 @@ void Test2()
 		DoTest2<TestContainer>(&XmlSerializeWrite, &XmlSerializeRead);
 	}
 }
+
+template<typename T>
+void Test3()
+{
+	T XmlSerializeWrite, XmlSerializeRead;
+	DoTestMiss(&XmlSerializeWrite, &XmlSerializeRead);
+}
 int _tmain(int argc, _TCHAR* argv[])
 {
 	//序列化函数为结构体成员函数形式
@@ -44,6 +51,9 @@ int _tmain(int argc, _TCHAR* argv[])
 	Test2<CJsonSerialize>();
 	Test2<CSerialization>();
 	
+	//测试缺少字段
+	Test3<CXmlSerialize>();
+	Test3<CJsonSerialize>();
 	return 0;
 }
 
