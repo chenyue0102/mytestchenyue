@@ -14,15 +14,15 @@
 /************************************************************************/
 //序列化除了字符数组以外的宏定义
 #define SERIALIZE_VALUE(value) \
-                Serialize(pSerialize, value, #value); \
+                SerializeHelper::Serialize(pSerialize, value, #value); \
 
 //序列化字符串数组宏定义
 #define SERIALIZE_CHAR(value) \
-                Serialize(pSerialize, value, _countof(value), #value); \
+                SerializeHelper::Serialize(pSerialize, value, _countof(value), #value); \
 
 //序列化除了字符数组以外的宏定义，使用外部的序列化函数时的帮助函数
 #define SERIALIZE_STRUCT_VALUE(value) \
-                Serialize(pSerialize, Value.value, #value); \
+                SerializeHelper::Serialize(pSerialize, Value.value, #value); \
 
 
 /*
@@ -105,7 +105,18 @@ void SetStringCode(EnumStringCode StringCode);
 // 返 回 值：
 // 函数说明：序列化变量
 // $_FUNCTION_END *********************************************************
-void Serialize(ISerialize *pSerialize, unsigned char& Value, const char *pstrName);
+void Serialize(ISerialize *pSerialize, bool& Value, const char *pstrName);
+
+// $_FUNCTION_BEGIN *******************************************************
+// 函数名称：Serialize
+// 函数参数：
+//					pSerialize			[输入]		序列化接口
+//					Value				[输入/输出]	需要序列化的参数，这个表示字符
+//					pstrName			[输入]		参数的名字,nullptr表示此参数没有名字
+// 返 回 值：
+// 函数说明：序列化变量
+// $_FUNCTION_END *********************************************************
+void Serialize(ISerialize *pSerialize, char& Value, const char *pstrName);
 
 // $_FUNCTION_BEGIN *******************************************************
 // 函数名称：Serialize
@@ -116,7 +127,7 @@ void Serialize(ISerialize *pSerialize, unsigned char& Value, const char *pstrNam
 // 返 回 值：
 // 函数说明：序列化变量
 // $_FUNCTION_END *********************************************************
-void Serialize(ISerialize *pSerialize, bool& Value, const char *pstrName);
+void Serialize(ISerialize *pSerialize, unsigned char& Value, const char *pstrName);
 
 // $_FUNCTION_BEGIN *******************************************************
 // 函数名称：Serialize
@@ -233,6 +244,17 @@ void Serialize(ISerialize *pSerialize, double &Value, const char *pstrName);
 // 函数参数：
 //					pSerialize			[输入]		序列化接口
 //					Value				[输入/输出]	需要序列化的参数
+//					pstrName			[输入]		参数的名字,nullptr表示此参数没有名字
+// 返 回 值：
+// 函数说明：序列化变量
+// $_FUNCTION_END *********************************************************
+void Serialize(ISerialize *pSerialize, long double &Value, const char *pstrName);
+
+// $_FUNCTION_BEGIN *******************************************************
+// 函数名称：Serialize
+// 函数参数：
+//					pSerialize			[输入]		序列化接口
+//					Value				[输入/输出]	需要序列化的参数，字符串编码默认为GB2312。更改编码使用SetStringCode
 //					pstrName			[输入]		参数的名字,nullptr表示此参数没有名字
 // 返 回 值：
 // 函数说明：序列化变量

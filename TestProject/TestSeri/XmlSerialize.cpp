@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "XmlSerialize.h"
 #include <assert.h>
 
@@ -51,7 +50,8 @@ bool CXmlSerialize::SetData(const char * pstrText, unsigned long ulDataLength)
 	do
 	{
 		std::string strText(pstrText, ulDataLength);
-		if (nullptr != m_XmlDocument.Parse(strText.c_str(), nullptr, TIXML_ENCODING_UTF8))
+		m_XmlDocument.Parse(strText.c_str(), nullptr, TIXML_ENCODING_UTF8);
+		if (m_XmlDocument.Error())
 		{
 			assert(false);
 			break;
@@ -142,11 +142,8 @@ void CXmlSerialize::EndSerlizeStruct(const char * pstrName)
 		}
 		else
 		{
-			auto pOldCurValue = m_StackValue.top();
+			m_pCurValue = m_StackValue.top();
 			m_StackValue.pop();
-
-			//BeginSerlizeStruct已经LinkEndChild了
-			m_pCurValue = pOldCurValue;
 		}
 	}
 }
@@ -259,14 +256,9 @@ void CXmlSerialize::EndSerlizeArrayItem(unsigned long ulIndex, const char * pstr
 		m_StackValue.pop();
 	}
 }
-
-void CXmlSerialize::Serialization(unsigned char & Value, const char * pstrName)
-{
-	unsigned long long ullValue = Value;
-	Serialization(ullValue, pstrName);
-	Value = static_cast<std::remove_reference<decltype(Value)>::type>(ullValue);
-}
-
+/************************************************************************/
+/* 序列化字段函数                                                         */
+/************************************************************************/
 void CXmlSerialize::Serialization(bool & Value, const char * pstrName)
 {
 	if (enum_Serialization_Type_Read == m_iSerializationType)
@@ -326,6 +318,64 @@ void CXmlSerialize::Serialization(bool & Value, const char * pstrName)
 			m_pCurValue->LinkEndChild(pElement);
 		}
 	}
+}
+
+void CXmlSerialize::Serialization(char & Value, const char * pstrName)
+{
+	if (enum_Serialization_Type_Read == m_iSerializationType)
+	{
+		TiXmlElement *pElement = nullptr;
+		if (nullptr == pstrName)
+		{
+			pElement = m_pCurValue;
+		}
+		else
+		{
+			pElement = m_pCurValue->FirstChildElement(pstrName);
+		}
+		if (nullptr != pElement)
+		{
+			auto pstrValue = pElement->GetText();
+			if (nullptr != pstrValue
+				&& 1 == strlen(pstrValue))
+			{
+				Value = pstrValue[0];
+			}
+			else
+			{
+				Log("CXmlSerialize::Serialization char GetText Error");
+				assert(false);
+			}
+		}
+		else
+		{
+			Log("CXmlSerialize::Serialization char pElement == nullptr Error");
+			assert(false);
+		}
+	}
+	else
+	{
+		char szText[] = {Value, '\0'};
+		TiXmlText *pXmlText = new TiXmlText(szText);
+		if (nullptr == pstrName)
+		{
+			m_pCurValue->SetValue(NULL_NAME);
+			m_pCurValue->LinkEndChild(pXmlText);
+		}
+		else
+		{
+			TiXmlElement *pElement = new TiXmlElement(pstrName);
+			pElement->LinkEndChild(pXmlText);
+			m_pCurValue->LinkEndChild(pElement);
+		}
+	}
+}
+
+void CXmlSerialize::Serialization(unsigned char & Value, const char * pstrName)
+{
+	unsigned long long ullValue = Value;
+	Serialization(ullValue, pstrName);
+	Value = static_cast<std::remove_reference<decltype(Value)>::type>(ullValue);
 }
 
 void CXmlSerialize::Serialization(short & Value, const char * pstrName)
@@ -466,12 +516,19 @@ void CXmlSerialize::Serialization(unsigned long long & Value, const char * pstrN
 
 void CXmlSerialize::Serialization(float & Value, const char * pstrName)
 {
-	double dValue = Value;
-	Serialization(dValue, pstrName);
-	Value = static_cast<std::remove_reference<decltype(Value)>::type>(dValue);
+	long double ldValue = Value;
+	Serialization(ldValue, pstrName);
+	Value = static_cast<std::remove_reference<decltype(Value)>::type>(ldValue);
 }
 
 void CXmlSerialize::Serialization(double & Value, const char * pstrName)
+{
+	long double ldValue = Value;
+	Serialization(ldValue, pstrName);
+	Value = static_cast<std::remove_reference<decltype(Value)>::type>(ldValue);
+}
+
+void CXmlSerialize::Serialization(long double& Value, const char *pstrName)
 {
 	if (enum_Serialization_Type_Read == m_iSerializationType)
 	{
@@ -489,7 +546,7 @@ void CXmlSerialize::Serialization(double & Value, const char * pstrName)
 			auto pstrValue = pElement->GetText();
 			if (nullptr != pstrValue)
 			{
-				Value = std::stod(pstrValue);
+				Value = std::stold(pstrValue);
 			}
 			else
 			{
@@ -522,29 +579,30 @@ void CXmlSerialize::Serialization(std::string & Value, const char * pstrName)
 {
 	if (enum_Serialization_Type_Read == m_iSerializationType)
 	{
+		TiXmlElement *pElement = nullptr;
 		if (nullptr == pstrName)
 		{
-
+			pElement = m_pCurValue;
 		}
 		else
 		{
-			auto pElement = m_pCurValue->FirstChildElement(pstrName);
-			if (nullptr != pElement)
+			pElement = m_pCurValue->FirstChildElement(pstrName);
+		}
+		if (nullptr != pElement)
+		{
+			auto pstrValue = pElement->GetText();
+			if (nullptr != pstrValue)
 			{
-				auto pstrValue = pElement->GetText();
-				if (nullptr != pstrValue)
-				{
-					Value = pstrValue;
-				}
-				else
-				{
-					assert(false);
-				}
+				Value = pstrValue;
 			}
 			else
 			{
-				assert(false);
+				//字符串为空
 			}
+		}
+		else
+		{
+			assert(false);
 		}
 	}
 	else

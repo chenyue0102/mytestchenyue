@@ -61,45 +61,6 @@ bool CSerialization::SetData(const char *pstrText, unsigned long ulDataLength)
 	return true;
 }
 
-// 序列化无符号字符
-void CSerialization::Serialization(unsigned char& byValue, const char *)
-{
-	if (m_pBuffer == NULL || m_dwBufferLen == 0)
-	{
-		assert(false);
-		return;
-	}
-
-	if (m_dwBufferLen < (m_dwDataLen + sizeof(unsigned char)))
-	{
-		if (m_iBufferCreateType == enum_Buffer_Create_Type_OutSide)	// 外部分配的缓存
-		{
-			throw(-1);
-		}
-		else if (m_iBufferCreateType == enum_Buffer_Create_Type_Inside)	// 内部分配的缓存
-		{
-			m_pBuffer = (char*)realloc(m_pBuffer, m_dwBufferLen * 2);
-			if (m_pBuffer == NULL)
-			{
-				assert(false);
-				throw(-1);
-			}
-			m_dwBufferLen += m_dwBufferLen;
-		}
-	}
-
-	if (m_iSerializationType == enum_Serialization_Type_Read)	// 读取数据
-	{
-		memcpy(&byValue, m_pBuffer + m_dwDataLen, sizeof(unsigned char));
-	}
-	else if (m_iSerializationType == enum_Serialization_Type_Write)	// 写入数据
-	{
-		memcpy(m_pBuffer + m_dwDataLen, &byValue, sizeof(unsigned char));
-	}
-
-	m_dwDataLen += sizeof(unsigned char);
-}
-
 // 序列化bool类型
 void CSerialization::Serialization(bool& bValue, const char *)
 {
@@ -137,6 +98,84 @@ void CSerialization::Serialization(bool& bValue, const char *)
 	}
 
 	m_dwDataLen += sizeof(bool);
+}
+
+// 序列化无符号字符
+void CSerialization::Serialization(char& cValue, const char *)
+{
+	if (m_pBuffer == NULL || m_dwBufferLen == 0)
+	{
+		assert(false);
+		return;
+	}
+
+	if (m_dwBufferLen < (m_dwDataLen + sizeof(char)))
+	{
+		if (m_iBufferCreateType == enum_Buffer_Create_Type_OutSide)	// 外部分配的缓存
+		{
+			throw(-1);
+		}
+		else if (m_iBufferCreateType == enum_Buffer_Create_Type_Inside)	// 内部分配的缓存
+		{
+			m_pBuffer = (char*)realloc(m_pBuffer, m_dwBufferLen * 2);
+			if (m_pBuffer == NULL)
+			{
+				assert(false);
+				throw(-1);
+			}
+			m_dwBufferLen += m_dwBufferLen;
+		}
+	}
+
+	if (m_iSerializationType == enum_Serialization_Type_Read)	// 读取数据
+	{
+		memcpy(&cValue, m_pBuffer + m_dwDataLen, sizeof(char));
+	}
+	else if (m_iSerializationType == enum_Serialization_Type_Write)	// 写入数据
+	{
+		memcpy(m_pBuffer + m_dwDataLen, &cValue, sizeof(char));
+	}
+
+	m_dwDataLen += sizeof(unsigned char);
+}
+
+// 序列化无符号字符
+void CSerialization::Serialization(unsigned char& byValue, const char *)
+{
+	if (m_pBuffer == NULL || m_dwBufferLen == 0)
+	{
+		assert(false);
+		return;
+	}
+
+	if (m_dwBufferLen < (m_dwDataLen + sizeof(unsigned char)))
+	{
+		if (m_iBufferCreateType == enum_Buffer_Create_Type_OutSide)	// 外部分配的缓存
+		{
+			throw(-1);
+		}
+		else if (m_iBufferCreateType == enum_Buffer_Create_Type_Inside)	// 内部分配的缓存
+		{
+			m_pBuffer = (char*)realloc(m_pBuffer, m_dwBufferLen * 2);
+			if (m_pBuffer == NULL)
+			{
+				assert(false);
+				throw(-1);
+			}
+			m_dwBufferLen += m_dwBufferLen;
+		}
+	}
+
+	if (m_iSerializationType == enum_Serialization_Type_Read)	// 读取数据
+	{
+		memcpy(&byValue, m_pBuffer + m_dwDataLen, sizeof(unsigned char));
+	}
+	else if (m_iSerializationType == enum_Serialization_Type_Write)	// 写入数据
+	{
+		memcpy(m_pBuffer + m_dwDataLen, &byValue, sizeof(unsigned char));
+	}
+
+	m_dwDataLen += sizeof(unsigned char);
 }
 
 // 序列化有符号短整型
@@ -524,6 +563,45 @@ void CSerialization::Serialization(double& dValue, const char *)
 	else if (m_iSerializationType == enum_Serialization_Type_Write)	// 写入数据
 	{
 		memcpy(m_pBuffer + m_dwDataLen, &dValue, sizeof(double));
+	}
+
+	m_dwDataLen += sizeof(double);
+}
+
+// 序列化双精度类型
+void CSerialization::Serialization(long double& ldValue, const char *)
+{
+	if (m_pBuffer == NULL || m_dwBufferLen == 0)
+	{
+		assert(false);
+		return;
+	}
+
+	if (m_dwBufferLen < (m_dwDataLen + sizeof(long double)))
+	{
+		if (m_iBufferCreateType == enum_Buffer_Create_Type_OutSide)	// 外部分配的缓存
+		{
+			throw(-1);
+		}
+		else if (m_iBufferCreateType == enum_Buffer_Create_Type_Inside)	// 内部分配的缓存
+		{
+			m_pBuffer = (char*)realloc(m_pBuffer, m_dwBufferLen * 2);
+			if (m_pBuffer == NULL)
+			{
+				assert(false);
+				throw(-1);
+			}
+			m_dwBufferLen += m_dwBufferLen;
+		}
+	}
+
+	if (m_iSerializationType == enum_Serialization_Type_Read)	// 读取数据
+	{
+		memcpy(&ldValue, m_pBuffer + m_dwDataLen, sizeof(long double));
+	}
+	else if (m_iSerializationType == enum_Serialization_Type_Write)	// 写入数据
+	{
+		memcpy(m_pBuffer + m_dwDataLen, &ldValue, sizeof(long double));
 	}
 
 	m_dwDataLen += sizeof(double);

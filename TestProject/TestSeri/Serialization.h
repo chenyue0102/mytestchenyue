@@ -65,6 +65,22 @@ public:
 	// 函数说明：设置需要序列化读的缓冲区
 	// $_FUNCTION_END *********************************************************
 	virtual bool SetData(const char *pstrText, unsigned long ulDataLength)override;
+public://序列化字段函数
+	// $_FUNCTION_BEGIN *******************************************************
+	// 函数名称：Serialization
+	// 函数参数：bValue		[输入]	bool类型
+	// 返 回 值：
+	// 函数说明：序列化bool类型
+	// $_FUNCTION_END *********************************************************
+	virtual void Serialization(bool& bValue, const char *)override;
+
+	// $_FUNCTION_BEGIN *******************************************************
+	// 函数名称：Serialization
+	// 函数参数：cValue		[输入]	字符
+	// 返 回 值：
+	// 函数说明：序列化无符号字符
+	// $_FUNCTION_END *********************************************************
+	virtual void Serialization(char& cValue, const char *)override;
 
 	// $_FUNCTION_BEGIN *******************************************************
 	// 函数名称：Serialization
@@ -73,14 +89,6 @@ public:
 	// 函数说明：序列化无符号字符
 	// $_FUNCTION_END *********************************************************
 	virtual void Serialization(unsigned char& byValue, const char *)override;
-
-	// $_FUNCTION_BEGIN *******************************************************
-	// 函数名称：Serialization
-	// 函数参数：bValue		[输入]	bool类型
-	// 返 回 值：
-	// 函数说明：序列化bool类型
-	// $_FUNCTION_END *********************************************************
-	virtual void Serialization(bool& bValue, const char *)override;
 
 	// $_FUNCTION_BEGIN *******************************************************
 	// 函数名称：Serialization
@@ -162,6 +170,14 @@ public:
 	// 函数说明：序列化双精度类型
 	// $_FUNCTION_END *********************************************************
 	virtual void Serialization(double& dValue, const char *)override;
+
+	// $_FUNCTION_BEGIN *******************************************************
+	// 函数名称：Serialization
+	// 函数参数：dValue		[输入]	双精度类型
+	// 返 回 值：
+	// 函数说明：序列化双精度类型
+	// $_FUNCTION_END *********************************************************
+	virtual void Serialization(long double& ldValue, const char *)override;
 
 	// $_FUNCTION_BEGIN *******************************************************
 	// 函数名称：Serialization

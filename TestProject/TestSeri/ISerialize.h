@@ -151,7 +151,17 @@ public://序列化字段函数
 	// 返 回 值：
 	// 函数说明：序列化变量
 	// $_FUNCTION_END *********************************************************
-	virtual void Serialization(unsigned char& Value, const char *pstrName) = 0;
+	virtual void Serialization(bool& Value, const char *pstrName) = 0;
+
+	// $_FUNCTION_BEGIN *******************************************************
+	// 函数名称：Serialization
+	// 函数参数：
+	//					Value				[输入/输出]	需要序列化的参数，这个表示字符
+	//					pstrName			[输入]		参数的名字,nullptr表示此参数没有名字
+	// 返 回 值：
+	// 函数说明：序列化变量
+	// $_FUNCTION_END *********************************************************
+	virtual void Serialization(char& Value, const char *pstrName) = 0;
 
 	// $_FUNCTION_BEGIN *******************************************************
 	// 函数名称：Serialization
@@ -161,7 +171,7 @@ public://序列化字段函数
 	// 返 回 值：
 	// 函数说明：序列化变量
 	// $_FUNCTION_END *********************************************************
-	virtual void Serialization(bool& Value, const char *pstrName) = 0;
+	virtual void Serialization(unsigned char& Value, const char *pstrName) = 0;
 
 	// $_FUNCTION_BEGIN *******************************************************
 	// 函数名称：Serialization
@@ -262,6 +272,16 @@ public://序列化字段函数
 	// 函数说明：序列化变量
 	// $_FUNCTION_END *********************************************************
 	virtual void Serialization(double& Value, const char *pstrName) = 0;
+
+	// $_FUNCTION_BEGIN *******************************************************
+	// 函数名称：Serialization
+	// 函数参数：
+	//					Value				[输入/输出]	需要序列化的参数
+	//					pstrName			[输入]		参数的名字,nullptr表示此参数没有名字
+	// 返 回 值：
+	// 函数说明：序列化变量
+	// $_FUNCTION_END *********************************************************
+	virtual void Serialization(long double& Value, const char *pstrName) = 0;
 
 	// $_FUNCTION_BEGIN *******************************************************
 	// 函数名称：EndSerlizeArrayItem

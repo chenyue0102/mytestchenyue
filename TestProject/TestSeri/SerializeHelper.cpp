@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "SerializeHelper.h"
 #include <cassert>
 #if _MSC_VER >= 1700//MS VC++ 11.0
@@ -56,12 +55,17 @@ void SetStringCode(EnumStringCode StringCode)
 	HelpData.SetStringCode(StringCode);
 }
 
-void Serialize(ISerialize *pSerialization, unsigned char& Value, const char *pstrName)
+void Serialize(ISerialize *pSerialization, bool& Value, const char *pstrName)
 {
 	return pSerialization->Serialization(Value, pstrName);
 }
 
-void Serialize(ISerialize *pSerialization, bool& Value, const char *pstrName)
+void Serialize(ISerialize *pSerialization, char& Value, const char *pstrName)
+{
+	return pSerialization->Serialization(Value, pstrName);
+}
+
+void Serialize(ISerialize *pSerialization, unsigned char& Value, const char *pstrName)
 {
 	return pSerialization->Serialization(Value, pstrName);
 }
@@ -112,6 +116,11 @@ void Serialize(ISerialize *pSerialization, float &Value, const char *pstrName)
 }
 
 void Serialize(ISerialize *pSerialization, double &Value, const char *pstrName)
+{
+	return pSerialization->Serialization(Value, pstrName);
+}
+
+void Serialize(ISerialize *pSerialization, long double &Value, const char *pstrName)
 {
 	return pSerialization->Serialization(Value, pstrName);
 }

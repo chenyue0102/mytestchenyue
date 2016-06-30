@@ -287,6 +287,95 @@ void CJsonSerialize::EndSerlizeArrayItem(unsigned long ulIndex, const char *pstr
 	}
 }
 
+void CJsonSerialize::Serialization(bool & Value, const char * pstrName)
+{
+	if (enum_Serialization_Type_Read == m_iSerializationType)
+	{
+		Json::Value JsonValue;
+		if (nullptr == pstrName)
+		{
+			JsonValue = *m_pCurValue;
+		}
+		else
+		{
+			JsonValue = (*m_pCurValue)[pstrName];
+		}
+		if (JsonValue.isBool())
+		{
+			Value = JsonValue.asBool();
+		}
+		else
+		{
+			const char *pLogName = (nullptr == pstrName) ? "nullptr" : pstrName;
+			Log("CJsonSerialize::Serialization bool JsonValue Type=%d name=%s Error", static_cast<int>(JsonValue.type()), pLogName);
+			assert(false);
+		}
+	}
+	else
+	{
+		if (nullptr == pstrName)
+		{
+			//这个元素应存入数组
+			m_pCurValue.reset(new Json::Value(Value));
+		}
+		else
+		{
+			(*m_pCurValue)[pstrName] = Value;
+		}
+	}
+}
+
+void CJsonSerialize::Serialization(char & Value, const char * pstrName)
+{
+	//Json没有unsigned char 当作unsigned int，
+	if (enum_Serialization_Type_Read == m_iSerializationType)
+	{
+		Json::Value JsonValue;
+		if (nullptr == pstrName)
+		{
+			JsonValue = *m_pCurValue;
+		}
+		else
+		{
+			JsonValue = (*m_pCurValue)[pstrName];
+		}
+		if (JsonValue.isString())
+		{
+			std::string strValue = JsonValue.asString();
+			if (1 == strValue.size())
+			{
+				Value = strValue[0];
+			}
+			else
+			{
+				const char *pLogName = (nullptr == pstrName) ? "nullptr" : pstrName;
+				Log("CJsonSerialize::Serialization char JsonValue Length != 1 name=%s Error", pLogName);
+				assert(false);
+			}
+		}
+		else
+		{
+			const char *pLogName = (nullptr == pstrName) ? "nullptr" : pstrName;
+			Log("CJsonSerialize::Serialization char JsonValue Type=%d name=%s Error", static_cast<int>(JsonValue.type()), pLogName);
+			assert(false);
+		}
+
+	}
+	else
+	{
+		char szValue[] = { Value, '\0'};
+		if (nullptr == pstrName)
+		{
+			//这个元素应存入数组
+			m_pCurValue.reset(new Json::Value(szValue));
+		}
+		else
+		{
+			(*m_pCurValue)[pstrName] = szValue;
+		}
+	}
+}
+
 void CJsonSerialize::Serialization(unsigned char & Value, const char * pstrName)
 {
 	//Json没有unsigned char 当作unsigned int，
@@ -323,44 +412,6 @@ void CJsonSerialize::Serialization(unsigned char & Value, const char * pstrName)
 		else
 		{
 			(*m_pCurValue)[pstrName] = static_cast<unsigned int>(Value);
-		}
-	}
-}
-
-void CJsonSerialize::Serialization(bool & Value, const char * pstrName)
-{
-	if (enum_Serialization_Type_Read == m_iSerializationType)
-	{
-		Json::Value JsonValue;
-		if (nullptr == pstrName)
-		{
-			JsonValue = *m_pCurValue;
-		}
-		else
-		{
-			JsonValue = (*m_pCurValue)[pstrName];
-		}
-		if (JsonValue.isBool())
-		{
-			Value = JsonValue.asBool();
-		}
-		else
-		{
-			const char *pLogName = (nullptr == pstrName) ? "nullptr" : pstrName;
-			Log("CJsonSerialize::Serialization bool JsonValue Type=%d name=%s Error", static_cast<int>(JsonValue.type()), pLogName);
-			assert(false);
-		}
-	}
-	else
-	{
-		if (nullptr == pstrName)
-		{
-			//这个元素应存入数组
-			m_pCurValue.reset(new Json::Value(Value));
-		}
-		else
-		{
-			(*m_pCurValue)[pstrName] = Value;
 		}
 	}
 }
@@ -746,6 +797,45 @@ void CJsonSerialize::Serialization(double & Value, const char * pstrName)
 		else
 		{
 			(*m_pCurValue)[pstrName] = Value;
+		}
+	}
+}
+
+void CJsonSerialize::Serialization(long double & Value, const char * pstrName)
+{
+	//Json没有long double 当作double，
+	if (enum_Serialization_Type_Read == m_iSerializationType)
+	{
+		Json::Value JsonValue;
+		if (nullptr == pstrName)
+		{
+			JsonValue = *m_pCurValue;
+		}
+		else
+		{
+			JsonValue = (*m_pCurValue)[pstrName];
+		}
+		if (JsonValue.isDouble())
+		{
+			Value = static_cast<long double>(JsonValue.asDouble());
+		}
+		else
+		{
+			const char *pLogName = (nullptr == pstrName) ? "nullptr" : pstrName;
+			Log("CJsonSerialize::Serialization long double JsonValue Type=%d name=%s Error", static_cast<int>(JsonValue.type()), pLogName);
+			assert(false);
+		}
+	}
+	else
+	{
+		if (nullptr == pstrName)
+		{
+			//这个元素应存入数组
+			m_pCurValue.reset(new Json::Value(static_cast<double>(Value)));
+		}
+		else
+		{
+			(*m_pCurValue)[pstrName] = static_cast<double>(Value);
 		}
 	}
 }
