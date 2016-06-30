@@ -6,7 +6,6 @@
 // $_FILEHEADER_END ***********************************************************
 #pragma once
 #include <vector>
-#include <windows.h>
 #include "ISerialize.h"
 
 
@@ -236,12 +235,11 @@ void Serialize(ISerialize *pSerialize, char *Value, unsigned long ulValueBufferS
 // 函数参数：
 //					pSerialize			[输入]		序列化接口
 //					Value				[输入/输出]	需要序列化的参数
-//					pstrName			[输入]		参数的名字,nullptr表示此参数没有名字
 // 返 回 值：
 // 函数说明：序列化结构体变量
 // $_FUNCTION_END *********************************************************
 template<typename T>
-inline BOOL SerializeStruct(ISerialize *pSerialize, T &Value)
+inline bool SerializeStruct(ISerialize *pSerialize, T &Value)
 {
 	//T类型必须是结构体或者类
 	static_assert(std::is_class<T>::value, "Serialize T must be struct or class");
