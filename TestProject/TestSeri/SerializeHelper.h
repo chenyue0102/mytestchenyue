@@ -41,8 +41,8 @@
 
 
 /************************************************************************/
-/* 序列化的一些帮助函数，使得使用序列化的时候，简化统一方式，           */
-/* pSerialize指针这里不会判空，外部判断                                 */
+/* 序列化的一些帮助函数，使得使用序列化的时候，简化统一方式，                   */
+/* pSerialize指针这里不会判空，外部判断                                     */
 /************************************************************************/
 namespace SerializeHelper
 {
@@ -53,9 +53,10 @@ void test();
 //默认是EnumStringCodeNone。EnumStringCodeNone与EnumStringCodeGB2312逻辑相等
 enum EnumStringCode
 {
-	EnumStringCodeNone,
-	EnumStringCodeGB2312,
-	EnumStringCodeUtf8,
+	EnumStringCodeNone,		//默认，与EnumStringCodeGB2312逻辑相等
+	EnumStringCodeGB2312,	//GB2312，
+	EnumStringCodeUtf8,		//utf8
+	EnumStringCodeBinary,	//std::string中存储的是二进制数据
 };
 
 // $_FUNCTION_BEGIN *******************************************************
@@ -227,10 +228,12 @@ void Serialize(ISerialize *pSerialize, long double &Value, const char *pstrName)
 //					pSerialize			[输入]		序列化接口
 //					Value				[输入/输出]	需要序列化的参数，字符串编码默认为GB2312。更改编码使用SetStringCode
 //					pstrName			[输入]		参数的名字,nullptr表示此参数没有名字
+//					StringCode			[输入]		字符串的编码，如果是EnumStringCodeNone，则会使用SetStringCode设置的编码
+//													有些时候，会用string存储二进制数据，序列化的时候，二进制数据特殊处理
 // 返 回 值：
 // 函数说明：序列化变量
 // $_FUNCTION_END *********************************************************
-void Serialize(ISerialize *pSerialize, std::string& Value, const char *pstrName);
+void Serialize(ISerialize *pSerialize, std::string& Value, const char *pstrName, EnumStringCode StringCode = EnumStringCodeNone);
 
 // $_FUNCTION_BEGIN *******************************************************
 // 函数名称：Serialize

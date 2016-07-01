@@ -607,6 +607,8 @@ void CXmlSerialize::Serialization(std::string & Value, const char * pstrName)
 	}
 	else
 	{
+		//xml序列化不支持中间截断
+		assert(Value.size() == strlen(Value.c_str()));
 		TiXmlText *pXmlText = new TiXmlText(Value.c_str());
 		if (nullptr == pstrName)
 		{

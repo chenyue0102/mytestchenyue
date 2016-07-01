@@ -21,6 +21,19 @@ bool operator==(const std::vector<T> &left, const std::vector<T> &right)
 	return true;
 }
 
+template<typename T>
+bool CompareArray(const T leftArray[], const T rightArray[], size_t stCount)
+{
+	for (size_t nIndex = 0; nIndex < stCount; ++nIndex)
+	{
+		if (!(leftArray[nIndex] == rightArray[nIndex]))
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
 bool SerializeStruct(ISerialize *pSerialize, TestAllType &Value)
 {
 	try
@@ -66,7 +79,14 @@ void TestAllType::init()
 	f = 123.456f;
 	d = 456.789;
 	ld = 789.123;
-	ss = R"(hello,world,你好，世界,~!@#$%^&*()_+|}{": ? > < , . / ;'`[]-=\)";
+	ss = R"(hello,world)";
+	ss.append(1, '\0');
+	ss.append(1, 1);
+	ss.append(1, 12);
+	ss.append(1, 23);
+	ss.append(1, 34);
+	ss.append(1, 44);
+	ss.append(R"(,你好，世界,~!@#$%^&*()_+|}{": ? > < , . / ; '`[]-=\)");
 	strcpy(szText, "hello, world,szText");
 	int nBegin = 2000;
 	for (auto &OneKey : Keys)
@@ -122,6 +142,8 @@ bool TestAllType::operator==(const TestAllType &other)const
 		&& fabs(d - other.d) < FLT_MIN
 		&& fabs(ld - other.ld) < FLT_MIN
 		&& ss == other.ss
+		&& 0 == strcmp(szText, other.szText)
+		&& CompareArray(Keys, other.Keys, _countof(Keys))
 		);
 }
 
@@ -245,7 +267,10 @@ bool TestArray::operator==(const TestArray & other) const
 		&& vt == other.vt
 		&& vvs == other.vvs
 		&& vts == other.vts
-		&& vvts == other.vvts);
+		&& vvts == other.vvts
+		&& CompareArray(tsArray, other.tsArray, _countof(tsArray))
+		&& CompareArray(vtArray, other.vtArray, _countof(vtArray))
+		);
 }
 
 void TestContainer::init()

@@ -125,7 +125,63 @@ void Serialize(ISerialize *pSerialization, long double &Value, const char *pstrN
 	return pSerialization->Serialization(Value, pstrName);
 }
 
-void Serialize(ISerialize *pSerialization, std::string& Value, const char *pstrName)
+void SerializeJsonXmlGB2312(ISerialize *pSerialization, std::string& Value, const char *pstrName)
+{
+	CSerializeHelperData &HelpData = CSerializeHelperData::GetInstance();
+	CUTF8_GBK_Convert &CodeConvert = HelpData.GetCodeConvert();
+	if (enum_Serialization_Type_Read == pSerialization->GetSerializationType())
+	{
+		//将Json中的字符串从UTF8转换成GB2312
+		std::string strUTF8;
+		pSerialization->Serialization(strUTF8, pstrName);
+		if (!strUTF8.empty())
+		{
+			std::string strGB2312;
+			strGB2312.resize(strUTF8.size() * 2, '\0');	//2倍大小认为够了
+			unsigned long ulGB2312 = strGB2312.size();
+			if (CodeConvert.ConvertCode(CHARSET_CONVERT_TYPE_UTF8_TO_GBK, strUTF8.c_str(), strUTF8.size(),
+				&*strGB2312.begin(), ulGB2312) < 0)
+			{
+				assert(false);
+			}
+			else
+			{
+				Value.append(strGB2312.data(), ulGB2312);
+			}
+		}
+	}
+	else
+	{
+		//写入Json之前，将GB2312转换成UTF8
+		std::string strUTF8;
+		if (!Value.empty())
+		{
+			std::string strTemp;
+			strTemp.resize(Value.size() * 2, '\0');
+			unsigned long ulUTF8 = strTemp.size();
+			if (CodeConvert.ConvertCode(CHARSET_CONVERT_TYPE_GBK_TO_UTF8,
+				Value.c_str(), Value.size(), &*strTemp.begin(), ulUTF8) < 0)
+			{
+				assert(false);
+			}
+			else
+			{
+				strUTF8.append(strTemp.data(), ulUTF8);
+			}
+		}
+		pSerialization->Serialization(strUTF8, pstrName);
+	}
+}
+
+void SerializeJsonXmlBinary(ISerialize *pSerialization, std::string& Value, const char *pstrName)
+{
+	//Json可以存储二进制，xml需要base64编码
+	assert(EnumSerializeFormatXml != pSerialization->GetSerializeFormat());
+	CSerializeHelperData &HelpData = CSerializeHelperData::GetInstance();
+	return pSerialization->Serialization(Value, pstrName);
+}
+
+void Serialize(ISerialize *pSerialization, std::string& Value, const char *pstrName, EnumStringCode StringCode/* = EnumStringCodeNone*/)
 {
 	switch (pSerialization->GetSerializeFormat())
 	{
@@ -136,57 +192,22 @@ void Serialize(ISerialize *pSerialization, std::string& Value, const char *pstrN
 	case EnumSerializeFormatXml:
 		{
 			CSerializeHelperData &HelpData = CSerializeHelperData::GetInstance();
-			EnumStringCode StringCode = HelpData.GetStringCode();
+			if (EnumStringCodeNone == StringCode)
+			{
+				StringCode = HelpData.GetStringCode();
+			}
 			if (EnumStringCodeNone == StringCode
 				|| EnumStringCodeGB2312 == StringCode)
 			{
-				CUTF8_GBK_Convert &CodeConvert = HelpData.GetCodeConvert();
-				if (enum_Serialization_Type_Read == pSerialization->GetSerializationType())
-				{
-					//将Json中的字符串从UTF8转换成GB2312
-					std::string strUTF8;
-					pSerialization->Serialization(strUTF8, pstrName);
-					if (!strUTF8.empty())
-					{
-						std::string strGB2312;
-						strGB2312.resize(strUTF8.size() * 2, '\0');	//2倍大小认为够了
-						unsigned long ulGB2312 = strGB2312.size();
-						if (CodeConvert.ConvertCode(CHARSET_CONVERT_TYPE_UTF8_TO_GBK, strUTF8.c_str(), strUTF8.size(),
-							&*strGB2312.begin(), ulGB2312) < 0)
-						{
-							assert(false);
-						}
-						else
-						{
-							Value.append(strGB2312.data(), ulGB2312);
-						}
-					}
-				}
-				else
-				{
-					//写入Json之前，将GB2312转换成UTF8
-					std::string strUTF8;
-					if (!Value.empty())
-					{
-						std::string strTemp;
-						strTemp.resize(Value.size() * 2, '\0');
-						unsigned long ulUTF8 = strTemp.size();
-						if (CodeConvert.ConvertCode(CHARSET_CONVERT_TYPE_GBK_TO_UTF8,
-							Value.c_str(), Value.size(), &*strTemp.begin(), ulUTF8) < 0)
-						{
-							assert(false);
-						}
-						else
-						{
-							strUTF8.append(strTemp.data(), ulUTF8);
-						}
-					}
-					pSerialization->Serialization(strUTF8, pstrName);
-				}
+				return SerializeJsonXmlGB2312(pSerialization, Value, pstrName);
 			}
 			else if (EnumStringCodeUtf8 == StringCode)
 			{
 				return pSerialization->Serialization(Value, pstrName);
+			}
+			else if (EnumStringCodeBinary == StringCode)
+			{
+				return SerializeJsonXmlBinary(pSerialization, Value, pstrName);
 			}
 			else
 			{
