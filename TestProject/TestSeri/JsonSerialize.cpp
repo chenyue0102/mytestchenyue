@@ -2,7 +2,7 @@
 #include <cassert>
 
 CJsonSerialize::CJsonSerialize()
-	: m_iSerializationType(enum_Serialization_Type_Default)
+	: m_iSerializeType(EnumSerializeIONone)
 	, m_pRootValue(new Json::Value(Json::objectValue))
 	, m_pCurValue(nullptr)
 	, m_StackValue()
@@ -16,24 +16,24 @@ CJsonSerialize::~CJsonSerialize()
 
 }
 
-void CJsonSerialize::SetSerializationType(ENUM_SERIALIZATION_TYPE iSerializationType)
+void CJsonSerialize::SetSerializeType(EnumSerializeIO iSerializeType)
 {
-	m_iSerializationType = iSerializationType;
-	if (!(enum_Serialization_Type_Read == m_iSerializationType || enum_Serialization_Type_Write == m_iSerializationType))
+	m_iSerializeType = iSerializeType;
+	if (!(EnumSerializeIORead == m_iSerializeType || EnumSerializeIORead == m_iSerializeType))
 	{
-		Log("CJsonSerialize::SetSerializationType iSerializationType=%d Error", static_cast<int>(iSerializationType));
+		Log("CJsonSerialize::SetSerializeType iSerializeType=%d Error", static_cast<int>(iSerializeType));
 		assert(false);
 	}
 }
 
-ENUM_SERIALIZATION_TYPE CJsonSerialize::GetSerializationType()
+EnumSerializeIO CJsonSerialize::GetSerializeType()
 {
-	if (!(enum_Serialization_Type_Read == m_iSerializationType || enum_Serialization_Type_Write == m_iSerializationType))
+	if (!(EnumSerializeIORead == m_iSerializeType || EnumSerializeIORead == m_iSerializeType))
 	{
-		Log("CJsonSerialize::GetSerializationType m_iSerializationType=%d Error", static_cast<int>(m_iSerializationType));
+		Log("CJsonSerialize::GetSerializeType m_iSerializeType=%d Error", static_cast<int>(m_iSerializeType));
 		assert(false);
 	}
-	return m_iSerializationType;
+	return m_iSerializeType;
 }
 
 EnumSerializeFormat CJsonSerialize::GetSerializeFormat()
@@ -58,9 +58,9 @@ bool CJsonSerialize::SetData(const char *pstrText, unsigned long ulDataLength)
 
 const char* CJsonSerialize::GetData()
 {
-	if (enum_Serialization_Type_Write != m_iSerializationType)
+	if (EnumSerializeIORead != m_iSerializeType)
 	{
-		Log("CJsonSerialize::GetData m_iSerializationType=%d Error", static_cast<int>(m_iSerializationType));
+		Log("CJsonSerialize::GetData m_iSerializeType=%d Error", static_cast<int>(m_iSerializeType));
 		assert(false);
 	}
 	CheckWriteToBuffer();
@@ -69,18 +69,18 @@ const char* CJsonSerialize::GetData()
 
 unsigned long CJsonSerialize::GetDataLen()
 {
-	if (enum_Serialization_Type_Write != m_iSerializationType)
+	if (EnumSerializeIORead != m_iSerializeType)
 	{
-		Log("CJsonSerialize::GetDataLen m_iSerializationType=%d Error", static_cast<int>(m_iSerializationType));
+		Log("CJsonSerialize::GetDataLen m_iSerializeType=%d Error", static_cast<int>(m_iSerializeType));
 		assert(false);
 	}
 	CheckWriteToBuffer();
 	return static_cast<unsigned long>(m_strBuffer.size());
 }
 
-void CJsonSerialize::BeginSerlizeStruct(const char *pstrName)
+void CJsonSerialize::BeginSerializeStruct(const char *pstrName)
 {
-	if (enum_Serialization_Type_Read == m_iSerializationType)
+	if (EnumSerializeIORead == m_iSerializeType)
 	{
 		if (nullptr == pstrName)
 		{
@@ -91,7 +91,7 @@ void CJsonSerialize::BeginSerlizeStruct(const char *pstrName)
 			Json::Value NewValue = (*m_pCurValue)[pstrName];
 			if (!NewValue.isObject())
 			{
-				Log("CJsonSerialize::BeginSerlizeStruct NewValue Type=%d Error", static_cast<int>(NewValue.type()));
+				Log("CJsonSerialize::BeginSerializeStruct NewValue Type=%d Error", static_cast<int>(NewValue.type()));
 				assert(false);
 				throw - 1;
 			}
@@ -106,8 +106,8 @@ void CJsonSerialize::BeginSerlizeStruct(const char *pstrName)
 			//这个元素应存入数组
 			assert(m_pCurValue->isNull());
 			//将当前结构体调整为Object
-			//此逻辑是BeginSerlizeArrayItem的时候，不知道接下来要序列化的东西类型，
-			//所以BeginSerlizeArrayItem先创建了一个未知元素类型，此时需要将其调整为数组
+			//此逻辑是BeginSerializeArrayItem的时候，不知道接下来要序列化的东西类型，
+			//所以BeginSerializeArrayItem先创建了一个未知元素类型，此时需要将其调整为数组
 			*m_pCurValue = Json::Value(Json::objectValue);
 		}
 		else
@@ -118,9 +118,9 @@ void CJsonSerialize::BeginSerlizeStruct(const char *pstrName)
 	}
 }
 
-void CJsonSerialize::EndSerlizeStruct(const char *pstrName)
+void CJsonSerialize::EndSerializeStruct(const char *pstrName)
 {
-	if (enum_Serialization_Type_Read == m_iSerializationType)
+	if (EnumSerializeIORead == m_iSerializeType)
 	{
 		if (nullptr == pstrName)
 		{
@@ -150,15 +150,15 @@ void CJsonSerialize::EndSerlizeStruct(const char *pstrName)
 	}
 }
 
-void CJsonSerialize::BeginSerlizeArray(unsigned long &ulCount, const char *pstrName)
+void CJsonSerialize::BeginSerializeArray(unsigned long &ulCount, const char *pstrName)
 {
-	if (enum_Serialization_Type_Read == m_iSerializationType)
+	if (EnumSerializeIORead == m_iSerializeType)
 	{
 		if (nullptr == pstrName)
 		{
 			if (!m_pCurValue->isArray())
 			{
-				Log("CJsonSerialize::BeginSerlizeArray isArray Type=%d Error", static_cast<int>(m_pCurValue->type()));
+				Log("CJsonSerialize::BeginSerializeArray isArray Type=%d Error", static_cast<int>(m_pCurValue->type()));
 				assert(false);
 				throw (-1);
 			}
@@ -170,7 +170,7 @@ void CJsonSerialize::BeginSerlizeArray(unsigned long &ulCount, const char *pstrN
 			Json::Value TempValue = (*m_pCurValue)[pstrName];
 			if (!TempValue.isArray())
 			{
-				Log("CJsonSerialize::BeginSerlizeArray TempValue Type=%d Error", static_cast<int>(TempValue.type()));
+				Log("CJsonSerialize::BeginSerializeArray TempValue Type=%d Error", static_cast<int>(TempValue.type()));
 				assert(false);
 				throw (-1);
 			}
@@ -186,8 +186,8 @@ void CJsonSerialize::BeginSerlizeArray(unsigned long &ulCount, const char *pstrN
 			//这个元素应存入数组
 			assert(m_pCurValue->isNull());
 			//将当前结构体调整为array
-			//此逻辑是BeginSerlizeArrayItem的时候，不知道接下来要序列化的东西类型，
-			//所以BeginSerlizeArrayItem先创建了一个未知元素类型，此时需要将其调整为数组
+			//此逻辑是BeginSerializeArrayItem的时候，不知道接下来要序列化的东西类型，
+			//所以BeginSerializeArrayItem先创建了一个未知元素类型，此时需要将其调整为数组
 			*m_pCurValue = Json::Value(Json::arrayValue);
 		}
 		else
@@ -198,9 +198,9 @@ void CJsonSerialize::BeginSerlizeArray(unsigned long &ulCount, const char *pstrN
 	}
 }
 
-void CJsonSerialize::EndSerlizeArray(const char *pstrName)
+void CJsonSerialize::EndSerializeArray(const char *pstrName)
 {
-	if (enum_Serialization_Type_Read == m_iSerializationType)
+	if (EnumSerializeIORead == m_iSerializeType)
 	{
 		if (nullptr == pstrName)
 		{
@@ -238,19 +238,19 @@ void CJsonSerialize::EndSerlizeArray(const char *pstrName)
 	}
 }
 
-void CJsonSerialize::BeginSerlizeArrayItem(unsigned long ulIndex, const char *pstrName)
+void CJsonSerialize::BeginSerializeArrayItem(unsigned long ulIndex, const char *pstrName)
 {
-	if (enum_Serialization_Type_Read == m_iSerializationType)
+	if (EnumSerializeIORead == m_iSerializeType)
 	{
 		if (!m_pCurValue->isArray())
 		{
-			Log("CJsonSerialize::BeginSerlizeArrayItem isArray ulIndex=%u Type=%d Error", ulIndex, static_cast<int>(m_pCurValue->type()));
+			Log("CJsonSerialize::BeginSerializeArrayItem isArray ulIndex=%u Type=%d Error", ulIndex, static_cast<int>(m_pCurValue->type()));
 			assert(false);
 			throw (-1);
 		}
 		if (ulIndex >= m_pCurValue->size())
 		{
-			Log("CJsonSerialize::BeginSerlizeArrayItem ulIndex >= size ulIndex=%u size=%d Error", ulIndex, static_cast<int>(m_pCurValue->size()));
+			Log("CJsonSerialize::BeginSerializeArrayItem ulIndex >= size ulIndex=%u size=%d Error", ulIndex, static_cast<int>(m_pCurValue->size()));
 			assert(false);
 			throw (-1);
 		}
@@ -267,9 +267,9 @@ void CJsonSerialize::BeginSerlizeArrayItem(unsigned long ulIndex, const char *ps
 	}
 }
 
-void CJsonSerialize::EndSerlizeArrayItem(unsigned long ulIndex, const char *pstrName)
+void CJsonSerialize::EndSerializeArrayItem(unsigned long ulIndex, const char *pstrName)
 {
-	if (enum_Serialization_Type_Read == m_iSerializationType)
+	if (EnumSerializeIORead == m_iSerializeType)
 	{
 		m_pCurValue = m_StackValue.top();
 		m_StackValue.pop();
@@ -287,9 +287,9 @@ void CJsonSerialize::EndSerlizeArrayItem(unsigned long ulIndex, const char *pstr
 	}
 }
 
-void CJsonSerialize::Serialization(bool & Value, const char * pstrName)
+void CJsonSerialize::Serialize(bool & Value, const char * pstrName)
 {
-	if (enum_Serialization_Type_Read == m_iSerializationType)
+	if (EnumSerializeIORead == m_iSerializeType)
 	{
 		Json::Value JsonValue;
 		if (nullptr == pstrName)
@@ -307,7 +307,7 @@ void CJsonSerialize::Serialization(bool & Value, const char * pstrName)
 		else
 		{
 			const char *pLogName = (nullptr == pstrName) ? "nullptr" : pstrName;
-			Log("CJsonSerialize::Serialization bool JsonValue Type=%d name=%s Error", static_cast<int>(JsonValue.type()), pLogName);
+			Log("CJsonSerialize::Serialize bool JsonValue Type=%d name=%s Error", static_cast<int>(JsonValue.type()), pLogName);
 			assert(false);
 		}
 	}
@@ -325,10 +325,10 @@ void CJsonSerialize::Serialization(bool & Value, const char * pstrName)
 	}
 }
 
-void CJsonSerialize::Serialization(char & Value, const char * pstrName)
+void CJsonSerialize::Serialize(char & Value, const char * pstrName)
 {
 	//Json没有unsigned char 当作unsigned int，
-	if (enum_Serialization_Type_Read == m_iSerializationType)
+	if (EnumSerializeIORead == m_iSerializeType)
 	{
 		Json::Value JsonValue;
 		if (nullptr == pstrName)
@@ -349,14 +349,14 @@ void CJsonSerialize::Serialization(char & Value, const char * pstrName)
 			else
 			{
 				const char *pLogName = (nullptr == pstrName) ? "nullptr" : pstrName;
-				Log("CJsonSerialize::Serialization char JsonValue Length != 1 name=%s Error", pLogName);
+				Log("CJsonSerialize::Serialize char JsonValue Length != 1 name=%s Error", pLogName);
 				assert(false);
 			}
 		}
 		else
 		{
 			const char *pLogName = (nullptr == pstrName) ? "nullptr" : pstrName;
-			Log("CJsonSerialize::Serialization char JsonValue Type=%d name=%s Error", static_cast<int>(JsonValue.type()), pLogName);
+			Log("CJsonSerialize::Serialize char JsonValue Type=%d name=%s Error", static_cast<int>(JsonValue.type()), pLogName);
 			assert(false);
 		}
 
@@ -376,10 +376,10 @@ void CJsonSerialize::Serialization(char & Value, const char * pstrName)
 	}
 }
 
-void CJsonSerialize::Serialization(unsigned char & Value, const char * pstrName)
+void CJsonSerialize::Serialize(unsigned char & Value, const char * pstrName)
 {
 	//Json没有unsigned char 当作unsigned int，
-	if (enum_Serialization_Type_Read == m_iSerializationType)
+	if (EnumSerializeIORead == m_iSerializeType)
 	{
 		Json::Value JsonValue;
 		if (nullptr == pstrName)
@@ -397,7 +397,7 @@ void CJsonSerialize::Serialization(unsigned char & Value, const char * pstrName)
 		else
 		{
 			const char *pLogName = (nullptr == pstrName) ? "nullptr" : pstrName;
-			Log("CJsonSerialize::Serialization unsigned char JsonValue Type=%d name=%s Error", static_cast<int>(JsonValue.type()), pLogName);
+			Log("CJsonSerialize::Serialize unsigned char JsonValue Type=%d name=%s Error", static_cast<int>(JsonValue.type()), pLogName);
 			assert(false);
 		}
 		
@@ -416,10 +416,10 @@ void CJsonSerialize::Serialization(unsigned char & Value, const char * pstrName)
 	}
 }
 
-void CJsonSerialize::Serialization(short & Value, const char * pstrName)
+void CJsonSerialize::Serialize(short & Value, const char * pstrName)
 {
 	//Json没有short 当作int，
-	if (enum_Serialization_Type_Read == m_iSerializationType)
+	if (EnumSerializeIORead == m_iSerializeType)
 	{
 		Json::Value JsonValue;
 		if (nullptr == pstrName)
@@ -437,7 +437,7 @@ void CJsonSerialize::Serialization(short & Value, const char * pstrName)
 		else
 		{
 			const char *pLogName = (nullptr == pstrName) ? "nullptr" : pstrName;
-			Log("CJsonSerialize::Serialization short JsonValue Type=%d name=%s Error", static_cast<int>(JsonValue.type()), pLogName);
+			Log("CJsonSerialize::Serialize short JsonValue Type=%d name=%s Error", static_cast<int>(JsonValue.type()), pLogName);
 			assert(false);
 		}
 	}
@@ -455,10 +455,10 @@ void CJsonSerialize::Serialization(short & Value, const char * pstrName)
 	}
 }
 
-void CJsonSerialize::Serialization(unsigned short & Value, const char * pstrName)
+void CJsonSerialize::Serialize(unsigned short & Value, const char * pstrName)
 {
 	//Json没有unsigned short 当作unsigned int，
-	if (enum_Serialization_Type_Read == m_iSerializationType)
+	if (EnumSerializeIORead == m_iSerializeType)
 	{
 		Json::Value JsonValue;
 		if (nullptr == pstrName)
@@ -476,7 +476,7 @@ void CJsonSerialize::Serialization(unsigned short & Value, const char * pstrName
 		else
 		{
 			const char *pLogName = (nullptr == pstrName) ? "nullptr" : pstrName;
-			Log("CJsonSerialize::Serialization unsigned short JsonValue Type=%d name=%s Error", static_cast<int>(JsonValue.type()), pLogName);
+			Log("CJsonSerialize::Serialize unsigned short JsonValue Type=%d name=%s Error", static_cast<int>(JsonValue.type()), pLogName);
 			assert(false);
 		}
 	}
@@ -494,9 +494,9 @@ void CJsonSerialize::Serialization(unsigned short & Value, const char * pstrName
 	}
 }
 
-void CJsonSerialize::Serialization(int& Value, const char *pstrName)
+void CJsonSerialize::Serialize(int& Value, const char *pstrName)
 {
-	if (enum_Serialization_Type_Read == m_iSerializationType)
+	if (EnumSerializeIORead == m_iSerializeType)
 	{
 		Json::Value JsonValue;
 		if (nullptr == pstrName)
@@ -514,7 +514,7 @@ void CJsonSerialize::Serialization(int& Value, const char *pstrName)
 		else
 		{
 			const char *pLogName = (nullptr == pstrName) ? "nullptr" : pstrName;
-			Log("CJsonSerialize::Serialization int JsonValue Type=%d name=%s Error", static_cast<int>(JsonValue.type()), pLogName);
+			Log("CJsonSerialize::Serialize int JsonValue Type=%d name=%s Error", static_cast<int>(JsonValue.type()), pLogName);
 			assert(false);
 		}
 	}
@@ -532,9 +532,9 @@ void CJsonSerialize::Serialization(int& Value, const char *pstrName)
 	}
 }
 
-void CJsonSerialize::Serialization(unsigned int & Value, const char * pstrName)
+void CJsonSerialize::Serialize(unsigned int & Value, const char * pstrName)
 {
-	if (enum_Serialization_Type_Read == m_iSerializationType)
+	if (EnumSerializeIORead == m_iSerializeType)
 	{
 		Json::Value JsonValue;
 		if (nullptr == pstrName)
@@ -552,7 +552,7 @@ void CJsonSerialize::Serialization(unsigned int & Value, const char * pstrName)
 		else
 		{
 			const char *pLogName = (nullptr == pstrName) ? "nullptr" : pstrName;
-			Log("CJsonSerialize::Serialization unsigned int JsonValue Type=%d name=%s Error", static_cast<int>(JsonValue.type()), pLogName);
+			Log("CJsonSerialize::Serialize unsigned int JsonValue Type=%d name=%s Error", static_cast<int>(JsonValue.type()), pLogName);
 			assert(false);
 		}
 	}
@@ -570,10 +570,10 @@ void CJsonSerialize::Serialization(unsigned int & Value, const char * pstrName)
 	}
 }
 
-void CJsonSerialize::Serialization(long & Value, const char * pstrName)
+void CJsonSerialize::Serialize(long & Value, const char * pstrName)
 {
 	//Json没有long 当作int，
-	if (enum_Serialization_Type_Read == m_iSerializationType)
+	if (EnumSerializeIORead == m_iSerializeType)
 	{
 		Json::Value JsonValue;
 		if (nullptr == pstrName)
@@ -591,7 +591,7 @@ void CJsonSerialize::Serialization(long & Value, const char * pstrName)
 		else
 		{
 			const char *pLogName = (nullptr == pstrName) ? "nullptr" : pstrName;
-			Log("CJsonSerialize::Serialization long JsonValue Type=%d name=%s Error", static_cast<int>(JsonValue.type()), pLogName);
+			Log("CJsonSerialize::Serialize long JsonValue Type=%d name=%s Error", static_cast<int>(JsonValue.type()), pLogName);
 			assert(false);
 		}
 	}
@@ -609,10 +609,10 @@ void CJsonSerialize::Serialization(long & Value, const char * pstrName)
 	}
 }
 
-void CJsonSerialize::Serialization(unsigned long & Value, const char * pstrName)
+void CJsonSerialize::Serialize(unsigned long & Value, const char * pstrName)
 {
 	//Json没有unsigned long 当作unsigned int，
-	if (enum_Serialization_Type_Read == m_iSerializationType)
+	if (EnumSerializeIORead == m_iSerializeType)
 	{
 		Json::Value JsonValue;
 		if (nullptr == pstrName)
@@ -630,7 +630,7 @@ void CJsonSerialize::Serialization(unsigned long & Value, const char * pstrName)
 		else
 		{
 			const char *pLogName = (nullptr == pstrName) ? "nullptr" : pstrName;
-			Log("CJsonSerialize::Serialization unsigned long JsonValue Type=%d name=%s Error", static_cast<int>(JsonValue.type()), pLogName);
+			Log("CJsonSerialize::Serialize unsigned long JsonValue Type=%d name=%s Error", static_cast<int>(JsonValue.type()), pLogName);
 			assert(false);
 		}
 	}
@@ -648,9 +648,9 @@ void CJsonSerialize::Serialization(unsigned long & Value, const char * pstrName)
 	}
 }
 
-void CJsonSerialize::Serialization(long long & Value, const char * pstrName)
+void CJsonSerialize::Serialize(long long & Value, const char * pstrName)
 {
-	if (enum_Serialization_Type_Read == m_iSerializationType)
+	if (EnumSerializeIORead == m_iSerializeType)
 	{
 		Json::Value JsonValue;
 		if (nullptr == pstrName)
@@ -668,7 +668,7 @@ void CJsonSerialize::Serialization(long long & Value, const char * pstrName)
 		else
 		{
 			const char *pLogName = (nullptr == pstrName) ? "nullptr" : pstrName;
-			Log("CJsonSerialize::Serialization long long JsonValue Type=%d name=%s Error", static_cast<int>(JsonValue.type()), pLogName);
+			Log("CJsonSerialize::Serialize long long JsonValue Type=%d name=%s Error", static_cast<int>(JsonValue.type()), pLogName);
 			assert(false);
 		}
 	}
@@ -686,9 +686,9 @@ void CJsonSerialize::Serialization(long long & Value, const char * pstrName)
 	}
 }
 
-void CJsonSerialize::Serialization(unsigned long long & Value, const char * pstrName)
+void CJsonSerialize::Serialize(unsigned long long & Value, const char * pstrName)
 {
-	if (enum_Serialization_Type_Read == m_iSerializationType)
+	if (EnumSerializeIORead == m_iSerializeType)
 	{
 		Json::Value JsonValue;
 		if (nullptr == pstrName)
@@ -706,7 +706,7 @@ void CJsonSerialize::Serialization(unsigned long long & Value, const char * pstr
 		else
 		{
 			const char *pLogName = (nullptr == pstrName) ? "nullptr" : pstrName;
-			Log("CJsonSerialize::Serialization unsigned long long JsonValue Type=%d name=%s Error", static_cast<int>(JsonValue.type()), pLogName);
+			Log("CJsonSerialize::Serialize unsigned long long JsonValue Type=%d name=%s Error", static_cast<int>(JsonValue.type()), pLogName);
 			assert(false);
 		}
 	}
@@ -724,10 +724,10 @@ void CJsonSerialize::Serialization(unsigned long long & Value, const char * pstr
 	}
 }
 
-void CJsonSerialize::Serialization(float & Value, const char * pstrName)
+void CJsonSerialize::Serialize(float & Value, const char * pstrName)
 {
 	//Json没有float 当作double，
-	if (enum_Serialization_Type_Read == m_iSerializationType)
+	if (EnumSerializeIORead == m_iSerializeType)
 	{
 		Json::Value JsonValue;
 		if (nullptr == pstrName)
@@ -745,7 +745,7 @@ void CJsonSerialize::Serialization(float & Value, const char * pstrName)
 		else
 		{
 			const char *pLogName = (nullptr == pstrName) ? "nullptr" : pstrName;
-			Log("CJsonSerialize::Serialization float JsonValue Type=%d name=%s Error", static_cast<int>(JsonValue.type()), pLogName);
+			Log("CJsonSerialize::Serialize float JsonValue Type=%d name=%s Error", static_cast<int>(JsonValue.type()), pLogName);
 			assert(false);
 		}
 	}
@@ -763,9 +763,9 @@ void CJsonSerialize::Serialization(float & Value, const char * pstrName)
 	}
 }
 
-void CJsonSerialize::Serialization(double & Value, const char * pstrName)
+void CJsonSerialize::Serialize(double & Value, const char * pstrName)
 {
-	if (enum_Serialization_Type_Read == m_iSerializationType)
+	if (EnumSerializeIORead == m_iSerializeType)
 	{
 		Json::Value JsonValue;
 		if (nullptr == pstrName)
@@ -783,7 +783,7 @@ void CJsonSerialize::Serialization(double & Value, const char * pstrName)
 		else
 		{
 			const char *pLogName = (nullptr == pstrName) ? "nullptr" : pstrName;
-			Log("CJsonSerialize::Serialization double JsonValue Type=%d name=%s Error", static_cast<int>(JsonValue.type()), pLogName);
+			Log("CJsonSerialize::Serialize double JsonValue Type=%d name=%s Error", static_cast<int>(JsonValue.type()), pLogName);
 			assert(false);
 		}
 	}
@@ -801,10 +801,10 @@ void CJsonSerialize::Serialization(double & Value, const char * pstrName)
 	}
 }
 
-void CJsonSerialize::Serialization(long double & Value, const char * pstrName)
+void CJsonSerialize::Serialize(long double & Value, const char * pstrName)
 {
 	//Json没有long double 当作double，
-	if (enum_Serialization_Type_Read == m_iSerializationType)
+	if (EnumSerializeIORead == m_iSerializeType)
 	{
 		Json::Value JsonValue;
 		if (nullptr == pstrName)
@@ -822,7 +822,7 @@ void CJsonSerialize::Serialization(long double & Value, const char * pstrName)
 		else
 		{
 			const char *pLogName = (nullptr == pstrName) ? "nullptr" : pstrName;
-			Log("CJsonSerialize::Serialization long double JsonValue Type=%d name=%s Error", static_cast<int>(JsonValue.type()), pLogName);
+			Log("CJsonSerialize::Serialize long double JsonValue Type=%d name=%s Error", static_cast<int>(JsonValue.type()), pLogName);
 			assert(false);
 		}
 	}
@@ -840,9 +840,9 @@ void CJsonSerialize::Serialization(long double & Value, const char * pstrName)
 	}
 }
 
-void CJsonSerialize::Serialization(std::string& Value, const char *pstrName)
+void CJsonSerialize::Serialize(std::string& Value, const char *pstrName)
 {
-	if (enum_Serialization_Type_Read == m_iSerializationType)
+	if (EnumSerializeIORead == m_iSerializeType)
 	{
 		Json::Value JsonValue;
 		if (nullptr == pstrName)
@@ -860,7 +860,7 @@ void CJsonSerialize::Serialization(std::string& Value, const char *pstrName)
 		else
 		{
 			const char *pLogName = (nullptr == pstrName) ? "nullptr" : pstrName;
-			Log("CJsonSerialize::Serialization string JsonValue Type=%d name=%s Error", static_cast<int>(JsonValue.type()), pLogName);
+			Log("CJsonSerialize::Serialize string JsonValue Type=%d name=%s Error", static_cast<int>(JsonValue.type()), pLogName);
 			assert(false);
 		}
 	}

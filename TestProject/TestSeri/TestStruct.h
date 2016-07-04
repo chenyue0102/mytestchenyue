@@ -19,8 +19,8 @@ void DoTest(ISerialize * pSerializeWrite, ISerialize * pSerializeRead)
 {
 	T AllTypeWrite;
 	AllTypeWrite.init();
-	pSerializeWrite->SetSerializationType(enum_Serialization_Type_Write);
-	AllTypeWrite.Serialization(pSerializeWrite);
+	pSerializeWrite->SetSerializeType(EnumSerializeIOWrite);
+	AllTypeWrite.Serialize(pSerializeWrite);
 
 	std::string strBuffer(pSerializeWrite->GetData(), pSerializeWrite->GetDataLen());
 	std::wstring strWText;
@@ -29,10 +29,10 @@ void DoTest(ISerialize * pSerializeWrite, ISerialize * pSerializeRead)
 		strWText = UTF8ToWChar(strBuffer);
 	}
 
-	pSerializeRead->SetSerializationType(enum_Serialization_Type_Read);
+	pSerializeRead->SetSerializeType(EnumSerializeIORead);
 	pSerializeRead->SetData(strBuffer.data(), strBuffer.size());
 	T AllTypeRead;
-	AllTypeRead.Serialization(pSerializeRead);
+	AllTypeRead.Serialize(pSerializeRead);
 
 	assert(AllTypeWrite == AllTypeRead);
 }
@@ -42,7 +42,7 @@ void DoTest2(ISerialize * pSerializeWrite, ISerialize * pSerializeRead)
 {
 	T AllTypeWrite;
 	AllTypeWrite.init();
-	pSerializeWrite->SetSerializationType(enum_Serialization_Type_Write);
+	pSerializeWrite->SetSerializeType(EnumSerializeIOWrite);
 	if (!SerializeStruct(pSerializeWrite, AllTypeWrite))
 	{
 		assert(false);
@@ -55,7 +55,7 @@ void DoTest2(ISerialize * pSerializeWrite, ISerialize * pSerializeRead)
 		strWText = UTF8ToWChar(strBuffer);
 	}
 
-	pSerializeRead->SetSerializationType(enum_Serialization_Type_Read);
+	pSerializeRead->SetSerializeType(EnumSerializeIORead);
 	pSerializeRead->SetData(strBuffer.data(), strBuffer.size());
 	T AllTypeRead;
 	if (!SerializeStruct(pSerializeRead, AllTypeRead))
@@ -90,7 +90,7 @@ struct TestAllType
 	int		Keys[4] = { 0 };
 
 	void init();
-	BOOL Serialization(ISerialize *pSerialize);
+	BOOL Serialize(ISerialize *pSerialize);
 	bool operator==(const TestAllType &other)const;
 };
 
@@ -102,7 +102,7 @@ struct TestStruct
 	std::string strValue;
 
 	void init();
-	BOOL Serialization(ISerialize *pSerialize);
+	BOOL Serialize(ISerialize *pSerialize);
 	bool operator==(const TestStruct &other)const;
 };
 
@@ -120,7 +120,7 @@ struct TestArray
 	std::vector<int> vtArray[3];
 
 	void init();
-	BOOL Serialization(ISerialize *pSerialize);
+	BOOL Serialize(ISerialize *pSerialize);
 	bool operator==(const TestArray &other)const;
 };
 
@@ -133,7 +133,7 @@ struct TestContainer
 	TestArray ta;
 
 	void init();
-	BOOL Serialization(ISerialize *pSerialize);
+	BOOL Serialize(ISerialize *pSerialize);
 	bool operator==(const TestContainer &other)const;
 };
 
@@ -147,7 +147,7 @@ struct TestMiss
 	std::string strValue;
 
 	void init();
-	BOOL Serialization(ISerialize *pSerialize);
+	BOOL Serialize(ISerialize *pSerialize);
 };
 
 bool SerializeStruct(ISerialize *pSerialize, TestMiss &Value);

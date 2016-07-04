@@ -27,9 +27,6 @@
     <ClInclude Include="ISerialize.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Serialization.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="JsonSerialize.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -45,15 +42,15 @@
     <ClInclude Include="TestStruct.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="BinarySerialize.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="TestSeri.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="Serialization.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="JsonSerialize.cpp">
@@ -69,6 +66,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="TestStruct.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="BinarySerialize.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

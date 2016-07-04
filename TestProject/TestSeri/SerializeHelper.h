@@ -10,7 +10,7 @@
 
 
 /************************************************************************/
-/* 序列化宏 Serialization                                                */
+/* 序列化宏 Serialize                                                */
 /************************************************************************/
 //序列化除了字符数组以外的宏定义
 #define SERIALIZE_VALUE(value) \
@@ -266,7 +266,7 @@ void Serialize(ISerialize *pSerialize, T Value[], unsigned long ulValueCount, co
 	try
 	{
 		//如果Json中没有这个结构体，则序列化函数会抛出异常
-		pSerialize->BeginSerlizeArray(ulCount, pstrName);
+		pSerialize->BeginSerializeArray(ulCount, pstrName);
 	}
 	catch (int)
 	{
@@ -277,11 +277,11 @@ void Serialize(ISerialize *pSerialize, T Value[], unsigned long ulValueCount, co
 	assert(ulValueCount == ulCount);
 	for (unsigned long ulIndex = 0; ulIndex < ulCount && ulIndex < ulValueCount; ulIndex++)
 	{
-		pSerialize->BeginSerlizeArrayItem(ulIndex, pstrName);
+		pSerialize->BeginSerializeArrayItem(ulIndex, pstrName);
 		Serialize(pSerialize, Value[ulIndex], nullptr);
-		pSerialize->EndSerlizeArrayItem(ulIndex, pstrName);
+		pSerialize->EndSerializeArrayItem(ulIndex, pstrName);
 	}
-	pSerialize->EndSerlizeArray(pstrName);
+	pSerialize->EndSerializeArray(pstrName);
 }
 
 // $_FUNCTION_BEGIN *******************************************************
@@ -297,7 +297,7 @@ inline bool SerializeStruct(ISerialize *pSerialize, T &Value)
 {
 	//T类型必须是结构体或者类
 	static_assert(std::is_class<T>::value, "Serialize T must be struct or class");
-	return Value.Serialization(pSerialize);
+	return Value.Serialize(pSerialize);
 }
 
 // $_FUNCTION_BEGIN *******************************************************
@@ -317,7 +317,7 @@ void Serialize(ISerialize *pSerialize, T &Value, const char *pstrName)
 	try
 	{
 		//如果Json中没有这个结构体，则序列化函数会抛出异常
-		pSerialize->BeginSerlizeStruct(pstrName);
+		pSerialize->BeginSerializeStruct(pstrName);
 	}
 	catch (int)
 	{
@@ -330,7 +330,7 @@ void Serialize(ISerialize *pSerialize, T &Value, const char *pstrName)
 		throw - 1;
 	}
 
-	pSerialize->EndSerlizeStruct(pstrName);
+	pSerialize->EndSerializeStruct(pstrName);
 }
 
 // $_FUNCTION_BEGIN *******************************************************
@@ -349,7 +349,7 @@ void Serialize(ISerialize *pSerialize, std::vector<T> &tArray, const char *pstrN
 	try
 	{
 		//如果Json中没有这个结构体，则序列化函数会抛出异常
-		pSerialize->BeginSerlizeArray(ulCount, pstrName);
+		pSerialize->BeginSerializeArray(ulCount, pstrName);
 	}
 	catch (int)
 	{
@@ -359,8 +359,8 @@ void Serialize(ISerialize *pSerialize, std::vector<T> &tArray, const char *pstrN
 	
 	for (unsigned long ulIndex = 0; ulIndex < ulCount; ulIndex++)
 	{
-		pSerialize->BeginSerlizeArrayItem(ulIndex, pstrName);
-		if (enum_Serialization_Type_Read == pSerialize->GetSerializationType())
+		pSerialize->BeginSerializeArrayItem(ulIndex, pstrName);
+		if (EnumSerializeIORead == pSerialize->GetSerializeType())
 		{
 			T t;
 			Serialize(pSerialize, t, nullptr);
@@ -370,9 +370,9 @@ void Serialize(ISerialize *pSerialize, std::vector<T> &tArray, const char *pstrN
 		{
 			Serialize(pSerialize, tArray[ulIndex], nullptr);
 		}
-		pSerialize->EndSerlizeArrayItem(ulIndex, pstrName);
+		pSerialize->EndSerializeArrayItem(ulIndex, pstrName);
 	}
-	pSerialize->EndSerlizeArray(pstrName);
+	pSerialize->EndSerializeArray(pstrName);
 }
 
 };

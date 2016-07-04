@@ -92,7 +92,7 @@ void TestAllType::init()
 	
 }
 
-BOOL TestAllType::Serialization(ISerialize *pSerialize)
+BOOL TestAllType::Serialize(ISerialize *pSerialize)
 {
 	return SerializeStruct(pSerialize, *this);
 }
@@ -126,7 +126,7 @@ void TestStruct::init()
 	strValue = R"(TestStruct£¬hello, world)";
 }
 
-BOOL TestStruct::Serialization(ISerialize * pSerialize)
+BOOL TestStruct::Serialize(ISerialize * pSerialize)
 {
 	return SerializeStruct(pSerialize, *this);
 }
@@ -184,7 +184,7 @@ void TestArray::init()
 	vtArray[2] = { 44,55,66 };
 }
 
-BOOL TestArray::Serialization(ISerialize *pSerialize)
+BOOL TestArray::Serialize(ISerialize *pSerialize)
 {
 	return SerializeStruct(pSerialize, *this);
 }
@@ -229,7 +229,7 @@ void TestContainer::init()
 	ta.init();
 }
 
-BOOL TestContainer::Serialization(ISerialize * pSerialize)
+BOOL TestContainer::Serialize(ISerialize * pSerialize)
 {
 	return SerializeStruct(pSerialize, *this);
 }
@@ -264,7 +264,7 @@ void TestMiss::init()
 	strValue = "hello,world,value";
 }
 
-BOOL TestMiss::Serialization(ISerialize * pSerialize)
+BOOL TestMiss::Serialize(ISerialize * pSerialize)
 {
 	try
 	{
@@ -302,8 +302,8 @@ void DoTestMiss(ISerialize * pSerializeWrite, ISerialize * pSerializeRead)
 	assert(pSerializeWrite->GetSerializeFormat() != EnumSerializeFormatBinary);
 	TestMiss MissWrite;
 	MissWrite.init();
-	pSerializeWrite->SetSerializationType(enum_Serialization_Type_Write);
-	MissWrite.Serialization(pSerializeWrite);
+	pSerializeWrite->SetSerializeType(EnumSerializeIOWrite);
+	MissWrite.Serialize(pSerializeWrite);
 
 	std::string strBuffer(pSerializeWrite->GetData(), pSerializeWrite->GetDataLen());
 	std::wstring strWText;
@@ -313,7 +313,7 @@ void DoTestMiss(ISerialize * pSerializeWrite, ISerialize * pSerializeRead)
 	}
 
 	TestMiss MissRead;
-	pSerializeRead->SetSerializationType(enum_Serialization_Type_Read);
+	pSerializeRead->SetSerializeType(EnumSerializeIORead);
 	pSerializeRead->SetData(strBuffer.data(), strBuffer.size());
 	SerializeStruct(pSerializeRead, MissRead);
 }

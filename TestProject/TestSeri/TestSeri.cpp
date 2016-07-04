@@ -4,7 +4,7 @@
 #include "stdafx.h"
 #include "XmlSerialize.h"
 #include "JsonSerialize.h"
-#include "Serialization.h"
+#include "BinarySerialize.h"
 #include "TestStruct.h"
 #pragma comment(lib, "lib_json.lib")
 
@@ -44,12 +44,12 @@ int _tmain(int argc, _TCHAR* argv[])
 	//序列化函数为结构体成员函数形式
 	Test<CJsonSerialize>();
 	Test<CXmlSerialize>();
-	Test<CSerialization>();
+	Test<CBinarySerialize>();
 
 	//序列化函数为全局函数形式
 	Test2<CJsonSerialize>();
 	Test2<CXmlSerialize>();
-	Test2<CSerialization>();
+	Test2<CBinarySerialize>();
 	
 	//测试缺少字段
 	Test3<CJsonSerialize>();
