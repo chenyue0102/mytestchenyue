@@ -4,6 +4,7 @@
 #include <atomic>
 #endif
 #include "UTF8_GBK_Convert.h"
+#include <atlenc.h>
 
 
 //SerializeHelper使用存储数据的内部类
@@ -173,12 +174,46 @@ void SerializeJsonXmlGB2312(ISerialize *pSerialization, std::string& Value, cons
 	}
 }
 
+std::string SerializeBase64Decode(const std::string &strBase64)
+{
+	std::string strTemp;
+	int nLength = strBase64.size() + 4;
+	strTemp.resize(nLength);
+
+	Base64Decode(strBase64.data(), strBase64.size(), reinterpret_cast<BYTE*>(&strTemp[0]), &nLength);
+	return std::string(strTemp.data(), nLength);
+}
+
+std::string SerializeBase64Encode(const std::string &strBinary)
+{
+	int nLength = strBinary.size() * 2 + 4;
+	std::string strTemp;
+	strTemp.resize(nLength);
+	Base64Encode(reinterpret_cast<const BYTE*>(strBinary.data()), strBinary.size(), &strTemp[0], &nLength);
+	return std::string(strTemp.data(), nLength);
+}
+
 void SerializeJsonXmlBinary(ISerialize *pSerialization, std::string& Value, const char *pstrName)
 {
 	//Json可以存储二进制，xml需要base64编码
-	assert(EnumSerializeFormatXml != pSerialization->GetSerializeFormat());
-	CSerializeHelperData &HelpData = CSerializeHelperData::GetInstance();
-	return pSerialization->Serialization(Value, pstrName);
+	if (EnumSerializeFormatXml == pSerialization->GetSerializeFormat())
+	{
+		//进行base64编码
+		if (enum_Serialization_Type_Read == pSerialization->GetSerializationType())
+		{
+			std::string strBase64;
+			pSerialization->Serialization(strBase64, pstrName);
+			Value = SerializeBase64Decode(strBase64);
+		}
+		else
+		{
+			pSerialization->Serialization(SerializeBase64Encode(Value), pstrName);
+		}
+	}
+	else
+	{
+		return pSerialization->Serialization(Value, pstrName);
+	}
 }
 
 void Serialize(ISerialize *pSerialization, std::string& Value, const char *pstrName, EnumStringCode StringCode/* = EnumStringCodeNone*/)

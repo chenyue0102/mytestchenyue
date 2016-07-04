@@ -42,18 +42,18 @@ void Test3()
 int _tmain(int argc, _TCHAR* argv[])
 {
 	//序列化函数为结构体成员函数形式
-	Test<CXmlSerialize>();
 	Test<CJsonSerialize>();
+	Test<CXmlSerialize>();
 	Test<CSerialization>();
 
 	//序列化函数为全局函数形式
-	Test2<CXmlSerialize>();
 	Test2<CJsonSerialize>();
+	Test2<CXmlSerialize>();
 	Test2<CSerialization>();
 	
 	//测试缺少字段
-	Test3<CXmlSerialize>();
 	Test3<CJsonSerialize>();
+	Test3<CXmlSerialize>();
 	return 0;
 }
 

@@ -8,9 +8,6 @@
 #include <string>
 
 
-#ifndef interface
-#define interface struct
-#endif
 // 序列化类型
 enum ENUM_SERIALIZATION_TYPE
 {
@@ -32,7 +29,7 @@ enum EnumSerializeFormat
 /************************************************************************/
 /* 序列化的接口，统一二进制与Json序列化方式                                  */
 /************************************************************************/
-interface ISerialize
+struct ISerialize
 {
 public://缓冲区设置函数
 	// $_FUNCTION_BEGIN *******************************************************

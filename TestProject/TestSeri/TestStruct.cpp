@@ -53,6 +53,7 @@ bool SerializeStruct(ISerialize *pSerialize, TestAllType &Value)
 		SERIALIZE_STRUCT_VALUE(d);
 		SERIALIZE_STRUCT_VALUE(ld);
 		SERIALIZE_STRUCT_VALUE(ss);
+		SerializeHelper::Serialize(pSerialize, Value.strBinary, "strBinary", SerializeHelper::EnumStringCodeBinary);
 		SERIALIZE_STRUCT_CHAR(szText);
 		SERIALIZE_STRUCT_ARRAY(Keys);
 	}
@@ -79,14 +80,9 @@ void TestAllType::init()
 	f = 123.456f;
 	d = 456.789;
 	ld = 789.123;
-	ss = R"(hello,world)";
-	ss.append(1, '\0');
-	ss.append(1, 1);
-	ss.append(1, 12);
-	ss.append(1, 23);
-	ss.append(1, 34);
-	ss.append(1, 44);
-	ss.append(R"(,你好，世界,~!@#$%^&*()_+|}{": ? > < , . / ; '`[]-=\)");
+	ss = R"(hello,world,你好，世界,~!@#$%^&*()_+|}{": ? > < , . / ; '`[]-=\)";
+	char szInitBinary[] = { 0x00, 0x01, 0x02, 0x03};
+	strBinary.append(szInitBinary, _countof(szInitBinary));
 	strcpy(szText, "hello, world,szText");
 	int nBegin = 2000;
 	for (auto &OneKey : Keys)
@@ -98,31 +94,7 @@ void TestAllType::init()
 
 BOOL TestAllType::Serialization(ISerialize *pSerialize)
 {
-	try
-	{
-		SERIALIZE_VALUE(b);
-		SERIALIZE_VALUE(c);
-		SERIALIZE_VALUE(uc);
-		SERIALIZE_VALUE(s);
-		SERIALIZE_VALUE(us);
-		SERIALIZE_VALUE(i);
-		SERIALIZE_VALUE(ui);
-		SERIALIZE_VALUE(l);
-		SERIALIZE_VALUE(ul);
-		SERIALIZE_VALUE(ll);
-		SERIALIZE_VALUE(ull);
-		SERIALIZE_VALUE(f);
-		SERIALIZE_VALUE(d);
-		SERIALIZE_VALUE(ld);
-		SERIALIZE_VALUE(ss);
-		SERIALIZE_CHAR(szText);
-		SERIALIZE_ARRAY(Keys);
-	}
-	catch (...)
-	{
-		return FALSE;
-	}
-	return TRUE;
+	return SerializeStruct(pSerialize, *this);
 }
 
 bool TestAllType::operator==(const TestAllType &other)const
@@ -142,6 +114,7 @@ bool TestAllType::operator==(const TestAllType &other)const
 		&& fabs(d - other.d) < FLT_MIN
 		&& fabs(ld - other.ld) < FLT_MIN
 		&& ss == other.ss
+		&& strBinary == other.strBinary
 		&& 0 == strcmp(szText, other.szText)
 		&& CompareArray(Keys, other.Keys, _countof(Keys))
 		);
@@ -155,16 +128,7 @@ void TestStruct::init()
 
 BOOL TestStruct::Serialization(ISerialize * pSerialize)
 {
-	try
-	{
-		SERIALIZE_VALUE(id);
-		SERIALIZE_VALUE(strValue);
-	}
-	catch (...)
-	{
-		return FALSE;
-	}
-	return TRUE;
+	return SerializeStruct(pSerialize, *this);
 }
 
 bool SerializeStruct(ISerialize *pSerialize, TestStruct &Value)
@@ -222,22 +186,7 @@ void TestArray::init()
 
 BOOL TestArray::Serialization(ISerialize *pSerialize)
 {
-	try
-	{
-		SERIALIZE_VALUE(idarray);
-		SERIALIZE_VALUE(ts);
-		SERIALIZE_VALUE(vt);
-		SERIALIZE_VALUE(vvs);
-		SERIALIZE_VALUE(vts);
-		SERIALIZE_VALUE(vvts);
-		SERIALIZE_ARRAY(tsArray);
-		SERIALIZE_ARRAY(vtArray);
-	}
-	catch (...)
-	{
-		return FALSE;
-	}
-	return TRUE;
+	return SerializeStruct(pSerialize, *this);
 }
 
 bool SerializeStruct(ISerialize * pSerialize, TestArray & Value)
@@ -282,17 +231,7 @@ void TestContainer::init()
 
 BOOL TestContainer::Serialization(ISerialize * pSerialize)
 {
-	try
-	{
-		SERIALIZE_VALUE(idcontainer);
-		SERIALIZE_VALUE(ts);
-		SERIALIZE_VALUE(ta);
-	}
-	catch (...)
-	{
-		return FALSE;
-	}
-	return TRUE;
+	return SerializeStruct(pSerialize, *this);
 }
 
 bool SerializeStruct(ISerialize * pSerialize, TestContainer & Value)

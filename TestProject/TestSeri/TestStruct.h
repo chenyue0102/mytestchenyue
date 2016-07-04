@@ -85,6 +85,7 @@ struct TestAllType
 	double d = 0.0;
 	long double ld = 0.0;
 	std::string ss;
+	std::string strBinary;		//存储二进制数据
 	char	szText[32] = { 0 };
 	int		Keys[4] = { 0 };
 
