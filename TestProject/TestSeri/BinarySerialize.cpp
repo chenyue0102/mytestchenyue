@@ -92,7 +92,7 @@ void CBinarySerialize::Serialize(bool& bValue, const char *)
 	{
 		memcpy(&bValue, m_pBuffer + m_dwDataLen, sizeof(bool));
 	}
-	else if (m_iSerializeType == EnumSerializeIORead)	// 写入数据
+	else if (m_iSerializeType == EnumSerializeIOWrite)	// 写入数据
 	{
 		memcpy(m_pBuffer + m_dwDataLen, &bValue, sizeof(bool));
 	}
@@ -131,7 +131,7 @@ void CBinarySerialize::Serialize(char& cValue, const char *)
 	{
 		memcpy(&cValue, m_pBuffer + m_dwDataLen, sizeof(char));
 	}
-	else if (m_iSerializeType == EnumSerializeIORead)	// 写入数据
+	else if (m_iSerializeType == EnumSerializeIOWrite)	// 写入数据
 	{
 		memcpy(m_pBuffer + m_dwDataLen, &cValue, sizeof(char));
 	}
@@ -170,7 +170,7 @@ void CBinarySerialize::Serialize(unsigned char& byValue, const char *)
 	{
 		memcpy(&byValue, m_pBuffer + m_dwDataLen, sizeof(unsigned char));
 	}
-	else if (m_iSerializeType == EnumSerializeIORead)	// 写入数据
+	else if (m_iSerializeType == EnumSerializeIOWrite)	// 写入数据
 	{
 		memcpy(m_pBuffer + m_dwDataLen, &byValue, sizeof(unsigned char));
 	}
@@ -209,7 +209,7 @@ void CBinarySerialize::Serialize(short& sValue, const char *)
 	{
 		memcpy(&sValue, m_pBuffer + m_dwDataLen, sizeof(short));
 	}
-	else if (m_iSerializeType == EnumSerializeIORead)	// 写入数据
+	else if (m_iSerializeType == EnumSerializeIOWrite)	// 写入数据
 	{
 		memcpy(m_pBuffer + m_dwDataLen, &sValue, sizeof(short));
 	}
@@ -248,7 +248,7 @@ void CBinarySerialize::Serialize(unsigned short& sValue, const char *)
 	{
 		memcpy(&sValue, m_pBuffer + m_dwDataLen, sizeof(unsigned short));
 	}
-	else if (m_iSerializeType == EnumSerializeIORead)	// 写入数据
+	else if (m_iSerializeType == EnumSerializeIOWrite)	// 写入数据
 	{
 		memcpy(m_pBuffer + m_dwDataLen, &sValue, sizeof(unsigned short));
 	}
@@ -287,7 +287,7 @@ void CBinarySerialize::Serialize(int& iValue, const char *)
 	{
 		memcpy(&iValue, m_pBuffer + m_dwDataLen, sizeof(int));
 	}
-	else if (m_iSerializeType == EnumSerializeIORead)	// 写入数据
+	else if (m_iSerializeType == EnumSerializeIOWrite)	// 写入数据
 	{
 		memcpy(m_pBuffer + m_dwDataLen, &iValue, sizeof(int));
 	}
@@ -326,7 +326,7 @@ void CBinarySerialize::Serialize(unsigned int& iValue, const char *)
 	{
 		memcpy(&iValue, m_pBuffer + m_dwDataLen, sizeof(unsigned int));
 	}
-	else if (m_iSerializeType == EnumSerializeIORead)	// 写入数据
+	else if (m_iSerializeType == EnumSerializeIOWrite)	// 写入数据
 	{
 		memcpy(m_pBuffer + m_dwDataLen, &iValue, sizeof(unsigned int));
 	}
@@ -365,7 +365,7 @@ void CBinarySerialize::Serialize(long& lValue, const char *)
 	{
 		memcpy(&lValue, m_pBuffer + m_dwDataLen, sizeof(long));
 	}
-	else if (m_iSerializeType == EnumSerializeIORead)	// 写入数据
+	else if (m_iSerializeType == EnumSerializeIOWrite)	// 写入数据
 	{
 		memcpy(m_pBuffer + m_dwDataLen, &lValue, sizeof(long));
 	}
@@ -404,7 +404,7 @@ void CBinarySerialize::Serialize(unsigned long& lValue, const char *)
 	{
 		memcpy(&lValue, m_pBuffer + m_dwDataLen, sizeof(unsigned long));
 	}
-	else if (m_iSerializeType == EnumSerializeIORead)	// 写入数据
+	else if (m_iSerializeType == EnumSerializeIOWrite)	// 写入数据
 	{
 		memcpy(m_pBuffer + m_dwDataLen, &lValue, sizeof(unsigned long));
 	}
@@ -443,7 +443,7 @@ void CBinarySerialize::Serialize(long long& i64Value, const char *)
 	{
 		memcpy(&i64Value, m_pBuffer + m_dwDataLen, sizeof(long long));
 	}
-	else if (m_iSerializeType == EnumSerializeIORead)	// 写入数据
+	else if (m_iSerializeType == EnumSerializeIOWrite)	// 写入数据
 	{
 		memcpy(m_pBuffer + m_dwDataLen, &i64Value, sizeof(long long));
 	}
@@ -482,7 +482,7 @@ void CBinarySerialize::Serialize(unsigned long long& Value, const char *)
 	{
 		memcpy(&Value, m_pBuffer + m_dwDataLen, sizeof(unsigned long long));
 	}
-	else if (m_iSerializeType == EnumSerializeIORead)	// 写入数据
+	else if (m_iSerializeType == EnumSerializeIOWrite)	// 写入数据
 	{
 		memcpy(m_pBuffer + m_dwDataLen, &Value, sizeof(unsigned long long));
 	}
@@ -521,7 +521,7 @@ void CBinarySerialize::Serialize(float& fValue, const char *)
 	{
 		memcpy(&fValue, m_pBuffer + m_dwDataLen, sizeof(float));
 	}
-	else if (m_iSerializeType == EnumSerializeIORead)	// 写入数据
+	else if (m_iSerializeType == EnumSerializeIOWrite)	// 写入数据
 	{
 		memcpy(m_pBuffer + m_dwDataLen, &fValue, sizeof(float));
 	}
@@ -560,7 +560,7 @@ void CBinarySerialize::Serialize(double& dValue, const char *)
 	{
 		memcpy(&dValue, m_pBuffer + m_dwDataLen, sizeof(double));
 	}
-	else if (m_iSerializeType == EnumSerializeIORead)	// 写入数据
+	else if (m_iSerializeType == EnumSerializeIOWrite)	// 写入数据
 	{
 		memcpy(m_pBuffer + m_dwDataLen, &dValue, sizeof(double));
 	}
@@ -599,7 +599,7 @@ void CBinarySerialize::Serialize(long double& ldValue, const char *)
 	{
 		memcpy(&ldValue, m_pBuffer + m_dwDataLen, sizeof(long double));
 	}
-	else if (m_iSerializeType == EnumSerializeIORead)	// 写入数据
+	else if (m_iSerializeType == EnumSerializeIOWrite)	// 写入数据
 	{
 		memcpy(m_pBuffer + m_dwDataLen, &ldValue, sizeof(long double));
 	}
@@ -652,7 +652,7 @@ void CBinarySerialize::Serialize(std::string& strValue, const char *)
 	{
 		strValue.append(m_pBuffer + m_dwDataLen, dwDataLen);
 	}
-	else if (m_iSerializeType == EnumSerializeIORead)	// 写入数据
+	else if (m_iSerializeType == EnumSerializeIOWrite)	// 写入数据
 	{
 		memcpy(m_pBuffer + m_dwDataLen, strValue.c_str(), dwDataLen);
 	}

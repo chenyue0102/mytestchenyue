@@ -19,7 +19,7 @@ CJsonSerialize::~CJsonSerialize()
 void CJsonSerialize::SetSerializeType(EnumSerializeIO iSerializeType)
 {
 	m_iSerializeType = iSerializeType;
-	if (!(EnumSerializeIORead == m_iSerializeType || EnumSerializeIORead == m_iSerializeType))
+	if (!(EnumSerializeIORead == m_iSerializeType || EnumSerializeIOWrite == m_iSerializeType))
 	{
 		Log("CJsonSerialize::SetSerializeType iSerializeType=%d Error", static_cast<int>(iSerializeType));
 		assert(false);
@@ -28,7 +28,7 @@ void CJsonSerialize::SetSerializeType(EnumSerializeIO iSerializeType)
 
 EnumSerializeIO CJsonSerialize::GetSerializeType()
 {
-	if (!(EnumSerializeIORead == m_iSerializeType || EnumSerializeIORead == m_iSerializeType))
+	if (!(EnumSerializeIORead == m_iSerializeType || EnumSerializeIOWrite == m_iSerializeType))
 	{
 		Log("CJsonSerialize::GetSerializeType m_iSerializeType=%d Error", static_cast<int>(m_iSerializeType));
 		assert(false);
@@ -58,7 +58,7 @@ bool CJsonSerialize::SetData(const char *pstrText, unsigned long ulDataLength)
 
 const char* CJsonSerialize::GetData()
 {
-	if (EnumSerializeIORead != m_iSerializeType)
+	if (EnumSerializeIOWrite != m_iSerializeType)
 	{
 		Log("CJsonSerialize::GetData m_iSerializeType=%d Error", static_cast<int>(m_iSerializeType));
 		assert(false);
@@ -69,7 +69,7 @@ const char* CJsonSerialize::GetData()
 
 unsigned long CJsonSerialize::GetDataLen()
 {
-	if (EnumSerializeIORead != m_iSerializeType)
+	if (EnumSerializeIOWrite != m_iSerializeType)
 	{
 		Log("CJsonSerialize::GetDataLen m_iSerializeType=%d Error", static_cast<int>(m_iSerializeType));
 		assert(false);

@@ -22,7 +22,7 @@ CXmlSerialize::~CXmlSerialize()
 void CXmlSerialize::SetSerializeType(EnumSerializeIO iSerializeType)
 {
 	m_iSerializeType = iSerializeType;
-	if (EnumSerializeIORead == m_iSerializeType)
+	if (EnumSerializeIOWrite == m_iSerializeType)
 	{
 		assert(nullptr == m_pRootValue);
 		TiXmlDeclaration *pXmlDeclaration = new TiXmlDeclaration("1.0", "UTF-8", "");
