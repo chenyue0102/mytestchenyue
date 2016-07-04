@@ -1,52 +1,46 @@
 // $_FILEHEADER_BEGIN *********************************************************
-// 文件名称：Serialization.h
+// 文件名称：Serialize.h
 // 创建日期：2012-02-28
 // 创建人：罗俊杰
 // 文件说明：序列化类,将数据读出或写入到内存
 // $_FILEHEADER_END ***********************************************************
 
-#ifndef SERIALIZATION_H
-#define SERIALIZATION_H
+#ifndef Serialize_H
+#define Serialize_H
 
 #include "Typedef.h"
 #include <string>
 #include <vector>
 #include "ISerialize.h"
-using namespace std;
 
-
-
-// 缓存创建类型
-enum ENUM_BUFFER_CREATE_TYPE
-{
-	enum_Buffer_Create_Type_Inside,		// 内部创建
-	enum_Buffer_Create_Type_OutSide,	// 外部创建
-};
-
-#define MAX_VECTOR_SIZE		(1024 * 1024)
-
-class CSerialization
+class CBinarySerialize
 	: public ISerialize
 {
+	// 缓存创建类型
+	enum ENUM_BUFFER_CREATE_TYPE
+	{
+		enum_Buffer_Create_Type_Inside,		// 内部创建
+		enum_Buffer_Create_Type_OutSide,	// 外部创建
+	};
 public:
-	CSerialization();
-	~CSerialization();
+	CBinarySerialize();
+	~CBinarySerialize();
 public:
 	// $_FUNCTION_BEGIN *******************************************************
-	// 函数名称：SetSerializationType
-	// 函数参数：iSerializationType		[输入]	序列化类型
+	// 函数名称：SetSerializeType
+	// 函数参数：iSerializeType		[输入]	序列化类型
 	// 返 回 值：
 	// 函数说明：设置序列化类型
 	// $_FUNCTION_END *********************************************************
-	virtual void SetSerializationType(ENUM_SERIALIZATION_TYPE iSerializationType)override;
+	virtual void SetSerializeType(EnumSerializeIO iSerializeType)override;
 
 	// $_FUNCTION_BEGIN *******************************************************
-	// 函数名称：GetSerializationType
+	// 函数名称：GetSerializeType
 	// 函数参数：
 	// 返 回 值：序列化类型
 	// 函数说明：获取序列化类型
 	// $_FUNCTION_END *********************************************************
-	virtual ENUM_SERIALIZATION_TYPE GetSerializationType()override;
+	virtual EnumSerializeIO GetSerializeType()override;
 
 	// $_FUNCTION_BEGIN *******************************************************
 	// 函数名称：GetSerializeFormat
@@ -67,125 +61,125 @@ public:
 	virtual bool SetData(const char *pstrText, unsigned long ulDataLength)override;
 public://序列化字段函数
 	// $_FUNCTION_BEGIN *******************************************************
-	// 函数名称：Serialization
+	// 函数名称：Serialize
 	// 函数参数：bValue		[输入]	bool类型
 	// 返 回 值：
 	// 函数说明：序列化bool类型
 	// $_FUNCTION_END *********************************************************
-	virtual void Serialization(bool& bValue, const char *)override;
+	virtual void Serialize(bool& bValue, const char *)override;
 
 	// $_FUNCTION_BEGIN *******************************************************
-	// 函数名称：Serialization
+	// 函数名称：Serialize
 	// 函数参数：cValue		[输入]	字符
 	// 返 回 值：
 	// 函数说明：序列化无符号字符
 	// $_FUNCTION_END *********************************************************
-	virtual void Serialization(char& cValue, const char *)override;
+	virtual void Serialize(char& cValue, const char *)override;
 
 	// $_FUNCTION_BEGIN *******************************************************
-	// 函数名称：Serialization
+	// 函数名称：Serialize
 	// 函数参数：byValue		[输入]	无符号字符
 	// 返 回 值：
 	// 函数说明：序列化无符号字符
 	// $_FUNCTION_END *********************************************************
-	virtual void Serialization(unsigned char& byValue, const char *)override;
+	virtual void Serialize(unsigned char& byValue, const char *)override;
 
 	// $_FUNCTION_BEGIN *******************************************************
-	// 函数名称：Serialization
+	// 函数名称：Serialize
 	// 函数参数：sValue		[输入]	有符号短整型
 	// 返 回 值：
 	// 函数说明：序列化有符号短整型
 	// $_FUNCTION_END *********************************************************
-	virtual void Serialization(short& sValue, const char *)override;
+	virtual void Serialize(short& sValue, const char *)override;
 
 	// $_FUNCTION_BEGIN *******************************************************
-	// 函数名称：Serialization
+	// 函数名称：Serialize
 	// 函数参数：sValue		[输入]	无符号短整型
 	// 返 回 值：
 	// 函数说明：序列化无符号短整型
 	// $_FUNCTION_END *********************************************************
-	virtual void Serialization(unsigned short& sValue, const char *)override;
+	virtual void Serialize(unsigned short& sValue, const char *)override;
 
 	// $_FUNCTION_BEGIN *******************************************************
-	// 函数名称：Serialization
+	// 函数名称：Serialize
 	// 函数参数：iValue		[输入]	有符号整型
 	// 返 回 值：
 	// 函数说明：序列化有符号整型
 	// $_FUNCTION_END *********************************************************
-	virtual void Serialization(int& iValue, const char *)override;
+	virtual void Serialize(int& iValue, const char *)override;
 
 	// $_FUNCTION_BEGIN *******************************************************
-	// 函数名称：Serialization
+	// 函数名称：Serialize
 	// 函数参数：iValue		[输入]	无符号整型
 	// 返 回 值：
 	// 函数说明：序列化无符号整型
 	// $_FUNCTION_END *********************************************************
-	virtual void Serialization(unsigned int& iValue, const char *)override;
+	virtual void Serialize(unsigned int& iValue, const char *)override;
 
 	// $_FUNCTION_BEGIN *******************************************************
-	// 函数名称：Serialization
+	// 函数名称：Serialize
 	// 函数参数：lValue		[输入]	有符号长整型
 	// 返 回 值：
 	// 函数说明：序列化有符号长整型
 	// $_FUNCTION_END *********************************************************
-	virtual void Serialization(long& lValue, const char *)override;
+	virtual void Serialize(long& lValue, const char *)override;
 
 	// $_FUNCTION_BEGIN *******************************************************
-	// 函数名称：Serialization
+	// 函数名称：Serialize
 	// 函数参数：lValue		[输入]	无符号长整型
 	// 返 回 值：
 	// 函数说明：序列化无符号长整型
 	// $_FUNCTION_END *********************************************************
-	virtual void Serialization(unsigned long& lValue, const char *)override;
+	virtual void Serialize(unsigned long& lValue, const char *)override;
 
 	// $_FUNCTION_BEGIN *******************************************************
-	// 函数名称：Serialization
+	// 函数名称：Serialize
 	// 函数参数：i64Value		[输入]	64位长整型
 	// 返 回 值：
 	// 函数说明：序列化64位长整型
 	// $_FUNCTION_END *********************************************************
-	virtual void Serialization(long long& i64Value, const char *)override;
+	virtual void Serialize(long long& i64Value, const char *)override;
 
 	// $_FUNCTION_BEGIN *******************************************************
-	// 函数名称：Serialization
+	// 函数名称：Serialize
 	// 函数参数：
 	//					Value				[输入/输出]	需要序列化的参数
 	// 返 回 值：
 	// 函数说明：序列化变量
 	// $_FUNCTION_END *********************************************************
-	virtual void Serialization(unsigned long long& Value, const char *)override;
+	virtual void Serialize(unsigned long long& Value, const char *)override;
 
 	// $_FUNCTION_BEGIN *******************************************************
-	// 函数名称：Serialization
+	// 函数名称：Serialize
 	// 函数参数：fValue		[输入]	单精度类型
 	// 返 回 值：
 	// 函数说明：序列化单精度类型
 	// $_FUNCTION_END *********************************************************
-	virtual void Serialization(float& fValue, const char *)override;
+	virtual void Serialize(float& fValue, const char *)override;
 
 	// $_FUNCTION_BEGIN *******************************************************
-	// 函数名称：Serialization
+	// 函数名称：Serialize
 	// 函数参数：dValue		[输入]	双精度类型
 	// 返 回 值：
 	// 函数说明：序列化双精度类型
 	// $_FUNCTION_END *********************************************************
-	virtual void Serialization(double& dValue, const char *)override;
+	virtual void Serialize(double& dValue, const char *)override;
 
 	// $_FUNCTION_BEGIN *******************************************************
-	// 函数名称：Serialization
+	// 函数名称：Serialize
 	// 函数参数：dValue		[输入]	双精度类型
 	// 返 回 值：
 	// 函数说明：序列化双精度类型
 	// $_FUNCTION_END *********************************************************
-	virtual void Serialization(long double& ldValue, const char *)override;
+	virtual void Serialize(long double& ldValue, const char *)override;
 
 	// $_FUNCTION_BEGIN *******************************************************
-	// 函数名称：Serialization
+	// 函数名称：Serialize
 	// 函数参数：strValue		[输入]	字符串
 	// 返 回 值：
 	// 函数说明：序列化字符串
 	// $_FUNCTION_END *********************************************************
-	virtual void Serialization(string& strValue, const char *)override;
+	virtual void Serialize(std::string& strValue, const char *)override;
 
 	// $_FUNCTION_BEGIN *******************************************************
 	// 函数名称：GetData
@@ -204,60 +198,60 @@ public://序列化字段函数
 	virtual DWORD GetDataLen()override;
 
 	// $_FUNCTION_BEGIN *******************************************************
-	// 函数名称：BeginSerlizeStruct
+	// 函数名称：BeginSerializeStruct
 	// 函数参数：
 	// 返 回 值：
 	// 函数说明：告诉序列化模块，接下来要序列化一个结构体
 	// $_FUNCTION_END *********************************************************
-	virtual void BeginSerlizeStruct(const char *)override;
+	virtual void BeginSerializeStruct(const char *)override;
 
 	// $_FUNCTION_BEGIN *******************************************************
-	// 函数名称：EndSerlizeStruct
+	// 函数名称：EndSerializeStruct
 	// 函数参数：
 	// 返 回 值：
 	// 函数说明：告诉序列化模块，当前的结构体已经序列化完成
 	// $_FUNCTION_END *********************************************************
-	virtual void EndSerlizeStruct(const char *)override;
+	virtual void EndSerializeStruct(const char *)override;
 
 	// $_FUNCTION_BEGIN *******************************************************
-	// 函数名称：BeginSerlizeArray
+	// 函数名称：BeginSerializeArray
 	// 函数参数：
 	//					ulCount				[输入/输出]	列表的长度
 	// 返 回 值：
 	// 函数说明：告诉序列化模块，接下来要序列化一个列表，并设置/获取列表的长度
 	// $_FUNCTION_END *********************************************************
-	virtual void BeginSerlizeArray(unsigned long &ulCount, const char *)override;
+	virtual void BeginSerializeArray(unsigned long &ulCount, const char *)override;
 
 	// $_FUNCTION_BEGIN *******************************************************
-	// 函数名称：EndSerlizeArray
+	// 函数名称：EndSerializeArray
 	// 函数参数：
 	// 返 回 值：
 	// 函数说明：告诉序列化模块，当前的列表已经序列化完成
 	// $_FUNCTION_END *********************************************************
-	virtual void EndSerlizeArray(const char *)override;
+	virtual void EndSerializeArray(const char *)override;
 
 	// $_FUNCTION_BEGIN *******************************************************
-	// 函数名称：BeginSerlizeArrayItem
+	// 函数名称：BeginSerializeArrayItem
 	// 函数参数：
 	// 返 回 值：
 	// 函数说明：告诉序列化模块，接下来要序列化列表中的第N个元素
 	// $_FUNCTION_END *********************************************************
-	virtual void BeginSerlizeArrayItem(unsigned long, const char *)override;
+	virtual void BeginSerializeArrayItem(unsigned long, const char *)override;
 
 	// $_FUNCTION_BEGIN *******************************************************
-	// 函数名称：EndSerlizeArrayItem
+	// 函数名称：EndSerializeArrayItem
 	// 函数参数：
 	// 返 回 值：
 	// 函数说明：告诉序列化模块，列表中的第N个元素已经序列化完成
 	// $_FUNCTION_END *********************************************************
-	virtual void EndSerlizeArrayItem(unsigned long, const char *)override;
+	virtual void EndSerializeArrayItem(unsigned long, const char *)override;
 private:
 	//禁用拷贝构造与赋值
-	CSerialization(const CSerialization &rhs);
-	const CSerialization& operator=(const CSerialization &rhs);
+	CBinarySerialize(const CBinarySerialize &rhs);
+	const CBinarySerialize& operator=(const CBinarySerialize &rhs);
 private:
 	// 序列化类型
-	ENUM_SERIALIZATION_TYPE	m_iSerializationType;
+	EnumSerializeIO	m_iSerializeType;
 
 	// 缓存创建类型
 	ENUM_BUFFER_CREATE_TYPE	m_iBufferCreateType;

@@ -1,6 +1,6 @@
 #include <assert.h>
 #include <string.h>
-#include "Serialization.h"
+#include "BinarySerialize.h"
 
 // 缓存默认长度
 #define DEF_BUFFER_LEN	2048
@@ -8,9 +8,9 @@
 //最大的string长度
 #define MAX_STRING_LENGTH	(1024 * 1024 * 10)
 
-CSerialization::CSerialization()
+CBinarySerialize::CBinarySerialize()
 {
-	m_iSerializationType = enum_Serialization_Type_Default;
+	m_iSerializeType = EnumSerializeIONone;
 	m_iBufferCreateType = enum_Buffer_Create_Type_Inside;
 	m_pBuffer = (char*)malloc(DEF_BUFFER_LEN);
 	memset(m_pBuffer, 0, DEF_BUFFER_LEN);
@@ -18,9 +18,9 @@ CSerialization::CSerialization()
 	m_dwDataLen = 0;
 }
 
-CSerialization::~CSerialization()
+CBinarySerialize::~CBinarySerialize()
 {
-	m_iSerializationType = enum_Serialization_Type_Default;
+	m_iSerializeType = EnumSerializeIONone;
 	if (m_iBufferCreateType == enum_Buffer_Create_Type_Inside)
 	{
 		free((void*)m_pBuffer);
@@ -31,23 +31,23 @@ CSerialization::~CSerialization()
 }
 
 // 设置序列化类型
-void CSerialization::SetSerializationType(ENUM_SERIALIZATION_TYPE iSerializationType)
+void CBinarySerialize::SetSerializeType(EnumSerializeIO iSerializeType)
 {
-	m_iSerializationType = iSerializationType;
+	m_iSerializeType = iSerializeType;
 }
 
 // 获取序列化类型
-ENUM_SERIALIZATION_TYPE CSerialization::GetSerializationType()
+EnumSerializeIO CBinarySerialize::GetSerializeType()
 {
-	return m_iSerializationType;
+	return m_iSerializeType;
 }
 
-EnumSerializeFormat CSerialization::GetSerializeFormat()
+EnumSerializeFormat CBinarySerialize::GetSerializeFormat()
 {
 	return EnumSerializeFormatBinary;
 }
 
-bool CSerialization::SetData(const char *pstrText, unsigned long ulDataLength)
+bool CBinarySerialize::SetData(const char *pstrText, unsigned long ulDataLength)
 {
 	if (m_iBufferCreateType == enum_Buffer_Create_Type_Inside)
 	{
@@ -62,7 +62,7 @@ bool CSerialization::SetData(const char *pstrText, unsigned long ulDataLength)
 }
 
 // 序列化bool类型
-void CSerialization::Serialization(bool& bValue, const char *)
+void CBinarySerialize::Serialize(bool& bValue, const char *)
 {
 	if (m_pBuffer == NULL || m_dwBufferLen == 0)
 	{
@@ -88,11 +88,11 @@ void CSerialization::Serialization(bool& bValue, const char *)
 		}
 	}
 
-	if (m_iSerializationType == enum_Serialization_Type_Read)	// 读取数据
+	if (m_iSerializeType == EnumSerializeIORead)	// 读取数据
 	{
 		memcpy(&bValue, m_pBuffer + m_dwDataLen, sizeof(bool));
 	}
-	else if (m_iSerializationType == enum_Serialization_Type_Write)	// 写入数据
+	else if (m_iSerializeType == EnumSerializeIORead)	// 写入数据
 	{
 		memcpy(m_pBuffer + m_dwDataLen, &bValue, sizeof(bool));
 	}
@@ -101,7 +101,7 @@ void CSerialization::Serialization(bool& bValue, const char *)
 }
 
 // 序列化无符号字符
-void CSerialization::Serialization(char& cValue, const char *)
+void CBinarySerialize::Serialize(char& cValue, const char *)
 {
 	if (m_pBuffer == NULL || m_dwBufferLen == 0)
 	{
@@ -127,11 +127,11 @@ void CSerialization::Serialization(char& cValue, const char *)
 		}
 	}
 
-	if (m_iSerializationType == enum_Serialization_Type_Read)	// 读取数据
+	if (m_iSerializeType == EnumSerializeIORead)	// 读取数据
 	{
 		memcpy(&cValue, m_pBuffer + m_dwDataLen, sizeof(char));
 	}
-	else if (m_iSerializationType == enum_Serialization_Type_Write)	// 写入数据
+	else if (m_iSerializeType == EnumSerializeIORead)	// 写入数据
 	{
 		memcpy(m_pBuffer + m_dwDataLen, &cValue, sizeof(char));
 	}
@@ -140,7 +140,7 @@ void CSerialization::Serialization(char& cValue, const char *)
 }
 
 // 序列化无符号字符
-void CSerialization::Serialization(unsigned char& byValue, const char *)
+void CBinarySerialize::Serialize(unsigned char& byValue, const char *)
 {
 	if (m_pBuffer == NULL || m_dwBufferLen == 0)
 	{
@@ -166,11 +166,11 @@ void CSerialization::Serialization(unsigned char& byValue, const char *)
 		}
 	}
 
-	if (m_iSerializationType == enum_Serialization_Type_Read)	// 读取数据
+	if (m_iSerializeType == EnumSerializeIORead)	// 读取数据
 	{
 		memcpy(&byValue, m_pBuffer + m_dwDataLen, sizeof(unsigned char));
 	}
-	else if (m_iSerializationType == enum_Serialization_Type_Write)	// 写入数据
+	else if (m_iSerializeType == EnumSerializeIORead)	// 写入数据
 	{
 		memcpy(m_pBuffer + m_dwDataLen, &byValue, sizeof(unsigned char));
 	}
@@ -179,7 +179,7 @@ void CSerialization::Serialization(unsigned char& byValue, const char *)
 }
 
 // 序列化有符号短整型
-void CSerialization::Serialization(short& sValue, const char *)
+void CBinarySerialize::Serialize(short& sValue, const char *)
 {
 	if (m_pBuffer == NULL || m_dwBufferLen == 0)
 	{
@@ -205,11 +205,11 @@ void CSerialization::Serialization(short& sValue, const char *)
 		}
 	}
 
-	if (m_iSerializationType == enum_Serialization_Type_Read)	// 读取数据
+	if (m_iSerializeType == EnumSerializeIORead)	// 读取数据
 	{
 		memcpy(&sValue, m_pBuffer + m_dwDataLen, sizeof(short));
 	}
-	else if (m_iSerializationType == enum_Serialization_Type_Write)	// 写入数据
+	else if (m_iSerializeType == EnumSerializeIORead)	// 写入数据
 	{
 		memcpy(m_pBuffer + m_dwDataLen, &sValue, sizeof(short));
 	}
@@ -218,7 +218,7 @@ void CSerialization::Serialization(short& sValue, const char *)
 }
 
 // 序列化无符号短整型
-void CSerialization::Serialization(unsigned short& sValue, const char *)
+void CBinarySerialize::Serialize(unsigned short& sValue, const char *)
 {
 	if (m_pBuffer == NULL || m_dwBufferLen == 0)
 	{
@@ -244,11 +244,11 @@ void CSerialization::Serialization(unsigned short& sValue, const char *)
 		}
 	}
 
-	if (m_iSerializationType == enum_Serialization_Type_Read)	// 读取数据
+	if (m_iSerializeType == EnumSerializeIORead)	// 读取数据
 	{
 		memcpy(&sValue, m_pBuffer + m_dwDataLen, sizeof(unsigned short));
 	}
-	else if (m_iSerializationType == enum_Serialization_Type_Write)	// 写入数据
+	else if (m_iSerializeType == EnumSerializeIORead)	// 写入数据
 	{
 		memcpy(m_pBuffer + m_dwDataLen, &sValue, sizeof(unsigned short));
 	}
@@ -257,7 +257,7 @@ void CSerialization::Serialization(unsigned short& sValue, const char *)
 }
 
 // 序列化有符号整型
-void CSerialization::Serialization(int& iValue, const char *)
+void CBinarySerialize::Serialize(int& iValue, const char *)
 {
 	if (m_pBuffer == NULL || m_dwBufferLen == 0)
 	{
@@ -283,11 +283,11 @@ void CSerialization::Serialization(int& iValue, const char *)
 		}
 	}
 
-	if (m_iSerializationType == enum_Serialization_Type_Read)	// 读取数据
+	if (m_iSerializeType == EnumSerializeIORead)	// 读取数据
 	{
 		memcpy(&iValue, m_pBuffer + m_dwDataLen, sizeof(int));
 	}
-	else if (m_iSerializationType == enum_Serialization_Type_Write)	// 写入数据
+	else if (m_iSerializeType == EnumSerializeIORead)	// 写入数据
 	{
 		memcpy(m_pBuffer + m_dwDataLen, &iValue, sizeof(int));
 	}
@@ -296,7 +296,7 @@ void CSerialization::Serialization(int& iValue, const char *)
 }
 
 // 序列化无符号整型
-void CSerialization::Serialization(unsigned int& iValue, const char *)
+void CBinarySerialize::Serialize(unsigned int& iValue, const char *)
 {
 	if (m_pBuffer == NULL || m_dwBufferLen == 0)
 	{
@@ -322,11 +322,11 @@ void CSerialization::Serialization(unsigned int& iValue, const char *)
 		}
 	}
 
-	if (m_iSerializationType == enum_Serialization_Type_Read)	// 读取数据
+	if (m_iSerializeType == EnumSerializeIORead)	// 读取数据
 	{
 		memcpy(&iValue, m_pBuffer + m_dwDataLen, sizeof(unsigned int));
 	}
-	else if (m_iSerializationType == enum_Serialization_Type_Write)	// 写入数据
+	else if (m_iSerializeType == EnumSerializeIORead)	// 写入数据
 	{
 		memcpy(m_pBuffer + m_dwDataLen, &iValue, sizeof(unsigned int));
 	}
@@ -335,7 +335,7 @@ void CSerialization::Serialization(unsigned int& iValue, const char *)
 }
 
 // 序列化有符号长整型
-void CSerialization::Serialization(long& lValue, const char *)
+void CBinarySerialize::Serialize(long& lValue, const char *)
 {
 	if (m_pBuffer == NULL || m_dwBufferLen == 0)
 	{
@@ -361,11 +361,11 @@ void CSerialization::Serialization(long& lValue, const char *)
 		}
 	}
 
-	if (m_iSerializationType == enum_Serialization_Type_Read)	// 读取数据
+	if (m_iSerializeType == EnumSerializeIORead)	// 读取数据
 	{
 		memcpy(&lValue, m_pBuffer + m_dwDataLen, sizeof(long));
 	}
-	else if (m_iSerializationType == enum_Serialization_Type_Write)	// 写入数据
+	else if (m_iSerializeType == EnumSerializeIORead)	// 写入数据
 	{
 		memcpy(m_pBuffer + m_dwDataLen, &lValue, sizeof(long));
 	}
@@ -374,7 +374,7 @@ void CSerialization::Serialization(long& lValue, const char *)
 }
 
 // 序列化无符号长整型
-void CSerialization::Serialization(unsigned long& lValue, const char *)
+void CBinarySerialize::Serialize(unsigned long& lValue, const char *)
 {
 	if (m_pBuffer == NULL || m_dwBufferLen == 0)
 	{
@@ -400,11 +400,11 @@ void CSerialization::Serialization(unsigned long& lValue, const char *)
 		}
 	}
 
-	if (m_iSerializationType == enum_Serialization_Type_Read)	// 读取数据
+	if (m_iSerializeType == EnumSerializeIORead)	// 读取数据
 	{
 		memcpy(&lValue, m_pBuffer + m_dwDataLen, sizeof(unsigned long));
 	}
-	else if (m_iSerializationType == enum_Serialization_Type_Write)	// 写入数据
+	else if (m_iSerializeType == EnumSerializeIORead)	// 写入数据
 	{
 		memcpy(m_pBuffer + m_dwDataLen, &lValue, sizeof(unsigned long));
 	}
@@ -413,7 +413,7 @@ void CSerialization::Serialization(unsigned long& lValue, const char *)
 }
 
 // 序列化64位长整型
-void CSerialization::Serialization(long long& i64Value, const char *)
+void CBinarySerialize::Serialize(long long& i64Value, const char *)
 {
 	if (m_pBuffer == NULL || m_dwBufferLen == 0)
 	{
@@ -439,11 +439,11 @@ void CSerialization::Serialization(long long& i64Value, const char *)
 		}
 	}
 
-	if (m_iSerializationType == enum_Serialization_Type_Read)	// 读取数据
+	if (m_iSerializeType == EnumSerializeIORead)	// 读取数据
 	{
 		memcpy(&i64Value, m_pBuffer + m_dwDataLen, sizeof(long long));
 	}
-	else if (m_iSerializationType == enum_Serialization_Type_Write)	// 写入数据
+	else if (m_iSerializeType == EnumSerializeIORead)	// 写入数据
 	{
 		memcpy(m_pBuffer + m_dwDataLen, &i64Value, sizeof(long long));
 	}
@@ -452,7 +452,7 @@ void CSerialization::Serialization(long long& i64Value, const char *)
 }
 
 // 序列化U64位长整型
-void CSerialization::Serialization(unsigned long long& Value, const char *)
+void CBinarySerialize::Serialize(unsigned long long& Value, const char *)
 {
 	if (m_pBuffer == NULL || m_dwBufferLen == 0)
 	{
@@ -478,11 +478,11 @@ void CSerialization::Serialization(unsigned long long& Value, const char *)
 		}
 	}
 
-	if (m_iSerializationType == enum_Serialization_Type_Read)	// 读取数据
+	if (m_iSerializeType == EnumSerializeIORead)	// 读取数据
 	{
 		memcpy(&Value, m_pBuffer + m_dwDataLen, sizeof(unsigned long long));
 	}
-	else if (m_iSerializationType == enum_Serialization_Type_Write)	// 写入数据
+	else if (m_iSerializeType == EnumSerializeIORead)	// 写入数据
 	{
 		memcpy(m_pBuffer + m_dwDataLen, &Value, sizeof(unsigned long long));
 	}
@@ -491,7 +491,7 @@ void CSerialization::Serialization(unsigned long long& Value, const char *)
 }
 
 // 序列化单精度类型
-void CSerialization::Serialization(float& fValue, const char *)
+void CBinarySerialize::Serialize(float& fValue, const char *)
 {
 	if (m_pBuffer == NULL || m_dwBufferLen == 0)
 	{
@@ -517,11 +517,11 @@ void CSerialization::Serialization(float& fValue, const char *)
 		}
 	}
 
-	if (m_iSerializationType == enum_Serialization_Type_Read)	// 读取数据
+	if (m_iSerializeType == EnumSerializeIORead)	// 读取数据
 	{
 		memcpy(&fValue, m_pBuffer + m_dwDataLen, sizeof(float));
 	}
-	else if (m_iSerializationType == enum_Serialization_Type_Write)	// 写入数据
+	else if (m_iSerializeType == EnumSerializeIORead)	// 写入数据
 	{
 		memcpy(m_pBuffer + m_dwDataLen, &fValue, sizeof(float));
 	}
@@ -530,7 +530,7 @@ void CSerialization::Serialization(float& fValue, const char *)
 }
 
 // 序列化双精度类型
-void CSerialization::Serialization(double& dValue, const char *)
+void CBinarySerialize::Serialize(double& dValue, const char *)
 {
 	if (m_pBuffer == NULL || m_dwBufferLen == 0)
 	{
@@ -556,11 +556,11 @@ void CSerialization::Serialization(double& dValue, const char *)
 		}
 	}
 
-	if (m_iSerializationType == enum_Serialization_Type_Read)	// 读取数据
+	if (m_iSerializeType == EnumSerializeIORead)	// 读取数据
 	{
 		memcpy(&dValue, m_pBuffer + m_dwDataLen, sizeof(double));
 	}
-	else if (m_iSerializationType == enum_Serialization_Type_Write)	// 写入数据
+	else if (m_iSerializeType == EnumSerializeIORead)	// 写入数据
 	{
 		memcpy(m_pBuffer + m_dwDataLen, &dValue, sizeof(double));
 	}
@@ -569,7 +569,7 @@ void CSerialization::Serialization(double& dValue, const char *)
 }
 
 // 序列化双精度类型
-void CSerialization::Serialization(long double& ldValue, const char *)
+void CBinarySerialize::Serialize(long double& ldValue, const char *)
 {
 	if (m_pBuffer == NULL || m_dwBufferLen == 0)
 	{
@@ -595,11 +595,11 @@ void CSerialization::Serialization(long double& ldValue, const char *)
 		}
 	}
 
-	if (m_iSerializationType == enum_Serialization_Type_Read)	// 读取数据
+	if (m_iSerializeType == EnumSerializeIORead)	// 读取数据
 	{
 		memcpy(&ldValue, m_pBuffer + m_dwDataLen, sizeof(long double));
 	}
-	else if (m_iSerializationType == enum_Serialization_Type_Write)	// 写入数据
+	else if (m_iSerializeType == EnumSerializeIORead)	// 写入数据
 	{
 		memcpy(m_pBuffer + m_dwDataLen, &ldValue, sizeof(long double));
 	}
@@ -608,7 +608,7 @@ void CSerialization::Serialization(long double& ldValue, const char *)
 }
 
 // 序列化字符串
-void CSerialization::Serialization(string& strValue, const char *)
+void CBinarySerialize::Serialize(std::string& strValue, const char *)
 {
 	if (m_pBuffer == NULL || m_dwBufferLen == 0)
 	{
@@ -617,7 +617,7 @@ void CSerialization::Serialization(string& strValue, const char *)
 	}
 
 	DWORD dwDataLen = (DWORD)strValue.size();
-	Serialization(dwDataLen, nullptr);
+	Serialize(dwDataLen, nullptr);
 
 	if (dwDataLen > MAX_STRING_LENGTH)
 	{
@@ -648,11 +648,11 @@ void CSerialization::Serialization(string& strValue, const char *)
 		}
 	}
 
-	if (m_iSerializationType == enum_Serialization_Type_Read)	// 读取数据
+	if (m_iSerializeType == EnumSerializeIORead)	// 读取数据
 	{
 		strValue.append(m_pBuffer + m_dwDataLen, dwDataLen);
 	}
-	else if (m_iSerializationType == enum_Serialization_Type_Write)	// 写入数据
+	else if (m_iSerializeType == EnumSerializeIORead)	// 写入数据
 	{
 		memcpy(m_pBuffer + m_dwDataLen, strValue.c_str(), dwDataLen);
 	}
@@ -661,44 +661,44 @@ void CSerialization::Serialization(string& strValue, const char *)
 }
 
 // 取得数据
-const char* CSerialization::GetData()
+const char* CBinarySerialize::GetData()
 {
 	return m_pBuffer;
 }
 
 // 取得数据长度
-DWORD CSerialization::GetDataLen()
+DWORD CBinarySerialize::GetDataLen()
 {
 	return m_dwDataLen;
 }
 
-void CSerialization::BeginSerlizeStruct(const char *)
+void CBinarySerialize::BeginSerializeStruct(const char *)
 {
 	return;
 }
 
-void CSerialization::EndSerlizeStruct(const char *)
+void CBinarySerialize::EndSerializeStruct(const char *)
 {
 	return;
 }
 
-void CSerialization::BeginSerlizeArray(unsigned long & ulCount, const char *)
+void CBinarySerialize::BeginSerializeArray(unsigned long & ulCount, const char *)
 {
 	//写入/读取数组长度
-	return Serialization(ulCount, nullptr);
+	return Serialize(ulCount, nullptr);
 }
 
-void CSerialization::EndSerlizeArray(const char *)
+void CBinarySerialize::EndSerializeArray(const char *)
 {
 	return;
 }
 
-void CSerialization::BeginSerlizeArrayItem(unsigned long, const char *)
+void CBinarySerialize::BeginSerializeArrayItem(unsigned long, const char *)
 {
 	return;
 }
 
-void CSerialization::EndSerlizeArrayItem(unsigned long, const char *)
+void CBinarySerialize::EndSerializeArrayItem(unsigned long, const char *)
 {
 	return;
 }
