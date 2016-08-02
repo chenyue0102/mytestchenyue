@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <string.h>
 #include "BinarySerialize.h"
+#include "SerializeString.h"
 
 // 缓存默认长度
 #define DEF_BUFFER_LEN	2048
@@ -16,6 +17,7 @@ CBinarySerialize::CBinarySerialize()
 	memset(m_pBuffer, 0, DEF_BUFFER_LEN);
 	m_dwBufferLen = DEF_BUFFER_LEN;
 	m_dwDataLen = 0;
+	m_SerializeStringCode = EnumSerializeStringCodeNone;
 }
 
 CBinarySerialize::~CBinarySerialize()
@@ -45,6 +47,16 @@ EnumSerializeIO CBinarySerialize::GetSerializeType()
 EnumSerializeFormat CBinarySerialize::GetSerializeFormat()
 {
 	return EnumSerializeFormatBinary;
+}
+
+void CBinarySerialize::SetSerializeStringCode(EnumSerializeStringCode SerializeStringCode)
+{
+	m_SerializeStringCode = SerializeStringCode;
+}
+
+EnumSerializeStringCode CBinarySerialize::GetSerializeStringCode()
+{
+	return m_SerializeStringCode;
 }
 
 bool CBinarySerialize::SetData(const char *pstrText, unsigned long ulDataLength)
@@ -608,7 +620,7 @@ void CBinarySerialize::Serialize(long double& ldValue, const char *)
 }
 
 // 序列化字符串
-void CBinarySerialize::Serialize(std::string& strValue, const char *)
+void CBinarySerialize::Serialize(CSerializeString& strValue, const char *)
 {
 	if (m_pBuffer == NULL || m_dwBufferLen == 0)
 	{

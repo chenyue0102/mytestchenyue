@@ -1,5 +1,8 @@
 #include "JsonSerialize.h"
 #include <cassert>
+#include "SerializeString.h"
+#include "CodeConvert.h"
+
 
 CJsonSerialize::CJsonSerialize()
 	: m_iSerializeType(EnumSerializeIONone)
@@ -7,6 +10,7 @@ CJsonSerialize::CJsonSerialize()
 	, m_pCurValue(nullptr)
 	, m_StackValue()
 	, m_bHaveWriteToBuffer(false)
+	, m_SerializeStringCode(EnumSerializeStringCodeNone)
 {
 	m_pCurValue = m_pRootValue;
 }
@@ -39,6 +43,16 @@ EnumSerializeIO CJsonSerialize::GetSerializeType()
 EnumSerializeFormat CJsonSerialize::GetSerializeFormat()
 {
 	return EnumSerializeFormatJson;
+}
+
+void CJsonSerialize::SetSerializeStringCode(EnumSerializeStringCode SerializeStringCode)
+{
+	m_SerializeStringCode = SerializeStringCode;
+}
+
+EnumSerializeStringCode CJsonSerialize::GetSerializeStringCode()
+{
+	return m_SerializeStringCode;
 }
 
 bool CJsonSerialize::SetData(const char *pstrText, unsigned long ulDataLength)
@@ -840,7 +854,7 @@ void CJsonSerialize::Serialize(long double & Value, const char * pstrName)
 	}
 }
 
-void CJsonSerialize::Serialize(std::string& Value, const char *pstrName)
+void CJsonSerialize::Serialize(CSerializeString& Value, const char *pstrName)
 {
 	if (EnumSerializeIORead == m_iSerializeType)
 	{
@@ -855,25 +869,28 @@ void CJsonSerialize::Serialize(std::string& Value, const char *pstrName)
 		}
 		if (JsonValue.isString())
 		{
-			Value = JsonValue.asString();
+			std::string strTempValue = ConvertToLocal(JsonValue.asString());
+
+			Value.assign(strTempValue.data(), strTempValue.size());
 		}
 		else
 		{
 			const char *pLogName = (nullptr == pstrName) ? "nullptr" : pstrName;
 			Log("CJsonSerialize::Serialize string JsonValue Type=%d name=%s Error", static_cast<int>(JsonValue.type()), pLogName);
-			assert(false);
 		}
 	}
 	else
 	{
+		std::string strTempValue(Value.data(), Value.size());
+		strTempValue = ConvertToJson(strTempValue);
 		if (nullptr == pstrName)
 		{
 			//这个元素应存入数组
-			m_pCurValue.reset(new Json::Value(Value));
+			m_pCurValue.reset(new Json::Value(strTempValue));
 		}
 		else
 		{
-			(*m_pCurValue)[pstrName] = Value;
+			(*m_pCurValue)[pstrName] = strTempValue;
 		}
 	}
 }
@@ -891,4 +908,50 @@ void CJsonSerialize::CheckWriteToBuffer()
 void CJsonSerialize::Log(const char * apFormat, ...)
 {
 
+}
+
+std::string CJsonSerialize::ConvertToJson(const std::string &strText)
+{
+	std::string strResultText;
+	switch (m_SerializeStringCode)
+	{
+	case EnumSerializeStringCodeNone:
+	case EnumSerializeStringCodeGB2312:
+		strResultText = CodeConvert::GB2312ToUtf8(strText);
+		break;
+	case EnumSerializeStringCodeUtf8:
+		strResultText = strText;
+		break;
+	case EnumSerializeStringCodeBinary:
+		strResultText = strText;
+		break;
+	default:
+		strResultText = strText;
+		assert(false);
+		break;
+	}
+	return strResultText;
+}
+
+std::string CJsonSerialize::ConvertToLocal(const std::string & strText)
+{
+	std::string strResultText;
+	switch (m_SerializeStringCode)
+	{
+	case EnumSerializeStringCodeNone:
+	case EnumSerializeStringCodeGB2312:
+		strResultText = CodeConvert::Utf8ToGB2312(strText);
+		break;
+	case EnumSerializeStringCodeUtf8:
+		strResultText = strText;
+		break;
+	case EnumSerializeStringCodeBinary:
+		strResultText = strText;
+		break;
+	default:
+		strResultText = strText;
+		assert(false);
+		break;
+	}
+	return strResultText;
 }

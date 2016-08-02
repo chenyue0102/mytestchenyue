@@ -45,6 +45,15 @@
     <ClInclude Include="BinarySerialize.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="EnumSerialize.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="SerializeString.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CodeConvert.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -69,6 +78,12 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="BinarySerialize.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="SerializeString.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CodeConvert.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

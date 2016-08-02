@@ -6,7 +6,6 @@
 #include "JsonSerialize.h"
 #include "BinarySerialize.h"
 #include "TestStruct.h"
-#pragma comment(lib, "lib_json.lib")
 
 template<typename T>
 void Test()

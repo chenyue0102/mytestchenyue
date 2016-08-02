@@ -53,7 +53,13 @@ bool SerializeStruct(ISerialize *pSerialize, TestAllType &Value)
 		SERIALIZE_STRUCT_VALUE(d);
 		SERIALIZE_STRUCT_VALUE(ld);
 		SERIALIZE_STRUCT_VALUE(ss);
-		SerializeHelper::Serialize(pSerialize, Value.strBinary, "strBinary", SerializeHelper::EnumStringCodeBinary);
+		
+		//序列化二进制数据
+		auto OldStringCode = pSerialize->GetSerializeStringCode();
+		pSerialize->SetSerializeStringCode(EnumSerializeStringCodeBinary);
+		SerializeHelper::Serialize(pSerialize, Value.strBinary, "strBinary");
+		pSerialize->SetSerializeStringCode(OldStringCode);
+
 		SERIALIZE_STRUCT_CHAR(szText);
 		SERIALIZE_STRUCT_ARRAY(Keys);
 	}

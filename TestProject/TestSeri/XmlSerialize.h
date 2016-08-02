@@ -9,6 +9,7 @@
 #include "tinyxml.h"
 #include "ISerialize.h"
 
+class CSerializeString;
 class CXmlSerialize
 	: public ISerialize
 {
@@ -40,6 +41,23 @@ public:
 	// 函数说明：获取序列化的格式
 	// $_FUNCTION_END *********************************************************
 	virtual EnumSerializeFormat GetSerializeFormat()override;
+
+	// $_FUNCTION_BEGIN *******************************************************
+	// 函数名称：SetSerializeStringCode
+	// 函数参数：
+	//					SerializeStringCode	[输入]		设置std::string字符串编码，默认是EnumSerializeStringCodeNone
+	// 返 回 值：
+	// 函数说明：设置std::string字符串编码，
+	// $_FUNCTION_END *********************************************************
+	virtual void SetSerializeStringCode(EnumSerializeStringCode SerializeStringCode)override;
+
+	// $_FUNCTION_BEGIN *******************************************************
+	// 函数名称：GetSerializeStringCode
+	// 函数参数：
+	// 返 回 值：
+	// 函数说明：获取std::string字符串编码，
+	// $_FUNCTION_END *********************************************************
+	virtual EnumSerializeStringCode GetSerializeStringCode()override;
 
 	// $_FUNCTION_BEGIN *******************************************************
 	// 函数名称：SetData
@@ -270,11 +288,13 @@ public://序列化字段函数
 	// 返 回 值：
 	// 函数说明：序列化变量
 	// $_FUNCTION_END *********************************************************
-	virtual void Serialize(std::string& Value, const char *pstrName)override;
+	virtual void Serialize(CSerializeString& Value, const char *pstrName)override;
 private:
 	void Log(const char * apFormat, ...);
 	int GetChildCount(TiXmlElement *pElement);
 	void CheckWriteToBuffer();
+	std::string ConverToXml(const std::string &strText);
+	std::string ConvertToLocal(const std::string &strText);
 private:
 	// 序列化类型
 	EnumSerializeIO	m_iSerializeType;
@@ -286,5 +306,7 @@ private:
 	std::string	m_strBuffer;
 	//是否已经将结果打入缓冲区了。
 	bool		m_bHaveWriteToBuffer;
+	//std::string字符串编码
+	EnumSerializeStringCode m_SerializeStringCode;
 };
 

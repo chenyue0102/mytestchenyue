@@ -6,26 +6,11 @@
 // $_FILEHEADER_END ***********************************************************
 #pragma once
 #include <string>
+#include "EnumSerialize.h"
 
 
-// 序列化类型
-enum EnumSerializeIO
-{
-	EnumSerializeIONone,	// 默认值
-	EnumSerializeIORead,		// 读取数据
-	EnumSerializeIOWrite,		// 写入数据
-};
 
-// 序列化的格式
-enum EnumSerializeFormat
-{
-	EnumSerializeFormatNone,
-	EnumSerializeFormatBinary,	// 二进制，
-	EnumSerializeFormatJson,	// Json格式，序列化std::string的时候，Json格式只接受utf8字符串
-	EnumSerializeFormatXml,		// Xml格式，序列化std::string的时候，只接受utf8字符串
-
-};
-
+class CSerializeString;
 /************************************************************************/
 /* 序列化的接口，统一二进制与Json序列化方式                                  */
 /************************************************************************/
@@ -56,6 +41,23 @@ public://缓冲区设置函数
 	// 函数说明：获取序列化的格式
 	// $_FUNCTION_END *********************************************************
 	virtual EnumSerializeFormat GetSerializeFormat() = 0;
+
+	// $_FUNCTION_BEGIN *******************************************************
+	// 函数名称：SetSerializeStringCode
+	// 函数参数：
+	//					SerializeStringCode	[输入]		设置std::string字符串编码，默认是EnumSerializeStringCodeNone
+	// 返 回 值：
+	// 函数说明：设置std::string字符串编码，
+	// $_FUNCTION_END *********************************************************
+	virtual void SetSerializeStringCode(EnumSerializeStringCode SerializeStringCode) = 0;
+
+	// $_FUNCTION_BEGIN *******************************************************
+	// 函数名称：GetSerializeStringCode
+	// 函数参数：
+	// 返 回 值：
+	// 函数说明：获取std::string字符串编码，
+	// $_FUNCTION_END *********************************************************
+	virtual EnumSerializeStringCode GetSerializeStringCode() = 0;
 
 	// $_FUNCTION_BEGIN *******************************************************
 	// 函数名称：SetData
@@ -286,9 +288,9 @@ public://序列化字段函数
 	//					Value				[输入/输出]	需要序列化的参数
 	//					pstrName			[输入]		参数的名字,nullptr表示此参数没有名字
 	// 返 回 值：
-	// 函数说明：序列化变量
+	// 函数说明：序列化字符串变量，CSerializeString支持跨dll边界，std::string不能够跨dll边界
 	// $_FUNCTION_END *********************************************************
-	virtual void Serialize(std::string& Value, const char *pstrName) = 0;
+	virtual void Serialize(CSerializeString& Value, const char *pstrName) = 0;
 };
 
 

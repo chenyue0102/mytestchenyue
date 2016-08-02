@@ -24,7 +24,7 @@ void DoTest(ISerialize * pSerializeWrite, ISerialize * pSerializeRead)
 
 	std::string strBuffer(pSerializeWrite->GetData(), pSerializeWrite->GetDataLen());
 	std::wstring strWText;
-	if (pSerializeWrite->GetSerializeFormat() != EnumSerializeFormatBinary)
+	if (pSerializeWrite->GetSerializeFormat() == EnumSerializeFormatJson)
 	{
 		strWText = UTF8ToWChar(strBuffer);
 	}
@@ -50,7 +50,7 @@ void DoTest2(ISerialize * pSerializeWrite, ISerialize * pSerializeRead)
 
 	std::string strBuffer(pSerializeWrite->GetData(), pSerializeWrite->GetDataLen());
 	std::wstring strWText;
-	if (pSerializeWrite->GetSerializeFormat() != EnumSerializeFormatBinary)
+	if (pSerializeWrite->GetSerializeFormat() == EnumSerializeFormatJson)
 	{
 		strWText = UTF8ToWChar(strBuffer);
 	}

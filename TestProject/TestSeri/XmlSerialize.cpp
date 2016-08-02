@@ -1,5 +1,7 @@
 #include "XmlSerialize.h"
 #include <assert.h>
+#include "SerializeString.h"
+#include "CodeConvert.h"
 
 #define NULL_NAME		"item"			//没有名字节点的默认名字
 #define ROOT_NAME		"root"			//root节点名字
@@ -11,6 +13,7 @@ CXmlSerialize::CXmlSerialize()
 	, m_StackValue()
 	, m_strBuffer()
 	, m_bHaveWriteToBuffer(false)
+	, m_SerializeStringCode(EnumSerializeStringCodeNone)
 {
 	
 }
@@ -25,7 +28,8 @@ void CXmlSerialize::SetSerializeType(EnumSerializeIO iSerializeType)
 	if (EnumSerializeIOWrite == m_iSerializeType)
 	{
 		assert(nullptr == m_pRootValue);
-		TiXmlDeclaration *pXmlDeclaration = new TiXmlDeclaration("1.0", "UTF-8", "");
+		const char *pstrCode = (EnumSerializeStringCodeUtf8 == m_SerializeStringCode) ? "UTF-8" : "gb2312";
+		TiXmlDeclaration *pXmlDeclaration = new TiXmlDeclaration("1.0", pstrCode, "");
 		m_XmlDocument.LinkEndChild(pXmlDeclaration);
 		m_pRootValue = new TiXmlElement(ROOT_NAME);
 		m_XmlDocument.LinkEndChild(m_pRootValue);
@@ -41,6 +45,16 @@ EnumSerializeIO CXmlSerialize::GetSerializeType()
 EnumSerializeFormat CXmlSerialize::GetSerializeFormat()
 {
 	return EnumSerializeFormatXml;
+}
+
+void CXmlSerialize::SetSerializeStringCode(EnumSerializeStringCode SerializeStringCode)
+{
+	m_SerializeStringCode = SerializeStringCode;
+}
+
+EnumSerializeStringCode CXmlSerialize::GetSerializeStringCode()
+{
+	return m_SerializeStringCode;
 }
 
 bool CXmlSerialize::SetData(const char * pstrText, unsigned long ulDataLength)
@@ -575,7 +589,7 @@ void CXmlSerialize::Serialize(long double& Value, const char *pstrName)
 	}
 }
 
-void CXmlSerialize::Serialize(std::string & Value, const char * pstrName)
+void CXmlSerialize::Serialize(CSerializeString & Value, const char * pstrName)
 {
 	if (EnumSerializeIORead == m_iSerializeType)
 	{
@@ -593,7 +607,8 @@ void CXmlSerialize::Serialize(std::string & Value, const char * pstrName)
 			auto pstrValue = pElement->GetText();
 			if (nullptr != pstrValue)
 			{
-				Value = pstrValue;
+				std::string strTempValue(ConvertToLocal(pstrValue));
+				Value.assign(strTempValue.data(), strTempValue.size());
 			}
 			else
 			{
@@ -602,14 +617,16 @@ void CXmlSerialize::Serialize(std::string & Value, const char * pstrName)
 		}
 		else
 		{
-			assert(false);
+			
 		}
 	}
 	else
 	{
+		std::string strTempValue(Value.data(), Value.size());
+		strTempValue = ConverToXml(strTempValue);
 		//xml序列化不支持中间截断
-		assert(Value.size() == strlen(Value.c_str()));
-		TiXmlText *pXmlText = new TiXmlText(Value.c_str());
+		assert(strTempValue.size() == strlen(strTempValue.c_str()));
+		TiXmlText *pXmlText = new TiXmlText(strTempValue.c_str());
 		if (nullptr == pstrName)
 		{
 			m_pCurValue->SetValue(NULL_NAME);
@@ -653,4 +670,46 @@ void CXmlSerialize::CheckWriteToBuffer()
 		m_XmlDocument.Accept(&XmlPrinter);
 		m_strBuffer = XmlPrinter.CStr();
 	}
+}
+
+std::string CXmlSerialize::ConverToXml(const std::string &strText)
+{
+	std::string strResultText;
+	switch (m_SerializeStringCode)
+	{
+	case EnumSerializeStringCodeNone:
+	case EnumSerializeStringCodeGB2312:
+	case EnumSerializeStringCodeUtf8:
+		strResultText = strText;
+		break;
+	case EnumSerializeStringCodeBinary:
+		strResultText = CodeConvert::Base64Encode(strText);
+		break;
+	default:
+		strResultText = strText;
+		assert(false);
+		break;
+	}
+	return strResultText;
+}
+
+std::string CXmlSerialize::ConvertToLocal(const std::string &strText)
+{
+	std::string strResultText;
+	switch (m_SerializeStringCode)
+	{
+	case EnumSerializeStringCodeNone:
+	case EnumSerializeStringCodeGB2312:
+	case EnumSerializeStringCodeUtf8:
+		strResultText = strText;
+		break;
+	case EnumSerializeStringCodeBinary:
+		strResultText = CodeConvert::Base64Decode(strText);
+		break;
+	default:
+		strResultText = strText;
+		assert(false);
+		break;
+	}
+	return strResultText;
 }

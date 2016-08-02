@@ -13,6 +13,7 @@
 #include <vector>
 #include "ISerialize.h"
 
+class CSerializeString;
 class CBinarySerialize
 	: public ISerialize
 {
@@ -49,6 +50,23 @@ public:
 	// 函数说明：获取序列化的格式
 	// $_FUNCTION_END *********************************************************
 	virtual EnumSerializeFormat GetSerializeFormat()override;
+
+	// $_FUNCTION_BEGIN *******************************************************
+	// 函数名称：SetSerializeStringCode
+	// 函数参数：
+	//					SerializeStringCode	[输入]		设置std::string字符串编码，默认是EnumSerializeStringCodeNone
+	// 返 回 值：
+	// 函数说明：设置std::string字符串编码，
+	// $_FUNCTION_END *********************************************************
+	virtual void SetSerializeStringCode(EnumSerializeStringCode SerializeStringCode)override;
+
+	// $_FUNCTION_BEGIN *******************************************************
+	// 函数名称：GetSerializeStringCode
+	// 函数参数：
+	// 返 回 值：
+	// 函数说明：获取std::string字符串编码，
+	// $_FUNCTION_END *********************************************************
+	virtual EnumSerializeStringCode GetSerializeStringCode()override;
 
 	// $_FUNCTION_BEGIN *******************************************************
 	// 函数名称：SetData
@@ -179,7 +197,7 @@ public://序列化字段函数
 	// 返 回 值：
 	// 函数说明：序列化字符串
 	// $_FUNCTION_END *********************************************************
-	virtual void Serialize(std::string& strValue, const char *)override;
+	virtual void Serialize(CSerializeString& strValue, const char *)override;
 
 	// $_FUNCTION_BEGIN *******************************************************
 	// 函数名称：GetData
@@ -264,6 +282,9 @@ private:
 
 	// 数据长度
 	DWORD			m_dwDataLen;
+
+	//std::string字符串编码
+	EnumSerializeStringCode m_SerializeStringCode;
 };
 
 #endif
