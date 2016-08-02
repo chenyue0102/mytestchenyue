@@ -5,7 +5,6 @@
 // 文件说明：序列化接口定义
 // $_FILEHEADER_END ***********************************************************
 #pragma once
-#include <string>
 #include "EnumSerialize.h"
 
 
