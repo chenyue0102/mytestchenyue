@@ -31,8 +31,7 @@ bool CMyThreadPool::Open()
 		{
 			nThreadCount = 1;
 		}
-		nThreadCount = 2;
-		//nThreadCount *= 2;
+		nThreadCount *= 2;
 
 		for (int nIndex = 0; nIndex < nThreadCount; nIndex++)
 		{
