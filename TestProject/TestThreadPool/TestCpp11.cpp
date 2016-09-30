@@ -13,66 +13,6 @@
 #include "MyTaskFun.h"
 #include "MyThreadPool.h"
 
-enum EnumAction
-{
-	EnumActionNone,
-	EnumActionExit,
-	EnumActionNotify,
-};
-
-void ThreadProc(std::condition_variable &cv, std::mutex &mx, std::vector<int> &vtNumber, volatile EnumAction &act)
-{
-	while (true)
-	{
-		std::unique_lock<std::mutex> lk(mx);
-		cv.wait(lk, [&act]()
-		{
-			return EnumActionNone != act;
-		});
-		if (EnumActionNotify == act)
-		{
-			std::vector<int> vtTemp = std::move(vtNumber);
-			lk.unlock();
-			for (auto &OneNumber : vtTemp)
-			{
-				printf("recv %d\n", OneNumber);
-			}
-		}
-		else if (EnumActionExit == act)
-		{
-			printf("recv exit\n");
-			break;
-		}
-	}
-}
-
-void DoJob(std::mutex &mx, std::condition_variable &cv, std::queue<std::function<void()>> &JobArray)
-{
-	while (true)
-	{
-		std::unique_lock<std::mutex> lk(mx);
-		cv.wait(lk, [&JobArray]() {return !JobArray.empty(); });
-		if (JobArray.size() != 0)
-		{
-			std::function<void()> Fun = JobArray.front();
-			int nNumber = JobArray.size();
-			JobArray.pop();
-			lk.unlock();
-			if (Fun)
-			{
-				std::cout << nNumber << "  ";
-				Fun();
-			}
-		}
-	}
-}
-
-void DoFun()
-{
-	std::cout << "jobid=" << std::this_thread::get_id() << std::endl;
-	int nCount = rand() % 1000;
-	std::this_thread::sleep_for(std::chrono::milliseconds(nCount));
-}
 
 void TestTask(long long &llTaskID)
 {
@@ -94,19 +34,8 @@ void TestTask(long long &llTaskID)
 			std::this_thread::sleep_for(std::chrono::seconds(1));
 		}
 	}
-	//printf("task throw InterruptedException\n");
-	//throw MyTaskFun::GetTaskInterruptedException();
-
 	std::cout << "task end " << llTaskID << " threadID="<< std::this_thread::get_id() << std::endl;
 }
-
-struct TestNotify : public INotifyTask
-{
-	virtual void NotifyTaskCompleted(long long llTaskID, bool)
-	{
-		//printf("complete taskid=%lld\n", llTaskID);
-	}
-};
 
 int main()
 {
