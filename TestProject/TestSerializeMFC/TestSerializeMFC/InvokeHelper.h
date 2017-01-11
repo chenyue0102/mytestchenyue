@@ -266,12 +266,12 @@ public:
 
 	bool UnRegisterQueryMsg(unsigned long ulMsgID)
 	{
-		auto itor = m_queryCallBackFun.find(ulMsgID);
-		if (itor != m_queryCallBackFun.end())
+		auto itor = m_queryCallbackFun.find(ulMsgID);
+		if (itor != m_queryCallbackFun.end())
 		{
 			CInvokeQueryBase *pNotifyBase = itor->second;
 			delete pNotifyBase;
-			m_queryCallBackFun.erase(itor);
+			m_queryCallbackFun.erase(itor);
 			return true;
 		}
 		else

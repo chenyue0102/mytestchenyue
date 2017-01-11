@@ -330,6 +330,8 @@ CTestSerializeMFCDlg::CTestSerializeMFCDlg(CWnd* pParent /*=NULL*/)
 	m_InvokeHelper.RegisterNotifyMsg(1, &CTestSerializeMFCDlg::DealA);
 	m_InvokeHelper.RegisterNotifyMsg(2, &CTestSerializeMFCDlg::DealB);
 	m_InvokeHelper.RegisterQueryMsg(3, &CTestSerializeMFCDlg::DealC);
+	m_InvokeHelper.UnRegisterQueryMsg(3);
+	m_InvokeHelper.RegisterQueryMsg(3, &CTestSerializeMFCDlg::DealC);
 }
 
 void CTestSerializeMFCDlg::DoDataExchange(CDataExchange* pDX)
