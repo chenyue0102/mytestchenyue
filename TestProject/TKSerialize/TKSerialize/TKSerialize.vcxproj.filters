@@ -25,14 +25,14 @@
     <Filter Include="tinyxml">
       <UniqueIdentifier>{9de35653-86a3-4bbc-bac7-2be8ecf2b1b7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Project">
+      <UniqueIdentifier>{6bcae95c-ae11-4d79-a32b-70eb2354fc8b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="targetver.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="..\json\allocator.h">
       <Filter>json</Filter>
     </ClInclude>
@@ -99,11 +99,17 @@
     <ClInclude Include="..\tinyxml\tinyxmlexport.h">
       <Filter>tinyxml</Filter>
     </ClInclude>
+    <ClInclude Include="NormalLock.h">
+      <Filter>Project</Filter>
+    </ClInclude>
+    <ClInclude Include="TKSerializeApp.h">
+      <Filter>Project</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>Project</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="dllmain.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="..\source\BinarySerialize.cpp">
       <Filter>source</Filter>
     </ClCompile>
@@ -113,14 +119,23 @@
     <ClCompile Include="..\source\JsonSerialize.cpp">
       <Filter>source</Filter>
     </ClCompile>
-    <ClCompile Include="..\source\SerializeString.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
     <ClCompile Include="..\source\XmlSerialize.cpp">
       <Filter>source</Filter>
     </ClCompile>
+    <ClCompile Include="NormalLock.cpp">
+      <Filter>Project</Filter>
+    </ClCompile>
+    <ClCompile Include="TKSerializeApp.cpp">
+      <Filter>Project</Filter>
+    </ClCompile>
+    <ClCompile Include="dllmain.cpp">
+      <Filter>Project</Filter>
+    </ClCompile>
     <ClCompile Include="TKSerialize.cpp">
-      <Filter>source</Filter>
+      <Filter>Project</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\SerializeString.cpp">
+      <Filter>Project</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -33,9 +33,10 @@ CBinarySerialize::~CBinarySerialize()
 }
 
 // 设置序列化类型
-void CBinarySerialize::SetSerializeType(EnumSerializeIO iSerializeType)
+bool CBinarySerialize::SetSerializeType(EnumSerializeIO iSerializeType)
 {
 	m_iSerializeType = iSerializeType;
+	return true;
 }
 
 // 获取序列化类型
@@ -49,9 +50,10 @@ EnumSerializeFormat CBinarySerialize::GetSerializeFormat()
 	return EnumSerializeFormatBinary;
 }
 
-void CBinarySerialize::SetSerializeStringCode(EnumSerializeStringCode SerializeStringCode)
+bool CBinarySerialize::SetSerializeStringCode(EnumSerializeStringCode SerializeStringCode)
 {
 	m_SerializeStringCode = SerializeStringCode;
+	return true;
 }
 
 EnumSerializeStringCode CBinarySerialize::GetSerializeStringCode()
@@ -74,602 +76,205 @@ bool CBinarySerialize::SetData(const char *pstrText, unsigned long ulDataLength)
 }
 
 // 序列化bool类型
-void CBinarySerialize::Serialize(bool& bValue, const char *)
+bool CBinarySerialize::Serialize(bool& Value, const char *)
 {
-	if (m_pBuffer == NULL || m_dwBufferLen == 0)
-	{
-		assert(false);
-		return;
-	}
-
-	if (m_dwBufferLen < (m_dwDataLen + sizeof(bool)))
-	{
-		if (m_iBufferCreateType == enum_Buffer_Create_Type_OutSide)	// 外部分配的缓存
-		{
-			throw(-1);
-		}
-		else if (m_iBufferCreateType == enum_Buffer_Create_Type_Inside)	// 内部分配的缓存
-		{
-			m_pBuffer = (char*)realloc(m_pBuffer, m_dwBufferLen * 2);
-			if (m_pBuffer == NULL)
-			{
-				assert(false);
-				throw(-1);
-			}
-			m_dwBufferLen += m_dwBufferLen;
-		}
-	}
-
-	if (m_iSerializeType == EnumSerializeIORead)	// 读取数据
-	{
-		memcpy(&bValue, m_pBuffer + m_dwDataLen, sizeof(bool));
-	}
-	else if (m_iSerializeType == EnumSerializeIOWrite)	// 写入数据
-	{
-		memcpy(m_pBuffer + m_dwDataLen, &bValue, sizeof(bool));
-	}
-
-	m_dwDataLen += sizeof(bool);
+	return InnerSerialize(Value);
 }
 
 // 序列化无符号字符
-void CBinarySerialize::Serialize(char& cValue, const char *)
+bool CBinarySerialize::Serialize(char& Value, const char *)
 {
-	if (m_pBuffer == NULL || m_dwBufferLen == 0)
-	{
-		assert(false);
-		return;
-	}
-
-	if (m_dwBufferLen < (m_dwDataLen + sizeof(char)))
-	{
-		if (m_iBufferCreateType == enum_Buffer_Create_Type_OutSide)	// 外部分配的缓存
-		{
-			throw(-1);
-		}
-		else if (m_iBufferCreateType == enum_Buffer_Create_Type_Inside)	// 内部分配的缓存
-		{
-			m_pBuffer = (char*)realloc(m_pBuffer, m_dwBufferLen * 2);
-			if (m_pBuffer == NULL)
-			{
-				assert(false);
-				throw(-1);
-			}
-			m_dwBufferLen += m_dwBufferLen;
-		}
-	}
-
-	if (m_iSerializeType == EnumSerializeIORead)	// 读取数据
-	{
-		memcpy(&cValue, m_pBuffer + m_dwDataLen, sizeof(char));
-	}
-	else if (m_iSerializeType == EnumSerializeIOWrite)	// 写入数据
-	{
-		memcpy(m_pBuffer + m_dwDataLen, &cValue, sizeof(char));
-	}
-
-	m_dwDataLen += sizeof(unsigned char);
+	return InnerSerialize(Value);
 }
 
 // 序列化无符号字符
-void CBinarySerialize::Serialize(unsigned char& byValue, const char *)
+bool CBinarySerialize::Serialize(unsigned char& Value, const char *)
 {
-	if (m_pBuffer == NULL || m_dwBufferLen == 0)
-	{
-		assert(false);
-		return;
-	}
-
-	if (m_dwBufferLen < (m_dwDataLen + sizeof(unsigned char)))
-	{
-		if (m_iBufferCreateType == enum_Buffer_Create_Type_OutSide)	// 外部分配的缓存
-		{
-			throw(-1);
-		}
-		else if (m_iBufferCreateType == enum_Buffer_Create_Type_Inside)	// 内部分配的缓存
-		{
-			m_pBuffer = (char*)realloc(m_pBuffer, m_dwBufferLen * 2);
-			if (m_pBuffer == NULL)
-			{
-				assert(false);
-				throw(-1);
-			}
-			m_dwBufferLen += m_dwBufferLen;
-		}
-	}
-
-	if (m_iSerializeType == EnumSerializeIORead)	// 读取数据
-	{
-		memcpy(&byValue, m_pBuffer + m_dwDataLen, sizeof(unsigned char));
-	}
-	else if (m_iSerializeType == EnumSerializeIOWrite)	// 写入数据
-	{
-		memcpy(m_pBuffer + m_dwDataLen, &byValue, sizeof(unsigned char));
-	}
-
-	m_dwDataLen += sizeof(unsigned char);
+	return InnerSerialize(Value);
 }
 
 // 序列化有符号短整型
-void CBinarySerialize::Serialize(short& sValue, const char *)
+bool CBinarySerialize::Serialize(short& Value, const char *)
 {
-	if (m_pBuffer == NULL || m_dwBufferLen == 0)
-	{
-		assert(false);
-		return;
-	}
-
-	if (m_dwBufferLen < (m_dwDataLen + sizeof(short)))
-	{
-		if (m_iBufferCreateType == enum_Buffer_Create_Type_OutSide)	// 外部分配的缓存
-		{
-			throw(-1);
-		}
-		else if (m_iBufferCreateType == enum_Buffer_Create_Type_Inside)	// 内部分配的缓存
-		{
-			m_pBuffer = (char*)realloc(m_pBuffer, m_dwBufferLen * 2);
-			if (m_pBuffer == NULL)
-			{
-				assert(false);
-				throw(-1);
-			}
-			m_dwBufferLen += m_dwBufferLen;
-		}
-	}
-
-	if (m_iSerializeType == EnumSerializeIORead)	// 读取数据
-	{
-		memcpy(&sValue, m_pBuffer + m_dwDataLen, sizeof(short));
-	}
-	else if (m_iSerializeType == EnumSerializeIOWrite)	// 写入数据
-	{
-		memcpy(m_pBuffer + m_dwDataLen, &sValue, sizeof(short));
-	}
-
-	m_dwDataLen += sizeof(short);
+	return InnerSerialize(Value);
 }
 
 // 序列化无符号短整型
-void CBinarySerialize::Serialize(unsigned short& sValue, const char *)
+bool CBinarySerialize::Serialize(unsigned short& Value, const char *)
 {
-	if (m_pBuffer == NULL || m_dwBufferLen == 0)
-	{
-		assert(false);
-		return;
-	}
-
-	if (m_dwBufferLen < (m_dwDataLen + sizeof(unsigned short)))
-	{
-		if (m_iBufferCreateType == enum_Buffer_Create_Type_OutSide)	// 外部分配的缓存
-		{
-			throw(-1);
-		}
-		else if (m_iBufferCreateType == enum_Buffer_Create_Type_Inside)	// 内部分配的缓存
-		{
-			m_pBuffer = (char*)realloc(m_pBuffer, m_dwBufferLen * 2);
-			if (m_pBuffer == NULL)
-			{
-				assert(false);
-				throw(-1);
-			}
-			m_dwBufferLen += m_dwBufferLen;
-		}
-	}
-
-	if (m_iSerializeType == EnumSerializeIORead)	// 读取数据
-	{
-		memcpy(&sValue, m_pBuffer + m_dwDataLen, sizeof(unsigned short));
-	}
-	else if (m_iSerializeType == EnumSerializeIOWrite)	// 写入数据
-	{
-		memcpy(m_pBuffer + m_dwDataLen, &sValue, sizeof(unsigned short));
-	}
-
-	m_dwDataLen += sizeof(unsigned short);
+	return InnerSerialize(Value);
 }
 
 // 序列化有符号整型
-void CBinarySerialize::Serialize(int& iValue, const char *)
+bool CBinarySerialize::Serialize(int& Value, const char *)
 {
-	if (m_pBuffer == NULL || m_dwBufferLen == 0)
-	{
-		assert(false);
-		return;
-	}
-
-	if (m_dwBufferLen < (m_dwDataLen + sizeof(int)))
-	{
-		if (m_iBufferCreateType == enum_Buffer_Create_Type_OutSide)	// 外部分配的缓存
-		{
-			throw(-1);
-		}
-		else if (m_iBufferCreateType == enum_Buffer_Create_Type_Inside)	// 内部分配的缓存
-		{
-			m_pBuffer = (char*)realloc(m_pBuffer, m_dwBufferLen * 2);
-			if (m_pBuffer == NULL)
-			{
-				assert(false);
-				throw(-1);
-			}
-			m_dwBufferLen += m_dwBufferLen;
-		}
-	}
-
-	if (m_iSerializeType == EnumSerializeIORead)	// 读取数据
-	{
-		memcpy(&iValue, m_pBuffer + m_dwDataLen, sizeof(int));
-	}
-	else if (m_iSerializeType == EnumSerializeIOWrite)	// 写入数据
-	{
-		memcpy(m_pBuffer + m_dwDataLen, &iValue, sizeof(int));
-	}
-
-	m_dwDataLen += sizeof(int);
+	return InnerSerialize(Value);
 }
 
 // 序列化无符号整型
-void CBinarySerialize::Serialize(unsigned int& iValue, const char *)
+bool CBinarySerialize::Serialize(unsigned int& Value, const char *)
 {
-	if (m_pBuffer == NULL || m_dwBufferLen == 0)
-	{
-		assert(false);
-		return;
-	}
-
-	if (m_dwBufferLen < (m_dwDataLen + sizeof(unsigned int)))
-	{
-		if (m_iBufferCreateType == enum_Buffer_Create_Type_OutSide)	// 外部分配的缓存
-		{
-			throw(-1);
-		}
-		else if (m_iBufferCreateType == enum_Buffer_Create_Type_Inside)	// 内部分配的缓存
-		{
-			m_pBuffer = (char*)realloc(m_pBuffer, m_dwBufferLen * 2);
-			if (m_pBuffer == NULL)
-			{
-				assert(false);
-				throw(-1);
-			}
-			m_dwBufferLen += m_dwBufferLen;
-		}
-	}
-
-	if (m_iSerializeType == EnumSerializeIORead)	// 读取数据
-	{
-		memcpy(&iValue, m_pBuffer + m_dwDataLen, sizeof(unsigned int));
-	}
-	else if (m_iSerializeType == EnumSerializeIOWrite)	// 写入数据
-	{
-		memcpy(m_pBuffer + m_dwDataLen, &iValue, sizeof(unsigned int));
-	}
-
-	m_dwDataLen += sizeof(unsigned int);
+	return InnerSerialize(Value);
 }
 
 // 序列化有符号长整型
-void CBinarySerialize::Serialize(long& lValue, const char *)
+bool CBinarySerialize::Serialize(long& Value, const char *)
 {
-	if (m_pBuffer == NULL || m_dwBufferLen == 0)
-	{
-		assert(false);
-		return;
-	}
-
-	if (m_dwBufferLen < (m_dwDataLen + sizeof(long)))
-	{
-		if (m_iBufferCreateType == enum_Buffer_Create_Type_OutSide)	// 外部分配的缓存
-		{
-			throw(-1);
-		}
-		else if (m_iBufferCreateType == enum_Buffer_Create_Type_Inside)	// 内部分配的缓存
-		{
-			m_pBuffer = (char*)realloc(m_pBuffer, m_dwBufferLen * 2);
-			if (m_pBuffer == NULL)
-			{
-				assert(false);
-				throw(-1);
-			}
-			m_dwBufferLen += m_dwBufferLen;
-		}
-	}
-
-	if (m_iSerializeType == EnumSerializeIORead)	// 读取数据
-	{
-		memcpy(&lValue, m_pBuffer + m_dwDataLen, sizeof(long));
-	}
-	else if (m_iSerializeType == EnumSerializeIOWrite)	// 写入数据
-	{
-		memcpy(m_pBuffer + m_dwDataLen, &lValue, sizeof(long));
-	}
-
-	m_dwDataLen += sizeof(long);
+	return InnerSerialize(Value);
 }
 
 // 序列化无符号长整型
-void CBinarySerialize::Serialize(unsigned long& lValue, const char *)
+bool CBinarySerialize::Serialize(unsigned long& Value, const char *)
 {
-	if (m_pBuffer == NULL || m_dwBufferLen == 0)
-	{
-		assert(false);
-		return;
-	}
-
-	if (m_dwBufferLen < (m_dwDataLen + sizeof(unsigned long)))
-	{
-		if (m_iBufferCreateType == enum_Buffer_Create_Type_OutSide)	// 外部分配的缓存
-		{
-			throw(-1);
-		}
-		else if (m_iBufferCreateType == enum_Buffer_Create_Type_Inside)	// 内部分配的缓存
-		{
-			m_pBuffer = (char*)realloc(m_pBuffer, m_dwBufferLen * 2);
-			if (m_pBuffer == NULL)
-			{
-				assert(false);
-				throw(-1);
-			}
-			m_dwBufferLen += m_dwBufferLen;
-		}
-	}
-
-	if (m_iSerializeType == EnumSerializeIORead)	// 读取数据
-	{
-		memcpy(&lValue, m_pBuffer + m_dwDataLen, sizeof(unsigned long));
-	}
-	else if (m_iSerializeType == EnumSerializeIOWrite)	// 写入数据
-	{
-		memcpy(m_pBuffer + m_dwDataLen, &lValue, sizeof(unsigned long));
-	}
-
-	m_dwDataLen += sizeof(unsigned long);
+	return InnerSerialize(Value);
 }
 
 // 序列化64位长整型
-void CBinarySerialize::Serialize(long long& i64Value, const char *)
+bool CBinarySerialize::Serialize(long long& Value, const char *)
 {
-	if (m_pBuffer == NULL || m_dwBufferLen == 0)
-	{
-		assert(false);
-		return;
-	}
-
-	if (m_dwBufferLen < (m_dwDataLen + sizeof(long long)))
-	{
-		if (m_iBufferCreateType == enum_Buffer_Create_Type_OutSide)	// 外部分配的缓存
-		{
-			throw(-1);
-		}
-		else if (m_iBufferCreateType == enum_Buffer_Create_Type_Inside)	// 内部分配的缓存
-		{
-			m_pBuffer = (char*)realloc(m_pBuffer, m_dwBufferLen * 2);
-			if (m_pBuffer == NULL)
-			{
-				assert(false);
-				throw(-1);
-			}
-			m_dwBufferLen += m_dwBufferLen;
-		}
-	}
-
-	if (m_iSerializeType == EnumSerializeIORead)	// 读取数据
-	{
-		memcpy(&i64Value, m_pBuffer + m_dwDataLen, sizeof(long long));
-	}
-	else if (m_iSerializeType == EnumSerializeIOWrite)	// 写入数据
-	{
-		memcpy(m_pBuffer + m_dwDataLen, &i64Value, sizeof(long long));
-	}
-
-	m_dwDataLen += sizeof(long long);
+	return InnerSerialize(Value);
 }
 
 // 序列化U64位长整型
-void CBinarySerialize::Serialize(unsigned long long& Value, const char *)
+bool CBinarySerialize::Serialize(unsigned long long& Value, const char *)
 {
-	if (m_pBuffer == NULL || m_dwBufferLen == 0)
-	{
-		assert(false);
-		return;
-	}
-
-	if (m_dwBufferLen < (m_dwDataLen + sizeof(long long)))
-	{
-		if (m_iBufferCreateType == enum_Buffer_Create_Type_OutSide)	// 外部分配的缓存
-		{
-			throw(-1);
-		}
-		else if (m_iBufferCreateType == enum_Buffer_Create_Type_Inside)	// 内部分配的缓存
-		{
-			m_pBuffer = (char*)realloc(m_pBuffer, m_dwBufferLen * 2);
-			if (m_pBuffer == NULL)
-			{
-				assert(false);
-				throw(-1);
-			}
-			m_dwBufferLen += m_dwBufferLen;
-		}
-	}
-
-	if (m_iSerializeType == EnumSerializeIORead)	// 读取数据
-	{
-		memcpy(&Value, m_pBuffer + m_dwDataLen, sizeof(unsigned long long));
-	}
-	else if (m_iSerializeType == EnumSerializeIOWrite)	// 写入数据
-	{
-		memcpy(m_pBuffer + m_dwDataLen, &Value, sizeof(unsigned long long));
-	}
-
-	m_dwDataLen += sizeof(unsigned long long);
+	return InnerSerialize(Value);
 }
 
 // 序列化单精度类型
-void CBinarySerialize::Serialize(float& fValue, const char *)
+bool CBinarySerialize::Serialize(float& Value, const char *)
 {
-	if (m_pBuffer == NULL || m_dwBufferLen == 0)
-	{
-		assert(false);
-		return;
-	}
-
-	if (m_dwBufferLen < (m_dwDataLen + sizeof(float)))
-	{
-		if (m_iBufferCreateType == enum_Buffer_Create_Type_OutSide)	// 外部分配的缓存
-		{
-			throw(-1);
-		}
-		else if (m_iBufferCreateType == enum_Buffer_Create_Type_Inside)	// 内部分配的缓存
-		{
-			m_pBuffer = (char*)realloc(m_pBuffer, m_dwBufferLen * 2);
-			if (m_pBuffer == NULL)
-			{
-				assert(false);
-				throw(-1);
-			}
-			m_dwBufferLen += m_dwBufferLen;
-		}
-	}
-
-	if (m_iSerializeType == EnumSerializeIORead)	// 读取数据
-	{
-		memcpy(&fValue, m_pBuffer + m_dwDataLen, sizeof(float));
-	}
-	else if (m_iSerializeType == EnumSerializeIOWrite)	// 写入数据
-	{
-		memcpy(m_pBuffer + m_dwDataLen, &fValue, sizeof(float));
-	}
-
-	m_dwDataLen += sizeof(float);
+	return InnerSerialize(Value);
 }
 
 // 序列化双精度类型
-void CBinarySerialize::Serialize(double& dValue, const char *)
+bool CBinarySerialize::Serialize(double& Value, const char *)
 {
-	if (m_pBuffer == NULL || m_dwBufferLen == 0)
-	{
-		assert(false);
-		return;
-	}
-
-	if (m_dwBufferLen < (m_dwDataLen + sizeof(double)))
-	{
-		if (m_iBufferCreateType == enum_Buffer_Create_Type_OutSide)	// 外部分配的缓存
-		{
-			throw(-1);
-		}
-		else if (m_iBufferCreateType == enum_Buffer_Create_Type_Inside)	// 内部分配的缓存
-		{
-			m_pBuffer = (char*)realloc(m_pBuffer, m_dwBufferLen * 2);
-			if (m_pBuffer == NULL)
-			{
-				assert(false);
-				throw(-1);
-			}
-			m_dwBufferLen += m_dwBufferLen;
-		}
-	}
-
-	if (m_iSerializeType == EnumSerializeIORead)	// 读取数据
-	{
-		memcpy(&dValue, m_pBuffer + m_dwDataLen, sizeof(double));
-	}
-	else if (m_iSerializeType == EnumSerializeIOWrite)	// 写入数据
-	{
-		memcpy(m_pBuffer + m_dwDataLen, &dValue, sizeof(double));
-	}
-
-	m_dwDataLen += sizeof(double);
+	return InnerSerialize(Value);
 }
 
 // 序列化双精度类型
-void CBinarySerialize::Serialize(long double& ldValue, const char *)
+bool CBinarySerialize::Serialize(long double& Value, const char *)
 {
-	if (m_pBuffer == NULL || m_dwBufferLen == 0)
-	{
-		assert(false);
-		return;
-	}
-
-	if (m_dwBufferLen < (m_dwDataLen + sizeof(long double)))
-	{
-		if (m_iBufferCreateType == enum_Buffer_Create_Type_OutSide)	// 外部分配的缓存
-		{
-			throw(-1);
-		}
-		else if (m_iBufferCreateType == enum_Buffer_Create_Type_Inside)	// 内部分配的缓存
-		{
-			m_pBuffer = (char*)realloc(m_pBuffer, m_dwBufferLen * 2);
-			if (m_pBuffer == NULL)
-			{
-				assert(false);
-				throw(-1);
-			}
-			m_dwBufferLen += m_dwBufferLen;
-		}
-	}
-
-	if (m_iSerializeType == EnumSerializeIORead)	// 读取数据
-	{
-		memcpy(&ldValue, m_pBuffer + m_dwDataLen, sizeof(long double));
-	}
-	else if (m_iSerializeType == EnumSerializeIOWrite)	// 写入数据
-	{
-		memcpy(m_pBuffer + m_dwDataLen, &ldValue, sizeof(long double));
-	}
-
-	m_dwDataLen += sizeof(double);
+	return InnerSerialize(Value);
 }
 
 // 序列化字符串
-void CBinarySerialize::Serialize(CSerializeString& strValue, const char *)
+bool CBinarySerialize::Serialize(CSerializeString& strValue, const char *)
 {
-	if (m_pBuffer == NULL || m_dwBufferLen == 0)
-	{
-		assert(false);
-		return;
-	}
+	bool bRes = false;
 
-	DWORD dwDataLen = (DWORD)strValue.size();
-	Serialize(dwDataLen, nullptr);
-
-	if (dwDataLen > MAX_STRING_LENGTH)
+	do 
 	{
-		assert(false);
-		throw -1;
-	}
-
-	if (m_dwBufferLen < (m_dwDataLen + dwDataLen))
-	{
-		if (m_iBufferCreateType == enum_Buffer_Create_Type_OutSide)	// 外部分配的缓存
+		if (m_pBuffer == NULL || m_dwBufferLen == 0)
 		{
-			throw(-1);
+			assert(false);
+			break;
 		}
-		else if (m_iBufferCreateType == enum_Buffer_Create_Type_Inside)	// 内部分配的缓存
-		{
-			// 要扩充的长度
-			DWORD dwLen = m_dwBufferLen * 2;
-			if (dwLen < dwDataLen)
-				dwLen = dwDataLen;
 
-			m_pBuffer = (char*)realloc(m_pBuffer, m_dwBufferLen + dwLen);
-			if (m_pBuffer == NULL)
+		DWORD dwDataLen = (DWORD)strValue.size();
+		if (!InnerSerialize(dwDataLen))
+		{
+			assert(false);
+			break;
+		}
+
+		if (dwDataLen > MAX_STRING_LENGTH)
+		{
+			assert(false);
+			break;
+		}
+
+		if (m_dwBufferLen < (m_dwDataLen + dwDataLen))
+		{
+			if (m_iBufferCreateType == enum_Buffer_Create_Type_OutSide)	// 外部分配的缓存
 			{
 				assert(false);
-				throw(-1);
+				break;
 			}
-			m_dwBufferLen += dwLen;
+			else if (m_iBufferCreateType == enum_Buffer_Create_Type_Inside)	// 内部分配的缓存
+			{
+				// 要扩充的长度
+				DWORD dwLen = m_dwBufferLen * 2;
+				if (dwLen < dwDataLen)
+					dwLen = dwDataLen;
+
+				m_pBuffer = (char*)realloc(m_pBuffer, m_dwBufferLen + dwLen);
+				if (m_pBuffer == NULL)
+				{
+					assert(false);
+					break;
+				}
+				m_dwBufferLen += dwLen;
+			}
 		}
-	}
 
-	if (m_iSerializeType == EnumSerializeIORead)	// 读取数据
-	{
-		strValue.append(m_pBuffer + m_dwDataLen, dwDataLen);
-	}
-	else if (m_iSerializeType == EnumSerializeIOWrite)	// 写入数据
-	{
-		memcpy(m_pBuffer + m_dwDataLen, strValue.c_str(), dwDataLen);
-	}
+		if (m_iSerializeType == EnumSerializeIORead)	// 读取数据
+		{
+			strValue.append(m_pBuffer + m_dwDataLen, dwDataLen);
+		}
+		else if (m_iSerializeType == EnumSerializeIOWrite)	// 写入数据
+		{
+			memcpy(m_pBuffer + m_dwDataLen, strValue.c_str(), dwDataLen);
+		}
 
-	m_dwDataLen += dwDataLen;
+		m_dwDataLen += dwDataLen;
+		bRes = true;
+	} while (false);
+
+	assert(bRes);
+	return bRes;
+}
+
+template<typename T>
+bool CBinarySerialize::InnerSerialize(T &Value)
+{
+	bool bRes = false;
+
+	do 
+	{
+		//T必须是数值类型或者浮点类型，数值类型，包含bool类型
+		static_assert(std::is_arithmetic<T>::value, "T must be an integral type or a floating-point type");
+		if (m_pBuffer == NULL || m_dwBufferLen == 0)
+		{
+			assert(false);
+			break;
+		}
+
+		if (m_dwBufferLen < (m_dwDataLen + sizeof(T)))
+		{
+			if (m_iBufferCreateType == enum_Buffer_Create_Type_OutSide)	// 外部分配的缓存
+			{
+				assert(false);
+				break;
+			}
+			else if (m_iBufferCreateType == enum_Buffer_Create_Type_Inside)	// 内部分配的缓存
+			{
+				m_pBuffer = (char*)realloc(m_pBuffer, m_dwBufferLen * 2);
+				if (m_pBuffer == NULL)
+				{
+					assert(false);
+					break;
+				}
+				m_dwBufferLen += m_dwBufferLen;
+			}
+		}
+
+		if (m_iSerializeType == EnumSerializeIORead)	// 读取数据
+		{
+			memcpy(&Value, m_pBuffer + m_dwDataLen, sizeof(T));
+		}
+		else if (m_iSerializeType == EnumSerializeIOWrite)	// 写入数据
+		{
+			memcpy(m_pBuffer + m_dwDataLen, &Value, sizeof(T));
+		}
+
+		m_dwDataLen += sizeof(T);
+		bRes = true;
+	} while (false);
+
+	assert(bRes);
+	return bRes;
 }
 
 // 取得数据
@@ -684,33 +289,33 @@ DWORD CBinarySerialize::GetDataLen()
 	return m_dwDataLen;
 }
 
-void CBinarySerialize::BeginSerializeStruct(const char *)
+bool CBinarySerialize::BeginSerializeStruct(const char *)
 {
-	return;
+	return true;
 }
 
-void CBinarySerialize::EndSerializeStruct(const char *)
+bool CBinarySerialize::EndSerializeStruct(const char *)
 {
-	return;
+	return true;
 }
 
-void CBinarySerialize::BeginSerializeArray(unsigned long & ulCount, const char *)
+bool CBinarySerialize::BeginSerializeArray(unsigned long & ulCount, const char *)
 {
 	//写入/读取数组长度
 	return Serialize(ulCount, nullptr);
 }
 
-void CBinarySerialize::EndSerializeArray(const char *)
+bool CBinarySerialize::EndSerializeArray(const char *)
 {
-	return;
+	return true;
 }
 
-void CBinarySerialize::BeginSerializeArrayItem(unsigned long, const char *)
+bool CBinarySerialize::BeginSerializeArrayItem(unsigned long, const char *)
 {
-	return;
+	return true;
 }
 
-void CBinarySerialize::EndSerializeArrayItem(unsigned long, const char *)
+bool CBinarySerialize::EndSerializeArrayItem(unsigned long, const char *)
 {
-	return;
+	return true;
 }

@@ -6,43 +6,35 @@
 // $_FILEHEADER_END ***********************************************************
 #pragma once
 #include <vector>
+#include <string>
 #include "EnumSerialize.h"
+
+#define MAX_ARRAY_LIMITED_COUNT		2147483647		//序列化Array的时候，需要一个容器最大数量，这个值表示最大数量
+
 
 namespace SerializeExport
 {
 	class CSerializeString;
 	struct ISerialize;
 }
+#ifdef QT_DLL
+class QString;
+#endif
 using namespace  SerializeExport;
 /************************************************************************/
 /* 序列化宏 Serialize                                                */
 /************************************************************************/
-//序列化除了字符数组以外的宏定义
+//序列化宏定义
 #define SERIALIZE_STRUCT_VALUE(value) \
                 SerializeHelper::Serialize(pSerialize, value, #value); 
-
-//序列化字符串数组宏定义
-#define SERIALIZE_STRUCT_CHAR_ARRAY(value) \
-                SerializeHelper::SerializeCharArray(pSerialize, value, _countof(value), #value); 
-
-//序列化数组
-#define SERIALIZE_STRUCT_ARRAY(value) \
-				SerializeHelper::SerializeArray(pSerialize, value, _countof(value), #value); 
 
 /************************************************************************/
 /* 使用全局序列化函数时的宏 SerializeStruct                                */
 /************************************************************************/
-//序列化除了字符数组以外的宏定义，使用外部的序列化函数时的帮助函数
+//序列化宏定义，使用外部的序列化函数时的帮助函数
 #define SERIALIZE_VALUE(value) \
                 SerializeHelper::Serialize(pSerialize, Value.value, #value); 
 
-//序列化字符串数组宏定义
-#define SERIALIZE_CHAR_ARRAY(value) \
-                SerializeHelper::SerializeCharArray(pSerialize, Value.value, _countof(Value.value), #value); 
-
-//序列化数组
-#define SERIALIZE_ARRAY(value) \
-				SerializeHelper::SerializeArray(pSerialize, Value.value, _countof(Value.value), #value); 
 
 
 /************************************************************************/
@@ -52,6 +44,10 @@ using namespace  SerializeExport;
 namespace SerializeHelper
 {
 inline void test();
+
+/************************************************************************/
+/* 基本类型序列化函数                                                      */
+/************************************************************************/
 
 // $_FUNCTION_BEGIN *******************************************************
 // 函数名称：Serialize
@@ -218,6 +214,12 @@ inline void Serialize(ISerialize *pSerialize, long double &Value, const char *ps
 // $_FUNCTION_END *********************************************************
 inline void Serialize(ISerialize *pSerialize, CSerializeString& Value, const char *pstrName);
 
+
+
+/************************************************************************/
+/* 扩展类型序列化函数，InnerSerializeWithException成功后再赋值              */
+/************************************************************************/
+
 // $_FUNCTION_BEGIN *******************************************************
 // 函数名称：Serialize
 // 函数参数：
@@ -229,53 +231,23 @@ inline void Serialize(ISerialize *pSerialize, CSerializeString& Value, const cha
 // $_FUNCTION_END *********************************************************
 inline void Serialize(ISerialize *pSerialize, std::string& Value, const char *pstrName);
 
+#ifdef QT_DLL
 // $_FUNCTION_BEGIN *******************************************************
 // 函数名称：Serialize
 // 函数参数：
 //					pSerialize			[输入]		序列化接口
-//					Value				[输入/输出]	需要序列化的参数，必须以'\0'结束，中间不能够包含'\0'
-//					ulValueBufferSize	[输入/输出]	_countof(Value)大小，序列化函数会序列化
+//					Value				[输入/输出]	需要序列化的参数
 //					pstrName			[输入]		参数的名字,nullptr表示此参数没有名字
 // 返 回 值：
 // 函数说明：序列化变量
 // $_FUNCTION_END *********************************************************
-inline void SerializeCharArray(ISerialize *pSerialize, char *Value, unsigned long ulValueBufferSize, const char *pstrName);
+inline void Serialize(ISerialize *pSerialize, QString& Value, const char *pstrName);
+#endif
 
-// $_FUNCTION_BEGIN *******************************************************
-// 函数名称：Serialize
-// 函数参数：
-//					pSerialize			[输入]		序列化接口
-//					Value				[输入/输出]	需要序列化的参数数组，
-//					ulValueBufferSize	[输入/输出]	_countof(Value)大小，序列化函数会序列化
-//					pstrName			[输入]		参数的名字,nullptr表示此参数没有名字
-// 返 回 值：
-// 函数说明：序列化变量数组
-// $_FUNCTION_END *********************************************************
-template<typename T>
-void SerializeArray(ISerialize *pSerialize, T Value[], unsigned long ulValueCount, const char *pstrName);
 
-// $_FUNCTION_BEGIN *******************************************************
-// 函数名称：Serialize
-// 函数参数：
-//					pSerialize			[输入]		序列化接口
-//					Value				[输入/输出]	需要序列化的参数
-// 返 回 值：
-// 函数说明：序列化结构体变量
-// $_FUNCTION_END *********************************************************
-template<typename T>
-bool SerializeStruct(ISerialize *pSerialize, T &Value);
-
-// $_FUNCTION_BEGIN *******************************************************
-// 函数名称：Serialize
-// 函数参数：
-//					pSerialize			[输入]		序列化接口
-//					Value				[输入/输出]	需要序列化的参数
-//					pstrName			[输入]		参数的名字,nullptr表示此参数没有名字
-// 返 回 值：
-// 函数说明：序列化结构体变量
-// $_FUNCTION_END *********************************************************
-template<typename T>
-void Serialize(ISerialize *pSerialize, T &Value, const char *pstrName);
+/************************************************************************/
+/* 数组控制序列化                                                         */
+/************************************************************************/
 
 // $_FUNCTION_BEGIN *******************************************************
 // 函数名称：Serialize
@@ -287,7 +259,88 @@ void Serialize(ISerialize *pSerialize, T &Value, const char *pstrName);
 // 函数说明：序列化vector数组变量
 // $_FUNCTION_END *********************************************************
 template<typename T>
-void Serialize(ISerialize *pSerialize, std::vector<T> &tArray, const char *pstrName);
+inline void Serialize(ISerialize *pSerialize, std::vector<T> &tArray, const char *pstrName);
+
+// $_FUNCTION_BEGIN *******************************************************
+// 函数名称：Serialize
+// 函数参数：
+//					pSerialize			[输入]		序列化接口
+//					tArray				[输入/输出]	需要序列化的参数
+//					pstrName			[输入]		参数的名字,nullptr表示此参数没有名字
+// 返 回 值：
+// 函数说明：序列化int nParam[8],char szNickName[16]这样的成员数组变量
+// $_FUNCTION_END *********************************************************
+template<typename T, size_t _Size> 
+inline void Serialize(ISerialize *pSerialize, T (&tArray)[_Size], const char *pstrName);
+
+
+/************************************************************************/
+/* 结构体控制序列化，非浸入式序列化函数，类似如下                              */
+/* struct Test                                                          */
+/* {                                                                    */
+/*    int a;                                                            */
+/* };                                                                   */
+/* //结构体序列化函数名称必须为SerializeStruct，如果使用SERIALIZE_VALUE宏     */
+/* //参数名称必须为Value                                                  */
+/* bool SerializeStruct(ISerialize *pSerialize, Test &Value)            */
+/* {                                                                    */
+/*     try                                                              */
+/*     {                                                                */
+/*         SERIALIZE_VALUE(a);                                          */
+/*     }                                                                */
+/*     catch (...)                                                      */
+/*     {                                                                */
+/*         return false;                                                */
+/*     }                                                                */
+/*     return true;                                                     */
+/* }                                                                    */
+/************************************************************************/
+
+// $_FUNCTION_BEGIN *******************************************************
+// 函数名称：Serialize
+// 函数参数：
+//					pSerialize			[输入]		序列化接口
+//					Value				[输入/输出]	需要序列化的参数
+//					pstrName			[输入]		参数的名字,nullptr表示此参数没有名字
+// 返 回 值：
+// 函数说明：序列化结构体变量
+// $_FUNCTION_END *********************************************************
+template<typename T>
+inline void Serialize(ISerialize *pSerialize, T &Value, const char *pstrName);
+
+
+/************************************************************************/
+/* 兼容类成员函数形式序列化，类似如下：                                       */
+/* struct Test                                                          */
+/* {                                                                    */
+/*		int a;                                                          */
+/*      //成员函数序列化名称必须为Serialize，如果使用SERIALIZE_STRUCT_VALUE宏 */
+/*		bool Serialize(ISerialize *pSerialize)                          */
+/*      {                                                               */
+/*          try                                                         */
+/*          {                                                           */
+/*              SERIALIZE_STRUCT_VALUE(a);                              */
+/*          }                                                           */
+/*          catch (...)                                                 */
+/*          {                                                           */
+/*              return false;                                           */
+/*          }                                                           */
+/*          return true;                                                */
+/*      }                                                               */
+/* };                                                                   */
+/************************************************************************/
+
+
+// $_FUNCTION_BEGIN *******************************************************
+// 函数名称：Serialize
+// 函数参数：
+//					pSerialize			[输入]		序列化接口
+//					Value				[输入/输出]	需要序列化的参数
+// 返 回 值：
+// 函数说明：序列化结构体变量，只为兼容成员函数形式序列化，其他情况下，此函数没有用处
+// $_FUNCTION_END *********************************************************
+template<typename T>
+inline bool SerializeStruct(ISerialize *pSerialize, T &Value);
 
 };
 

@@ -20,13 +20,18 @@ CJsonSerialize::~CJsonSerialize()
 
 }
 
-void CJsonSerialize::SetSerializeType(EnumSerializeIO iSerializeType)
+bool CJsonSerialize::SetSerializeType(EnumSerializeIO iSerializeType)
 {
 	m_iSerializeType = iSerializeType;
 	if (!(EnumSerializeIORead == m_iSerializeType || EnumSerializeIOWrite == m_iSerializeType))
 	{
 		Log("CJsonSerialize::SetSerializeType iSerializeType=%d Error", static_cast<int>(iSerializeType));
 		assert(false);
+		return false;
+	}
+	else
+	{
+		return true;
 	}
 }
 
@@ -45,9 +50,10 @@ EnumSerializeFormat CJsonSerialize::GetSerializeFormat()
 	return EnumSerializeFormatJson;
 }
 
-void CJsonSerialize::SetSerializeStringCode(EnumSerializeStringCode SerializeStringCode)
+bool CJsonSerialize::SetSerializeStringCode(EnumSerializeStringCode SerializeStringCode)
 {
 	m_SerializeStringCode = SerializeStringCode;
+	return true;
 }
 
 EnumSerializeStringCode CJsonSerialize::GetSerializeStringCode()
@@ -92,47 +98,56 @@ unsigned long CJsonSerialize::GetDataLen()
 	return static_cast<unsigned long>(m_strBuffer.size());
 }
 
-void CJsonSerialize::BeginSerializeStruct(const char *pstrName)
+bool CJsonSerialize::BeginSerializeStruct(const char *pstrName)
 {
-	if (EnumSerializeIORead == m_iSerializeType)
+	bool bRes = false;
+
+	do 
 	{
-		if (nullptr == pstrName)
+		if (EnumSerializeIORead == m_iSerializeType)
 		{
-			//do nothing
-		}
-		else
-		{
-			Json::Value NewValue = (*m_pCurValue)[pstrName];
-			if (!NewValue.isObject())
+			if (nullptr == pstrName)
 			{
-				Log("CJsonSerialize::BeginSerializeStruct NewValue Type=%d Error", static_cast<int>(NewValue.type()));
-				assert(false);
-				throw - 1;
+				//do nothing
 			}
-			m_StackValue.push(m_pCurValue);
-			m_pCurValue.reset(new Json::Value(NewValue));
-		}
-	}
-	else
-	{
-		if (nullptr == pstrName)
-		{
-			//这个元素应存入数组
-			assert(m_pCurValue->isNull());
-			//将当前结构体调整为Object
-			//此逻辑是BeginSerializeArrayItem的时候，不知道接下来要序列化的东西类型，
-			//所以BeginSerializeArrayItem先创建了一个未知元素类型，此时需要将其调整为数组
-			*m_pCurValue = Json::Value(Json::objectValue);
+			else
+			{
+				Json::Value NewValue = (*m_pCurValue)[pstrName];
+				if (!NewValue.isObject())
+				{
+					Log("CJsonSerialize::BeginSerializeStruct NewValue Type=%d Error", static_cast<int>(NewValue.type()));
+					assert(false);
+					break;
+				}
+				m_StackValue.push(m_pCurValue);
+				m_pCurValue.reset(new Json::Value(NewValue));
+			}
 		}
 		else
 		{
-			m_StackValue.push(m_pCurValue);
-			m_pCurValue.reset(new Json::Value(Json::objectValue));
+			if (nullptr == pstrName)
+			{
+				//这个元素应存入数组
+				assert(m_pCurValue->isNull());
+				//将当前结构体调整为Object
+				//此逻辑是BeginSerializeArrayItem的时候，不知道接下来要序列化的东西类型，
+				//所以BeginSerializeArrayItem先创建了一个未知元素类型，此时需要将其调整为数组
+				*m_pCurValue = Json::Value(Json::objectValue);
+			}
+			else
+			{
+				m_StackValue.push(m_pCurValue);
+				m_pCurValue.reset(new Json::Value(Json::objectValue));
+			}
 		}
-	}
+		bRes = true;
+	} while (false);
+	
+	assert(bRes);
+	return bRes;
 }
 
-void CJsonSerialize::EndSerializeStruct(const char *pstrName)
+bool CJsonSerialize::EndSerializeStruct(const char *pstrName)
 {
 	if (EnumSerializeIORead == m_iSerializeType)
 	{
@@ -162,57 +177,67 @@ void CJsonSerialize::EndSerializeStruct(const char *pstrName)
 			m_pCurValue = pOldCurValue;
 		}
 	}
+	return true;
 }
 
-void CJsonSerialize::BeginSerializeArray(unsigned long &ulCount, const char *pstrName)
+bool CJsonSerialize::BeginSerializeArray(unsigned long &ulCount, const char *pstrName)
 {
-	if (EnumSerializeIORead == m_iSerializeType)
+	bool bRes = false;
+
+	do 
 	{
-		if (nullptr == pstrName)
+		if (EnumSerializeIORead == m_iSerializeType)
 		{
-			if (!m_pCurValue->isArray())
+			if (nullptr == pstrName)
 			{
-				Log("CJsonSerialize::BeginSerializeArray isArray Type=%d Error", static_cast<int>(m_pCurValue->type()));
-				assert(false);
-				throw (-1);
+				if (!m_pCurValue->isArray())
+				{
+					Log("CJsonSerialize::BeginSerializeArray isArray Type=%d Error", static_cast<int>(m_pCurValue->type()));
+					assert(false);
+					break;
+				}
+
+				ulCount = m_pCurValue->size();
 			}
-			
-			ulCount = m_pCurValue->size();
+			else
+			{
+				Json::Value TempValue = (*m_pCurValue)[pstrName];
+				if (!TempValue.isArray())
+				{
+					Log("CJsonSerialize::BeginSerializeArray TempValue Type=%d Error", static_cast<int>(TempValue.type()));
+					assert(false);
+					break;
+				}
+				ulCount = TempValue.size();
+				m_StackValue.push(m_pCurValue);
+				m_pCurValue.reset(new Json::Value(TempValue));
+			}
 		}
 		else
 		{
-			Json::Value TempValue = (*m_pCurValue)[pstrName];
-			if (!TempValue.isArray())
+			if (nullptr == pstrName)
 			{
-				Log("CJsonSerialize::BeginSerializeArray TempValue Type=%d Error", static_cast<int>(TempValue.type()));
-				assert(false);
-				throw (-1);
+				//这个元素应存入数组
+				assert(m_pCurValue->isNull());
+				//将当前结构体调整为array
+				//此逻辑是BeginSerializeArrayItem的时候，不知道接下来要序列化的东西类型，
+				//所以BeginSerializeArrayItem先创建了一个未知元素类型，此时需要将其调整为数组
+				*m_pCurValue = Json::Value(Json::arrayValue);
 			}
-			ulCount = TempValue.size();
-			m_StackValue.push(m_pCurValue);
-			m_pCurValue.reset(new Json::Value(TempValue));
+			else
+			{
+				m_StackValue.push(m_pCurValue);
+				m_pCurValue.reset(new Json::Value(Json::arrayValue));
+			}
 		}
-	}
-	else
-	{
-		if (nullptr == pstrName)
-		{
-			//这个元素应存入数组
-			assert(m_pCurValue->isNull());
-			//将当前结构体调整为array
-			//此逻辑是BeginSerializeArrayItem的时候，不知道接下来要序列化的东西类型，
-			//所以BeginSerializeArrayItem先创建了一个未知元素类型，此时需要将其调整为数组
-			*m_pCurValue = Json::Value(Json::arrayValue);
-		}
-		else
-		{
-			m_StackValue.push(m_pCurValue);
-			m_pCurValue.reset(new Json::Value(Json::arrayValue));
-		}
-	}
+		bRes = true;
+	} while (false);
+	
+	assert(bRes);
+	return bRes;
 }
 
-void CJsonSerialize::EndSerializeArray(const char *pstrName)
+bool CJsonSerialize::EndSerializeArray(const char *pstrName)
 {
 	if (EnumSerializeIORead == m_iSerializeType)
 	{
@@ -250,38 +275,48 @@ void CJsonSerialize::EndSerializeArray(const char *pstrName)
 			m_pCurValue = pOldCurValue;
 		}
 	}
+	return true;
 }
 
-void CJsonSerialize::BeginSerializeArrayItem(unsigned long ulIndex, const char *pstrName)
+bool CJsonSerialize::BeginSerializeArrayItem(unsigned long ulIndex, const char *pstrName)
 {
-	if (EnumSerializeIORead == m_iSerializeType)
+	bool bRes = false;
+
+	do 
 	{
-		if (!m_pCurValue->isArray())
+		if (EnumSerializeIORead == m_iSerializeType)
 		{
-			Log("CJsonSerialize::BeginSerializeArrayItem isArray ulIndex=%u Type=%d Error", ulIndex, static_cast<int>(m_pCurValue->type()));
-			assert(false);
-			throw (-1);
+			if (!m_pCurValue->isArray())
+			{
+				Log("CJsonSerialize::BeginSerializeArrayItem isArray ulIndex=%u Type=%d Error", ulIndex, static_cast<int>(m_pCurValue->type()));
+				assert(false);
+				break;
+			}
+			if (ulIndex >= m_pCurValue->size())
+			{
+				Log("CJsonSerialize::BeginSerializeArrayItem ulIndex >= size ulIndex=%u size=%d Error", ulIndex, static_cast<int>(m_pCurValue->size()));
+				assert(false);
+				break;
+			}
+			Json::Value Item = (*m_pCurValue)[Json::ArrayIndex(ulIndex)];
+			assert(!Item.isNull());
+			m_StackValue.push(m_pCurValue);
+			m_pCurValue.reset(new Json::Value(Item));
 		}
-		if (ulIndex >= m_pCurValue->size())
+		else
 		{
-			Log("CJsonSerialize::BeginSerializeArrayItem ulIndex >= size ulIndex=%u size=%d Error", ulIndex, static_cast<int>(m_pCurValue->size()));
-			assert(false);
-			throw (-1);
+			m_StackValue.push(m_pCurValue);
+			//未知元素类型
+			m_pCurValue.reset(new Json::Value());
 		}
-		Json::Value Item = (*m_pCurValue)[Json::ArrayIndex(ulIndex)];
-		assert(!Item.isNull());
-		m_StackValue.push(m_pCurValue);
-		m_pCurValue.reset(new Json::Value(Item));
-	}
-	else
-	{
-		m_StackValue.push(m_pCurValue);
-		//未知元素类型
-		m_pCurValue.reset(new Json::Value());
-	}
+		bRes = true;
+	} while (false);
+	
+	assert(bRes);
+	return bRes;
 }
 
-void CJsonSerialize::EndSerializeArrayItem(unsigned long ulIndex, const char *pstrName)
+bool CJsonSerialize::EndSerializeArrayItem(unsigned long ulIndex, const char *pstrName)
 {
 	if (EnumSerializeIORead == m_iSerializeType)
 	{
@@ -299,600 +334,116 @@ void CJsonSerialize::EndSerializeArrayItem(unsigned long ulIndex, const char *ps
 
 		m_pCurValue = pOldCurValue;
 	}
+	return true;
 }
-
-void CJsonSerialize::Serialize(bool & Value, const char * pstrName)
+/************************************************************************/
+/* 序列化字段函数                                                         */
+/************************************************************************/
+bool CJsonSerialize::Serialize(bool & Value, const char * pstrName)
 {
-	if (EnumSerializeIORead == m_iSerializeType)
-	{
-		Json::Value JsonValue;
-		if (nullptr == pstrName)
-		{
-			JsonValue = *m_pCurValue;
-		}
-		else
-		{
-			JsonValue = (*m_pCurValue)[pstrName];
-		}
-		if (JsonValue.isBool())
-		{
-			Value = JsonValue.asBool();
-		}
-		else
-		{
-			const char *pLogName = (nullptr == pstrName) ? "nullptr" : pstrName;
-			Log("CJsonSerialize::Serialize bool JsonValue Type=%d name=%s Error", static_cast<int>(JsonValue.type()), pLogName);
-			assert(false);
-		}
-	}
-	else
-	{
-		if (nullptr == pstrName)
-		{
-			//这个元素应存入数组
-			m_pCurValue.reset(new Json::Value(Value));
-		}
-		else
-		{
-			(*m_pCurValue)[pstrName] = Value;
-		}
-	}
+	return InnerSerialize(Value, pstrName);
 }
 
-void CJsonSerialize::Serialize(char & Value, const char * pstrName)
+bool CJsonSerialize::Serialize(char & Value, const char * pstrName)
 {
-	//Json没有unsigned char 当作unsigned int，
-	if (EnumSerializeIORead == m_iSerializeType)
-	{
-		Json::Value JsonValue;
-		if (nullptr == pstrName)
-		{
-			JsonValue = *m_pCurValue;
-		}
-		else
-		{
-			JsonValue = (*m_pCurValue)[pstrName];
-		}
-		if (JsonValue.isString())
-		{
-			std::string strValue = JsonValue.asString();
-			if (1 == strValue.size())
-			{
-				Value = strValue[0];
-			}
-			else
-			{
-				const char *pLogName = (nullptr == pstrName) ? "nullptr" : pstrName;
-				Log("CJsonSerialize::Serialize char JsonValue Length != 1 name=%s Error", pLogName);
-				assert(false);
-			}
-		}
-		else
-		{
-			const char *pLogName = (nullptr == pstrName) ? "nullptr" : pstrName;
-			Log("CJsonSerialize::Serialize char JsonValue Type=%d name=%s Error", static_cast<int>(JsonValue.type()), pLogName);
-			assert(false);
-		}
-
-	}
-	else
-	{
-		char szValue[] = { Value, '\0'};
-		if (nullptr == pstrName)
-		{
-			//这个元素应存入数组
-			m_pCurValue.reset(new Json::Value(szValue));
-		}
-		else
-		{
-			(*m_pCurValue)[pstrName] = szValue;
-		}
-	}
+	//Json没有char 当作int
+	int iValue = Value;
+	bool bRes = InnerSerialize(iValue, pstrName);
+	Value = static_cast<std::remove_reference<decltype(Value)>::type>(iValue);
+	return bRes;
 }
 
-void CJsonSerialize::Serialize(unsigned char & Value, const char * pstrName)
+bool CJsonSerialize::Serialize(unsigned char & Value, const char * pstrName)
 {
-	//Json没有unsigned char 当作unsigned int，
-	if (EnumSerializeIORead == m_iSerializeType)
-	{
-		Json::Value JsonValue;
-		if (nullptr == pstrName)
-		{
-			JsonValue = *m_pCurValue;
-		}
-		else
-		{
-			JsonValue = (*m_pCurValue)[pstrName];
-		}
-		if (JsonValue.isUInt())
-		{
-			Value = JsonValue.asUInt();
-		}
-		else
-		{
-			const char *pLogName = (nullptr == pstrName) ? "nullptr" : pstrName;
-			Log("CJsonSerialize::Serialize unsigned char JsonValue Type=%d name=%s Error", static_cast<int>(JsonValue.type()), pLogName);
-			assert(false);
-		}
-		
-	}
-	else
-	{
-		if (nullptr == pstrName)
-		{
-			//这个元素应存入数组
-			m_pCurValue.reset(new Json::Value(static_cast<unsigned int>(Value)));
-		}
-		else
-		{
-			(*m_pCurValue)[pstrName] = static_cast<unsigned int>(Value);
-		}
-	}
+	//Json没有unsigned char 当作unsigned int
+	unsigned int uiValue = Value;
+	bool bRes = InnerSerialize(uiValue, pstrName);
+	Value = static_cast<std::remove_reference<decltype(Value)>::type>(uiValue);
+	return bRes;
 }
 
-void CJsonSerialize::Serialize(short & Value, const char * pstrName)
+bool CJsonSerialize::Serialize(short & Value, const char * pstrName)
 {
 	//Json没有short 当作int，
-	if (EnumSerializeIORead == m_iSerializeType)
-	{
-		Json::Value JsonValue;
-		if (nullptr == pstrName)
-		{
-			JsonValue = *m_pCurValue;
-		}
-		else
-		{
-			JsonValue = (*m_pCurValue)[pstrName];
-		}
-		if (JsonValue.isInt())
-		{
-			Value = static_cast<short>(JsonValue.asInt());
-		}
-		else
-		{
-			const char *pLogName = (nullptr == pstrName) ? "nullptr" : pstrName;
-			Log("CJsonSerialize::Serialize short JsonValue Type=%d name=%s Error", static_cast<int>(JsonValue.type()), pLogName);
-			assert(false);
-		}
-	}
-	else
-	{
-		if (nullptr == pstrName)
-		{
-			//这个元素应存入数组
-			m_pCurValue.reset(new Json::Value(static_cast<int>(Value)));
-		}
-		else
-		{
-			(*m_pCurValue)[pstrName] = static_cast<int>(Value);
-		}
-	}
+	int iValue = Value;
+	bool bRes = InnerSerialize(iValue, pstrName);
+	Value = static_cast<std::remove_reference<decltype(Value)>::type>(iValue);
+	return bRes;
 }
 
-void CJsonSerialize::Serialize(unsigned short & Value, const char * pstrName)
+bool CJsonSerialize::Serialize(unsigned short & Value, const char * pstrName)
 {
 	//Json没有unsigned short 当作unsigned int，
-	if (EnumSerializeIORead == m_iSerializeType)
-	{
-		Json::Value JsonValue;
-		if (nullptr == pstrName)
-		{
-			JsonValue = *m_pCurValue;
-		}
-		else
-		{
-			JsonValue = (*m_pCurValue)[pstrName];
-		}
-		if (JsonValue.isUInt())
-		{
-			Value = static_cast<unsigned short>(JsonValue.asUInt());
-		}
-		else
-		{
-			const char *pLogName = (nullptr == pstrName) ? "nullptr" : pstrName;
-			Log("CJsonSerialize::Serialize unsigned short JsonValue Type=%d name=%s Error", static_cast<int>(JsonValue.type()), pLogName);
-			assert(false);
-		}
-	}
-	else
-	{
-		if (nullptr == pstrName)
-		{
-			//这个元素应存入数组
-			m_pCurValue.reset(new Json::Value(static_cast<unsigned int>(Value)));
-		}
-		else
-		{
-			(*m_pCurValue)[pstrName] = static_cast<unsigned int>(Value);
-		}
-	}
+	unsigned int uiValue = Value;
+	bool bRes = InnerSerialize(uiValue, pstrName);
+	Value = static_cast<std::remove_reference<decltype(Value)>::type>(uiValue);
+	return bRes;
 }
 
-void CJsonSerialize::Serialize(int& Value, const char *pstrName)
+bool CJsonSerialize::Serialize(int& Value, const char *pstrName)
 {
-	if (EnumSerializeIORead == m_iSerializeType)
-	{
-		Json::Value JsonValue;
-		if (nullptr == pstrName)
-		{
-			JsonValue = *m_pCurValue;
-		}
-		else
-		{
-			JsonValue = (*m_pCurValue)[pstrName];
-		}
-		if (JsonValue.isInt())
-		{
-			Value = JsonValue.asInt();
-		}
-		else
-		{
-			const char *pLogName = (nullptr == pstrName) ? "nullptr" : pstrName;
-			Log("CJsonSerialize::Serialize int JsonValue Type=%d name=%s Error", static_cast<int>(JsonValue.type()), pLogName);
-			assert(false);
-		}
-	}
-	else
-	{
-		if (nullptr == pstrName)
-		{
-			//这个元素应存入数组
-			m_pCurValue.reset(new Json::Value(Value));
-		}
-		else
-		{
-			(*m_pCurValue)[pstrName] = Value;
-		}
-	}
+	return InnerSerialize(Value, pstrName);
 }
 
-void CJsonSerialize::Serialize(unsigned int & Value, const char * pstrName)
+bool CJsonSerialize::Serialize(unsigned int & Value, const char * pstrName)
 {
-	if (EnumSerializeIORead == m_iSerializeType)
-	{
-		Json::Value JsonValue;
-		if (nullptr == pstrName)
-		{
-			JsonValue = *m_pCurValue;
-		}
-		else
-		{
-			JsonValue = (*m_pCurValue)[pstrName];
-		}
-		if (JsonValue.isUInt())
-		{
-			Value = JsonValue.asUInt();
-		}
-		else
-		{
-			const char *pLogName = (nullptr == pstrName) ? "nullptr" : pstrName;
-			Log("CJsonSerialize::Serialize unsigned int JsonValue Type=%d name=%s Error", static_cast<int>(JsonValue.type()), pLogName);
-			assert(false);
-		}
-	}
-	else
-	{
-		if (nullptr == pstrName)
-		{
-			//这个元素应存入数组
-			m_pCurValue.reset(new Json::Value(Value));
-		}
-		else
-		{
-			(*m_pCurValue)[pstrName] = Value;
-		}
-	}
+	return InnerSerialize(Value, pstrName);
 }
 
-void CJsonSerialize::Serialize(long & Value, const char * pstrName)
+bool CJsonSerialize::Serialize(long & Value, const char * pstrName)
 {
 	//Json没有long 当作int，
-	if (EnumSerializeIORead == m_iSerializeType)
-	{
-		Json::Value JsonValue;
-		if (nullptr == pstrName)
-		{
-			JsonValue = *m_pCurValue;
-		}
-		else
-		{
-			JsonValue = (*m_pCurValue)[pstrName];
-		}
-		if (JsonValue.isInt())
-		{
-			Value = static_cast<long>(JsonValue.asInt());
-		}
-		else
-		{
-			const char *pLogName = (nullptr == pstrName) ? "nullptr" : pstrName;
-			Log("CJsonSerialize::Serialize long JsonValue Type=%d name=%s Error", static_cast<int>(JsonValue.type()), pLogName);
-			assert(false);
-		}
-	}
-	else
-	{
-		if (nullptr == pstrName)
-		{
-			//这个元素应存入数组
-			m_pCurValue.reset(new Json::Value(static_cast<int>(Value)));
-		}
-		else
-		{
-			(*m_pCurValue)[pstrName] = static_cast<int>(Value);
-		}
-	}
+	int iValue = Value;
+	bool bRes = InnerSerialize(iValue, pstrName);
+	Value = static_cast<std::remove_reference<decltype(Value)>::type>(iValue);
+	return bRes;
 }
 
-void CJsonSerialize::Serialize(unsigned long & Value, const char * pstrName)
+bool CJsonSerialize::Serialize(unsigned long & Value, const char * pstrName)
 {
 	//Json没有unsigned long 当作unsigned int，
-	if (EnumSerializeIORead == m_iSerializeType)
-	{
-		Json::Value JsonValue;
-		if (nullptr == pstrName)
-		{
-			JsonValue = *m_pCurValue;
-		}
-		else
-		{
-			JsonValue = (*m_pCurValue)[pstrName];
-		}
-		if (JsonValue.isUInt())
-		{
-			Value = static_cast<unsigned long>(JsonValue.asUInt());
-		}
-		else
-		{
-			const char *pLogName = (nullptr == pstrName) ? "nullptr" : pstrName;
-			Log("CJsonSerialize::Serialize unsigned long JsonValue Type=%d name=%s Error", static_cast<int>(JsonValue.type()), pLogName);
-			assert(false);
-		}
-	}
-	else
-	{
-		if (nullptr == pstrName)
-		{
-			//这个元素应存入数组
-			m_pCurValue.reset(new Json::Value(static_cast<unsigned int>(Value)));
-		}
-		else
-		{
-			(*m_pCurValue)[pstrName] = static_cast<unsigned int>(Value);
-		}
-	}
+	unsigned int uiValue = Value;
+	bool bRes = InnerSerialize(uiValue, pstrName);
+	Value = static_cast<std::remove_reference<decltype(Value)>::type>(uiValue);
+	return bRes;
 }
 
-void CJsonSerialize::Serialize(long long & Value, const char * pstrName)
+bool CJsonSerialize::Serialize(long long & Value, const char * pstrName)
 {
-	if (EnumSerializeIORead == m_iSerializeType)
-	{
-		Json::Value JsonValue;
-		if (nullptr == pstrName)
-		{
-			JsonValue = *m_pCurValue;
-		}
-		else
-		{
-			JsonValue = (*m_pCurValue)[pstrName];
-		}
-		if (JsonValue.isInt64())
-		{
-			Value = JsonValue.asInt64();
-		}
-		else
-		{
-			const char *pLogName = (nullptr == pstrName) ? "nullptr" : pstrName;
-			Log("CJsonSerialize::Serialize long long JsonValue Type=%d name=%s Error", static_cast<int>(JsonValue.type()), pLogName);
-			assert(false);
-		}
-	}
-	else
-	{
-		if (nullptr == pstrName)
-		{
-			//这个元素应存入数组
-			m_pCurValue.reset(new Json::Value(Value));
-		}
-		else
-		{
-			(*m_pCurValue)[pstrName] = Value;
-		}
-	}
+	return InnerSerialize(Value, pstrName);
 }
 
-void CJsonSerialize::Serialize(unsigned long long & Value, const char * pstrName)
+bool CJsonSerialize::Serialize(unsigned long long & Value, const char * pstrName)
 {
-	if (EnumSerializeIORead == m_iSerializeType)
-	{
-		Json::Value JsonValue;
-		if (nullptr == pstrName)
-		{
-			JsonValue = *m_pCurValue;
-		}
-		else
-		{
-			JsonValue = (*m_pCurValue)[pstrName];
-		}
-		if (JsonValue.isUInt64())
-		{
-			Value = JsonValue.asUInt64();
-		}
-		else
-		{
-			const char *pLogName = (nullptr == pstrName) ? "nullptr" : pstrName;
-			Log("CJsonSerialize::Serialize unsigned long long JsonValue Type=%d name=%s Error", static_cast<int>(JsonValue.type()), pLogName);
-			assert(false);
-		}
-	}
-	else
-	{
-		if (nullptr == pstrName)
-		{
-			//这个元素应存入数组
-			m_pCurValue.reset(new Json::Value(Value));
-		}
-		else
-		{
-			(*m_pCurValue)[pstrName] = Value;
-		}
-	}
+	return InnerSerialize(Value, pstrName);
 }
 
-void CJsonSerialize::Serialize(float & Value, const char * pstrName)
+bool CJsonSerialize::Serialize(float & Value, const char * pstrName)
 {
 	//Json没有float 当作double，
-	if (EnumSerializeIORead == m_iSerializeType)
-	{
-		Json::Value JsonValue;
-		if (nullptr == pstrName)
-		{
-			JsonValue = *m_pCurValue;
-		}
-		else
-		{
-			JsonValue = (*m_pCurValue)[pstrName];
-		}
-		if (JsonValue.isDouble())
-		{
-			Value = static_cast<float>(JsonValue.asDouble());
-		}
-		else
-		{
-			const char *pLogName = (nullptr == pstrName) ? "nullptr" : pstrName;
-			Log("CJsonSerialize::Serialize float JsonValue Type=%d name=%s Error", static_cast<int>(JsonValue.type()), pLogName);
-			assert(false);
-		}
-	}
-	else
-	{
-		if (nullptr == pstrName)
-		{
-			//这个元素应存入数组
-			m_pCurValue.reset(new Json::Value(static_cast<double>(Value)));
-		}
-		else
-		{
-			(*m_pCurValue)[pstrName] = static_cast<double>(Value);
-		}
-	}
+	double dValue = Value;
+	bool bRes = InnerSerialize(dValue, pstrName);
+	Value = static_cast<std::remove_reference<decltype(Value)>::type>(dValue);
+	return bRes;
 }
 
-void CJsonSerialize::Serialize(double & Value, const char * pstrName)
+bool CJsonSerialize::Serialize(double & Value, const char * pstrName)
 {
-	if (EnumSerializeIORead == m_iSerializeType)
-	{
-		Json::Value JsonValue;
-		if (nullptr == pstrName)
-		{
-			JsonValue = *m_pCurValue;
-		}
-		else
-		{
-			JsonValue = (*m_pCurValue)[pstrName];
-		}
-		if (JsonValue.isDouble())
-		{
-			Value = JsonValue.asDouble();
-		}
-		else
-		{
-			const char *pLogName = (nullptr == pstrName) ? "nullptr" : pstrName;
-			Log("CJsonSerialize::Serialize double JsonValue Type=%d name=%s Error", static_cast<int>(JsonValue.type()), pLogName);
-			assert(false);
-		}
-	}
-	else
-	{
-		if (nullptr == pstrName)
-		{
-			//这个元素应存入数组
-			m_pCurValue.reset(new Json::Value(Value));
-		}
-		else
-		{
-			(*m_pCurValue)[pstrName] = Value;
-		}
-	}
+	return InnerSerialize(Value, pstrName);
 }
 
-void CJsonSerialize::Serialize(long double & Value, const char * pstrName)
+bool CJsonSerialize::Serialize(long double & Value, const char * pstrName)
 {
 	//Json没有long double 当作double，
-	if (EnumSerializeIORead == m_iSerializeType)
-	{
-		Json::Value JsonValue;
-		if (nullptr == pstrName)
-		{
-			JsonValue = *m_pCurValue;
-		}
-		else
-		{
-			JsonValue = (*m_pCurValue)[pstrName];
-		}
-		if (JsonValue.isDouble())
-		{
-			Value = static_cast<long double>(JsonValue.asDouble());
-		}
-		else
-		{
-			const char *pLogName = (nullptr == pstrName) ? "nullptr" : pstrName;
-			Log("CJsonSerialize::Serialize long double JsonValue Type=%d name=%s Error", static_cast<int>(JsonValue.type()), pLogName);
-			assert(false);
-		}
-	}
-	else
-	{
-		if (nullptr == pstrName)
-		{
-			//这个元素应存入数组
-			m_pCurValue.reset(new Json::Value(static_cast<double>(Value)));
-		}
-		else
-		{
-			(*m_pCurValue)[pstrName] = static_cast<double>(Value);
-		}
-	}
+	double dValue = Value;
+	bool bRes = InnerSerialize(dValue, pstrName);
+	Value = static_cast<std::remove_reference<decltype(Value)>::type>(dValue);
+	return bRes;
 }
 
-void CJsonSerialize::Serialize(CSerializeString& Value, const char *pstrName)
+bool CJsonSerialize::Serialize(CSerializeString& Value, const char *pstrName)
 {
-	if (EnumSerializeIORead == m_iSerializeType)
-	{
-		Json::Value JsonValue;
-		if (nullptr == pstrName)
-		{
-			JsonValue = *m_pCurValue;
-		}
-		else
-		{
-			JsonValue = (*m_pCurValue)[pstrName];
-		}
-		if (JsonValue.isString())
-		{
-			std::string strTempValue = ConvertToLocal(JsonValue.asString());
-
-			Value.assign(strTempValue.data(), strTempValue.size());
-		}
-		else
-		{
-			const char *pLogName = (nullptr == pstrName) ? "nullptr" : pstrName;
-			Log("CJsonSerialize::Serialize string JsonValue Type=%d name=%s Error", static_cast<int>(JsonValue.type()), pLogName);
-		}
-	}
-	else
-	{
-		std::string strTempValue(Value.data(), Value.size());
-		strTempValue = ConvertToJson(strTempValue);
-		if (nullptr == pstrName)
-		{
-			//这个元素应存入数组
-			m_pCurValue.reset(new Json::Value(strTempValue));
-		}
-		else
-		{
-			(*m_pCurValue)[pstrName] = strTempValue;
-		}
-	}
+	return InnerSerialize(Value, pstrName);
 }
 
 void CJsonSerialize::CheckWriteToBuffer()
@@ -957,3 +508,186 @@ std::string CJsonSerialize::ConvertToLocal(const std::string & strText)
 	}
 	return strResultText;
 }
+
+bool CJsonSerialize::ConverToType(Json::Value &JsonValue, CSerializeString &Value, const char *pstrName)
+{
+	if (JsonValue.isString())
+	{
+		std::string strTempValue = ConvertToLocal(JsonValue.asString());
+
+		Value.assign(strTempValue.data(), strTempValue.size());
+		return true;
+	}
+	else
+	{
+		const char *pLogName = (nullptr == pstrName) ? "nullptr" : pstrName;
+		Log("CJsonSerialize::ConverToType string JsonValue Type=%d name=%s Error", static_cast<int>(JsonValue.type()), pLogName);
+		assert(false);
+		return false;
+	}
+}
+
+bool CJsonSerialize::ConverToType(Json::Value &JsonValue, bool &Value, const char *pstrName)
+{
+	if (JsonValue.isBool())
+	{
+		Value = JsonValue.asBool();
+		return true;
+	}
+	else
+	{
+		const char *pLogName = (nullptr == pstrName) ? "nullptr" : pstrName;
+		Log("CJsonSerialize::ConverToType bool JsonValue Type=%d name=%s Error", static_cast<int>(JsonValue.type()), pLogName);
+		assert(false);
+		return false;
+	}
+}
+
+bool CJsonSerialize::ConverToType(Json::Value &JsonValue, int &Value, const char *pstrName)
+{
+	if (JsonValue.isInt())
+	{
+		Value = JsonValue.asInt();
+		return true;
+	}
+	else
+	{
+		const char *pLogName = (nullptr == pstrName) ? "nullptr" : pstrName;
+		Log("CJsonSerialize::ConverToType int JsonValue Type=%d name=%s Error", static_cast<int>(JsonValue.type()), pLogName);
+		assert(false);
+		return false;
+	}
+}
+
+bool CJsonSerialize::ConverToType(Json::Value &JsonValue, unsigned int &Value, const char *pstrName)
+{
+	if (JsonValue.isUInt())
+	{
+		Value = JsonValue.asUInt();
+		return true;
+	}
+	else
+	{
+		const char *pLogName = (nullptr == pstrName) ? "nullptr" : pstrName;
+		Log("CJsonSerialize::ConverToType unsigned int JsonValue Type=%d name=%s Error", static_cast<int>(JsonValue.type()), pLogName);
+		assert(false);
+		return false;
+	}
+}
+
+bool CJsonSerialize::ConverToType(Json::Value &JsonValue, long long &Value, const char *pstrName)
+{
+	if (JsonValue.isInt64())
+	{
+		Value = JsonValue.asInt64();
+		return true;
+	}
+	else
+	{
+		const char *pLogName = (nullptr == pstrName) ? "nullptr" : pstrName;
+		Log("CJsonSerialize::ConverToType long long JsonValue Type=%d name=%s Error", static_cast<int>(JsonValue.type()), pLogName);
+		assert(false);
+		return false;
+	}
+}
+
+bool CJsonSerialize::ConverToType(Json::Value &JsonValue, unsigned long long &Value, const char *pstrName)
+{
+	if (JsonValue.isUInt64())
+	{
+		Value = JsonValue.asUInt64();
+		return true;
+	}
+	else
+	{
+		const char *pLogName = (nullptr == pstrName) ? "nullptr" : pstrName;
+		Log("CJsonSerialize::ConverToType unsigned long long JsonValue Type=%d name=%s Error", static_cast<int>(JsonValue.type()), pLogName);
+		assert(false);
+		return false;
+	}
+}
+
+bool CJsonSerialize::ConverToType(Json::Value &JsonValue, double &Value, const char *pstrName)
+{
+	if (JsonValue.isDouble())
+	{
+		Value = JsonValue.asDouble();
+		return true;
+	}
+	else
+	{
+		const char *pLogName = (nullptr == pstrName) ? "nullptr" : pstrName;
+		Log("CJsonSerialize::ConverToType double JsonValue Type=%d name=%s Error", static_cast<int>(JsonValue.type()), pLogName);
+		assert(false);
+		return false;
+	}
+}
+
+Json::Value CJsonSerialize::ConverToJsonValue(CSerializeString &Value)
+{
+	std::string strTempValue(Value.data(), Value.size());
+	strTempValue = ConvertToJson(strTempValue);
+	return Json::Value(strTempValue);
+}
+
+Json::Value CJsonSerialize::ConverToJsonValue(bool &Value)
+{
+	return Json::Value(Value);
+}
+
+Json::Value CJsonSerialize::ConverToJsonValue(int &Value)
+{
+	return Json::Value(Value);
+}
+
+Json::Value CJsonSerialize::ConverToJsonValue(unsigned int &Value)
+{
+	return Json::Value(Value);
+}
+
+Json::Value CJsonSerialize::ConverToJsonValue(long long &Value)
+{
+	return Json::Value(Value);
+}
+
+Json::Value CJsonSerialize::ConverToJsonValue(unsigned long long &Value)
+{
+	return Json::Value(Value);
+}
+
+Json::Value CJsonSerialize::ConverToJsonValue(double &Value)
+{
+	return Json::Value(Value);
+}
+
+template<typename T>
+bool CJsonSerialize::InnerSerialize(T &Value, const char *pstrName)
+{
+	if (EnumSerializeIORead == m_iSerializeType)
+	{
+		Json::Value JsonValue;
+		if (nullptr == pstrName)
+		{
+			JsonValue = *m_pCurValue;
+		}
+		else
+		{
+			JsonValue = (*m_pCurValue)[pstrName];
+		}
+		return ConverToType(JsonValue, Value, pstrName);
+	}
+	else
+	{
+		if (nullptr == pstrName)
+		{
+			//这个元素应存入数组
+			m_pCurValue.reset(new Json::Value(ConverToJsonValue(Value)));
+		}
+		else
+		{
+			(*m_pCurValue)[pstrName] = ConverToJsonValue(Value);
+		}
+		return true;
+	}
+}
+

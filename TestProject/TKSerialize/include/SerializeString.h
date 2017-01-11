@@ -8,7 +8,7 @@ namespace SerializeExport
 {
 
 struct SerializeStringData;
-class TKSNSEXTENDUI_API CSerializeString
+class TKSERIALIZE_API CSerializeString
 {
 public:
 	typedef size_t size_type;
