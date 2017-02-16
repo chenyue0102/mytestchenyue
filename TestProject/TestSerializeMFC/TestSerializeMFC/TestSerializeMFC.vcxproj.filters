@@ -13,6 +13,12 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="DealMsgHelper">
+      <UniqueIdentifier>{508d6da0-641d-41b2-8ff2-5095f989bf9c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="PostMsgHelper">
+      <UniqueIdentifier>{7e155229-46b3-47f9-89b8-ea6ee69a8c00}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />
@@ -21,6 +27,15 @@
     </None>
     <None Include="res\TestSerializeMFC.ico">
       <Filter>资源文件</Filter>
+    </None>
+    <None Include="DealMsgHelper\DealMsgHelper.inl">
+      <Filter>DealMsgHelper</Filter>
+    </None>
+    <None Include="DealMsgHelper\InvokeNotify.inl">
+      <Filter>DealMsgHelper</Filter>
+    </None>
+    <None Include="PostMsgHelper\PostMsgHelper.inl">
+      <Filter>PostMsgHelper</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
@@ -44,6 +59,15 @@
     </ClInclude>
     <ClInclude Include="InvokeHelper.h">
       <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="DealMsgHelper\DealMsgHelper.h">
+      <Filter>DealMsgHelper</Filter>
+    </ClInclude>
+    <ClInclude Include="DealMsgHelper\InvokeNotify.h">
+      <Filter>DealMsgHelper</Filter>
+    </ClInclude>
+    <ClInclude Include="PostMsgHelper\PostMsgHelper.h">
+      <Filter>PostMsgHelper</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

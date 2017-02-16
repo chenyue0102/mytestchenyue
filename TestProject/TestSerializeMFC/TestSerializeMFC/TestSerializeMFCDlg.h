@@ -3,7 +3,7 @@
 //
 
 #pragma once
-#include "InvokeHelper.h"
+#include "./DealMsgHelper/DealMsgHelper.h"
 
 struct TestA;
 struct TestB;
@@ -34,7 +34,14 @@ protected:
 
 	void DealA(const TestA &a);
 	void DealB(const TestB &b);
+	void DealE();
 	unsigned long DealC(const TestA &a, TestB &b);
-	void TestCallFun();
-	CInvokeHelper<CTestSerializeMFCDlg> m_InvokeHelper;
+	unsigned long DealD(TestB &b);
+	DealMsgHelper::CDealMsgHelper m_DealMsgHelper;
+public:
+	afx_msg void OnBnClickedButtonA();
+	afx_msg void OnBnClickedButtonB();
+	afx_msg void OnBnClickedButtonC();
+	afx_msg void OnBnClickedButtonD();
+	afx_msg void OnBnClickedButtonE();
 };

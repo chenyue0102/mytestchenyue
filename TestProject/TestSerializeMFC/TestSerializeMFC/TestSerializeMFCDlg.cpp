@@ -12,6 +12,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include "PostMsgHelper.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -322,16 +323,14 @@ END_MESSAGE_MAP()
 
 CTestSerializeMFCDlg::CTestSerializeMFCDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(CTestSerializeMFCDlg::IDD, pParent)
-	, m_InvokeHelper(this)
+	, m_DealMsgHelper()
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
-	m_InvokeHelper.RegisterNotifyMsg(1, &CTestSerializeMFCDlg::DealA);
-	m_InvokeHelper.UnRegisterNotifyMsg(1);
-	m_InvokeHelper.RegisterNotifyMsg(1, &CTestSerializeMFCDlg::DealA);
-	m_InvokeHelper.RegisterNotifyMsg(2, &CTestSerializeMFCDlg::DealB);
-	m_InvokeHelper.RegisterQueryMsg(3, &CTestSerializeMFCDlg::DealC);
-	m_InvokeHelper.UnRegisterQueryMsg(3);
-	m_InvokeHelper.RegisterQueryMsg(3, &CTestSerializeMFCDlg::DealC);
+	m_DealMsgHelper.RegMsg(1, this, &CTestSerializeMFCDlg::DealA);
+	m_DealMsgHelper.RegMsg(2, this, &CTestSerializeMFCDlg::DealB);
+	m_DealMsgHelper.RegMsg(3, this, &CTestSerializeMFCDlg::DealC);
+	m_DealMsgHelper.RegMsg(4, this, &CTestSerializeMFCDlg::DealD);
+	m_DealMsgHelper.RegMsg(5, this, &CTestSerializeMFCDlg::DealE);
 }
 
 void CTestSerializeMFCDlg::DoDataExchange(CDataExchange* pDX)
@@ -343,11 +342,15 @@ BEGIN_MESSAGE_MAP(CTestSerializeMFCDlg, CDialogEx)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
+	ON_BN_CLICKED(IDC_BUTTON_A, &CTestSerializeMFCDlg::OnBnClickedButtonA)
+	ON_BN_CLICKED(IDC_BUTTON_B, &CTestSerializeMFCDlg::OnBnClickedButtonB)
+	ON_BN_CLICKED(IDC_BUTTON_C, &CTestSerializeMFCDlg::OnBnClickedButtonC)
+	ON_BN_CLICKED(IDC_BUTTON_D, &CTestSerializeMFCDlg::OnBnClickedButtonD)
+	ON_BN_CLICKED(IDC_BUTTON_E, &CTestSerializeMFCDlg::OnBnClickedButtonE)
 END_MESSAGE_MAP()
 
 
 // CTestSerializeMFCDlg 消息处理程序
-
 BOOL CTestSerializeMFCDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
@@ -377,10 +380,6 @@ BOOL CTestSerializeMFCDlg::OnInitDialog()
 	SetIcon(m_hIcon, TRUE);			// 设置大图标
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
-	// TODO: 在此添加额外的初始化代码
-	//DoTest();
-
-	TestCallFun();
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -447,6 +446,11 @@ void CTestSerializeMFCDlg::DealB(const TestB & b)
 	MessageBox(CStringW(str));
 }
 
+void CTestSerializeMFCDlg::DealE()
+{
+	MessageBox(CStringW(L"DealE"));
+}
+
 unsigned long CTestSerializeMFCDlg::DealC(const TestA & a, TestB & b)
 {
 	CString str;
@@ -456,48 +460,50 @@ unsigned long CTestSerializeMFCDlg::DealC(const TestA & a, TestB & b)
 	return 1;
 }
 
-void CTestSerializeMFCDlg::TestCallFun()
+unsigned long CTestSerializeMFCDlg::DealD(TestB &b)
 {
-	{
-		TestA ta;
-		ta.a = 123456;
-		std::unique_ptr<SerializeExport::ISerialize, decltype(&SerializeExport::DestroySerializeInterface)>
-			pSerialize(SerializeExport::CreateSerializeInterface(EnumSerializeFormatJson), &SerializeExport::DestroySerializeInterface);
-		pSerialize->SetSerializeType(EnumSerializeIOWrite);
-		SerializeStruct(pSerialize.get(), ta);
-		//m_InvokeHelper.InvokeNotify(1, pSerialize->GetData(), pSerialize->GetDataLen());
-	}
-
-	{
-		TestB tb;
-		strcpy(tb.szName, "abc123");
-
-		std::unique_ptr<SerializeExport::ISerialize, decltype(&SerializeExport::DestroySerializeInterface)>
-			pSerialize(SerializeExport::CreateSerializeInterface(EnumSerializeFormatJson), &SerializeExport::DestroySerializeInterface);
-		pSerialize->SetSerializeType(EnumSerializeIOWrite);
-		SerializeStruct(pSerialize.get(), tb);
-		//m_InvokeHelper.InvokeNotify(2, pSerialize->GetData(), pSerialize->GetDataLen());
-	}
-	{
-		TestB tb = TestB();
-		TestA ta = TestA();
-		ta.a = 987;
-
-		std::unique_ptr<SerializeExport::ISerialize, decltype(&SerializeExport::DestroySerializeInterface)>
-			pSerialize(SerializeExport::CreateSerializeInterface(EnumSerializeFormatJson), &SerializeExport::DestroySerializeInterface);
-		pSerialize->SetSerializeType(EnumSerializeIOWrite);
-		SerializeStruct(pSerialize.get(), ta);
-		std::string strData;
-		unsigned long ulResult = 0;
-		m_InvokeHelper.InvokeQuery(3, pSerialize->GetData(), pSerialize->GetDataLen(), strData, &ulResult);
-		std::unique_ptr<SerializeExport::ISerialize, decltype(&SerializeExport::DestroySerializeInterface)>
-			pSerializeRead(SerializeExport::CreateSerializeInterface(EnumSerializeFormatJson), &SerializeExport::DestroySerializeInterface);
-		pSerializeRead->SetSerializeType(EnumSerializeIORead);
-		pSerializeRead->SetData(strData.data(), strData.size());
-		SerializeStruct(pSerializeRead.get(), tb);
-		CStringA str;
-		str.Format("DealB %s", tb.szName);
-		MessageBox(CStringW(str));
-	}
+	strcpy(b.szName, "DealD");
+	return 0;
 }
 
+void CTestSerializeMFCDlg::OnBnClickedButtonA()
+{
+	TestA ta;
+	ta.a = 123456;
+	PostMsgHelper::PostNotifyMsg(1, ta, EnumSerializeFormatJson, &m_DealMsgHelper);
+}
+
+
+void CTestSerializeMFCDlg::OnBnClickedButtonB()
+{
+	TestB tb;
+	strcpy(tb.szName, "abc123");
+	PostMsgHelper::PostNotifyMsg(2, tb, EnumSerializeFormatJson, &m_DealMsgHelper);
+}
+
+
+void CTestSerializeMFCDlg::OnBnClickedButtonC()
+{
+	TestB tb = TestB();
+	TestA ta = TestA();
+	ta.a = 987;
+	unsigned long ulResult = 0;
+	PostMsgHelper::SendQueryMsg(3, ta, tb, &ulResult, EnumSerializeFormatJson, &m_DealMsgHelper);
+	CStringA str;
+	str.Format("OnBnClickedButtonC %s", tb.szName);
+	MessageBox(CStringW(str));
+}
+
+
+void CTestSerializeMFCDlg::OnBnClickedButtonD()
+{
+	TestB tb = TestB();
+	unsigned long ulResult = 0;
+	PostMsgHelper::SendQueryMsg(4, tb, &ulResult, EnumSerializeFormatJson, &m_DealMsgHelper);
+}
+
+
+void CTestSerializeMFCDlg::OnBnClickedButtonE()
+{
+	PostMsgHelper::PostNotifyMsg(5, &m_DealMsgHelper);
+}
