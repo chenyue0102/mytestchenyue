@@ -90,8 +90,9 @@ inline DealMsgHelper::CInvokeNotifyFun<ClassType, ParamType>::CInvokeNotifyFun(C
 }
 
 template<typename ClassType, typename ParamType>
-inline void DealMsgHelper::CInvokeNotifyFun<ClassType, ParamType>::Notify(const void *pBuffer, unsigned long ulBytes, SerializeExport::EnumSerializeFormat SerializeFormat)
+inline bool DealMsgHelper::CInvokeNotifyFun<ClassType, ParamType>::Notify(const void *pBuffer, unsigned long ulBytes, SerializeExport::EnumSerializeFormat SerializeFormat)
 {
+	bool bRes = false;
 	do
 	{
 		ParamType pt = ParamType();
@@ -106,7 +107,9 @@ inline void DealMsgHelper::CInvokeNotifyFun<ClassType, ParamType>::Notify(const 
 			break;
 		}
 		(m_pObject->*m_callFun)(pt);
+		bRes = true;
 	} while (false);
+	return bRes;
 }
 
 template<typename ClassType>
@@ -119,16 +122,18 @@ inline CInvokeNotifyEmptyFun<ClassType>::CInvokeNotifyEmptyFun(ClassType *pObjec
 }
 
 template<typename ClassType>
-inline void CInvokeNotifyEmptyFun<ClassType>::Notify(const void *pBuffer, unsigned long ulBytes, SerializeExport::EnumSerializeFormat)
+inline bool CInvokeNotifyEmptyFun<ClassType>::Notify(const void *pBuffer, unsigned long ulBytes, SerializeExport::EnumSerializeFormat)
 {
 	assert(nullptr == pBuffer && 0 == ulBytes);
 	if (nullptr != m_pObject && nullptr != m_callFun)
 	{
 		(m_pObject->*m_callFun)();
+		return true;
 	}
 	else
 	{
 		assert(false);
+		return false;
 	}
 }
 
@@ -142,10 +147,11 @@ inline CInvokeQueryFun<ClassType, InParamType, OutParamType>::CInvokeQueryFun(Cl
 }
 
 template<typename ClassType, typename InParamType, typename OutParamType>
-inline void CInvokeQueryFun<ClassType, InParamType, OutParamType>::Query(
+inline bool CInvokeQueryFun<ClassType, InParamType, OutParamType>::Query(
 	const void *pBuffer, unsigned long ulBytes, SerializeExport::EnumSerializeFormat SerializeFormat, 
 	std::string &strResultData, unsigned long *pResult)
 {
+	bool bRes = false;
 	do
 	{
 		if (nullptr == pBuffer || 0 == ulBytes)
@@ -176,7 +182,9 @@ inline void CInvokeQueryFun<ClassType, InParamType, OutParamType>::Query(
 			assert(false);
 			break;
 		}
+		bRes = true;
 	} while (false);
+	return bRes;
 }
 
 template<typename ClassType, typename OutParamType>
@@ -189,9 +197,10 @@ inline CInvokeQueryEmptyFun<ClassType, OutParamType>::CInvokeQueryEmptyFun(Class
 }
 
 template<typename ClassType, typename OutParamType>
-inline void CInvokeQueryEmptyFun<ClassType, OutParamType>::Query(const void *pBuffer, unsigned long ulBytes, SerializeExport::EnumSerializeFormat SerializeFormat, 
+inline bool CInvokeQueryEmptyFun<ClassType, OutParamType>::Query(const void *pBuffer, unsigned long ulBytes, SerializeExport::EnumSerializeFormat SerializeFormat, 
 	std::string &strResultData, unsigned long *pResult)
 {
+	bool bRes = false;
 	do 
 	{
 		assert(nullptr == pBuffer && 0 == ulBytes);
@@ -211,6 +220,8 @@ inline void CInvokeQueryEmptyFun<ClassType, OutParamType>::Query(const void *pBu
 			assert(false);
 			break;
 		}
+		bRes = true;
 	} while (false);
+	return bRes;
 }
 }

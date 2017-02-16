@@ -18,7 +18,7 @@ struct CInvokeNotifyBase
 	{
 
 	};
-	virtual void Notify(const void *pBuffer, unsigned long ulBytes, SerializeExport::EnumSerializeFormat SerializeFormat) = 0;
+	virtual bool Notify(const void *pBuffer, unsigned long ulBytes, SerializeExport::EnumSerializeFormat SerializeFormat) = 0;
 };
 
 //将缓冲区解包成指定结构体的模板类，回掉函数必须是 void(T::*INVOKEFUN)(const ParamType&);类型 
@@ -27,7 +27,7 @@ struct CInvokeNotifyFun : public CInvokeNotifyBase
 {
 	typedef void(ClassType::*INVOKEFUN)(const ParamType&);
 	inline CInvokeNotifyFun(ClassType *pObject, INVOKEFUN fun);
-	virtual void Notify(const void *pBuffer, unsigned long ulBytes, SerializeExport::EnumSerializeFormat SerializeFormat)override;
+	virtual bool Notify(const void *pBuffer, unsigned long ulBytes, SerializeExport::EnumSerializeFormat SerializeFormat)override;
 	ClassType *m_pObject;
 	INVOKEFUN m_callFun;
 };
@@ -38,7 +38,7 @@ struct CInvokeNotifyEmptyFun : public CInvokeNotifyBase
 {
 	typedef void(ClassType::*INVOKEFUN)();
 	inline CInvokeNotifyEmptyFun(ClassType *pObject, INVOKEFUN fun);
-	inline void Notify(const void *, unsigned long, SerializeExport::EnumSerializeFormat);
+	inline bool Notify(const void *, unsigned long, SerializeExport::EnumSerializeFormat);
 	ClassType *m_pObject;
 	INVOKEFUN m_callFun;
 };
@@ -50,7 +50,7 @@ struct CInvokeQueryBase
 	{
 
 	};
-	virtual void Query(const void *pBuffer, unsigned long ulBytes, SerializeExport::EnumSerializeFormat SerializeFormat, 
+	virtual bool Query(const void *pBuffer, unsigned long ulBytes, SerializeExport::EnumSerializeFormat SerializeFormat, 
 		std::string &strResultData, unsigned long *pResultErrorCode) = 0;
 };
 
@@ -60,7 +60,7 @@ struct CInvokeQueryFun : public CInvokeQueryBase
 {
 	typedef unsigned long(ClassType::*INVOKEFUN)(const InParamType&, OutParamType &);
 	inline CInvokeQueryFun(ClassType *pObject, INVOKEFUN fun);
-	inline void Query(const void *pBuffer, unsigned long ulBytes, SerializeExport::EnumSerializeFormat SerializeFormat, 
+	inline bool Query(const void *pBuffer, unsigned long ulBytes, SerializeExport::EnumSerializeFormat SerializeFormat, 
 		std::string &strResultData, unsigned long *pResult);
 	ClassType *m_pObject;
 	INVOKEFUN m_callFun;
@@ -72,7 +72,7 @@ struct CInvokeQueryEmptyFun : public CInvokeQueryBase
 {
 	typedef unsigned long(ClassType::*INVOKEFUN)(OutParamType &);
 	inline CInvokeQueryEmptyFun(ClassType *pObject, INVOKEFUN fun);
-	inline void Query(const void *pBuffer, unsigned long ulBytes, SerializeExport::EnumSerializeFormat SerializeFormat, 
+	inline bool Query(const void *pBuffer, unsigned long ulBytes, SerializeExport::EnumSerializeFormat SerializeFormat, 
 		std::string &strResultData, unsigned long *pResult);
 	ClassType *m_pObject;
 	INVOKEFUN m_callFun;

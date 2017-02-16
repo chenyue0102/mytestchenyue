@@ -9,6 +9,7 @@ namespace DealMsgHelper
 /************************************************************************/
 inline CDealMsgHelper::CDealMsgHelper()
 	: m_notifyCallbackFun()
+	, m_queryCallbackFun()
 {
 
 }
@@ -46,7 +47,11 @@ inline bool CDealMsgHelper::InvokeNotify(unsigned long uMsg, const void *pBuffer
 			assert(false);
 			break;
 		}
-		pTemp->Notify(pBuffer, ulBytes, SerializeFormat);
+		if (!pTemp->Notify(pBuffer, ulBytes, SerializeFormat))
+		{
+			assert(false);
+			break;
+		}
 		bRes = true;
 	} while (false);
 
@@ -72,7 +77,11 @@ inline bool CDealMsgHelper::InvokeQuery(unsigned long uMsg, const void *pBuffer,
 			assert(false);
 			break;
 		}
-		pTemp->Query(pBuffer, ulBytes, SerializeFormat, strData, pResult);
+		if (!pTemp->Query(pBuffer, ulBytes, SerializeFormat, strData, pResult))
+		{
+			assert(false);
+			break;
+		}
 		bRes = true;
 	} while (false);
 
