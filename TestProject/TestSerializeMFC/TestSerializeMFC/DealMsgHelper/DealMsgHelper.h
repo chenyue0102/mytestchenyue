@@ -38,8 +38,8 @@ public:
 	bool RegMsg(unsigned long ulMsgID, ClassType *pObject, unsigned long (ClassType::*callFun)(const InParamType&, OutParamType &));
 
 	//Êä³ö»ñÈ¡
-	template<typename ClassType, typename OutParamType>
-	bool RegMsg(unsigned long ulMsgID, ClassType *pObject, unsigned long (ClassType::*callFun)(OutParamType &));
+	template<typename ClassType, typename InOutParamType>
+	bool RegMsg(unsigned long ulMsgID, ClassType *pObject, unsigned long (ClassType::*callFun)(InOutParamType &));
 protected:
 	std::map<unsigned long, CInvokeNotifyBase*> m_notifyCallbackFun;
 	std::map<unsigned long, CInvokeQueryBase*> m_queryCallbackFun;

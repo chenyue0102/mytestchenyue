@@ -187,8 +187,8 @@ inline bool CInvokeQueryFun<ClassType, InParamType, OutParamType>::Query(
 	return bRes;
 }
 
-template<typename ClassType, typename OutParamType>
-inline CInvokeQueryEmptyFun<ClassType, OutParamType>::CInvokeQueryEmptyFun(ClassType *pObject, INVOKEFUN fun)
+template<typename ClassType, typename InOutParamType>
+inline CInvokeQueryInOutFun<ClassType, InOutParamType>::CInvokeQueryInOutFun(ClassType *pObject, INVOKEFUN fun)
 	: m_pObject(pObject)
 	, m_callFun(fun)
 {
@@ -196,20 +196,28 @@ inline CInvokeQueryEmptyFun<ClassType, OutParamType>::CInvokeQueryEmptyFun(Class
 	assert(nullptr != m_pObject);
 }
 
-template<typename ClassType, typename OutParamType>
-inline bool CInvokeQueryEmptyFun<ClassType, OutParamType>::Query(const void *pBuffer, unsigned long ulBytes, SerializeExport::EnumSerializeFormat SerializeFormat, 
+template<typename ClassType, typename InOutParamType>
+inline bool CInvokeQueryInOutFun<ClassType, InOutParamType>::Query(const void *pBuffer, unsigned long ulBytes, SerializeExport::EnumSerializeFormat SerializeFormat, 
 	std::string &strResultData, unsigned long *pResult)
 {
 	bool bRes = false;
 	do 
 	{
-		assert(nullptr == pBuffer && 0 == ulBytes);
 		if (nullptr == m_pObject || nullptr == m_callFun)
 		{
 			assert(false);
 			break;
 		}
-		OutParamType out = OutParamType();
+		InOutParamType out = InOutParamType();
+		//如果pBuffer与ulBytes为空，则认为没有参数的获取
+		if (nullptr != pBuffer && 0 != ulBytes)
+		{
+			if (!UnpackValue(pBuffer, ulBytes, out, SerializeFormat))
+			{
+				assert(false);
+				break;
+			}
+		}
 		unsigned long ulRet = (m_pObject->*m_callFun)(out);
 		if (nullptr != pResult)
 		{

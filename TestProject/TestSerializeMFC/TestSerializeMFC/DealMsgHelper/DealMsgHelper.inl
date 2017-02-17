@@ -166,8 +166,8 @@ bool CDealMsgHelper::RegMsg(unsigned long ulMsgID, ClassType *pObject, unsigned 
 	return bRes;
 }
 
-template<typename ClassType, typename OutParamType>
-bool CDealMsgHelper::RegMsg(unsigned long ulMsgID, ClassType *pObject, unsigned long (ClassType::*callFun)(OutParamType &))
+template<typename ClassType, typename InOutParamType>
+bool CDealMsgHelper::RegMsg(unsigned long ulMsgID, ClassType *pObject, unsigned long (ClassType::*callFun)(InOutParamType &))
 {
 	bool bRes = false;
 
@@ -183,7 +183,7 @@ bool CDealMsgHelper::RegMsg(unsigned long ulMsgID, ClassType *pObject, unsigned 
 			assert(false);
 			break;
 		}
-		CInvokeQueryBase *pInvokeFun = new CInvokeQueryEmptyFun<typename ClassType, typename OutParamType>(pObject, callFun);
+		CInvokeQueryBase *pInvokeFun = new CInvokeQueryInOutFun<typename ClassType, typename InOutParamType>(pObject, callFun);
 		auto res = m_queryCallbackFun.insert(std::make_pair(ulMsgID, pInvokeFun));
 		assert(res.second);
 		bRes = true;

@@ -66,12 +66,12 @@ struct CInvokeQueryFun : public CInvokeQueryBase
 	INVOKEFUN m_callFun;
 };
 
-//查询模板类，参数必须是unsigned long (ClassType::*INVOKEFUN)(OutParamType &);
-template<typename ClassType, typename OutParamType>
-struct CInvokeQueryEmptyFun : public CInvokeQueryBase
+//查询模板类，参数必须是unsigned long (ClassType::*INVOKEFUN)(InOutParamType &);
+template<typename ClassType, typename InOutParamType>
+struct CInvokeQueryInOutFun : public CInvokeQueryBase
 {
-	typedef unsigned long(ClassType::*INVOKEFUN)(OutParamType &);
-	inline CInvokeQueryEmptyFun(ClassType *pObject, INVOKEFUN fun);
+	typedef unsigned long(ClassType::*INVOKEFUN)(InOutParamType &);
+	inline CInvokeQueryInOutFun(ClassType *pObject, INVOKEFUN fun);
 	inline bool Query(const void *pBuffer, unsigned long ulBytes, SerializeExport::EnumSerializeFormat SerializeFormat, 
 		std::string &strResultData, unsigned long *pResult);
 	ClassType *m_pObject;
