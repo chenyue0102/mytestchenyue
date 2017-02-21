@@ -157,7 +157,7 @@ inline void Serialize(ISerialize *pSerialize, std::string& Value, const char *ps
 	}
 }
 
-#ifdef QT_DLL
+#ifdef QT_CORE_LIB
 inline void Serialize(ISerialize *pSerialize, QString& Value, const char *pstrName)
 {
 	//OldStringCode不考虑异常的情况。因为二进制抛出异常就是停止序列化，不恢复旧编码没关系

@@ -231,7 +231,7 @@ inline void Serialize(ISerialize *pSerialize, CSerializeString& Value, const cha
 // $_FUNCTION_END *********************************************************
 inline void Serialize(ISerialize *pSerialize, std::string& Value, const char *pstrName);
 
-#ifdef QT_DLL
+#ifdef QT_CORE_LIB
 // $_FUNCTION_BEGIN *******************************************************
 // 函数名称：Serialize
 // 函数参数：
