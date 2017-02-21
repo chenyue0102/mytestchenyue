@@ -47,6 +47,10 @@ inline bool InnerSerializeWithException(ISerialize *pSerialize, T& Value, const 
 	{
 		bRes = pSerialize->Serialize(Value, pstrName);
 	}
+	else
+	{
+		assert(false);
+	}
 	if (!bRes)
 	{
 		ThrowException(pSerialize);
