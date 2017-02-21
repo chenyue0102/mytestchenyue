@@ -1,7 +1,7 @@
 #include "SerializeHelper.h"
 #include <cassert>
 #include <iterator>
-#ifdef QT_DLL
+#ifdef QT_CORE_LIB
 #include <QString>
 #endif
 #include "SerializeString.h"

@@ -17,7 +17,7 @@ namespace SerializeExport
 	class CSerializeString;
 	struct ISerialize;
 }
-#ifdef QT_DLL
+#ifdef QT_CORE_LIB
 class QString;
 #endif
 using namespace  SerializeExport;
