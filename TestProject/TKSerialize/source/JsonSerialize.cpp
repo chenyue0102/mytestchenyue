@@ -61,7 +61,7 @@ EnumSerializeStringCode CJsonSerialize::GetSerializeStringCode()
 	return m_SerializeStringCode;
 }
 
-bool CJsonSerialize::SetData(const char *pstrText, unsigned long ulDataLength)
+bool CJsonSerialize::SetData(const char *pstrText, suint32 ulDataLength)
 {
 	std::string strText;
 	strText.append(pstrText, ulDataLength);
@@ -87,7 +87,7 @@ const char* CJsonSerialize::GetData()
 	return m_strBuffer.c_str();
 }
 
-unsigned long CJsonSerialize::GetDataLen()
+suint32 CJsonSerialize::GetDataLen()
 {
 	if (EnumSerializeIOWrite != m_iSerializeType)
 	{
@@ -95,7 +95,7 @@ unsigned long CJsonSerialize::GetDataLen()
 		assert(false);
 	}
 	CheckWriteToBuffer();
-	return static_cast<unsigned long>(m_strBuffer.size());
+	return static_cast<suint32>(m_strBuffer.size());
 }
 
 bool CJsonSerialize::BeginSerializeStruct(const char *pstrName)
@@ -180,7 +180,7 @@ bool CJsonSerialize::EndSerializeStruct(const char *pstrName)
 	return true;
 }
 
-bool CJsonSerialize::BeginSerializeArray(unsigned long &ulCount, const char *pstrName)
+bool CJsonSerialize::BeginSerializeArray(suint32 &ulCount, const char *pstrName)
 {
 	bool bRes = false;
 
@@ -278,7 +278,7 @@ bool CJsonSerialize::EndSerializeArray(const char *pstrName)
 	return true;
 }
 
-bool CJsonSerialize::BeginSerializeArrayItem(unsigned long ulIndex, const char *pstrName)
+bool CJsonSerialize::BeginSerializeArrayItem(suint32 ulIndex, const char *pstrName)
 {
 	bool bRes = false;
 
@@ -316,7 +316,7 @@ bool CJsonSerialize::BeginSerializeArrayItem(unsigned long ulIndex, const char *
 	return bRes;
 }
 
-bool CJsonSerialize::EndSerializeArrayItem(unsigned long ulIndex, const char *pstrName)
+bool CJsonSerialize::EndSerializeArrayItem(suint32 ulIndex, const char *pstrName)
 {
 	if (EnumSerializeIORead == m_iSerializeType)
 	{

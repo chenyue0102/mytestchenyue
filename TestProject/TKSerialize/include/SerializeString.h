@@ -1,5 +1,5 @@
 #pragma once
-#include "TKSerializeExport.h"
+#include "TKSerializeExportDefine.h"
 
 /************************************************************************/
 /* 字符串类，std::string不能够跨dll边界，使用此类解决此问题                   */

@@ -72,7 +72,7 @@ public:
 	// 返 回 值：true or false
 	// 函数说明：设置需要序列化读的缓冲区
 	// $_FUNCTION_END *********************************************************
-	virtual bool SetData(const char *pstrText, unsigned long ulDataLength)override;
+	virtual bool SetData(const char *pstrText, suint32 ulDataLength)override;
 
 	// $_FUNCTION_BEGIN *******************************************************
 	// 函数名称：GetData
@@ -88,7 +88,7 @@ public:
 	// 返 回 值：序列化缓冲区长度
 	// 函数说明：获取序列化缓冲区长度
 	// $_FUNCTION_END *********************************************************
-	virtual unsigned long GetDataLen()override;
+	virtual suint32 GetDataLen()override;
 
 	// $_FUNCTION_BEGIN *******************************************************
 	// 函数名称：BeginSerializeStruct
@@ -116,7 +116,7 @@ public:
 	// 返 回 值：true or false
 	// 函数说明：告诉序列化模块，接下来要序列化一个列表，并设置/获取列表的长度
 	// $_FUNCTION_END *********************************************************
-	virtual bool BeginSerializeArray(unsigned long &ulCount, const char *pstrName)override;
+	virtual bool BeginSerializeArray(suint32 &ulCount, const char *pstrName)override;
 
 	// $_FUNCTION_BEGIN *******************************************************
 	// 函数名称：EndSerializeArray
@@ -135,7 +135,7 @@ public:
 	// 返 回 值：true or false
 	// 函数说明：告诉序列化模块，接下来要序列化列表中的第N个元素
 	// $_FUNCTION_END *********************************************************
-	virtual bool BeginSerializeArrayItem(unsigned long ulIndex, const char *pstrName)override;
+	virtual bool BeginSerializeArrayItem(suint32 ulIndex, const char *pstrName)override;
 
 	// $_FUNCTION_BEGIN *******************************************************
 	// 函数名称：EndSerializeArrayItem
@@ -145,7 +145,7 @@ public:
 	// 返 回 值：true or false
 	// 函数说明：告诉序列化模块，列表中的第N个元素已经序列化完成
 	// $_FUNCTION_END *********************************************************
-	virtual bool EndSerializeArrayItem(unsigned long ulIndex, const char *pstrName)override;
+	virtual bool EndSerializeArrayItem(suint32 ulIndex, const char *pstrName)override;
 public://序列化字段函数
 	// $_FUNCTION_BEGIN *******************************************************
 	// 函数名称：Serialize

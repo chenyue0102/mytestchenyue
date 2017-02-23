@@ -284,7 +284,7 @@ const char* CBinarySerialize::GetData()
 }
 
 // 取得数据长度
-DWORD CBinarySerialize::GetDataLen()
+suint32 CBinarySerialize::GetDataLen()
 {
 	return m_dwDataLen;
 }
@@ -299,7 +299,7 @@ bool CBinarySerialize::EndSerializeStruct(const char *)
 	return true;
 }
 
-bool CBinarySerialize::BeginSerializeArray(unsigned long & ulCount, const char *)
+bool CBinarySerialize::BeginSerializeArray(suint32 & ulCount, const char *)
 {
 	//写入/读取数组长度
 	return Serialize(ulCount, nullptr);
@@ -310,12 +310,12 @@ bool CBinarySerialize::EndSerializeArray(const char *)
 	return true;
 }
 
-bool CBinarySerialize::BeginSerializeArrayItem(unsigned long, const char *)
+bool CBinarySerialize::BeginSerializeArrayItem(suint32, const char *)
 {
 	return true;
 }
 
-bool CBinarySerialize::EndSerializeArrayItem(unsigned long, const char *)
+bool CBinarySerialize::EndSerializeArrayItem(suint32, const char *)
 {
 	return true;
 }

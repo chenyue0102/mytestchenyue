@@ -60,7 +60,7 @@ EnumSerializeStringCode CXmlSerialize::GetSerializeStringCode()
 	return m_SerializeStringCode;
 }
 
-bool CXmlSerialize::SetData(const char * pstrText, unsigned long ulDataLength)
+bool CXmlSerialize::SetData(const char * pstrText, suint32 ulDataLength)
 {
 	bool bRes = false;
 
@@ -103,10 +103,10 @@ const char * CXmlSerialize::GetData()
 	return m_strBuffer.data();
 }
 
-unsigned long CXmlSerialize::GetDataLen()
+suint32 CXmlSerialize::GetDataLen()
 {
 	CheckWriteToBuffer();
-	return static_cast<unsigned long>(m_strBuffer.size());
+	return static_cast<suint32>(m_strBuffer.size());
 }
 
 bool CXmlSerialize::BeginSerializeStruct(const char * pstrName)
@@ -187,7 +187,7 @@ bool CXmlSerialize::EndSerializeStruct(const char * pstrName)
 	return true;
 }
 
-bool CXmlSerialize::BeginSerializeArray(unsigned long & ulCount, const char * pstrName)
+bool CXmlSerialize::BeginSerializeArray(suint32 & ulCount, const char * pstrName)
 {
 	bool bRes = false;
 
@@ -268,7 +268,7 @@ bool CXmlSerialize::EndSerializeArray(const char * pstrName)
 	return true;
 }
 
-bool CXmlSerialize::BeginSerializeArrayItem(unsigned long ulIndex, const char * pstrName)
+bool CXmlSerialize::BeginSerializeArrayItem(suint32 ulIndex, const char * pstrName)
 {
 	if (EnumSerializeIORead == m_iSerializeType)
 	{
@@ -293,7 +293,7 @@ bool CXmlSerialize::BeginSerializeArrayItem(unsigned long ulIndex, const char * 
 	return true;
 }
 
-bool CXmlSerialize::EndSerializeArrayItem(unsigned long ulIndex, const char * pstrName)
+bool CXmlSerialize::EndSerializeArrayItem(suint32 ulIndex, const char * pstrName)
 {
 	if (EnumSerializeIORead == m_iSerializeType)
 	{
