@@ -2,7 +2,7 @@
 //
 #include <assert.h>
 #include "TKSerializeExport.h"
-#include "TKSerialize.h"
+#include "TKSerializeExportDefine.h"
 #include "TKSerializeApp.h"
 
 

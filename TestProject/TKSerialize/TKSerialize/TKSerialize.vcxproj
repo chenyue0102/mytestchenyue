@@ -88,8 +88,8 @@
   <ItemGroup>
     <ClInclude Include="..\include\EnumSerialize.h" />
     <ClInclude Include="..\include\InterfaceSerialize.h" />
-    <ClInclude Include="..\include\TKSerialize.h" />
     <ClInclude Include="..\include\TKSerializeExport.h" />
+    <ClInclude Include="..\include\TKSerializeExportDefine.h" />
     <ClInclude Include="..\json\allocator.h" />
     <ClInclude Include="..\json\assertions.h" />
     <ClInclude Include="..\json\autolink.h" />
