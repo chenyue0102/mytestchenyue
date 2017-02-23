@@ -29,5 +29,12 @@ enum EnumSerializeStringCode
 
 	EnumSerializeStringCodeGB2312 = 1000,		//GB2312，
 };
+
+// 序列化数组的情况下，数组长度是无符号32位整数，防止不同编译器，数组长度字段占用空间不一样
+#ifdef WIN32
+typedef unsigned long suint32;
+#else
+#error 定义其他平台无符号32位整数
+#endif
 }
 

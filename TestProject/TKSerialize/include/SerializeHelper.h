@@ -43,7 +43,6 @@ using namespace  SerializeExport;
 /************************************************************************/
 namespace SerializeHelper
 {
-inline void test();
 
 /************************************************************************/
 /* 基本类型序列化函数                                                      */
@@ -341,7 +340,6 @@ inline void Serialize(ISerialize *pSerialize, T &Value, const char *pstrName);
 // $_FUNCTION_END *********************************************************
 template<typename T>
 inline bool SerializeStruct(ISerialize *pSerialize, T &Value);
-
 };
 
 #include "SerializeHelper.inl"

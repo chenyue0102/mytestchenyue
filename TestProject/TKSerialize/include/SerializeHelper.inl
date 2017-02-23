@@ -10,10 +10,6 @@
 
 namespace SerializeHelper
 {
-inline void test()
-{
-
-}
 
 /************************************************************************/
 /* 二进制序列化，出错后抛出异常，不在允许继续序列化，                          */
@@ -187,7 +183,7 @@ inline void Serialize(ISerialize *pSerialize, QString& Value, const char *pstrNa
 /* 数组控制序列化                                                         */
 /************************************************************************/
 template<typename T, typename _InIt>
-inline void InnerSerializeArrayWrite(ISerialize *pSerialize, _InIt _First, unsigned long ulValueCount, const char *pstrName)
+inline void InnerSerializeArrayWrite(ISerialize *pSerialize, _InIt _First, suint32 ulValueCount, const char *pstrName)
 {
 	//只支持一维数组
 	static_assert(!std::is_array<T>::value, "T must not Be Array");
@@ -198,7 +194,7 @@ inline void InnerSerializeArrayWrite(ISerialize *pSerialize, _InIt _First, unsig
 		return ThrowException(pSerialize);
 	}
 
-	for (unsigned long ulIndex = 0; ulIndex < ulValueCount; ulIndex++,++_First)
+	for (suint32 ulIndex = 0; ulIndex < ulValueCount; ulIndex++,++_First)
 	{
 		// BeginSerializeArrayItem 二进制序列化固定返回true， Json与xml不应该失败，这里不做判断了
 		if (!pSerialize->BeginSerializeArrayItem(ulIndex, pstrName))
@@ -220,12 +216,12 @@ inline void InnerSerializeArrayWrite(ISerialize *pSerialize, _InIt _First, unsig
 }
 
 template<typename T, typename _InIt>
-inline void InnerSerializeArrayRead(ISerialize *pSerialize, _InIt _First, unsigned long ulLimitedCount, const char *pstrName)
+inline void InnerSerializeArrayRead(ISerialize *pSerialize, _InIt _First, suint32 ulLimitedCount, const char *pstrName)
 {
 	//只支持一维数组
 	static_assert(!std::is_array<T>::value, "T must not Be Array");
 	assert(0 != ulLimitedCount);
-	unsigned long ulCount = 0;
+	suint32 ulCount = 0;
 	if (!pSerialize->BeginSerializeArray(ulCount, pstrName))
 	{
 		// Json，Xml没有元素，认为是正常。然后返回，继续序列化其他的内容。
@@ -235,7 +231,7 @@ inline void InnerSerializeArrayRead(ISerialize *pSerialize, _InIt _First, unsign
 
 	//不能超过限制数量，Array可能是int a[4]这样的数组，不能超过数组的最大数量，vector<int> 则无此限制
 	assert(ulCount <= ulLimitedCount);
-	for (unsigned long ulIndex = 0; 
+	for (suint32 ulIndex = 0; 
 		ulIndex < ulCount && ulIndex < ulLimitedCount; 
 		ulIndex++,++_First)
 	{
@@ -288,7 +284,7 @@ inline void Serialize(ISerialize *pSerialize, std::vector<T> &tArray, const char
 
 //其他的数组类型，按照数组序列化
 template<typename T>
-inline void InnerSerializeArray(ISerialize *pSerialize, T tArray[], unsigned long ulCount, const char *pstrName)
+inline void InnerSerializeArray(ISerialize *pSerialize, T tArray[], suint32 ulCount, const char *pstrName)
 {
 	switch (pSerialize->GetSerializeType())
 	{
@@ -310,7 +306,7 @@ inline void InnerSerializeArray(ISerialize *pSerialize, T tArray[], unsigned lon
 
 //提供一个char数组的全特例化版本,char数组当成字符串序列化
 template<>
-inline void InnerSerializeArray<char>(ISerialize *pSerialize, char tArray[], unsigned long ulCount, const char *pstrName)
+inline void InnerSerializeArray<char>(ISerialize *pSerialize, char tArray[], suint32 ulCount, const char *pstrName)
 {
 	//将char*转换成std::string，再序列化
 	assert(ulCount > 1);
