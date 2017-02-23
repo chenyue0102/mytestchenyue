@@ -127,6 +127,7 @@ inline void InnerSerializeArrayRead(ISerialize *pSerialize, _InIt _First, suint3
 template<typename T>
 inline void InnerSerializeArray(ISerialize *pSerialize, T tArray[], suint32 ulCount, const char *pstrName)
 {
+	static_assert(!std::is_pointer<T>::value, "T must not be pointer");
 	switch (pSerialize->GetSerializeType())
 	{
 	case EnumSerializeIORead:

@@ -139,6 +139,7 @@ inline void Serialize(ISerialize *pSerialize, QString& Value, const char *pstrNa
 template<typename T>
 inline void Serialize(ISerialize *pSerialize, std::vector<T> &tArray, const char *pstrName)
 {
+	static_assert(!std::is_pointer<T>::value, "T must not be pointer");
 	switch (pSerialize->GetSerializeType())
 	{
 	case EnumSerializeIORead:
