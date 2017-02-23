@@ -9,34 +9,31 @@ inline suint32 InnerGetAnyVectorTypeSize(CTKPtrList<T> &tArray)
 }
 
 template<typename T>
-inline bool InnerSerializeAnyVectorTypeItem(ISerialize *pSerialize, CTKPtrList<T> &tArray, suint32 unIndex)
+inline void InnerSerializeAnyVectorTypeItem(ISerialize *pSerialize, CTKPtrList<T> &tArray, suint32 unIndex)
 {
 	// Serialize 二进制序列化有可能抛出异常，结束序列化， Json与xml不应该失败
 	if (EnumSerializeIORead == pSerialize->GetSerializeType())
 	{
 		T *pItem = new T();
-		Serialize(pSerialize, *pItem, nullptr);
+		try
+		{
+			Serialize(pSerialize, *pItem, nullptr);
+		}
+		catch (...)
+		{
+			delete pItem;
+			throw;
+		}
 		tArray.AddTail(pItem);
-		return true;
 	}
 	else if (EnumSerializeIOWrite == pSerialize->GetSerializeType())
 	{
 		T *pItem = tArray.GetAt(unIndex);
-		if (nullptr == pItem)
-		{
-			assert(false);
-			return false;
-		}
-		else
-		{
-			Serialize(pSerialize, *pItem, nullptr);
-			return true;
-		}
+		Serialize(pSerialize, *pItem, nullptr);
 	}
 	else
 	{
 		assert(false);
-		return false;
 	}
 }
 
@@ -53,34 +50,31 @@ inline suint32 InnerGetAnyVectorTypeSize(std::vector<T*> &tArray)
 }
 
 template<typename T>
-inline bool InnerSerializeAnyVectorTypeItem(ISerialize *pSerialize, std::vector<T*> &tArray, suint32 unIndex)
+inline void InnerSerializeAnyVectorTypeItem(ISerialize *pSerialize, std::vector<T*> &tArray, suint32 unIndex)
 {
 	// Serialize 二进制序列化有可能抛出异常，结束序列化， Json与xml不应该失败
 	if (EnumSerializeIORead == pSerialize->GetSerializeType())
 	{
 		T *pItem = new T();
-		Serialize(pSerialize, *pItem, nullptr);
+		try
+		{
+			Serialize(pSerialize, *pItem, nullptr);
+		}
+		catch (...)
+		{
+			delete pItem;
+			throw;
+		}
 		tArray.push_back(pItem);
-		return true;
 	}
 	else if (EnumSerializeIOWrite == pSerialize->GetSerializeType())
 	{
 		T *pItem = tArray.at(unIndex);
-		if (nullptr == pItem)
-		{
-			assert(false);
-			return false;
-		}
-		else
-		{
-			Serialize(pSerialize, *pItem, nullptr);
-			return true;
-		}
+		Serialize(pSerialize, *pItem, nullptr);
 	}
 	else
 	{
 		assert(false);
-		return false;
 	}
 }
 

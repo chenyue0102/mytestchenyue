@@ -193,12 +193,7 @@ inline void InnerSerializeAnyVectorType(ISerialize *pSerialize, VECTOR_TYPE &tAr
 			break;
 		}
 
-		if (!InnerSerializeAnyVectorTypeItem(pSerialize, tArray, ulIndex))
-		{
-			pSerialize->EndSerializeArrayItem(ulIndex, pstrName);
-			assert(false);
-			break;
-		}
+		InnerSerializeAnyVectorTypeItem(pSerialize, tArray, ulIndex);
 
 		// EndSerializeArrayItem 二进制序列化固定返回true， Json与xml不应该失败，这里不做判断了
 		pSerialize->EndSerializeArrayItem(ulIndex, pstrName);
@@ -215,7 +210,7 @@ inline suint32 InnerGetAnyVectorTypeSize(VECTOR_TYPE &tArray)
 }
 
 template<typename VECTOR_TYPE>
-inline bool InnerSerializeAnyVectorTypeItem(ISerialize *pSerialize, VECTOR_TYPE &tArray, suint32 unIndex)
+inline void InnerSerializeAnyVectorTypeItem(ISerialize *pSerialize, VECTOR_TYPE &tArray, suint32 unIndex)
 {
 	// Serialize 二进制序列化有可能抛出异常，结束序列化， Json与xml不应该失败
 	if (EnumSerializeIORead == pSerialize->GetSerializeType())
@@ -223,18 +218,15 @@ inline bool InnerSerializeAnyVectorTypeItem(ISerialize *pSerialize, VECTOR_TYPE 
 		VECTOR_TYPE::value_type item = VECTOR_TYPE::value_type();
 		Serialize(pSerialize, item, nullptr);
 		tArray.push_back(std::move(item));
-		return true;
 	}
 	else if (EnumSerializeIOWrite == pSerialize->GetSerializeType())
 	{
 		VECTOR_TYPE::value_type &item = tArray[unIndex];
 		Serialize(pSerialize, item, nullptr);
-		return true;
 	}
 	else
 	{
 		assert(false);
-		return false;
 	}
 }
 }

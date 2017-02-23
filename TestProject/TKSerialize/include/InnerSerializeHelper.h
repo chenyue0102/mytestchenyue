@@ -57,6 +57,6 @@ template<typename VECTOR_TYPE>
 inline suint32 InnerGetAnyVectorTypeSize(VECTOR_TYPE &tArray);
 
 template<typename VECTOR_TYPE>
-inline bool InnerSerializeAnyVectorTypeItem(ISerialize *pSerialize, VECTOR_TYPE &tArray, suint32 unIndex);
+inline void InnerSerializeAnyVectorTypeItem(ISerialize *pSerialize, VECTOR_TYPE &tArray, suint32 unIndex);
 };
 #include "InnerSerializeHelper.inl"

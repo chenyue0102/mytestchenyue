@@ -172,7 +172,7 @@ bool CBinarySerialize::Serialize(CSerializeString& strValue, const char *)
 			break;
 		}
 
-		DWORD dwDataLen = (DWORD)strValue.size();
+		suint32 dwDataLen = static_cast<suint32>(strValue.size());
 		if (!InnerSerialize(dwDataLen))
 		{
 			assert(false);
@@ -195,7 +195,7 @@ bool CBinarySerialize::Serialize(CSerializeString& strValue, const char *)
 			else if (m_iBufferCreateType == enum_Buffer_Create_Type_Inside)	// 内部分配的缓存
 			{
 				// 要扩充的长度
-				DWORD dwLen = m_dwBufferLen * 2;
+				suint32 dwLen = m_dwBufferLen * 2;
 				if (dwLen < dwDataLen)
 					dwLen = dwDataLen;
 

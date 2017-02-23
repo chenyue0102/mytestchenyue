@@ -8,7 +8,6 @@
 #ifndef Serialize_H
 #define Serialize_H
 
-#include "Typedef.h"
 #include <string>
 #include <vector>
 #include "InterfaceSerialize.h"
@@ -293,10 +292,10 @@ private:
 	char*			m_pBuffer;
 
 	// 缓存长度
-	DWORD			m_dwBufferLen;
+	suint32			m_dwBufferLen;
 
 	// 数据长度
-	DWORD			m_dwDataLen;
+	suint32			m_dwDataLen;
 
 	//std::string字符串编码
 	EnumSerializeStringCode m_SerializeStringCode;
