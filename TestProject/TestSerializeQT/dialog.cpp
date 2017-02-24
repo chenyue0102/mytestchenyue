@@ -161,6 +161,7 @@ void Dialog::OnTestULongT()
 	TestB b;
 	b.strName = "dog";
 	b.vtValue.push_back("some dogs");
+	//输入输出同一个结构体函数
 	PostMsgHelper::SendQueryMsg(3, b, &ulRet, f, &m_DealMsgHelper);
 }
 
@@ -179,6 +180,7 @@ void Dialog::OnTestULongIO()
 	TestA a;
 	a.a = 77777;
 	TestB b;
+	//输入输出不同函数
 	PostMsgHelper::SendQueryMsg(4, a, b, &ulRet, f, &m_DealMsgHelper);
 }
 

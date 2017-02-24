@@ -6,6 +6,22 @@
 
 namespace PostMsgHelper
 {
+inline bool InnerPostMsg(unsigned long uMsgID, const void *pBuffer, unsigned long ulBytes, SerializeExport::EnumSerializeFormat SerializeFormat, void *pInterface)
+{
+	//模拟把数据发出去
+	DealMsgHelper::CDealMsgHelper *pDealMsg = reinterpret_cast<DealMsgHelper::CDealMsgHelper*>(pInterface);
+	return pDealMsg->InvokeNotify(uMsgID, pBuffer, ulBytes, SerializeFormat);
+}
+
+inline bool InnerSendMsg(unsigned long uMsgID, const void *pBuffer, unsigned long ulBytes,
+	SerializeExport::EnumSerializeFormat SerializeFormat, std::string &strResult, unsigned long *pResult, 
+	void *pInterface)
+{
+	//模拟把数据发出去
+	DealMsgHelper::CDealMsgHelper *pDealMsg = reinterpret_cast<DealMsgHelper::CDealMsgHelper*>(pInterface);
+	return pDealMsg->InvokeQuery(uMsgID, pBuffer, ulBytes, SerializeFormat, strResult, pResult);
+}
+
 template<typename ParamType>
 inline bool PostNotifyMsg(unsigned long uMsgID, const ParamType &t, 
 	SerializeExport::EnumSerializeFormat SerializeFormat, void *pInterface)
@@ -20,9 +36,7 @@ inline bool PostNotifyMsg(unsigned long uMsgID, const ParamType &t,
 			assert(false);
 			break;
 		}
-		//利用pInterface将数据发送出去
-		DealMsgHelper::CDealMsgHelper *pDealMsg = reinterpret_cast<DealMsgHelper::CDealMsgHelper*>(pInterface);
-		if (!pDealMsg->InvokeNotify(uMsgID, strData.data(), strData.size(), SerializeFormat))
+		if (!InnerPostMsg(uMsgID, strData.data(), strData.size(), SerializeFormat, pInterface))
 		{
 			assert(false);
 			break;
@@ -39,9 +53,7 @@ bool PostNotifyMsg(unsigned long uMsgID, void *pInterface)
 
 	do 
 	{
-		//利用pInterface将数据发送出去
-		DealMsgHelper::CDealMsgHelper *pDealMsg = reinterpret_cast<DealMsgHelper::CDealMsgHelper*>(pInterface);
-		if (!pDealMsg->InvokeNotify(uMsgID, nullptr, 0, EnumSerializeFormatNone))
+		if (!InnerPostMsg(uMsgID, nullptr, 0, EnumSerializeFormatNone, pInterface))
 		{
 			assert(false);
 			break;
@@ -67,9 +79,7 @@ inline bool SendQueryMsg(unsigned long uMsgID, const InParamType &in, OutParamTy
 			break;
 		}
 		std::string strResult;
-		//利用pInterface将数据发送出去
-		DealMsgHelper::CDealMsgHelper *pDealMsg = reinterpret_cast<DealMsgHelper::CDealMsgHelper*>(pInterface);
-		if (!pDealMsg->InvokeQuery(uMsgID, strData.data(), strData.size(), SerializeFormat, strResult, pResult))
+		if (!InnerSendMsg(uMsgID, strData.data(), strData.size(), SerializeFormat, strResult, pResult, pInterface))
 		{
 			assert(false);
 			break;
@@ -100,9 +110,7 @@ inline bool SendQueryMsg(unsigned long uMsgID, InOutParamType &inout, unsigned l
 			break;
 		}
 		std::string strResult;
-		//利用pInterface将数据发送出去
-		DealMsgHelper::CDealMsgHelper *pDealMsg = reinterpret_cast<DealMsgHelper::CDealMsgHelper*>(pInterface);
-		if (!pDealMsg->InvokeQuery(uMsgID, strData.data(), strData.size(), SerializeFormat, strResult, pResult))
+		if (!InnerSendMsg(uMsgID, strData.data(), strData.size(), SerializeFormat, strResult, pResult, pInterface))
 		{
 			assert(false);
 			break;
