@@ -83,11 +83,17 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <None Include="..\include\InnerSerializeHelper.inl" />
+    <None Include="..\include\SerializeHelper.inl" />
+    <None Include="..\include\SerializeHelperEx.inl" />
     <None Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\EnumSerialize.h" />
+    <ClInclude Include="..\include\InnerSerializeHelper.h" />
     <ClInclude Include="..\include\InterfaceSerialize.h" />
+    <ClInclude Include="..\include\SerializeHelper.h" />
+    <ClInclude Include="..\include\SerializeHelperEx.h" />
     <ClInclude Include="..\include\SerializeString.h" />
     <ClInclude Include="..\include\TKSerializeExport.h" />
     <ClInclude Include="..\include\TKSerializeExportDefine.h" />

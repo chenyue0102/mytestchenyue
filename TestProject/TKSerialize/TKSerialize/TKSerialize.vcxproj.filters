@@ -28,9 +28,21 @@
     <Filter Include="Project">
       <UniqueIdentifier>{6bcae95c-ae11-4d79-a32b-70eb2354fc8b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="SerializeHelper">
+      <UniqueIdentifier>{ad71ba2b-4946-4f23-9140-26eb792d68a5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />
+    <None Include="..\include\InnerSerializeHelper.inl">
+      <Filter>SerializeHelper</Filter>
+    </None>
+    <None Include="..\include\SerializeHelper.inl">
+      <Filter>SerializeHelper</Filter>
+    </None>
+    <None Include="..\include\SerializeHelperEx.inl">
+      <Filter>SerializeHelper</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\json\allocator.h">
@@ -110,6 +122,15 @@
     </ClInclude>
     <ClInclude Include="..\include\SerializeString.h">
       <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\InnerSerializeHelper.h">
+      <Filter>SerializeHelper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\SerializeHelper.h">
+      <Filter>SerializeHelper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\SerializeHelperEx.h">
+      <Filter>SerializeHelper</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
