@@ -42,8 +42,8 @@
   <widget class="QGroupBox" name="groupBox">
    <property name="geometry">
     <rect>
-     <x>40</x>
-     <y>60</y>
+     <x>20</x>
+     <y>50</y>
      <width>111</width>
      <height>92</height>
     </rect>
@@ -89,6 +89,58 @@
    </property>
    <property name="text">
     <string>容错</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pushButtonNoitfyVoidT">
+   <property name="geometry">
+    <rect>
+     <x>160</x>
+     <y>50</y>
+     <width>161</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Notify void(constT&amp;&amp;)</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pushButtonNoitfyVoidVoid">
+   <property name="geometry">
+    <rect>
+     <x>160</x>
+     <y>80</y>
+     <width>161</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Notify void()</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pushButtonQueryULongT">
+   <property name="geometry">
+    <rect>
+     <x>160</x>
+     <y>120</y>
+     <width>161</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Query ULong(T&amp;&amp;)</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pushButtonQueryULongIO">
+   <property name="geometry">
+    <rect>
+     <x>160</x>
+     <y>160</y>
+     <width>161</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Query ULong(constI&amp;&amp;, O&amp;&amp;)</string>
    </property>
   </widget>
  </widget>
