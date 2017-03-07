@@ -18,7 +18,7 @@ namespace SerializeHelper
 // 函数说明：序列化vector数组变量
 // $_FUNCTION_END *********************************************************
 template<typename T>
-inline void Serialize(ISerialize *pSerialize, CTKPtrList<T> &tArray, const char *pstrName);
+inline void Serialize(ISerialize &pSerialize, CTKPtrList<T> &tArray, const char *pstrName);
 
 // $_FUNCTION_BEGIN *******************************************************
 // 函数名称：Serialize
@@ -30,6 +30,6 @@ inline void Serialize(ISerialize *pSerialize, CTKPtrList<T> &tArray, const char 
 // 函数说明：序列化vector数组变量
 // $_FUNCTION_END *********************************************************
 template<typename T>
-inline void Serialize(ISerialize *pSerialize, std::vector<T*> &tArray, const char *pstrName);
+inline void Serialize(ISerialize &pSerialize, std::vector<T*> &tArray, const char *pstrName);
 };
 #include "SerializeHelperEx.inl"

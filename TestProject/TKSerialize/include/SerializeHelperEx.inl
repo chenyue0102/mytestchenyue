@@ -9,10 +9,10 @@ inline suint32 InnerGetAnyVectorTypeSize(CTKPtrList<T> &tArray)
 }
 
 template<typename T>
-inline void InnerSerializeAnyVectorTypeItem(ISerialize *pSerialize, CTKPtrList<T> &tArray, suint32 unIndex)
+inline void InnerSerializeAnyVectorTypeItem(ISerialize &pSerialize, CTKPtrList<T> &tArray, suint32 unIndex)
 {
 	// Serialize 二进制序列化有可能抛出异常，结束序列化， Json与xml不应该失败
-	if (EnumSerializeIORead == pSerialize->GetSerializeType())
+	if (EnumSerializeIORead == pSerialize.GetSerializeType())
 	{
 		T *pItem = new T();
 		try
@@ -26,7 +26,7 @@ inline void InnerSerializeAnyVectorTypeItem(ISerialize *pSerialize, CTKPtrList<T
 		}
 		tArray.AddTail(pItem);
 	}
-	else if (EnumSerializeIOWrite == pSerialize->GetSerializeType())
+	else if (EnumSerializeIOWrite == pSerialize.GetSerializeType())
 	{
 		T *pItem = tArray.GetAt(unIndex);
 		Serialize(pSerialize, *pItem, nullptr);
@@ -38,7 +38,7 @@ inline void InnerSerializeAnyVectorTypeItem(ISerialize *pSerialize, CTKPtrList<T
 }
 
 template<typename T>
-inline void Serialize(ISerialize *pSerialize, CTKPtrList<T> &tArray, const char *pstrName)
+inline void Serialize(ISerialize &pSerialize, CTKPtrList<T> &tArray, const char *pstrName)
 {
 	return InnerSerializeAnyVectorType(pSerialize, tArray, pstrName);
 }
@@ -50,10 +50,10 @@ inline suint32 InnerGetAnyVectorTypeSize(std::vector<T*> &tArray)
 }
 
 template<typename T>
-inline void InnerSerializeAnyVectorTypeItem(ISerialize *pSerialize, std::vector<T*> &tArray, suint32 unIndex)
+inline void InnerSerializeAnyVectorTypeItem(ISerialize &pSerialize, std::vector<T*> &tArray, suint32 unIndex)
 {
 	// Serialize 二进制序列化有可能抛出异常，结束序列化， Json与xml不应该失败
-	if (EnumSerializeIORead == pSerialize->GetSerializeType())
+	if (EnumSerializeIORead == pSerialize.GetSerializeType())
 	{
 		T *pItem = new T();
 		try
@@ -67,7 +67,7 @@ inline void InnerSerializeAnyVectorTypeItem(ISerialize *pSerialize, std::vector<
 		}
 		tArray.push_back(pItem);
 	}
-	else if (EnumSerializeIOWrite == pSerialize->GetSerializeType())
+	else if (EnumSerializeIOWrite == pSerialize.GetSerializeType())
 	{
 		T *pItem = tArray.at(unIndex);
 		Serialize(pSerialize, *pItem, nullptr);
@@ -79,7 +79,7 @@ inline void InnerSerializeAnyVectorTypeItem(ISerialize *pSerialize, std::vector<
 }
 
 template<typename T>
-inline void Serialize(ISerialize *pSerialize, std::vector<T*> &tArray, const char *pstrName)
+inline void Serialize(ISerialize &pSerialize, std::vector<T*> &tArray, const char *pstrName)
 {
 	static_assert(!std::is_pointer<T>::value, "T must not be pointer");
 	return InnerSerializeAnyVectorType(pSerialize, tArray, pstrName);

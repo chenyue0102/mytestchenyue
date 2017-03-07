@@ -90,25 +90,25 @@ bool CompareArray(const T leftArray[], const T rightArray[], size_t stCount)
 }
 
 template<typename T>
-void DoTest(ISerialize * pSerializeWrite, ISerialize * pSerializeRead)
+void DoTest(ISerialize & pSerializeWrite, ISerialize & pSerializeRead)
 {
 	T AllTypeWrite;
 	AllTypeWrite.init();
-	pSerializeWrite->SetSerializeType(EnumSerializeIOWrite);
+	pSerializeWrite.SetSerializeType(EnumSerializeIOWrite);
 	AllTypeWrite.Serialize(pSerializeWrite);
 
-	std::string strBuffer(pSerializeWrite->GetData(), pSerializeWrite->GetDataLen());
+	std::string strBuffer(pSerializeWrite.GetData(), pSerializeWrite.GetDataLen());
 #ifdef _DEBUG
 	std::wstring strWText;
-	if (pSerializeWrite->GetSerializeFormat() == EnumSerializeFormatJson
-		|| pSerializeWrite->GetSerializeFormat() == EnumSerializeFormatXml)
+	if (pSerializeWrite.GetSerializeFormat() == EnumSerializeFormatJson
+		|| pSerializeWrite.GetSerializeFormat() == EnumSerializeFormatXml)
 	{
 		strWText = UTF8ToWChar(strBuffer);
 	}
 #endif
 
-	pSerializeRead->SetSerializeType(EnumSerializeIORead);
-	pSerializeRead->SetData(strBuffer.data(), strBuffer.size());
+	pSerializeRead.SetSerializeType(EnumSerializeIORead);
+	pSerializeRead.SetData(strBuffer.data(), strBuffer.size());
 	T AllTypeRead;
 	AllTypeRead.Serialize(pSerializeRead);
 
@@ -116,27 +116,27 @@ void DoTest(ISerialize * pSerializeWrite, ISerialize * pSerializeRead)
 }
 
 template<typename T>
-void DoTest2(ISerialize * pSerializeWrite, ISerialize * pSerializeRead)
+void DoTest2(ISerialize & pSerializeWrite, ISerialize & pSerializeRead)
 {
 	T AllTypeWrite;
 	AllTypeWrite.init();
-	pSerializeWrite->SetSerializeType(EnumSerializeIOWrite);
+	pSerializeWrite.SetSerializeType(EnumSerializeIOWrite);
 	if (!SerializeStruct(pSerializeWrite, AllTypeWrite))
 	{
 		assert(false);
 	}
 
-	std::string strBuffer(pSerializeWrite->GetData(), pSerializeWrite->GetDataLen());
+	std::string strBuffer(pSerializeWrite.GetData(), pSerializeWrite.GetDataLen());
 #ifdef _DEBUG
 	std::wstring strWText;
-	if (pSerializeWrite->GetSerializeFormat() == EnumSerializeFormatJson)
+	if (pSerializeWrite.GetSerializeFormat() == EnumSerializeFormatJson)
 	{
 		strWText = UTF8ToWChar(strBuffer);
 	}
 #endif
 
-	pSerializeRead->SetSerializeType(EnumSerializeIORead);
-	pSerializeRead->SetData(strBuffer.data(), strBuffer.size());
+	pSerializeRead.SetSerializeType(EnumSerializeIORead);
+	pSerializeRead.SetData(strBuffer.data(), strBuffer.size());
 	T AllTypeRead;
 	if (!SerializeStruct(pSerializeRead, AllTypeRead))
 	{
@@ -146,7 +146,7 @@ void DoTest2(ISerialize * pSerializeWrite, ISerialize * pSerializeRead)
 	assert(AllTypeWrite == AllTypeRead);
 }
 
-void DoTestMiss(ISerialize * pSerializeWrite, ISerialize * pSerializeRead);
+void DoTestMiss(ISerialize & pSerializeWrite, ISerialize & pSerializeRead);
 
 struct TestAllType
 {
@@ -196,11 +196,11 @@ struct TestAllType
 		//strQString
 	}
 	void init();
-	BOOL Serialize(ISerialize *pSerialize);
+	BOOL Serialize(ISerialize &pSerialize);
 	bool operator==(const TestAllType &other)const;
 };
 
-bool SerializeStruct(ISerialize *pSerialize, TestAllType &Value);
+bool SerializeStruct(ISerialize &pSerialize, TestAllType &Value);
 
 struct TestStruct
 {
@@ -212,11 +212,11 @@ struct TestStruct
 		id = 0;
 	}
 	void init();
-	BOOL Serialize(ISerialize *pSerialize);
+	BOOL Serialize(ISerialize &pSerialize);
 	bool operator==(const TestStruct &other)const;
 };
 
-bool SerializeStruct(ISerialize *pSerialize, TestStruct &Value);
+bool SerializeStruct(ISerialize &pSerialize, TestStruct &Value);
 
 struct TestArray
 {
@@ -234,11 +234,11 @@ struct TestArray
 		idarray = 0;
 	}
 	void init();
-	BOOL Serialize(ISerialize *pSerialize);
+	BOOL Serialize(ISerialize &pSerialize);
 	bool operator==(const TestArray &other)const;
 };
 
-bool SerializeStruct(ISerialize *pSerialize, TestArray &Value);
+bool SerializeStruct(ISerialize &pSerialize, TestArray &Value);
 
 struct TestContainer
 {
@@ -251,11 +251,11 @@ struct TestContainer
 		idcontainer = 0;
 	}
 	void init();
-	BOOL Serialize(ISerialize *pSerialize);
+	BOOL Serialize(ISerialize &pSerialize);
 	bool operator==(const TestContainer &other)const;
 };
 
-bool SerializeStruct(ISerialize *pSerialize, TestContainer &Value);
+bool SerializeStruct(ISerialize &pSerialize, TestContainer &Value);
 
 struct TestMiss
 {
@@ -269,7 +269,7 @@ struct TestMiss
 		nID = 0;
 	}
 	void init();
-	BOOL Serialize(ISerialize *pSerialize);
+	BOOL Serialize(ISerialize &pSerialize);
 	bool operator==(const TestMiss &other)const
 	{
 		return (
@@ -281,19 +281,19 @@ struct TestMiss
 	}
 };
 
-bool SerializeStruct(ISerialize *pSerialize, TestMiss &Value);
+bool SerializeStruct(ISerialize &pSerialize, TestMiss &Value);
 
 inline void Test(EnumSerializeFormat SerializeFormat)
 {
 	{
 		std::unique_ptr<ISerialize, decltype(&DestroySerializeInterface)> pSerializeWrite(CreateSerializeInterface(SerializeFormat), &DestroySerializeInterface);
 		std::unique_ptr<ISerialize, decltype(&DestroySerializeInterface)> pSerializeRead(CreateSerializeInterface(SerializeFormat), &DestroySerializeInterface);
-		DoTest<TestAllType>(pSerializeWrite.get(), pSerializeRead.get());
+		DoTest<TestAllType>(*pSerializeWrite, *pSerializeRead);
 	}
 	{
 		std::unique_ptr<ISerialize, decltype(&DestroySerializeInterface)> pSerializeWrite(CreateSerializeInterface(SerializeFormat), &DestroySerializeInterface);
 		std::unique_ptr<ISerialize, decltype(&DestroySerializeInterface)> pSerializeRead(CreateSerializeInterface(SerializeFormat), &DestroySerializeInterface);
-		DoTest<TestContainer>(pSerializeWrite.get(), pSerializeRead.get());
+		DoTest<TestContainer>(*pSerializeWrite, *pSerializeRead);
 	}
 }
 
@@ -302,12 +302,12 @@ inline void Test2(EnumSerializeFormat SerializeFormat)
 	{
 		std::unique_ptr<ISerialize, decltype(&DestroySerializeInterface)> pSerializeWrite(CreateSerializeInterface(SerializeFormat), &DestroySerializeInterface);
 		std::unique_ptr<ISerialize, decltype(&DestroySerializeInterface)> pSerializeRead(CreateSerializeInterface(SerializeFormat), &DestroySerializeInterface);
-		DoTest2<TestAllType>(pSerializeWrite.get(), pSerializeRead.get());
+		DoTest2<TestAllType>(*pSerializeWrite, *pSerializeRead);
 	}
 	{
 		std::unique_ptr<ISerialize, decltype(&DestroySerializeInterface)> pSerializeWrite(CreateSerializeInterface(SerializeFormat), &DestroySerializeInterface);
 		std::unique_ptr<ISerialize, decltype(&DestroySerializeInterface)> pSerializeRead(CreateSerializeInterface(SerializeFormat), &DestroySerializeInterface);
-		DoTest2<TestContainer>(pSerializeWrite.get(), pSerializeRead.get());
+		DoTest2<TestContainer>(*pSerializeWrite, *pSerializeRead);
 	}
 }
 
@@ -315,5 +315,5 @@ inline void Test3(EnumSerializeFormat SerializeFormat)
 {
 	std::unique_ptr<ISerialize, decltype(&DestroySerializeInterface)> pSerializeWrite(CreateSerializeInterface(SerializeFormat), &DestroySerializeInterface);
 	std::unique_ptr<ISerialize, decltype(&DestroySerializeInterface)> pSerializeRead(CreateSerializeInterface(SerializeFormat), &DestroySerializeInterface);
-	DoTestMiss(pSerializeWrite.get(), pSerializeRead.get());
+	DoTestMiss(*pSerializeWrite, *pSerializeRead);
 }

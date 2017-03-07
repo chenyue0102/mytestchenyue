@@ -45,7 +45,7 @@ struct TKTest
 	}
 };
 
-bool SerializeStruct(ISerialize *pSerialize, TKTest &Value)
+bool SerializeStruct(ISerialize &pSerialize, TKTest &Value)
 {
 	try
 	{
@@ -95,7 +95,7 @@ void Dialog::OnTKType()
 {
 	std::unique_ptr<ISerialize, decltype(&DestroySerializeInterface)> pSerializeWrite(CreateSerializeInterface(GetSerializeFormat()), &DestroySerializeInterface);
 	std::unique_ptr<ISerialize, decltype(&DestroySerializeInterface)> pSerializeRead(CreateSerializeInterface(GetSerializeFormat()), &DestroySerializeInterface);
-	DoTest2<TKTest>(pSerializeWrite.get(), pSerializeRead.get());
+	DoTest2<TKTest>(*pSerializeWrite, *pSerializeRead);
 }
 
 SerializeExport::EnumSerializeFormat Dialog::GetSerializeFormat()
@@ -119,7 +119,7 @@ void Dialog::OnLoss()
 	auto f = GetSerializeFormat();
 	std::unique_ptr<ISerialize, decltype(&DestroySerializeInterface)> pSerializeWrite(CreateSerializeInterface(f), &DestroySerializeInterface);
 	std::unique_ptr<ISerialize, decltype(&DestroySerializeInterface)> pSerializeRead(CreateSerializeInterface(f), &DestroySerializeInterface);
-	DoTestMiss(pSerializeWrite.get(), pSerializeRead.get());
+	DoTestMiss(*pSerializeWrite, *pSerializeRead);
 }
 
 void Dialog::OnNotifyVoidT(const TestA &a)

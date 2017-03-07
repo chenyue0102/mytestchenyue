@@ -13,7 +13,7 @@ struct TestA
 	int a;
 };
 
-inline bool SerializeStruct(ISerialize *pSerialize, TestA &Value)
+inline bool SerializeStruct(ISerialize &pSerialize, TestA &Value)
 {
 	try
 	{
@@ -33,7 +33,7 @@ struct TestB
 	std::vector<std::string> vtValue;
 };
 
-inline bool SerializeStruct(ISerialize *pSerialize, TestB &Value)
+inline bool SerializeStruct(ISerialize &pSerialize, TestB &Value)
 {
 	try
 	{

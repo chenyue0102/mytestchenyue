@@ -1,7 +1,7 @@
 #include "TestStruct.h"
 #include "SerializeHelper.h"
 
-bool SerializeStruct(ISerialize *pSerialize, TestAllType &Value)
+bool SerializeStruct(ISerialize &pSerialize, TestAllType &Value)
 {
 	try
 	{
@@ -22,14 +22,14 @@ bool SerializeStruct(ISerialize *pSerialize, TestAllType &Value)
 		SERIALIZE_VALUE(strUtf8);
 
 		//序列化二进制数据
-		auto OldStringCode = pSerialize->GetSerializeStringCode();
+		auto OldStringCode = pSerialize.GetSerializeStringCode();
 
-		pSerialize->SetSerializeStringCode(EnumSerializeStringCodeGB2312);
+		pSerialize.SetSerializeStringCode(EnumSerializeStringCodeGB2312);
 		SERIALIZE_VALUE(strGB2312);
-		pSerialize->SetSerializeStringCode(EnumSerializeStringCodeBinary);
+		pSerialize.SetSerializeStringCode(EnumSerializeStringCodeBinary);
 		SERIALIZE_VALUE(strBinary);
 
-		pSerialize->SetSerializeStringCode(OldStringCode);
+		pSerialize.SetSerializeStringCode(OldStringCode);
 
 		SERIALIZE_VALUE(szText);
 		SERIALIZE_VALUE(Keys);
@@ -86,7 +86,7 @@ void TestAllType::init()
 #endif
 }
 
-BOOL TestAllType::Serialize(ISerialize *pSerialize)
+BOOL TestAllType::Serialize(ISerialize &pSerialize)
 {
 	return SerializeStruct(pSerialize, *this);
 }
@@ -123,12 +123,12 @@ void TestStruct::init()
 	strValue = "TestStruct, hello, world";
 }
 
-BOOL TestStruct::Serialize(ISerialize * pSerialize)
+BOOL TestStruct::Serialize(ISerialize & pSerialize)
 {
 	return SerializeStruct(pSerialize, *this);
 }
 
-bool SerializeStruct(ISerialize *pSerialize, TestStruct &Value)
+bool SerializeStruct(ISerialize &pSerialize, TestStruct &Value)
 {
 	try
 	{
@@ -202,12 +202,12 @@ void TestArray::init()
 	vtArray[2].push_back(66);
 }
 
-BOOL TestArray::Serialize(ISerialize *pSerialize)
+BOOL TestArray::Serialize(ISerialize &pSerialize)
 {
 	return SerializeStruct(pSerialize, *this);
 }
 
-bool SerializeStruct(ISerialize * pSerialize, TestArray & Value)
+bool SerializeStruct(ISerialize & pSerialize, TestArray & Value)
 {
 	try
 	{
@@ -247,12 +247,12 @@ void TestContainer::init()
 	ta.init();
 }
 
-BOOL TestContainer::Serialize(ISerialize * pSerialize)
+BOOL TestContainer::Serialize(ISerialize & pSerialize)
 {
 	return SerializeStruct(pSerialize, *this);
 }
 
-bool SerializeStruct(ISerialize * pSerialize, TestContainer & Value)
+bool SerializeStruct(ISerialize & pSerialize, TestContainer & Value)
 {
 	try
 	{
@@ -293,7 +293,7 @@ void TestMiss::init()
 	strValue = "hello,world,value";
 }
 
-BOOL TestMiss::Serialize(ISerialize * pSerialize)
+BOOL TestMiss::Serialize(ISerialize & pSerialize)
 {
 	try
 	{
@@ -309,7 +309,7 @@ BOOL TestMiss::Serialize(ISerialize * pSerialize)
 	return TRUE;
 }
 
-bool SerializeStruct(ISerialize * pSerialize, TestMiss & Value)
+bool SerializeStruct(ISerialize & pSerialize, TestMiss & Value)
 {
 	try
 	{
@@ -325,24 +325,24 @@ bool SerializeStruct(ISerialize * pSerialize, TestMiss & Value)
 	return true;
 }
 
-void DoTestMiss(ISerialize * pSerializeWrite, ISerialize * pSerializeRead)
+void DoTestMiss(ISerialize & pSerializeWrite, ISerialize & pSerializeRead)
 {
 	//二进制不支持缺少字段
 	TestMiss MissWrite;
 	MissWrite.init();
-	pSerializeWrite->SetSerializeType(EnumSerializeIOWrite);
+	pSerializeWrite.SetSerializeType(EnumSerializeIOWrite);
 	MissWrite.Serialize(pSerializeWrite);
 
-	std::string strBuffer(pSerializeWrite->GetData(), pSerializeWrite->GetDataLen());
+	std::string strBuffer(pSerializeWrite.GetData(), pSerializeWrite.GetDataLen());
 	std::wstring strWText;
-	if (pSerializeWrite->GetSerializeFormat() != EnumSerializeFormatBinary)
+	if (pSerializeWrite.GetSerializeFormat() != EnumSerializeFormatBinary)
 	{
 		strWText = UTF8ToWChar(strBuffer);
 	}
 
 	TestMiss MissRead;
-	pSerializeRead->SetSerializeType(EnumSerializeIORead);
-	pSerializeRead->SetData(strBuffer.data(), strBuffer.size());
+	pSerializeRead.SetSerializeType(EnumSerializeIORead);
+	pSerializeRead.SetData(strBuffer.data(), strBuffer.size());
 	SerializeStruct(pSerializeRead, MissRead);
 
 	assert(MissWrite == MissRead);

@@ -34,7 +34,7 @@ inline bool UnpackValue(const void *pBuffer, unsigned long ulBytes, ParamType &t
 		}
 		pSerializeRead->SetSerializeType(EnumSerializeIORead);
 		pSerializeRead->SetData(reinterpret_cast<const char*>(pBuffer), ulBytes);
-		if (!SerializeStruct(pSerializeRead.get(), t))
+		if (!SerializeStruct(*pSerializeRead, t))
 		{
 			assert(false);
 			break;
@@ -67,7 +67,7 @@ inline bool PackValue(const ParamType &t, std::string &strOutData, SerializeExpo
 		}
 		pSerializeWrite->SetSerializeType(EnumSerializeIOWrite);
 		ParamType &temp = const_cast<ParamType&>(t);
-		if (!SerializeStruct(pSerializeWrite.get(), temp))
+		if (!SerializeStruct(*pSerializeWrite, temp))
 		{
 			assert(false);
 			break;
