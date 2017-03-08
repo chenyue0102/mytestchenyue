@@ -24,13 +24,13 @@ bool SerializeStruct(ISerialize &pSerialize, TestAllType &Value)
 		//序列化二进制数据
 		{
 			//将当前字符编码切换到Gb2312，此段退出的时候，会将编码置回去
-			SERIALIZE_SWITCH_CODE(EnumSerializeStringCodeGB2312);
+			SerializeHelper::CSwitchTextCode SwitchTextCode(pSerialize, EnumSerializeStringCodeGB2312);
 			SERIALIZE_VALUE(strGB2312);
 		}
 
 		{
 			//将当前字符编码切换到二进制，此段退出的时候，会将编码置回去
-			SERIALIZE_SWITCH_CODE(EnumSerializeStringCodeBinary);
+			SerializeHelper::CSwitchTextCode SwitchTextCode(pSerialize, EnumSerializeStringCodeBinary);
 			SERIALIZE_VALUE(strBinary);
 		}
 

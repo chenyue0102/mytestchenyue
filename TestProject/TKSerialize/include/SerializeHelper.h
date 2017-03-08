@@ -35,14 +35,22 @@ using namespace  SerializeExport;
 #define SERIALIZE_VALUE(value) \
                 SerializeHelper::Serialize(pSerialize, Value.value, #value); 
 
-//生成唯一变量名称
-#define GENERATE_UNIQUE_NAME2(x,y) x##y
-#define GENERATE_UNIQUE_NAME1(x,y) GENERATE_UNIQUE_NAME2(x,y)
-#define GENERATE_UNIQUE_NAME(base) GENERATE_UNIQUE_NAME1(base, __COUNTER__)
 
-//切换文字字符编码宏，定义一个局部变量，析构的时候，将编码置回去
-#define SERIALIZE_SWITCH_CODE(stringCode) \
-	SerializeHelper::CSwitchTextCode GENERATE_UNIQUE_NAME(SwitchStringCode)(pSerialize, stringCode)
+#ifdef ENABLE_SWITCH_CODE_MACRO
+	//生成唯一变量名称
+	#define GENERATE_UNIQUE_NAME2(x,y) x##y
+	#define GENERATE_UNIQUE_NAME1(x,y) GENERATE_UNIQUE_NAME2(x,y)
+	#define GENERATE_UNIQUE_NAME(base) GENERATE_UNIQUE_NAME1(base, __COUNTER__)
+
+	//切换文字字符编码宏，定义一个局部变量，析构的时候，将编码置回去，
+	//用在兼容旧代码。允许旧代码定义开关，是否启用这个宏
+	//其他时候，可以直接使用CSwitchTextCode类
+	#define SERIALIZE_SWITCH_CODE(stringCode) \
+		SerializeHelper::CSwitchTextCode GENERATE_UNIQUE_NAME(SwitchStringCode)(pSerialize, stringCode)
+
+#else
+	#define SERIALIZE_SWITCH_CODE(stringCode) 0
+#endif
 
 
 /************************************************************************/

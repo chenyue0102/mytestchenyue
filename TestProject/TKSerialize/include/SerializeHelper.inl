@@ -115,7 +115,7 @@ inline void Serialize(ISerialize &pSerialize, std::string& Value, const char *ps
 inline void Serialize(ISerialize &pSerialize, QString& Value, const char *pstrName)
 {
 	//定义一个局部变量，切换字符编码到utf8，局部变量析构的时候，编码再置回去
-	SERIALIZE_SWITCH_CODE(EnumSerializeStringCodeUtf8);
+	CSwitchTextCode SwitchTextCode(pSerialize, EnumSerializeStringCodeUtf8);
 	if (EnumSerializeIORead == pSerialize.GetSerializeType())
 	{
 		//序列化成功，才给参数赋值
