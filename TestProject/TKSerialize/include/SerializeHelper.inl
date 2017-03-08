@@ -114,10 +114,8 @@ inline void Serialize(ISerialize &pSerialize, std::string& Value, const char *ps
 #ifdef QT_CORE_LIB
 inline void Serialize(ISerialize &pSerialize, QString& Value, const char *pstrName)
 {
-	//OldStringCode不考虑异常的情况。因为二进制抛出异常就是停止序列化，不恢复旧编码没关系
-	//Json与xml不会抛出异常，所以会恢复旧编码
-	EnumSerializeStringCode OldStringCode = pSerialize.GetSerializeStringCode();
-	pSerialize.SetSerializeStringCode(EnumSerializeStringCodeUtf8);
+	//定义一个局部变量，切换字符编码到utf8，局部变量析构的时候，编码再置回去
+	SERIALIZE_SWITCH_CODE(EnumSerializeStringCodeUtf8);
 	if (EnumSerializeIORead == pSerialize.GetSerializeType())
 	{
 		//序列化成功，才给参数赋值
@@ -132,7 +130,6 @@ inline void Serialize(ISerialize &pSerialize, QString& Value, const char *pstrNa
 		CSerializeString strTemp(Value.toUtf8().data());
 		InnerSerializeWithException(pSerialize, strTemp, pstrName);
 	}
-	pSerialize.SetSerializeStringCode(OldStringCode);
 }
 #endif
 

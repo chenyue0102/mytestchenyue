@@ -35,6 +35,14 @@ using namespace  SerializeExport;
 #define SERIALIZE_VALUE(value) \
                 SerializeHelper::Serialize(pSerialize, Value.value, #value); 
 
+//生成唯一变量名称
+#define GENERATE_UNIQUE_NAME2(x,y) x##y
+#define GENERATE_UNIQUE_NAME1(x,y) GENERATE_UNIQUE_NAME2(x,y)
+#define GENERATE_UNIQUE_NAME(base) GENERATE_UNIQUE_NAME1(base, __COUNTER__)
+
+//切换文字字符编码宏，定义一个局部变量，析构的时候，将编码置回去
+#define SERIALIZE_SWITCH_CODE(stringCode) \
+	SerializeHelper::CSwitchTextCode GENERATE_UNIQUE_NAME(SwitchStringCode)(pSerialize, stringCode)
 
 
 /************************************************************************/
@@ -340,6 +348,26 @@ inline void Serialize(ISerialize &pSerialize, T &Value, const char *pstrName);
 // $_FUNCTION_END *********************************************************
 template<typename T>
 inline bool SerializeStruct(ISerialize &pSerialize, T &Value);
+
+
+//切换文字的编码
+class CSwitchTextCode
+{
+public:
+	CSwitchTextCode(ISerialize &pSerialize, EnumSerializeStringCode StringCode)
+		: m_pSerialize(pSerialize)
+		, m_OldStringCode(pSerialize.GetSerializeStringCode())
+	{
+		m_pSerialize.SetSerializeStringCode(StringCode);
+	}
+	~CSwitchTextCode()
+	{
+		m_pSerialize.SetSerializeStringCode(m_OldStringCode);
+	}
+private:
+	ISerialize &m_pSerialize;
+	EnumSerializeStringCode m_OldStringCode;
+};
 };
 
 #include "SerializeHelper.inl"

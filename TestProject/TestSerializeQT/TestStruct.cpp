@@ -22,14 +22,17 @@ bool SerializeStruct(ISerialize &pSerialize, TestAllType &Value)
 		SERIALIZE_VALUE(strUtf8);
 
 		//序列化二进制数据
-		auto OldStringCode = pSerialize.GetSerializeStringCode();
+		{
+			//将当前字符编码切换到Gb2312，此段退出的时候，会将编码置回去
+			SERIALIZE_SWITCH_CODE(EnumSerializeStringCodeGB2312);
+			SERIALIZE_VALUE(strGB2312);
+		}
 
-		pSerialize.SetSerializeStringCode(EnumSerializeStringCodeGB2312);
-		SERIALIZE_VALUE(strGB2312);
-		pSerialize.SetSerializeStringCode(EnumSerializeStringCodeBinary);
-		SERIALIZE_VALUE(strBinary);
-
-		pSerialize.SetSerializeStringCode(OldStringCode);
+		{
+			//将当前字符编码切换到二进制，此段退出的时候，会将编码置回去
+			SERIALIZE_SWITCH_CODE(EnumSerializeStringCodeBinary);
+			SERIALIZE_VALUE(strBinary);
+		}
 
 		SERIALIZE_VALUE(szText);
 		SERIALIZE_VALUE(Keys);
