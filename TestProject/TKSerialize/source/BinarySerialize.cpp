@@ -319,3 +319,51 @@ bool CBinarySerialize::EndSerializeArrayItem(suint32, const char *)
 {
 	return true;
 }
+
+bool CBinarySerialize::AssistorSerialize(char *Value, suint32 ulDataLength)
+{
+	bool bRes = false;
+
+	do 
+	{
+		if (m_pBuffer == NULL || m_dwBufferLen == 0)
+		{
+			assert(false);
+			break;
+		}
+
+		if (m_dwBufferLen < (m_dwDataLen + ulDataLength))
+		{
+			if (m_iBufferCreateType == enum_Buffer_Create_Type_OutSide)	// 外部分配的缓存
+			{
+				assert(false);
+				break;
+			}
+			else if (m_iBufferCreateType == enum_Buffer_Create_Type_Inside)	// 内部分配的缓存
+			{
+				m_pBuffer = (char*)realloc(m_pBuffer, m_dwBufferLen * 2);
+				if (m_pBuffer == NULL)
+				{
+					assert(false);
+					break;
+				}
+				m_dwBufferLen += m_dwBufferLen;
+			}
+		}
+
+		if (m_iSerializeType == EnumSerializeIORead)	// 读取数据
+		{
+			memcpy(Value, m_pBuffer + m_dwDataLen, ulDataLength);
+		}
+		else if (m_iSerializeType == EnumSerializeIOWrite)	// 写入数据
+		{
+			memcpy(m_pBuffer + m_dwDataLen, Value, ulDataLength);
+		}
+
+		m_dwDataLen += ulDataLength;
+		bRes = true;
+	} while (false);
+
+	assert(bRes);
+	return bRes;
+}

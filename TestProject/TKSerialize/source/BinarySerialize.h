@@ -19,7 +19,7 @@ namespace SerializeExport
 
 using namespace SerializeExport;
 class CBinarySerialize
-	: public SerializeExport::ISerialize
+	: public SerializeExport::IAssistorSerialize
 {
 	// 缓存创建类型
 	enum ENUM_BUFFER_CREATE_TYPE
@@ -267,6 +267,16 @@ public://序列化字段函数
 	// 函数说明：告诉序列化模块，列表中的第N个元素已经序列化完成
 	// $_FUNCTION_END *********************************************************
 	virtual bool EndSerializeArrayItem(suint32, const char *)override;
+
+	// $_FUNCTION_BEGIN *******************************************************
+	// 函数名称：AssistorSerialize
+	// 函数参数：
+	//					Value				[输入/输出]	需要序列化的参数
+	//					ulDataLength		[输入]		缓冲区长度
+	// 返 回 值：true or false
+	// 函数说明：从缓冲区中，读取/写入ulDataLength长度
+	// $_FUNCTION_END *********************************************************
+	virtual bool AssistorSerialize(char *Value, suint32 ulDataLength);
 private:
 	// $_FUNCTION_BEGIN *******************************************************
 	// 函数名称：InnerSerialize
