@@ -230,6 +230,8 @@ bool SerializeStruct(ISerialize & pSerialize, TestArray & Value)
 	return true;
 }
 
+
+
 bool TestArray::operator==(const TestArray & other) const
 {
 	return (idarray == other.idarray

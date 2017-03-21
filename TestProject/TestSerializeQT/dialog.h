@@ -48,6 +48,11 @@ inline bool SerializeStruct(ISerialize &pSerialize, TestB &Value)
 	return true;
 }
 
+struct TestMy
+{
+	int a;
+};
+
 using namespace SerializeExport;
 namespace Ui {
 class Dialog;

@@ -7,7 +7,18 @@
 #include <QDebug>
 #include "PostMsgHelper.h"
 
-
+bool SerializeStruct(ISerialize & pSerialize, TestMy & Value)
+{
+	try
+	{
+		SERIALIZE_VALUE(a);
+	}
+	catch (...)
+	{
+		return false;
+	}
+	return true;
+}
 struct TKTest
 {
 	CTKPtrList<std::string> stringArray;
