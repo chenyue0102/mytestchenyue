@@ -674,7 +674,16 @@ bool CJsonSerialize::InnerSerialize(T &Value, const char *pstrName)
 		{
 			JsonValue = (*m_pCurValue)[pstrName];
 		}
-		return ConverToType(JsonValue, Value, pstrName);
+		if (JsonValue.isNull())
+		{
+			const char *pLogName = (nullptr == pstrName) ? "nullptr" : pstrName;
+			Log("CJsonSerialize::InnerSerialize Name=%s not Find", pstrName);
+			return false;
+		}
+		else
+		{
+			return ConverToType(JsonValue, Value, pstrName);
+		}
 	}
 	else
 	{
