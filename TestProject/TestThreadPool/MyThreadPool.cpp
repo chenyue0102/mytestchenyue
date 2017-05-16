@@ -89,7 +89,7 @@ bool CMyThreadPool::Close()
 	return bRes;
 }
 
-bool CMyThreadPool::DoTask(std::function<void()> Fun, long long &llTaskID)
+bool CMyThreadPool::DoTask(const std::function<void()> &Fun, long long &llTaskID)
 {
 	bool bRes = false;
 
@@ -177,7 +177,7 @@ void CMyThreadPool::ThreadProc()
 			assert(0 == m_BusyThreadArray.size());
 			break;
 		}
-		if (m_IdleThreadArray.size() > 0 && m_JobArray.size() > 0)
+		if (!m_IdleThreadArray.empty() && !m_JobArray.empty())
 		{
 			std::shared_ptr<CMyThreadTask> pMyThreadTask = m_IdleThreadArray.top();
 			m_IdleThreadArray.pop();

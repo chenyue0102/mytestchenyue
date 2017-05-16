@@ -53,7 +53,7 @@ void CMyThreadTask::Close()
 	}
 }
 
-bool CMyThreadTask::DoTask(std::function<void()> Fun, long long llTaskID)
+bool CMyThreadTask::DoTask(const std::function<void()> &Fun, long long llTaskID)
 {
 	bool bRes = false;
 	do 

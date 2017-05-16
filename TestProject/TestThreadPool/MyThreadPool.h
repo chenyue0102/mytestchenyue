@@ -22,7 +22,7 @@ public:
 	bool Open();
 	bool Close();
 public:
-	bool DoTask(std::function<void()> Fun, long long &llTaskID);
+	bool DoTask(const std::function<void()> &Fun, long long &llTaskID);
 	bool InterruptTask(long long llTaskID, bool bWaitFinished);
 protected:
 	virtual void NotifyTaskCompleted(long long llTaskID, bool bInterrupted)override;

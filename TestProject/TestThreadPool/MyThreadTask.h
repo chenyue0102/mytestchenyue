@@ -23,7 +23,7 @@ public:
 	void Open(INotifyTask *pNotifyTask);
 	void Close();
 public:
-	bool DoTask(std::function<void()> Fun, long long llTaskID);
+	bool DoTask(const std::function<void()> &Fun, long long llTaskID);
 	void InterruptTask(bool bWaitFinished);
 	bool IsTaskInterrupted()const;
 private:

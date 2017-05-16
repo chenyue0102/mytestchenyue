@@ -9,10 +9,35 @@
 #include <iostream>
 #include <atomic>
 #include <string>
+#include <sstream>
 #include "MyThreadTask.h"
 #include "MyTaskFun.h"
 #include "MyThreadPool.h"
+#include <windows.h>
 
+std::mutex g_mx;
+std::list<std::string> g_logArray;
+
+void OutputLog()
+{
+	while (true)
+	{
+		std::this_thread::sleep_for(std::chrono::milliseconds(50));
+		std::unique_lock<std::mutex> lk(g_mx);
+		while (!g_logArray.empty())
+		{
+			std::string str = *g_logArray.begin();
+			OutputDebugStringA(str.c_str());
+			g_logArray.pop_front();
+		}
+	}
+}
+
+void Log(const std::string &strText)
+{
+	std::lock_guard<std::mutex> lk(g_mx);
+	g_logArray.push_back(strText);
+}
 
 void TestTask(long long &llTaskID)
 {
@@ -21,12 +46,19 @@ void TestTask(long long &llTaskID)
 	{
 		n = 3;
 	}
-	std::cout << "task execing " << llTaskID << " threadID=" << std::this_thread::get_id() << std::endl;
+	{
+		std::stringstream ss;
+		ss << "task execing " << llTaskID << " threadID=" << std::this_thread::get_id() << std::endl;
+		Log(ss.str());
+	}
+	
 	while ((++n) < 10)
 	{
 		if (MyTaskFun::IsTaskInterrupted())
 		{
-			std::cout << "task Interrupted " << llTaskID << " threadID=" << std::this_thread::get_id() << std::endl;
+			std::stringstream ss;
+			ss << "task Interrupted " << llTaskID << " threadID=" << std::this_thread::get_id() << std::endl;
+			Log(ss.str());
 			throw MyTaskFun::GetTaskInterruptedException();
 		}
 		else
@@ -34,11 +66,17 @@ void TestTask(long long &llTaskID)
 			std::this_thread::sleep_for(std::chrono::seconds(1));
 		}
 	}
-	std::cout << "task end " << llTaskID << " threadID="<< std::this_thread::get_id() << std::endl;
+	{
+		std::stringstream ss;
+		ss << "task end " << llTaskID << " threadID=" << std::this_thread::get_id() << std::endl;
+		Log(ss.str());
+	}
+	
 }
 
 int main()
 {
+	std::thread tLog(&OutputLog);
 	std::vector<long long> llKeyArray;
 	llKeyArray.resize(1000);
 	{
@@ -54,7 +92,12 @@ int main()
 			{
 				std::function<void()> Fun = std::bind(&TestTask, std::ref(llKeyArray[nKey]));
 				MyThreadPool.DoTask(Fun, llKeyArray[nKey]);
-				std::cout << "DoTask " << llKeyArray[nKey] << std::endl;
+				{
+					std::stringstream ss;
+					ss << "DoTask " << llKeyArray[nKey] << std::endl;
+					Log(ss.str());
+				}
+				
 				nKey++;
 			}
 			else if (2 == nNumber)
