@@ -18,9 +18,9 @@
 std::mutex g_mx;
 std::list<std::string> g_logArray;
 
-void OutputLog()
+void OutputLog(volatile bool &bExit)
 {
-	while (true)
+	while (!bExit)
 	{
 		std::this_thread::sleep_for(std::chrono::milliseconds(50));
 		std::unique_lock<std::mutex> lk(g_mx);
@@ -76,7 +76,8 @@ void TestTask(long long &llTaskID)
 
 int main()
 {
-	std::thread tLog(&OutputLog);
+	volatile bool bExit = false;
+	std::thread tLog(&OutputLog, std::ref(bExit));
 	std::vector<long long> llKeyArray;
 	llKeyArray.resize(1000);
 	{
@@ -102,7 +103,9 @@ int main()
 			}
 			else if (2 == nNumber)
 			{
+				bExit = true;
 				MyThreadPool.Close();
+				tLog.join();
 			}
 			else if (nNumber > 0)
 			{
