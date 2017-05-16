@@ -101,6 +101,11 @@ bool CMyThreadPool::DoTask(const std::function<void()> &Fun, long long &llTaskID
 			break;
 		}
 		std::lock_guard<std::mutex> lk(m_mtx);
+		if (m_bExit)
+		{
+			assert(false);
+			break;
+		}
 		llTaskID = ++m_llTaskID;
 		TaskJobInfo JobInfo = { llTaskID, Fun };
 		m_JobArray.push_back(JobInfo);
@@ -150,7 +155,7 @@ void CMyThreadPool::NotifyTaskCompleted(long long llTaskID, bool bInterrupted)
 		{
 			m_IdleThreadArray.push(itor->second);
 			m_BusyThreadArray.erase(itor);
-			if (m_JobArray.size() > 0)
+			if (!m_JobArray.empty())
 			{
 				m_cv.notify_one();
 			}
@@ -169,7 +174,7 @@ void CMyThreadPool::ThreadProc()
 		std::unique_lock<std::mutex> lk(m_mtx);
 		m_cv.wait(lk, [this]() 
 			{
-				return m_bExit || (m_JobArray.size() > 0 && m_IdleThreadArray.size() > 0);
+				return m_bExit || (!m_JobArray.empty() && !m_IdleThreadArray.empty());
 			});
 		if (m_bExit)
 		{
