@@ -39,6 +39,9 @@
     <ClInclude Include="UserObject.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="TaskPool.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -60,6 +63,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="UserObject.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="TaskPool.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

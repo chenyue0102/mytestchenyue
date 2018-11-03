@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "IOCPServer.h"
 #include <assert.h>
 #include <MSWSock.h>
@@ -505,7 +506,7 @@ void CIOCPServer::CheckSocketThread()
 	int nResult = 0;
 	OVERLAPPEDPLUS *pOverlapped = nullptr;
 	DWORD dwWaitResult = 0;
-	unsigned int nAcceptSize = 0;
+	std::size_t nAcceptSize = 0;
 	time_t tLastCheckTime = time(nullptr), tCurTime = 0;
 	while (m_bContinueCheckSocket)
 	{
