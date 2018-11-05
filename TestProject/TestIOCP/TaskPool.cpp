@@ -23,7 +23,6 @@ bool CTaskPool::Open(unsigned int nPoolSize)
 		m_bExit = false;
 		m_nPoolSize = nPoolSize;
 		m_taskStatus.resize(nPoolSize, TaskStatusNone);
-		m_threadFuns.resize(nPoolSize);
 		m_cvs.swap(std::vector<std::condition_variable>(nPoolSize));
 		m_threads.swap(std::vector<std::thread>(nPoolSize));
 
@@ -63,7 +62,6 @@ bool CTaskPool::Close()
 	m_threads.clear();
 	m_cvs.clear();
 	m_globalFuns.clear();
-	m_threadFuns.clear();
 	m_nPoolSize = 0;
 	return true;
 }
@@ -71,20 +69,14 @@ bool CTaskPool::Close()
 bool CTaskPool::AddTask(const std::function<void()> &fun)
 {
 	std::lock_guard<std::mutex> lk(m_mutex);
-	bool bFindFreeTask = false;
+	m_globalFuns.push_back(fun);
 	for (unsigned int nIndex = 0; nIndex < m_nPoolSize; nIndex++)
 	{
 		if (TaskStatusFree == m_taskStatus[nIndex])
 		{
-			m_threadFuns[nIndex].push_back(fun);
 			m_cvs[nIndex].notify_one();
-			bFindFreeTask = true;
 			break;
 		}
-	}
-	if (!bFindFreeTask)
-	{
-		m_globalFuns.push_back(fun);
 	}
 	return true;
 }
@@ -93,7 +85,6 @@ void CTaskPool::TaskThread(unsigned int nCurIndex)
 {
 	auto &taskStatus = m_taskStatus[nCurIndex];
 	auto &cv = m_cvs[nCurIndex];
-	auto &threadFuns = m_threadFuns[nCurIndex];
 	auto &globalFuns = m_globalFuns;
 
 	TASK_ARRAY curThreadFuns;
@@ -110,7 +101,6 @@ void CTaskPool::TaskThread(unsigned int nCurIndex)
 			[&]()->bool
 		{
 			if (m_bExit
-				|| !threadFuns.empty()
 				|| !globalFuns.empty())
 			{
 				return true;
@@ -128,7 +118,6 @@ void CTaskPool::TaskThread(unsigned int nCurIndex)
 
 	DoTask:
 		taskStatus = TaskStatusBusy;
-		curThreadFuns = std::move(threadFuns);
 		if (!globalFuns.empty())
 		{
 			//全局任务，只取1个，给其他线程一些机会
@@ -137,17 +126,6 @@ void CTaskPool::TaskThread(unsigned int nCurIndex)
 		}
 		lk.unlock();
 
-		if (!curThreadFuns.empty())
-		{
-			for (auto &oneFun : curThreadFuns)
-			{
-				if (oneFun)
-				{
-					oneFun();
-				}
-			}
-			curThreadFuns.clear();
-		}
 		if (curGlobalFun)
 		{
 			curGlobalFun();
@@ -156,8 +134,7 @@ void CTaskPool::TaskThread(unsigned int nCurIndex)
 
 		//再次检测下任务
 		lk.lock();
-		if (threadFuns.empty()
-			&& globalFuns.empty())
+		if (globalFuns.empty())
 		{
 			taskStatus = TaskStatusFree;
 			continue;
