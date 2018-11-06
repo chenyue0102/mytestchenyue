@@ -11,7 +11,7 @@ class CUserObject : public IUnknownEx
 {
 public:
 	CUserObject();
-	~CUserObject();
+	virtual ~CUserObject();
 public:
 	void SetClientInfo(SOCKET s, const sockaddr_in &addr);
 	void Close();
@@ -20,7 +20,7 @@ public:
 public://给IOCPServer类调用
 	bool OnRecvData(const char *pBuffer, DWORD dwDataLen);
 	bool CheckSocket();
-public:
+public://引用计数
 	virtual ULONG AddRef(void)override;
 	virtual ULONG Release(void)override;
 public://子类调用
