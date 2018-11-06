@@ -8,12 +8,15 @@
 #include "IOCPServer.h"
 #include "tsdeque.h"
 #include "TaskPool.h"
+#include "Single.h"
 
 int main()
 {
-	CIOCPServer server;
-	CTaskPool taskPool;
+	auto &server = CSingle<CIOCPServer>::Instance();
+	auto &taskPool = CSingle<CTaskPool>::Instance();
 	int a = 0;
+	server.Open(5617);
+	taskPool.Open(2);
 
 	do 
 	{

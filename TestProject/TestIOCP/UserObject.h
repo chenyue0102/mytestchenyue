@@ -2,23 +2,39 @@
 #include <list>
 #include <string>
 #include <mutex>
-#include <wtypes.h>
+#include <atomic>
+#include "Protocol.h"
+#include "IUnknownEx.h"
 
-struct MSG_HEADER
-{
-	DWORD dwMsgType;
-	DWORD dwMsgLen;
-};
-class CUserObject
+
+class CUserObject : public IUnknownEx
 {
 public:
 	CUserObject();
 	~CUserObject();
 public:
-	void OnRecvData(const char *pBuffer, DWORD dwDataLen);
+	void SetClientInfo(SOCKET s, const sockaddr_in &addr);
+	void Close();
+	SOCKET GetSocket()const;
+	bool SendMsg(MSGHEADERLOCAL *pHeader);
+public://给IOCPServer类调用
+	bool OnRecvData(const char *pBuffer, DWORD dwDataLen);
+	bool CheckSocket();
+public:
+	virtual ULONG AddRef(void)override;
+	virtual ULONG Release(void)override;
+public://子类调用
+	virtual bool OnMsg(MSGHEADERLOCAL *pHeader);
+	virtual void OnClose();
 private:
-	std::mutex m_mutex;
+	void InnerDoRecvMsg();
+private:
+	std::atomic_ulong m_ulRef;
+	std::atomic<time_t> m_tLastMsgTime;
+	mutable std::mutex m_mutex;
+	SOCKET m_hSocket;
+	sockaddr_in m_addr;
 	std::list<std::string> m_MsgData;
-	std::string m_tempData;
+	std::string m_tempData; //接收缓存，能够组成一个完整包后，将内容移植m_MsgData
 };
 

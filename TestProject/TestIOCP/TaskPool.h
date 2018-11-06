@@ -20,6 +20,7 @@ public:
 	bool Open(unsigned int nPoolSize);
 	bool Close();
 	bool AddTask(const std::function<void()> &fun);
+	bool AddTask(const std::function<void()> &fun, std::size_t nKey);
 private:
 	void TaskThread(unsigned int nCurIndex);
 public:
@@ -28,6 +29,7 @@ public:
 	std::vector<std::thread> m_threads;
 	std::vector<std::condition_variable> m_cvs;
 	TASK_ARRAY m_globalFuns;//全局任务
+	std::vector<TASK_ARRAY> m_threadFuns;
 	std::vector<TaskStatus> m_taskStatus;
 	volatile bool m_bExit;
 	unsigned int m_nPoolSize;

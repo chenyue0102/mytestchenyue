@@ -12,6 +12,7 @@
 #define OVERLAPPED_POOL_SIZE 2048
 #define MAX_CONTEXT_SIZE 50000
 #define CONNECT_TIMEOUT_SECOND 2 //连接后，没有发包，超时秒数
+#define MAX_MSG_PACKET_LEN (1 * 1024 * 1024)
 
 #define MACRO_SAFE_CLOSESOCKET(s) {if(s!= INVALID_SOCKET){closesocket(s); s=INVALID_SOCKET;}}
 
@@ -179,6 +180,51 @@ bool CIOCPServer::Close()
 	return true;
 }
 
+bool CIOCPServer::Send(SOCKET hSocket, const char *pBuffer, unsigned int nLen)
+{
+	bool bRes = false;
+
+	do 
+	{
+		if (nLen > MAX_MSG_PACKET_LEN
+			|| nullptr == pBuffer
+			|| 0 == nLen)
+		{
+			assert(false);
+			break;
+		}
+		bRes = true;
+		std::lock_guard<std::mutex> lk(m_hWriteMutex);
+		unsigned int nSendLen = 0;
+		while (nSendLen < nLen)
+		{
+			OVERLAPPEDPLUS *pOverlapped = MallocOverlapPlus(EnumIOOperationWrite);
+			pOverlapped->m_sClientSocket = hSocket;
+			if (nLen - nSendLen < SEND_BUF_LEN)
+			{
+				pOverlapped->m_wsaBuffer.len = nLen - nSendLen;
+			}
+			else
+			{
+				pOverlapped->m_wsaBuffer.len = SEND_BUF_LEN;
+			}
+			memcpy(pOverlapped->m_wsaBuffer.buf, pBuffer + nSendLen, pOverlapped->m_wsaBuffer.len);
+			nSendLen += pOverlapped->m_wsaBuffer.len;
+
+			DWORD dwNumberOfBytesSent = 0;
+			int nResult = WSASend(hSocket, &pOverlapped->m_wsaBuffer, 1, &dwNumberOfBytesSent, 0, (OVERLAPPED*)pOverlapped, NULL);
+			if (SOCKET_ERROR == nResult && WSAGetLastError() != WSA_IO_PENDING)
+			{
+				FreeOverlapPlus(pOverlapped);
+				bRes = false;
+				break;
+			}
+		}
+	} while (false);
+	
+	return bRes;
+}
+
 void CIOCPServer::PostAccept()
 {
 	bool bRes = false;
@@ -246,7 +292,6 @@ OVERLAPPEDPLUS* CIOCPServer::MallocOverlapPlus(EnumIOOperation IOOperation)
 	{
 		pOverlapped = new OVERLAPPEDPLUS();
 		pOverlapped->m_wsaBuffer.buf = new char[SEND_BUF_LEN]();
-		pOverlapped->m_wsaBuffer.len = SEND_BUF_LEN;
 	}
 	else
 	{
@@ -257,6 +302,7 @@ OVERLAPPEDPLUS* CIOCPServer::MallocOverlapPlus(EnumIOOperation IOOperation)
 	{
 		pOverlapped->m_sClientSocket = INVALID_SOCKET;
 		pOverlapped->m_eIoOperation = IOOperation;
+		pOverlapped->m_wsaBuffer.len = SEND_BUF_LEN;
 	}
 	return pOverlapped;
 }
@@ -412,7 +458,12 @@ void CIOCPServer::IOCPThread()
 					FreeOverlapPlus(lpOverlapped);
 					continue;
 				}
-				m_TCPContextManager.OnRecvData(lpOverlapped->m_wsaBuffer.buf, dwNumberOfBytes, lpNewContext);
+				if (!m_TCPContextManager.OnRecvData(lpOverlapped->m_wsaBuffer.buf, dwNumberOfBytes, lpNewContext))
+				{
+					RemoveTcpContextLogic(lpNewContext);
+					FreeOverlapPlus(lpOverlapped);
+					continue;
+				}
 
 				lpOverlapped->m_eIoOperation = EnumIOOperationRead;
 				liRet = WSARecv(lpNewContext->m_hSocket,

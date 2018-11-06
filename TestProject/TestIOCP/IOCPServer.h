@@ -42,6 +42,8 @@ public:
 public:
 	bool Open(WORD wPort);
 	bool Close();
+public:
+	bool Send(SOCKET hSocket, const char *pBuffer, unsigned int nLen);
 private:
 	void IOCPThread();
 	void CheckSocketThread();
@@ -77,6 +79,8 @@ private:
 
 	std::mutex m_TCPContextMutex;//Á¬½ÓËø
 	std::set<TCPContext*> m_TCPContextSet;
+
+	std::mutex m_hWriteMutex;
 
 	TCPContextManager m_TCPContextManager;
 };

@@ -1,6 +1,10 @@
 #pragma once
 #include <WinSock2.h>
-#include "tsset.h"
+#include <atlcomcli.h>
+#include <set>
+#include <map>
+#include "UserObject.h"
+
 
 struct TCPContext
 {
@@ -18,7 +22,6 @@ struct TCPContext
 
 	}
 };
-
 class TCPContextManager : public TCPContext
 {
 public:
@@ -28,8 +31,12 @@ public:
 	TCPContext* CreateContext();
 	void FreeContext(TCPContext *pTCPContext);
 public:
-	void OnRecvData(const char *pBuffer, DWORD dwRecvLen, TCPContext *pTCPContext);
+	bool OnRecvData(const char *pBuffer, DWORD dwRecvLen, TCPContext *pTCPContext);
 private:
-	tsset<TCPContext*> m_TCPContextSet;
+	CUserObject* CreateUserObject(DWORD dwObjectType);
+private:
+	std::mutex m_mutex;
+	std::set<TCPContext*> m_TCPContextSet;
+	std::map<TCPContext*, CComPtr<CUserObject>> m_ContextObjectMap;
 };
 

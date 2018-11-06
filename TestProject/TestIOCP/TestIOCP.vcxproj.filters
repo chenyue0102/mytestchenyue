@@ -42,6 +42,12 @@
     <ClInclude Include="TaskPool.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="IUnknownEx.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="tsmap.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -66,6 +72,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="TaskPool.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="tsmap.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
