@@ -14,6 +14,7 @@ public:
 	virtual ~CUserObject();
 public:
 	void SetClientInfo(SOCKET s, const sockaddr_in &addr);
+	void SetSocket(SOCKET s);
 	void Close();
 	SOCKET GetSocket()const;
 	bool SendMsg(MSGHEADERLOCAL *pHeader);

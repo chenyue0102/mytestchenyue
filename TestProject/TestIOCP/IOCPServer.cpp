@@ -20,11 +20,11 @@ CIOCPServer::CIOCPServer()
 	: m_hCompletionPort(INVALID_HANDLE_VALUE)
 	, m_threads()
 	, m_sListenSocket(INVALID_SOCKET)
-	, m_TCPContext()
 	, m_hAcceptEvent(nullptr)
 	, m_AcceptOverlappedSet()
 	, m_bContinueCheckSocket(true)
 {
+	m_UserObject.AddRef();
 }
 
 
@@ -63,8 +63,8 @@ bool CIOCPServer::Open(WORD wPort)
 			assert(false);
 			break;
 		}
-		m_TCPContext.m_hSocket = m_sListenSocket;
-		if (nullptr == CreateIoCompletionPort((HANDLE)m_sListenSocket, m_hCompletionPort, (ULONG_PTR)&m_TCPContext, 0))
+		m_UserObject.SetSocket(m_sListenSocket);
+		if (nullptr == CreateIoCompletionPort((HANDLE)m_sListenSocket, m_hCompletionPort, (ULONG_PTR)&m_UserObject, 0))
 		{
 			assert(false);
 			break;
@@ -123,7 +123,7 @@ bool CIOCPServer::Close()
 	}
 	MACRO_SAFE_CLOSESOCKET(m_sListenSocket);
 
-	while (GetAcceptOverlappedSize() > 0 || GetTCPContextSize() > 0)
+	while (GetAcceptOverlappedSize() > 0 || GetUserObjectSize() > 0)
 	{
 		{
 			std::lock_guard<std::mutex> lk(m_AcceptOverlappedMutex);
@@ -133,10 +133,10 @@ bool CIOCPServer::Close()
 			}
 		}
 		{
-			std::lock_guard<std::mutex> lk(m_TCPContextMutex);
-			for (TCPContext *pTCPContext : m_TCPContextSet)
+			std::lock_guard<std::mutex> lk(m_UserObjectMutex);
+			for (auto &pUserObject : m_UserObjectSet)
 			{
-				MACRO_SAFE_CLOSESOCKET(pTCPContext->m_hSocket);
+				pUserObject->Close();
 			}
 		}
 	}
@@ -329,17 +329,13 @@ void CIOCPServer::FreeOverlapPlus(OVERLAPPEDPLUS *pOverlapped)
 	}
 }
 
-TCPContext* CIOCPServer::CreateContext()
+bool CIOCPServer::RemoveUserObjectLogic(CUserObject *pUserObject)
 {
-	return m_TCPContextManager.CreateContext();
-}
-
-bool CIOCPServer::RemoveTcpContextLogic(TCPContext *pTCPContext)
-{
-	if (RemoveTcpContext(pTCPContext))
+	CComPtr<CUserObject> pTemp(pUserObject);
+	if (RemoveUserObject(pUserObject))
 	{
-		MACRO_SAFE_CLOSESOCKET(pTCPContext->m_hSocket);
-		m_TCPContextManager.FreeContext(pTCPContext);
+		pUserObject->Close();
+		m_TCPContextManager.FreeContext(pUserObject);
 		return true;
 	}
 	else
@@ -367,28 +363,28 @@ std::size_t CIOCPServer::GetAcceptOverlappedSize()
 	return m_AcceptOverlappedSet.size();
 }
 
-bool CIOCPServer::InsertTCPContext(TCPContext *pTCPContext)
+bool CIOCPServer::InsertUserObject(CUserObject *pUserObject)
 {
-	std::lock_guard<std::mutex> lk(m_TCPContextMutex);
-	return m_TCPContextSet.insert(pTCPContext).second;
+	std::lock_guard<std::mutex> lk(m_UserObjectMutex);
+	return m_UserObjectSet.insert(pUserObject).second;
 }
 
-bool CIOCPServer::RemoveTcpContext(TCPContext * pTCPContext)
+bool CIOCPServer::RemoveUserObject(CUserObject * pUserObject)
 {
-	std::lock_guard<std::mutex> lk(m_TCPContextMutex);
-	return (0 != m_TCPContextSet.erase(pTCPContext));
+	std::lock_guard<std::mutex> lk(m_UserObjectMutex);
+	return (0 != m_UserObjectSet.erase(pUserObject));
 }
 
-std::size_t CIOCPServer::GetTCPContextSize()
+std::size_t CIOCPServer::GetUserObjectSize()
 {
-	std::lock_guard<std::mutex> lk(m_TCPContextMutex);
-	return m_TCPContextSet.size();
+	std::lock_guard<std::mutex> lk(m_UserObjectMutex);
+	return m_UserObjectSet.size();
 }
 
 void CIOCPServer::IOCPThread()
 {
 	DWORD dwNumberOfBytes = 0;
-	TCPContext *pTCPContext = nullptr;
+	CUserObject *pUserObject = nullptr;
 	OVERLAPPEDPLUS *lpOverlapped = nullptr;
 	struct sockaddr_in *lpstrLocalAddr = nullptr, *lpstrRemoteAddr = nullptr;
 	int liLocalAddrLen = 0, liRemoteAddrLen = 0;
@@ -397,12 +393,12 @@ void CIOCPServer::IOCPThread()
 
 	while (true)
 	{
-		pTCPContext = nullptr;
+		pUserObject = nullptr;
 		lpOverlapped = nullptr;
 		dwNumberOfBytes = 0;
-		if (GetQueuedCompletionStatus(m_hCompletionPort, &dwNumberOfBytes, (PULONG_PTR)&pTCPContext, (LPOVERLAPPED*)&lpOverlapped, INFINITE))
+		if (GetQueuedCompletionStatus(m_hCompletionPort, &dwNumberOfBytes, (PULONG_PTR)&pUserObject, (LPOVERLAPPED*)&lpOverlapped, INFINITE))
 		{
-			if (nullptr == pTCPContext)
+			if (nullptr == pUserObject)
 			{
 				break;
 			}
@@ -425,7 +421,7 @@ void CIOCPServer::IOCPThread()
 					FreeOverlapPlus(lpOverlapped);
 					continue;
 				}
-				if (GetTCPContextSize() >= MAX_CONTEXT_SIZE)
+				if (GetUserObjectSize() >= MAX_CONTEXT_SIZE)
 				{
 					MACRO_SAFE_CLOSESOCKET(lpOverlapped->m_sClientSocket);
 					FreeOverlapPlus(lpOverlapped);
@@ -440,33 +436,34 @@ void CIOCPServer::IOCPThread()
 					&liLocalAddrLen,
 					(SOCKADDR **)&lpstrRemoteAddr,
 					&liRemoteAddrLen);
-
-				TCPContext *lpNewContext = CreateContext();
-				if (nullptr == lpNewContext)
+				
+				sockaddr_in addr;
+				addr.sin_addr.s_addr = lpstrRemoteAddr->sin_addr.s_addr;
+				addr.sin_port = lpstrRemoteAddr->sin_port;
+				CComPtr<CUserObject> pNewUserObject = m_TCPContextManager.CreateContext(lpOverlapped->m_wsaBuffer.buf, dwNumberOfBytes, 
+																							lpOverlapped->m_sClientSocket, addr);
+				if (!pNewUserObject)
 				{
 					MACRO_SAFE_CLOSESOCKET(lpOverlapped->m_sClientSocket);
 					FreeOverlapPlus(lpOverlapped);
 					continue;
 				}
-				lpNewContext->m_hSocket = lpOverlapped->m_sClientSocket;
-				lpNewContext->addr.sin_addr.s_addr = lpstrRemoteAddr->sin_addr.s_addr;
-				lpNewContext->addr.sin_port = lpstrRemoteAddr->sin_port;
-				InsertTCPContext(lpNewContext);
-				if (nullptr == CreateIoCompletionPort((HANDLE)lpNewContext->m_hSocket, m_hCompletionPort, (ULONG_PTR)lpNewContext, 0))
+				InsertUserObject(pNewUserObject);
+				if (nullptr == CreateIoCompletionPort((HANDLE)lpOverlapped->m_sClientSocket, m_hCompletionPort, (ULONG_PTR)(CUserObject*)pNewUserObject, 0))
 				{
-					RemoveTcpContextLogic(lpNewContext);
+					RemoveUserObject(pNewUserObject);
 					FreeOverlapPlus(lpOverlapped);
 					continue;
 				}
-				if (!m_TCPContextManager.OnRecvData(lpOverlapped->m_wsaBuffer.buf, dwNumberOfBytes, lpNewContext))
+				if (!m_TCPContextManager.OnRecvData(lpOverlapped->m_wsaBuffer.buf, dwNumberOfBytes, pNewUserObject))
 				{
-					RemoveTcpContextLogic(lpNewContext);
+					RemoveUserObject(pNewUserObject);
 					FreeOverlapPlus(lpOverlapped);
 					continue;
 				}
 
 				lpOverlapped->m_eIoOperation = EnumIOOperationRead;
-				liRet = WSARecv(lpNewContext->m_hSocket,
+				liRet = WSARecv(lpOverlapped->m_sClientSocket,
 					&lpOverlapped->m_wsaBuffer,
 					1,
 					&dwNumberOfBytes,
@@ -476,7 +473,7 @@ void CIOCPServer::IOCPThread()
 				if (liRet == SOCKET_ERROR && WSAGetLastError() != WSA_IO_PENDING)
 				{
 					//释放lpOverlapPlus和lpNewContext
-					RemoveTcpContextLogic(lpNewContext);
+					RemoveUserObject(pNewUserObject);
 					FreeOverlapPlus(lpOverlapped);
 					continue;
 				}
@@ -486,12 +483,12 @@ void CIOCPServer::IOCPThread()
 			{
 				if (0 == dwNumberOfBytes)
 				{
-					RemoveTcpContextLogic(pTCPContext);
+					RemoveUserObject(pUserObject);
 					FreeOverlapPlus(lpOverlapped);
 					continue;
 				}
-				m_TCPContextManager.OnRecvData(lpOverlapped->m_wsaBuffer.buf, dwNumberOfBytes, pTCPContext);
-				liRet = WSARecv(pTCPContext->m_hSocket,
+				m_TCPContextManager.OnRecvData(lpOverlapped->m_wsaBuffer.buf, dwNumberOfBytes, pUserObject);
+				liRet = WSARecv(pUserObject->GetSocket(),
 					&lpOverlapped->m_wsaBuffer,
 					1,
 					&dwNumberOfBytes,
@@ -501,7 +498,7 @@ void CIOCPServer::IOCPThread()
 
 				if (liRet == SOCKET_ERROR && WSAGetLastError() != WSA_IO_PENDING)
 				{
-					RemoveTcpContextLogic(pTCPContext);
+					RemoveUserObject(pUserObject);
 					FreeOverlapPlus(lpOverlapped);
 					continue;
 				}
@@ -533,7 +530,7 @@ void CIOCPServer::IOCPThread()
 			}
 			case EnumIOOperationRead:
 			{
-				RemoveTcpContextLogic(pTCPContext);
+				RemoveUserObject(pUserObject);
 				FreeOverlapPlus(lpOverlapped);
 				break;
 			}
@@ -598,12 +595,12 @@ void CIOCPServer::CheckSocketThread()
 
 			//检查连接心跳
 			{
-				std::lock_guard<std::mutex> lk(m_TCPContextMutex);
-				for (TCPContext *pTCPContext : m_TCPContextSet)
+				std::lock_guard<std::mutex> lk(m_UserObjectMutex);
+				for (auto &pUserObject : m_UserObjectSet)
 				{
-					if (!pTCPContext->CheckSocket())
+					if (!pUserObject->CheckSocket())
 					{
-						MACRO_SAFE_CLOSESOCKET(pTCPContext->m_hSocket);
+						pUserObject->Close();
 					}
 				}
 			}

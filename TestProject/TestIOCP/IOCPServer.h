@@ -50,16 +50,15 @@ private:
 	void PostAccept();
 	OVERLAPPEDPLUS* MallocOverlapPlus(EnumIOOperation IOOperation);
 	void FreeOverlapPlus(OVERLAPPEDPLUS *pOverlapped);
-	TCPContext* CreateContext();
-	bool RemoveTcpContextLogic(TCPContext *pTCPContext);
+	bool RemoveUserObjectLogic(CUserObject *pUserObject);
 
 	bool InsertAcceptOverlapped(OVERLAPPEDPLUS *pOverlapped);
 	bool RemoveAcceptOverlapped(OVERLAPPEDPLUS *pOverlapped);
 	std::size_t GetAcceptOverlappedSize();
 
-	bool InsertTCPContext(TCPContext *pTCPContext);
-	bool RemoveTcpContext(TCPContext *pTCPContext);
-	std::size_t GetTCPContextSize();
+	bool InsertUserObject(CUserObject *pUserObject);
+	bool RemoveUserObject(CUserObject *pUserObject);
+	std::size_t GetUserObjectSize();
 private:
 	HANDLE m_hCompletionPort;
 	std::vector<std::thread> m_threads;//IOCP处理线程
@@ -69,7 +68,7 @@ private:
 	volatile bool m_bContinueCheckSocket;
 
 	SOCKET m_sListenSocket;
-	TCPContext m_TCPContext;
+	CUserObject m_UserObject;
 
 	std::mutex m_OverlappedMutex;
 	std::deque<OVERLAPPEDPLUS*> m_OverlappedPool;
@@ -77,8 +76,8 @@ private:
 	std::mutex m_AcceptOverlappedMutex;//Accept socket 锁
 	std::set<OVERLAPPEDPLUS*> m_AcceptOverlappedSet;//Accept socket 列表
 
-	std::mutex m_TCPContextMutex;//连接锁
-	std::set<TCPContext*> m_TCPContextSet;
+	std::mutex m_UserObjectMutex;//连接锁
+	std::set<CComPtr<CUserObject>> m_UserObjectSet;
 
 	std::mutex m_hWriteMutex;
 

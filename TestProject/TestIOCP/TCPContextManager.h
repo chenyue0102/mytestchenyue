@@ -6,37 +6,20 @@
 #include "UserObject.h"
 
 
-struct TCPContext
-{
-	SOCKET m_hSocket;
-	sockaddr_in addr;
-
-	bool CheckSocket()
-	{
-		return true;
-	}
-	TCPContext()
-		: m_hSocket(INVALID_SOCKET)
-		, addr()
-	{
-
-	}
-};
-class TCPContextManager : public TCPContext
+class TCPContextManager
 {
 public:
 	TCPContextManager();
 	~TCPContextManager();
 public:
-	TCPContext* CreateContext();
-	void FreeContext(TCPContext *pTCPContext);
+	CUserObject* CreateContext(const char *pBuffer, DWORD dwRecvLen, SOCKET s, const sockaddr_in &adddr);
+	void FreeContext(CUserObject *pUserObject);
 public:
-	bool OnRecvData(const char *pBuffer, DWORD dwRecvLen, TCPContext *pTCPContext);
+	bool OnRecvData(const char *pBuffer, DWORD dwRecvLen, CUserObject *pUserObject);
 private:
-	CUserObject* CreateUserObject(DWORD dwObjectType);
+	CUserObject* InnerCreateUserObject(DWORD dwObjectType);
 private:
 	std::mutex m_mutex;
-	std::set<TCPContext*> m_TCPContextSet;
-	std::map<TCPContext*, CComPtr<CUserObject>> m_ContextObjectMap;
+	std::set<CComPtr<CUserObject>> m_UserObjectSet;
 };
 

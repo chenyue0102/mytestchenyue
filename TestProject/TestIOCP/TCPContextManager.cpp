@@ -12,30 +12,49 @@ TCPContextManager::~TCPContextManager()
 {
 }
 
-TCPContext* TCPContextManager::CreateContext()
+CUserObject* TCPContextManager::CreateContext(const char *pBuffer, DWORD dwRecvLen, SOCKET s, const sockaddr_in &addr)
 {
 	std::lock_guard<std::mutex> lk(m_mutex);
+	CComPtr<CUserObject> pUserObject;
 
-	TCPContext *pTCPContext = new TCPContext();
-	m_TCPContextSet.insert(pTCPContext);
-	return pTCPContext;
+	do 
+	{
+		if (nullptr == pBuffer
+			|| dwRecvLen < sizeof(MSGHEADERNET))
+		{
+			assert(false);
+			break;
+		}
+		MSGHEADERNET net = { 0 };
+		memcpy(&net, pBuffer, sizeof(MSGHEADERNET));
+		MSGHEADERLOCAL local = Net2Local(net);
+		pUserObject = InnerCreateUserObject(local.dwObjectTye);
+		if (!pUserObject)
+		{
+			assert(false);
+			break;
+		}
+		pUserObject->SetClientInfo(s, addr);
+		m_UserObjectSet.insert(pUserObject);
+	} while (false);
+	return pUserObject;
 }
 
-void TCPContextManager::FreeContext(TCPContext *pTCPContext)
+void TCPContextManager::FreeContext(CUserObject *pDeleteObject)
 {
 	CComPtr<CUserObject> pUserObject;
 	{
 		std::lock_guard<std::mutex> lk(m_mutex);
 
-		auto iter = m_ContextObjectMap.find(pTCPContext);
-		if (iter != m_ContextObjectMap.end())
+		auto iter = m_UserObjectSet.find(pDeleteObject);
+		if (iter != m_UserObjectSet.end())
 		{
-			pUserObject = iter->second;
+			pUserObject = *iter;
+			m_UserObjectSet.erase(iter);
 		}
-		m_ContextObjectMap.erase(pTCPContext);
-		if (m_TCPContextSet.erase(pTCPContext))
+		else
 		{
-			delete pTCPContext;
+			assert(false);
 		}
 	}
 	if (pUserObject)
@@ -44,7 +63,7 @@ void TCPContextManager::FreeContext(TCPContext *pTCPContext)
 	}
 }
 
-bool TCPContextManager::OnRecvData(const char *pBuffer, DWORD dwRecvLen, TCPContext *pTCPContext)
+bool TCPContextManager::OnRecvData(const char *pBuffer, DWORD dwRecvLen, CUserObject *pUserObject)
 {
 	std::lock_guard<std::mutex> lk(m_mutex);
 	bool bRes = false;
@@ -57,48 +76,25 @@ bool TCPContextManager::OnRecvData(const char *pBuffer, DWORD dwRecvLen, TCPCont
 			assert(false);
 			break;
 		}
-		auto iter = m_ContextObjectMap.find(pTCPContext);
-		if (iter == m_ContextObjectMap.end())
+		auto iter = m_UserObjectSet.find(pUserObject);
+		if (iter == m_UserObjectSet.end())
 		{
-			if (dwRecvLen < sizeof(MSGHEADERNET))
-			{
-				assert(false);
-				break;
-			}
-			MSGHEADERNET net = { 0 };
-			memcpy(&net, pBuffer, sizeof(MSGHEADERNET));
-			MSGHEADERLOCAL local = Net2Local(net);
-			CComPtr<CUserObject> pUserObject = CreateUserObject(local.dwObjectTye);
-			if (!pUserObject)
-			{
-				assert(false);
-				break;
-			}
-			pUserObject->SetClientInfo(pTCPContext->m_hSocket, pTCPContext->addr);
-			if (!pUserObject->OnRecvData(pBuffer, dwRecvLen))
-			{
-				assert(false);
-				break;
-			}
-			m_ContextObjectMap.insert(std::make_pair(pTCPContext, pUserObject));
-			bRes = true;
+			assert(false);
+			break;
 		}
-		else
+		CComPtr<CUserObject> pUserObject = *iter;
+		if (!pUserObject)
 		{
-			CComPtr<CUserObject> pUserObject = iter->second;
-			if (!pUserObject)
-			{
-				assert(false);
-				break;
-			}
-			bRes = pUserObject->OnRecvData(pBuffer, dwRecvLen);
+			assert(false);
+			break;
 		}
+		bRes = pUserObject->OnRecvData(pBuffer, dwRecvLen);
 	} while (false);
 	
 	return bRes;
 }
 
-CUserObject * TCPContextManager::CreateUserObject(DWORD dwObjectType)
+CUserObject * TCPContextManager::InnerCreateUserObject(DWORD dwObjectType)
 {
 	return new CUserObject;
 }

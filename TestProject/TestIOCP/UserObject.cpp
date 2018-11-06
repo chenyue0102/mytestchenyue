@@ -31,6 +31,12 @@ void CUserObject::SetClientInfo(SOCKET s, const sockaddr_in & addr)
 	m_addr = addr;
 }
 
+void CUserObject::SetSocket(SOCKET s)
+{
+	std::lock_guard<std::mutex> lk(m_mutex);
+	m_hSocket = s;
+}
+
 void CUserObject::Close()
 {
 	std::lock_guard<std::mutex> lk(m_mutex);
