@@ -61,7 +61,7 @@ bool CUserObject::SendMsg(MSGHEADERLOCAL * pHeader)
 	memcpy(&local, pHeader, sizeof(local));
 	MSGHEADERNET net = Local2Net(local);
 	memcpy(pHeader, &net, sizeof(net));
-	CSingle<CIOCPServer>::Instance().Send(GetSocket(), (char*)pHeader, local.dwMsgLen);
+	CSingle<CIOCPServer>::Instance().Send(GetSocket(), (char*)pHeader, local.dwMsgLen + sizeof(MSGHEADERLOCAL));
 	return false;
 }
 
@@ -77,7 +77,7 @@ bool CUserObject::OnRecvData(const char *pBuffer, DWORD dwDataLen)
 		MSGHEADERNET net = { 0 };
 		memcpy(&net, m_tempData.data(), sizeof(MSGHEADERNET));
 		MSGHEADERLOCAL local = Net2Local(net);
-		DWORD dwOneMsgLen = local.dwMsgLen;
+		DWORD dwOneMsgLen = local.dwMsgLen + sizeof(MSGHEADERLOCAL);
 		if (m_tempData.size() >= dwOneMsgLen)
 		{
 			memcpy(&*m_tempData.begin(), &local, sizeof(MSGHEADERLOCAL));//包头转换成本地结构体

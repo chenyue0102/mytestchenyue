@@ -6,13 +6,13 @@ struct MSGHEADERNET
 {
 	DWORD dwMsgID;
 	DWORD dwObjectTye;
-	DWORD dwMsgLen;
+	DWORD dwMsgLen;		//不包含包头
 };
 struct MSGHEADERLOCAL
 {
 	DWORD dwMsgID;
 	DWORD dwObjectTye;
-	DWORD dwMsgLen;
+	DWORD dwMsgLen;		//不包含包头
 };
 inline MSGHEADERLOCAL Net2Local(const MSGHEADERNET &net)
 {
