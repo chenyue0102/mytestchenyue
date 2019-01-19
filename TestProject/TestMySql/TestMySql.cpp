@@ -107,14 +107,54 @@ void test2()
 
 void test3()
 {
-	
+	std::cout << "test2" << std::endl;
+
+	try
+	{
+		sql::Driver *driver = nullptr;
+		sql::Connection *con = nullptr;
+		sql::PreparedStatement *preQuery = nullptr;
+		sql::ResultSet *res = nullptr;
+
+		//创建连接
+		driver = get_driver_instance();
+		//连接mysql
+		con = driver->connect("tcp://localhost:3306", "username", "password");
+		//设置使用的数据库
+		con->setSchema("test");
+		sql::Statement *stmt = con->createStatement();
+
+		preQuery = con->prepareStatement("CALL get_name_count(?,@namecount)");
+		sql::SQLString name("jim");
+		preQuery->setString(1, name);
+		preQuery->execute();
+		res = preQuery->executeQuery("SELECT @namecount AS _namecount ");
+
+		while (res->next())
+		{
+			auto count = res->getInt(1);
+			std::cout << "count=" << count << std::endl;
+		}
+		delete res;
+		delete preQuery;
+		delete con;
+	}
+	catch (sql::SQLException &e)
+	{
+		std::cout << "# ERR: SQLException in " << __FILE__;
+		std::cout << "(" << __FUNCTION__ << ") on line " << __LINE__ << std::endl;
+		std::cout << "# ERR: " << e.what();
+		std::cout << " (MySQL error code: " << e.getErrorCode();
+		std::cout << ", SQLState: " << e.getSQLState() << " )" << std::endl;
+		std::cout << e.getSQLStateCStr() << std::endl;
+	}
 }
 
 int main()
 {
 	test1();
 	test2();
-	//test3();
+	test3();
     return 0;
 }
 
