@@ -3,6 +3,8 @@
 #include <type_traits>
 #include <string.h>
 #include <string>
+#include <thread>
+#include <chrono>
 #include <errno.h>
 #include <fcntl.h>//open
 #include <sys/stat.h>  // mode访问权限所需头文件
@@ -200,6 +202,7 @@ void testFileFun()
 			break;
 		}
 		int uid = fcntl(fd, F_GETOWN);
+		printf("own %d\n", uid);
 		if (-1 == fcntl(fd, F_SETOWN, getpid()))
 		{
 			printf("errno=%d\n", errno);
@@ -231,15 +234,162 @@ void testioctl()
 	fd = -1;
 }
 
-int main()
+void testPart1()
 {
-    printf("hello from TestLinux!\n");
 	testWriteFile();
 	testReadFile();
 	testFileStat();
 	testMapFile();
 	testFileFun();
 	testioctl();
-	testioctl();
+}
+
+void test_fork()
+{
+	pid_t pid = fork();
+	if (-1 == pid)
+	{
+		printf("errno=%d\n", errno);
+		assert(false);
+	}
+	else if (0 == pid)
+	{
+		printf("child process mypid=%d parentpid=%d\n", getpid(), getppid());
+	}
+	else
+	{
+		printf("fork child pid=%d mypid=%d parentpid=%d\n", pid, getpid(), getppid());
+	}
+}
+
+void test_system()
+{
+	int ret = system("ping 127.0.0.1 -c 2");
+	printf("system result %d\n", ret);
+}
+
+void test_exec()
+{
+	char *args[] = { "/bin/ls", nullptr };
+	int ret = -1;
+	if ((ret = execve("/bin/ls", args, nullptr)) < 0)
+	{
+		printf("execuve failed result=%d\n", ret);
+	}
+	printf("error");
+}
+
+void test_unmaed_pipe()
+{
+	pid_t pid = 0;
+	int fd[2] = { 0 };
+	int result = pipe(fd);
+	int *read_pipe = &fd[0];
+	int *write_pipe = &fd[1];
+	if (-1 == result)
+	{
+		printf("test_unmaed_pipe pipe failed error=%d\n", errno);
+		return;
+	}
+	pid = fork();
+	if (-1 == pid)
+	{
+		printf("test_unmaed_pipe fork failed error=%d\n", errno);
+	}
+	else if (0 == pid)
+	{
+		if (-1 == close(*read_pipe))
+		{
+			printf("test_unmaed_pipe close read failed error=%d\n", errno);
+		}
+		const char *pstrText = "hello,world";
+		ssize_t nBytes = write(*write_pipe, pstrText, strlen(pstrText));
+		if (-1 == close(*write_pipe))
+		{
+			printf("test_unmaed_pipe close write failed error=%d\n", errno);
+		}
+	}
+	else
+	{
+		if (-1 == close(*write_pipe))
+		{
+			printf("test_unmaed_pipe close write failed error=%d\n", errno);
+		}
+		char szBuf[256] = { 0 };
+		ssize_t nBytes = read(*read_pipe, szBuf, sizeof(szBuf));
+		printf("recv len=%lld, %s\n", nBytes, szBuf);
+		nBytes = read(*read_pipe, szBuf, sizeof(szBuf));
+		printf("recv len=%lld, %s\n", nBytes, szBuf);
+		if (-1 == close(*read_pipe))
+		{
+			printf("test_unmaed_pipe close read failed error=%d\n", errno);
+		}
+	}
+}
+
+void test_named_pipe()
+{
+	const char *pfifo_name = "/tmp/my_fifo";
+	int res = 0;
+	int write_fd = -1;
+	int read_fd = -1;
+	int pid = 0;
+	ssize_t readlen = -1;
+
+	do
+	{
+		if (-1 == access(pfifo_name, F_OK))
+		{
+			if (-1 == (res = mkfifo(pfifo_name, 0666)))
+			{
+				printf("test_named_pipe mkfifo errno=%d\n", errno);
+				break;
+			}
+		}
+		pid = fork();
+		if (-1 == pid)
+		{
+			printf("test_named_pipe fork errno=%d\n", errno);
+			break;
+		}
+		else if (0 == pid)
+		{
+			if (-1 == (write_fd = open(pfifo_name, O_WRONLY)))
+			{
+				printf("test_named_pipe open errno=%d\n", errno);
+				break;
+			}
+			const char *pstrText = "hello,world";
+			if (-1 == write(write_fd, pstrText, strlen(pstrText)))
+			{
+				printf("test_named_pipe write_fd open errno=%d\n", errno);
+				break;
+			}
+		}
+		else
+		{
+			if (-1 == (read_fd = open(pfifo_name, O_RDONLY)))
+			{
+				printf("test_named_pipe read_fd open errno=%d\n", errno);
+				break;
+			}
+			char buf[256] = { 0 };
+			if (-1 == (readlen = read(read_fd, buf, sizeof(buf))))
+			{
+				printf("test_named_pipe open errno=%d\n", errno);
+				break;
+			}
+			printf("test_named_pipe %lld read=%s\n", readlen, buf);
+		}
+	} while (false);
+}
+int main()
+{
+    printf("hello from TestLinux!\n");
+	//test_fork();
+	//test_system();
+	//test_exec();
+	//test_unmaed_pipe();
+	test_named_pipe();
     return 0;
 }
