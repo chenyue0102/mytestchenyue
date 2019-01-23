@@ -3,7 +3,6 @@
 #include <type_traits>
 #include <string.h>
 #include <string>
-#include <thread>
 #include <chrono>
 #include <errno.h>
 #include <fcntl.h>//open
@@ -12,8 +11,22 @@
 #include <sys/mman.h>//mmap
 #include <sys/ioctl.h>
 #include <linux/cdrom.h>
+#include <sys/types.h>
+#include <sys/msg.h>
+#include <sys/ipc.h>//ftok
+#include <sys/sem.h>
+#include <pthread.h>
 
 #define TEST_FILE_NAME "/home/test/1.txt"
+#define MSG_QUIT 100
+#define MSG_PRINT 101
+
+struct mymsgbuf
+{
+	long mtype;
+	char buf[256];
+};
+
 template < typename T, size_t N >
 size_t _countof(T(&arr)[N])
 {
@@ -382,14 +395,152 @@ void test_named_pipe()
 			printf("test_named_pipe %lld read=%s\n", readlen, buf);
 		}
 	} while (false);
+	if (-1 != write_fd)
+	{
+		if (-1 == close(write_fd))
+		{
+			printf("test_named_pipe write_fd close errno=%d\n", errno);
+		}
+		write_fd = -1;
+	}
+	if (-1 != read_fd)
+	{
+		if (-1 == close(read_fd))
+		{
+			printf("test_named_pipe read_fd close errno=%d\n", errno);
+		}
+		read_fd = -1;
+	}
 }
+
+void*  send_msg_thread(void *arg)
+{
+	int msg_id = *(int*)arg;
+	mymsgbuf buf;
+	
+	do
+	{
+		memset(&buf, 0, sizeof(buf));
+		buf.mtype = MSG_PRINT;
+		strcpy(buf.buf, "hello,world");
+		if (-1 == msgsnd(msg_id, &buf, strlen(buf.buf) + 1, IPC_NOWAIT))
+		{
+			printf("send_msg_thread msgsnd errno=%d\n", errno);
+			break;
+		}
+		memset(&buf, 0, sizeof(buf));
+		buf.mtype = MSG_QUIT;
+		if (-1 == msgsnd(msg_id, &buf, 0, 0))
+		{
+			printf("send_msg_thread msgsnd errno=%d\n", errno);
+			break;
+		}
+	} while (false);
+}
+
+void read_message(int msg_id)
+{
+	int ret = -1;
+	bool bContinue = true;
+	mymsgbuf buf;
+	while (bContinue)
+	{
+		memset(&buf, 0, sizeof(buf));
+		if (-1 == (ret = msgrcv(msg_id, &buf, sizeof(buf) - sizeof(long), 0, MSG_NOERROR)))
+		{
+			printf("read_message msgrcv errno=%d\n", errno);
+			break;
+		}
+		switch (buf.mtype)
+		{
+		case MSG_QUIT:
+			printf("read_message quit\n");
+			bContinue = false;
+			break;
+		case MSG_PRINT:
+			printf("read_message print=%s", buf.buf);
+			break;
+		default:
+			printf("read_message unknown \n");
+			bContinue = false;
+			break;
+		}
+	}
+}
+
+void test_msg()
+{
+	const char *pstrMsgPath = "/home/test";
+	key_t key = ftok(pstrMsgPath, 'a');
+	int msg_id = -1;
+	pthread_t pt;
+	msqid_ds msg_info;
+	int mode = 0666;
+	
+	do
+	{
+		if (-1 == key)
+		{
+			printf("test_msg ftok errno=%d\n", errno);
+			break;
+		}
+		if (-1 == (msg_id = msgget(key, IPC_CREAT | IPC_EXCL | mode)))
+		{
+			if (-1 == (msg_id = msgget(key, IPC_CREAT)))
+			{
+				printf("test_msg msgget errno=%d\n", errno);
+				break;
+			}
+		}
+		if (-1 == msgctl(msg_id, IPC_STAT, &msg_info))
+		{
+			printf("test_msg msgctl IPC_STAT errno=%d\n", errno);
+			break;
+		}
+		memset(&msg_info, 0, sizeof(msg_info));
+		msg_info.msg_qbytes = 123456;
+		if (-1 == msgctl(msg_id, IPC_SET, &msg_info))
+		{
+			printf("test_msg msgctl IPC_SET errno=%d\n", errno);
+			//break;
+		}
+		if (0 != pthread_create(&pt, nullptr, &send_msg_thread, &msg_id))
+		{
+			printf("test_msg pthread_create errno=%d\n", errno);
+			break;
+		}
+		read_message(msg_id);
+		if (0 != pthread_join(pt, nullptr))
+		{
+			printf("test_msg pthread_join errno=%d\n", errno);
+			break;
+		}
+	} while (false);
+
+	if (-1 != msg_id)
+	{
+		if (-1 == msgctl(msg_id, IPC_RMID, nullptr))
+		{
+			printf("send_msg_thread msgctl IPC_RMID errno=%d\n", errno);
+		}
+		msg_id = -1;
+	}
+}
+
+void test_semget()
+{
+
+}
+
 int main()
 {
-    printf("hello from TestLinux!\n");
+	int a = 0666;
 	//test_fork();
 	//test_system();
 	//test_exec();
 	//test_unmaed_pipe();
-	test_named_pipe();
+	//test_named_pipe();
+	test_msg();
+	test_semget();
     return 0;
 }
