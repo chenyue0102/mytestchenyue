@@ -1,4 +1,5 @@
 ﻿#include <cstdio>
+#include <stdlib.h>
 #include <assert.h>
 #include <type_traits>
 #include <string.h>
@@ -15,7 +16,10 @@
 #include <sys/msg.h>
 #include <sys/ipc.h>//ftok
 #include <sys/sem.h>
+#include <semaphore.h>
 #include <pthread.h>
+#include <sys/shm.h>
+#include <signal.h>
 
 #define TEST_FILE_NAME "/home/test/1.txt"
 #define MSG_QUIT 100
@@ -151,6 +155,30 @@ void testFileStat()
 	} while (false);
 }
 
+void* createAnonymousMapFile(size_t size)
+{
+	void *pAddress = mmap(nullptr, size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, 0, 0);
+	if (MAP_FAILED != pAddress)
+	{
+		return pAddress;
+	}
+	else
+	{
+		printf("createAnonymousMapFile mmap failed\n");
+		return nullptr;
+	}
+}
+
+int freeAnonymousMapFile(void *pAddress, size_t size)
+{
+	int ret = munmap(pAddress, size);
+	if (-1 == ret)
+	{
+		printf("freeAnonymousMapFile errno=%d\n", errno);
+	}
+	return ret;
+}
+
 void testMapFile()
 {
 	int fd = -1;
@@ -176,7 +204,7 @@ void testMapFile()
 			break;
 		}
 		void *pstr = mmap(nullptr, nFileLen, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-		if ((void*)-1 == pstr)
+		if (MAP_FAILED == pstr)
 		{
 			printf("errno=%d\n", errno);
 			assert(false);
@@ -247,7 +275,7 @@ void testioctl()
 	fd = -1;
 }
 
-void testPart1()
+void test_part1()
 {
 	testWriteFile();
 	testReadFile();
@@ -436,6 +464,7 @@ void*  send_msg_thread(void *arg)
 			break;
 		}
 	} while (false);
+	return nullptr;
 }
 
 void read_message(int msg_id)
@@ -458,7 +487,7 @@ void read_message(int msg_id)
 			bContinue = false;
 			break;
 		case MSG_PRINT:
-			printf("read_message print=%s", buf.buf);
+			printf("read_message print=%s\n", buf.buf);
 			break;
 		default:
 			printf("read_message unknown \n");
@@ -470,13 +499,13 @@ void read_message(int msg_id)
 
 void test_msg()
 {
-	const char *pstrMsgPath = "/home/test";
+	const char *pstrMsgPath = "/tmp/msg";
 	key_t key = ftok(pstrMsgPath, 'a');
 	int msg_id = -1;
 	pthread_t pt;
 	msqid_ds msg_info;
 	int mode = 0666;
-	
+
 	do
 	{
 		if (-1 == key)
@@ -527,20 +556,369 @@ void test_msg()
 	}
 }
 
-void test_semget()
-{
+#define MAX_RESOUCR_COUNT 4
+#define PRODUCER_COUNT 3
+#define CONSUMER_COUNT 2
 
+char g_szBuf[MAX_RESOUCR_COUNT][64] = { 0 };
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+volatile int  g_producer = 0;
+volatile int  g_consumer = 0;
+sem_t sem_empty = {0};
+sem_t sem_full = {0};
+const int g_loopcount = 100;
+
+
+void add_count(volatile int *pcount)
+{
+	if (++(*pcount) >= MAX_RESOUCR_COUNT)
+	{
+		*pcount = 0;
+	}
+}
+
+void*  producer_proc(void *arg)
+{
+	int index = 0;
+	do
+	{
+		if (-1 == sem_wait(&sem_empty))
+		{
+			printf("producer_proc sem_wait errno=%d\n", errno);
+			break;
+		}
+		std::string strNum = std::to_string(random());
+		sleep(PRODUCER_COUNT);
+		if (0 != pthread_mutex_lock(&mutex))
+		{
+			printf("producer_proc pthread_mutex_lock errno=%d\n", errno);
+			break;
+		}
+		strcpy(g_szBuf[g_producer], strNum.c_str());
+		printf("producer_proc text=%s\n", g_szBuf[g_producer]);
+		add_count(&g_producer);
+		if (0 != pthread_mutex_unlock(&mutex))
+		{
+			printf("producer_proc pthread_mutex_unlock errno=%d\n", errno);
+			break;
+		}
+		if (-1 == sem_post(&sem_full))
+		{
+			printf("producer_proc sem_post errno=%d\n", errno);
+			break;
+		}
+	} while (++index < g_loopcount);
+	return nullptr;
+}
+
+void*  consumer_proc(void *arg)
+{
+	int index = 0;
+	do
+	{
+		if (-1 == sem_wait(&sem_full))
+		{
+			printf("consumer_proc sem_wait errno=%d\n", errno);
+			break;
+		}
+		if (0 != pthread_mutex_lock(&mutex))
+		{
+			printf("consumer_proc pthread_mutex_lock errno=%d\n", errno);
+			break;
+		}
+		printf("consumer_proc text=%s\n", g_szBuf[g_consumer]);
+		add_count(&g_consumer);
+		if (0 != pthread_mutex_unlock(&mutex))
+		{
+			printf("consumer_proc pthread_mutex_unlock errno=%d\n", errno);
+			break;
+		}
+		sleep(CONSUMER_COUNT);
+		if (-1 == sem_post(&sem_empty))
+		{
+			printf("consumer_proc sem_post errno=%d\n", errno);
+			break;
+		}
+	} while (++index < g_loopcount);
+	return nullptr;
+}
+
+void test_sem()
+{
+	srand(time(nullptr));
+	
+	do
+	{
+		if (-1 == sem_init(&sem_empty, 0, PRODUCER_COUNT))
+		{
+			printf("test_sem sem_init errno=%d\n", errno);
+			break;
+		}
+		if (-1 == sem_init(&sem_full, 0, 0))
+		{
+			printf("test_sem sem_init errno=%d\n", errno);
+			break;
+		}
+		if (0 != pthread_mutex_init(&mutex, nullptr))
+		{
+			printf("test_sem pthread_mutexattr_init errno=%d\n", errno);
+			break;
+		}
+		pthread_t ptProducer[PRODUCER_COUNT];
+		pthread_t ptConsumer[CONSUMER_COUNT];
+
+		for (auto &oneThread : ptProducer)
+		{
+			if (0 != pthread_create(&oneThread, nullptr, &producer_proc, nullptr))
+			{
+				printf("test_sem pthread_create errno=%d\n", errno);
+				break;
+			}
+		}
+		
+		for (auto &&oneThread : ptConsumer)
+		{
+			if (0 != pthread_create(&oneThread, nullptr, &consumer_proc, nullptr))
+			{
+				printf("test_sem pthread_create errno=%d\n", errno);
+				break;
+			}
+		}
+		
+		for (auto &oneThread : ptProducer)
+		{
+			if (0 != pthread_join(oneThread, nullptr))
+			{
+				printf("test_sem pthread_join errno=%d\n", errno);
+				break;
+			}
+		}
+
+		for (auto &&oneThread : ptConsumer)
+		{
+			if (0 != pthread_join(oneThread, nullptr))
+			{
+				printf("test_sem pthread_join errno=%d\n", errno);
+				break;
+			}
+		}
+	} while (false);
+
+	if (0 != pthread_mutex_destroy(&mutex))
+	{
+		printf("test_sem pthread_mutexattr_destroy errno=%d\n", errno);
+	}
+	if (-1 == sem_destroy(&sem_empty))
+	{
+		printf("test_sem sem_destroy errno=%d\n", errno);
+	}
+	if (-1 == sem_destroy(&sem_full))
+	{
+		printf("test_sem sem_destroy errno=%d\n", errno);
+	}
+}
+
+void test_shm()
+{
+	const char *pstrMsgPath = "/ipc/shm";
+	key_t key = ftok(pstrMsgPath, 'a');
+	int mode = 0666;
+	int shmid = -1;
+	sem_t *semid = nullptr;
+	char *pshm = nullptr;
+	pid_t pid = -1;
+
+	do
+	{
+		if (nullptr == (semid= (sem_t*)createAnonymousMapFile(sizeof(sem_t))))
+		{
+			printf("test_shm createAnonymousMapFile errno=%d\n", errno);
+			break;
+		}
+		memset(semid, 0, sizeof(sem_t));
+		if (-1 == key)
+		{
+			printf("test_shm ftok errno=%d\n", errno);
+			break;
+		}
+		if (-1 == (shmid = shmget(key, 1024, IPC_CREAT | mode)))
+		{
+			printf("test_shm shmget errno=%d\n", errno);
+			break;
+		}
+		if (nullptr == (pshm = (char*)shmat(shmid, nullptr, 0)))
+		{
+			printf("test_shm shmat errno=%d\n", errno);
+			break;
+		}
+		if (-1 == sem_init(semid, 1, 0))
+		{
+			printf("test_shm sem_init errno=%d\n", errno);
+			break;
+		}
+		pid = fork();
+		if (-1 == pid)
+		{
+			printf("test_shm fork errno=%d\n", errno);
+			break;
+		}
+		else if (0 == pid)
+		{
+			//sleep(1);
+			strcpy(pshm, "hello,world,shm");
+			if (-1 == shmctl(shmid, IPC_RMID, nullptr))
+			{
+				printf("test_shm shmctl errno=%d\n", errno);
+				break;
+			}
+			if (-1 == sem_post(semid))
+			{
+				printf("test_shm sem_post errno=%d\n", errno);
+				break;
+			}
+		}
+		else
+		{
+			if (-1 == sem_wait(semid))
+			{
+				printf("test_shm sem_wait errno=%d\n", errno);
+				break;
+			}
+			//sleep(1);
+			printf("test_shm shm=%s\n", pshm);
+			if (-1 == shmctl(shmid, IPC_RMID, nullptr))
+			{
+				printf("test_shm shmctl errno=%d\n", errno);
+				break;
+			}
+		}
+	} while (false);
+	if (-1 == sem_destroy(semid))
+	{
+		printf("test_shm sem_destroy errno=%d\n", errno);
+	}
+	if (nullptr != semid)
+	{
+		freeAnonymousMapFile(semid, sizeof(sem_t));
+		semid = nullptr;
+	}
+	if (nullptr != pshm)
+	{
+		if (-1 == shmdt(pshm))
+		{
+			printf("test_shm shmdt errno=%d\n", errno);
+		}
+		pshm = nullptr;
+	}
+}
+
+sighandler_t g_sigintold = nullptr;
+sighandler_t g_sigstop = nullptr;
+void sig_handle(int signo)
+{
+	if (SIGINT == signo)
+	{
+		printf("sig_int recv SIGINT pid=%d\n", getpid());
+		if (nullptr != g_sigintold)
+		{
+			g_sigintold(signo);
+		}
+	}
+	else if (SIGABRT == signo)
+	{
+		printf("sig_int recv SIGABRT pid=%d\n", getpid());
+		if (nullptr != g_sigstop)
+		{
+			g_sigstop(signo);
+		}
+	}
+	else
+	{
+		printf("sig_int error signo=%d\n", signo);
+	}
+}
+
+void test_signal()
+{
+	g_sigintold = signal(SIGINT, &sig_handle);
+	g_sigstop = signal(SIGABRT, &sig_handle);
+	pid_t pid = fork();
+	if (-1 == pid)
+	{
+		printf("errno=%d\n", errno);
+		assert(false);
+	}
+	else if (0 == pid)
+	{
+		sleep(60);
+	}
+	else
+	{
+		printf("parent pid=%d child pid=%d\n", getpid(), pid);
+		sleep(1);
+		if (-1 == kill(pid, SIGABRT))
+		{ 
+			printf("test_signal kill errno=%d\n", errno);
+		}
+		if (-1 == raise(SIGINT))
+		{
+			printf("test_signal raise errno=%d\n", errno);
+		}
+	}
+}
+
+void* thread_proc(void *arg)
+{
+	int *p = (int*)arg;
+	int *result = new int(0);
+	if (nullptr != p)
+	{
+		*result = *p + 1;
+	}
+	pthread_exit(result);
+}
+
+void test_thread()
+{
+	pthread_t pt = 0;
+	int arg = 9;
+	if (0 != pthread_create(&pt, nullptr, &thread_proc, &arg))
+	{
+		printf("test_thread pthread_create errno=%d\n", errno);
+	}
+	int *presult = nullptr;
+	if (0 != pthread_join(pt, (void**)&presult))
+	{
+		printf("test_thread pthread_join errno=%d\n", errno);
+	}
+	if (nullptr != presult)
+	{
+		printf("test_thread result=%d\n", *presult);
+		delete presult;
+	}
+	else
+	{
+		printf("test_thread nullptr != presult\n");
+	}
+}
+
+void test_part2()
+{
+	test_fork();
+	test_system();
+	test_exec();
+	test_unmaed_pipe();
+	test_named_pipe();
+	test_msg();
+	test_sem();
+	test_shm();
+	test_signal();
+	test_thread();
 }
 
 int main()
 {
-	int a = 0666;
-	//test_fork();
-	//test_system();
-	//test_exec();
-	//test_unmaed_pipe();
-	//test_named_pipe();
-	test_msg();
-	test_semget();
+	//test_part1();
+	//test_part2();
     return 0;
 }
