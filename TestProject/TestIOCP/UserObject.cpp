@@ -101,7 +101,7 @@ bool CUserObject::OnRecvData(const char *pBuffer, DWORD dwDataLen)
 		};
 		//同一个Object的Recv由同一个线程调用
 		static_assert(sizeof(void*) == sizeof(std::size_t), "");
-		CSingle<CTaskPool>::Instance().AddTask(doRecvFun, (std::size_t)this);
+		CSingle<CTaskPool>::Instance().AddOrderTask(doRecvFun, (TASK_GROUPID)this);
 	}
 	return true;
 }
