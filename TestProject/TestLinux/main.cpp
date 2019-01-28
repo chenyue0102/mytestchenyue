@@ -35,7 +35,7 @@ void client_process(int fd)
 			printf("client_process write errno=%d\n", errno);
 			break;
 		}
-#ifdef _DEBUG
+#if 0
 		break;
 #endif
 		if (-1 == (recvlen = read(fd, buf, sizeof(buf))))
@@ -56,11 +56,38 @@ void client_process(int fd)
 void server_process(int fd)
 {
 	char buf[64] = { 0 };
-	int len = -1;
+	int len = -1, ret = -1;
 	bool bContinue = true;
+	fd_set rd = { 0 };
+	timeval tv = { 0 };
 	while (bContinue)
 	{
-		len = read(fd, buf, sizeof(buf));
+		FD_ZERO(&rd);
+		FD_SET(fd, &rd);
+		tv.tv_sec = 1;
+		tv.tv_usec = 0;
+		ret = select(fd + 1, &rd, nullptr, nullptr, &tv);
+		if (-1 == ret)
+		{
+			printf("server_process select error=%d\n", errno);
+			break;
+		}
+		else if (0 == ret)
+		{
+			printf("server_process select timeout\n");
+			continue;
+		}
+		else if (!FD_ISSET(fd, &rd))
+		{
+			printf("server_process FD_ISSET error=%d\n", errno);
+			break;
+		}
+		else
+		{
+			printf("server_process select read\n");
+		}
+		//len = read(fd, buf, sizeof(buf));
+		len = recv(fd, buf, sizeof(buf), 0);
 		if (-1 == len)
 		{
 			printf("server_process recv -1\n");
@@ -71,7 +98,7 @@ void server_process(int fd)
 			printf("server_process recv 0\n");
 			break;
 		}
-#ifdef _DEBUG
+#if 0
 		else
 		{
 			for (;;)
@@ -430,7 +457,6 @@ void test_dns()
 int main()
 {
 	//test_unix_stream();
-	//test_inet_stream();
-	test_dns();
+	test_inet_stream();
     return 0;
 }
