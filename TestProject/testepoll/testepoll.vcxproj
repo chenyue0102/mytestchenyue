@@ -80,16 +80,21 @@
     <ClCompile Include="Log.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ServerObject.cpp" />
+    <ClCompile Include="TaskPool.cpp" />
     <ClCompile Include="UserObjectManager.cpp" />
     <ClCompile Include="UserObjectBase.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\include\ProtocolBase.h" />
+    <ClInclude Include="..\include\typedef.h" />
     <ClInclude Include="daemon.h" />
     <ClInclude Include="EPollObject.h" />
     <ClInclude Include="InterfaceDefine.h" />
     <ClInclude Include="Log.h" />
     <ClInclude Include="ServerObject.h" />
     <ClInclude Include="Single.h" />
+    <ClInclude Include="SmartPtr.h" />
+    <ClInclude Include="TaskPool.h" />
     <ClInclude Include="UserObjectManager.h" />
     <ClInclude Include="UserObjectBase.h" />
   </ItemGroup>

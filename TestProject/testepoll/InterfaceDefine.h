@@ -12,4 +12,12 @@ struct IUserObjectManager
 	
 };
 
+struct IUnknownEx
+{
+	virtual unsigned long AddRef(void) = 0;
+
+	virtual unsigned long Release(void) = 0;
+};
+
+
 #endif

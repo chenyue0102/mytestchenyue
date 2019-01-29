@@ -3,11 +3,43 @@
 #include <MSWSock.h>
 #include "pch.h"
 #include <iostream>
+#include <memory>
 #include <Windows.h>
+#include "SmartPtr.h"
 #pragma comment(lib, "Ws2_32.lib")
 
+struct IUnknownEx
+{
+	virtual unsigned long AddRef(void)
+	{
+		return 0;
+	}
+
+	virtual unsigned long Release(void)
+	{
+		return 0;
+	}
+};
+
+struct test : public IUnknownEx
+{
+	void dotest()
+	{
+		printf("test");
+	}
+
+};
 int main()
 {
+	/*std::unique_ptr<test> p(new test);
+	p->dotest();*/
+	SmartPtr<test> pSmartPtr(new test);
+	pSmartPtr->dotest();
+	auto f = [pSmartPtr]()
+	{
+		pSmartPtr->dotest();
+	};
+	
 	int a = 0;
 	WSADATA lwsaData;
 	WSAStartup(MAKEWORD(2, 2), &lwsaData);

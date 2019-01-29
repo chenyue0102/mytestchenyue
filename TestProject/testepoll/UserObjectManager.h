@@ -3,8 +3,10 @@
 #include "InterfaceDefine.h"
 #include <mutex>
 #include <map>
+#include <list>
+#include <set>
 #include <memory>
-
+#include "SmartPtr.h"
 
 struct UserObjectBase;
 class UserObjectManager : public IUserObjectManager
@@ -20,7 +22,7 @@ public:
 	void notifyRecv(int fd, const char *pBuffer, unsigned int recvLen)override;
 private:
 	std::mutex m_mutex;
-	std::map<int, std::unique_ptr<UserObjectBase>> m_fdObjectArray;
+	std::map<int, SmartPtr<UserObjectBase>> m_fdObjectArray;
 };
 
 #endif
