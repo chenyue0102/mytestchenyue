@@ -433,8 +433,8 @@ void test_dns()
 {
 	hostent *host = gethostbyname("www.baidu.com");
 	print_hostent(host);
-	in_addr addr = { 0 };
 
+	in_addr addr = { 0 };
 	int ret = inet_pton(AF_INET, "61.135.169.125", &addr);
 	char ipaddress[INET_ADDRSTRLEN] = { 0 };
 	inet_ntop(AF_INET, &addr, ipaddress, sizeof(ipaddress));
