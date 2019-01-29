@@ -16,7 +16,8 @@ namespace testepoll
 {
 	void init_daemon(const char *name)
 	{
-		int i, fd0, fd1, fd2;
+		unsigned int i;
+		int fd0, fd1, fd2;
 		pid_t pid;
 		rlimit rl;
 		struct sigaction sa;

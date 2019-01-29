@@ -5,7 +5,14 @@
 
 extern int errno;
 
-#define LOG(level, fmt, ...)\
-	syslog(level, fmt, __VA_ARGS__)
+#if 0
+#define LOG(level, ...)\
+	syslog(level, __VA_ARGS__)
+#else
+#include <stdlib.h>
+#define LOG(level, ...)\
+	printf(__VA_ARGS__);\
+	printf("\n")
+#endif
 #endif
 
