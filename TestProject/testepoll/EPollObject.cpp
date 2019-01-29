@@ -16,7 +16,7 @@ EPollObject::~EPollObject()
 {
 }
 
-bool EPollObject::open()
+bool EPollObject::init()
 {
 	bool bRes = false;
 
@@ -24,12 +24,12 @@ bool EPollObject::open()
 	{
 		if ((m_epollfd = epoll_create(1024)) < 0)
 		{
-			LOG(LOG_ERR, "EPollObject::open epoll_create errno=%d\n", errno);
+			LOG(LOG_ERR, "EPollObject::init epoll_create errno=%d\n", errno);
 			break;
 		}
 		if (0 != pthread_create(&m_waitThreadId, nullptr, &EPollObject::innerStaticWaitThread, this))
 		{
-			LOG(LOG_ERR, "EPollObject::open pthread_create errno=%d\n", errno);
+			LOG(LOG_ERR, "EPollObject::init pthread_create errno=%d\n", errno);
 			break;
 		}
 
@@ -38,12 +38,12 @@ bool EPollObject::open()
 
 	if (!bRes)
 	{
-		close();
+		destory();
 	}
 	return bRes;
 }
 
-bool EPollObject::close()
+bool EPollObject::destory()
 {
 	return false;
 }
@@ -57,11 +57,77 @@ bool EPollObject::updateFun(int fd, EventType eventType, std::function<void()> f
 	return innerEpollUpdate(fd, epoll_op);
 }
 
+bool EPollObject::removeFun(int fd, EventType eventType)
+{
+	std::lock_guard<std::mutex> lk(m_mutex);
+
+	bool bRet = false;
+
+	do
+	{
+		auto iter = m_fdEventFun.find(fd);
+		if (iter == m_fdEventFun.end())
+		{
+			LOG(LOG_DEBUG, "EPollObject::removeFun iter == m_fdEventFun.end() failed");
+			break;
+		}
+		EVENT_FUN_ARRAY &eventFunArray = iter->second;
+		if (0 == eventFunArray.erase(eventType))
+		{
+			LOG(LOG_DEBUG, "EPollObject::removeFun 0 == eventFunArray.erase(eventType) failed");
+			break;
+		}
+		if (0 == eventFunArray.size())
+		{
+			if (epoll_ctl(m_epollfd, EPOLL_CTL_DEL, fd, 0) < 0)
+			{
+				LOG(LOG_ERR, "EPollObject::removeFun epoll_ctl errno=%d\n", errno);
+				break;
+			}
+		}
+		else
+		{
+			if (!innerEpollUpdate(fd, EPOLL_CTL_MOD))
+			{
+				LOG(LOG_ERR, "EPollObject::removeFun !innerEpollUpdate failed");
+				break;
+			}
+		}
+		bRet = true;
+	} while (false);
+	return bRet;
+}
+
+bool EPollObject::removeFun(int fd)
+{
+	std::lock_guard<std::mutex> lk(m_mutex);
+
+	bool bRet = false;
+
+	do
+	{
+		auto iter = m_fdEventFun.find(fd);
+		if (iter == m_fdEventFun.end())
+		{
+			LOG(LOG_ERR, "EPollObject::removeFun iter == m_fdEventFun.end() failed");
+			break;
+		}
+		if (epoll_ctl(m_epollfd, EPOLL_CTL_DEL, fd, 0) < 0)
+		{
+			LOG(LOG_ERR, "EPollObject::removeFun epoll_ctl errno=%d\n", errno);
+			break;
+		}
+		bRet = true;
+	} while (false);
+	
+	return bRet;
+}
+
 bool EPollObject::innerEpollUpdate(int fd, int epoll_op)
 {
 	epoll_event ev = { 0 };
 	ev.data.fd = fd;
-	for (auto &eventPair : m_fdEventFun)
+	for (auto &eventPair : m_fdEventFun[fd])
 	{
 		switch (eventPair.first)
 		{

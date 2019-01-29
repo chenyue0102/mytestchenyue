@@ -7,7 +7,6 @@
 
 enum EventType
 {
-	ET_NONE = 0,
 	ET_READ,
 };
 class EPollObject
@@ -16,10 +15,11 @@ public:
 	EPollObject();
 	~EPollObject();
 public:
-	bool open();
-	bool close();
+	bool init();
+	bool destory();
 	bool updateFun(int fd, EventType eventType, std::function<void()> fun);
 	bool removeFun(int fd, EventType eventType);
+	bool removeFun(int fd);
 private:
 	bool innerEpollUpdate(int fd, int epoll_op);
 private:

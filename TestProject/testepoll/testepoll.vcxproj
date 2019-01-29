@@ -80,13 +80,18 @@
     <ClCompile Include="Log.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ServerObject.cpp" />
+    <ClCompile Include="UserObjectManager.cpp" />
+    <ClCompile Include="UserObjectBase.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="daemon.h" />
     <ClInclude Include="EPollObject.h" />
+    <ClInclude Include="InterfaceDefine.h" />
     <ClInclude Include="Log.h" />
     <ClInclude Include="ServerObject.h" />
     <ClInclude Include="Single.h" />
+    <ClInclude Include="UserObjectManager.h" />
+    <ClInclude Include="UserObjectBase.h" />
   </ItemGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Link>

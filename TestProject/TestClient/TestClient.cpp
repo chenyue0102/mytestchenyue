@@ -1,12 +1,48 @@
 ﻿// TestClient.cpp : 此文件包含 "main" 函数。程序执行将在此处开始并结束。
 //
-
+#include <MSWSock.h>
 #include "pch.h"
 #include <iostream>
+#include <Windows.h>
+#pragma comment(lib, "Ws2_32.lib")
 
 int main()
 {
-    std::cout << "Hello World!\n"; 
+	int a = 0;
+	WSADATA lwsaData;
+	WSAStartup(MAKEWORD(2, 2), &lwsaData);
+
+	sockaddr_in addr = { 0 };
+	addr.sin_family = AF_INET;
+	addr.sin_port = htons(5617);
+	addr.sin_addr.S_un.S_addr = inet_addr("192.168.56.101");
+
+	SOCKET s = socket(AF_INET, SOCK_STREAM, 0);
+
+	do
+	{
+		printf("0:exit 1:init and connect 2:send 3: 4:close\n");
+		scanf("%d", &a);
+		switch (a)
+		{
+		case 0:
+			break;
+		case 1:
+			s = socket(AF_INET, SOCK_STREAM, 0);
+			connect(s, (const sockaddr*)&addr, sizeof(addr));
+			break;
+		case 2:
+			send(s, "1234", 4, 0);
+			break;
+		case 3:
+			break;
+		case 4:
+			closesocket(s);
+			break;
+		default:
+			break;
+		}
+	} while (0 != a);
 }
 
 // 运行程序: Ctrl + F5 或调试 >“开始执行(不调试)”菜单
