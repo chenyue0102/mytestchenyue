@@ -327,6 +327,9 @@ bool ServerObject::onError(int fd)
 	std::unique_lock<std::mutex> lk(m_mutex);
 
 	innerCleanSocket(fd);
+	lk.unlock();
+	m_pUserObjectManager->notifyClose(fd);
+	lk.lock();
 	return false;
 }
 
