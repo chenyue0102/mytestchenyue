@@ -1,4 +1,5 @@
 #include "UserObjectManager.h"
+#include <assert.h>
 #include "UserObjectBase.h"
 #include "Log.h"
 #include "Single.h"
@@ -28,6 +29,7 @@ void UserObjectManager::notifyAccept(int fd, sockaddr_in & addr)
 	else
 	{
 		LOG(LOG_ERR, "TcpContextManager::notifyAccept fd failed\n");
+		assert(false);
 	}
 }
 
@@ -51,6 +53,7 @@ void UserObjectManager::notifyClose(int fd)
 	else
 	{
 		LOG(LOG_ERR, "TcpContextManager::notifyClose erase failed\n");
+		assert(false);
 	}
 }
 
@@ -66,5 +69,6 @@ void UserObjectManager::notifyRecv(int fd, const char * pBuffer, unsigned int re
 	else
 	{
 		LOG(LOG_ERR, "TcpContextManager::notifyRecv find failed\n");
+		assert(false);
 	}
 }

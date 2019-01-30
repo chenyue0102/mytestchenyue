@@ -1,4 +1,5 @@
 #include "ServerObject.h"
+#include <assert.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>//sockaddr_in
 #include <fcntl.h>//fcntl
@@ -32,17 +33,20 @@ bool ServerObject::init(IUserObjectManager *pUserObjectManager)
 		if (nullptr == (m_pUserObjectManager = pUserObjectManager))
 		{
 			LOG(LOG_ERR, "ServerObject::init pUserObjectManager failed\n");
+			assert(false);
 			break;
 		}
 		if ((m_fdListen = socket(AF_INET, SOCK_STREAM, 0)) < 0)
 		{
 			LOG(LOG_ERR, "ServerObject::init socket errno=%d\n", errno);
+			assert(false);
 			break;
 		}
 		int flags = fcntl(m_fdListen, F_GETFL, 0);
 		if (fcntl(m_fdListen, F_SETFL, flags | O_NONBLOCK) < 0)
 		{
 			LOG(LOG_ERR, "ServerObject::init fcntl errno=%d\n", errno);
+			assert(false);
 			break;
 		}
 
@@ -53,11 +57,13 @@ bool ServerObject::init(IUserObjectManager *pUserObjectManager)
 		if (bind(m_fdListen, (const sockaddr*)&addr, sizeof(addr)) < 0)
 		{
 			LOG(LOG_ERR, "ServerObject::init bind errno=%d\n", errno);
+			assert(false);
 			break;
 		}
 		if (-1 == listen(m_fdListen, BACKLOG))
 		{
 			LOG(LOG_ERR, "ServerObject::init listen errno=%d\n", errno);
+			assert(false);
 			break;
 		}
 		auto accpentFun = [this]() 
@@ -68,6 +74,7 @@ bool ServerObject::init(IUserObjectManager *pUserObjectManager)
 		if (!epollObject.updateFun(m_fdListen, ET_READ, accpentFun))
 		{
 			LOG(LOG_ERR, "ServerObject::init updateFun errno=%d\n", errno);
+			assert(false);
 			break;
 		}
 
@@ -93,12 +100,15 @@ bool ServerObject::send(int fd, const char * pBuffer, unsigned int nLen)
 		if (nullptr == pBuffer
 			|| 0 == nLen)
 		{
+			LOG(LOG_ERR, "ServerObject::send param failed\n");
+			assert(false);
 			break;
 		}
 		auto iter = m_acceptSocketArray.find(fd);
 		if (iter == m_acceptSocketArray.end())
 		{
 			LOG(LOG_ERR, "ServerObject::send iter == m_acceptSocketArray.end() failed\n");
+			assert(false);
 			break;
 		}
 		SOCKET_INFO &sockInfo = iter->second;
@@ -141,6 +151,7 @@ bool ServerObject::onAccept()
 		if (nullptr == m_pUserObjectManager)
 		{
 			LOG(LOG_ERR, "ServerObject::onAccept nullptr == m_pUserObjectManager\n");
+			assert(false);
 			break;
 		}
 		sockaddr_in addr = { 0 };
@@ -150,6 +161,7 @@ bool ServerObject::onAccept()
 			if (EAGAIN != errno)
 			{
 				LOG(LOG_ERR, "ServerObject::onAccept accept errno=%d\n", errno);
+				assert(false);
 			}
 			break;
 		}
@@ -157,6 +169,7 @@ bool ServerObject::onAccept()
 		if (fcntl(acpSock, F_SETFL, flags | O_NONBLOCK) < 0)
 		{
 			LOG(LOG_ERR, "ServerObject::onAccept fcntl errno=%d\n", errno);
+			assert(false);
 			break;
 		}
 
@@ -169,6 +182,7 @@ bool ServerObject::onAccept()
 		if (!epollObject.updateFun(acpSock, ET_READ, readFun))
 		{
 			LOG(LOG_ERR, "ServerObject::onAccept updateFun errno=%d\n", errno);
+			assert(false);
 			break;
 		}
 
@@ -205,6 +219,7 @@ bool ServerObject::onRead(int fd)
 		if (nullptr == m_pUserObjectManager)
 		{
 			LOG(LOG_ERR, "ServerObject::onRead nullptr == m_pUserObjectManager failed\n");
+			assert(false);
 			break;
 		}
 		ssize_t ret = recv(fd, buf, sizeof(buf), 0);
@@ -214,8 +229,16 @@ bool ServerObject::onRead(int fd)
 			m_pUserObjectManager->notifyRecv(fd, buf, static_cast<unsigned int>(ret));
 			lk.lock();
 		}
-		else if (0 == ret)
+		else
 		{
+			//ret==0 client close, ret < 0 error
+			if (ret < 0)
+			{
+				if (EAGAIN != errno)
+				{
+					LOG(LOG_ERR, "ServerObject::onAccept accept errno=%d\n", errno);
+				}
+			}
 			if (0 == m_acceptSocketArray.erase(fd))
 			{
 				LOG(LOG_ERR, "ServerObject::onAccept 0 == m_acceptSocketArray.erase(fd) failed\n");
@@ -231,14 +254,7 @@ bool ServerObject::onRead(int fd)
 			if (close(fd) < 0)
 			{
 				LOG(LOG_ERR, "ServerObject::onAccept close errno=%d\n", errno);
-			}
-			break;
-		}
-		else
-		{
-			if (EAGAIN != errno)
-			{
-				LOG(LOG_ERR, "ServerObject::onAccept accept errno=%d\n", errno);
+				assert(false);
 			}
 			break;
 		}
@@ -264,6 +280,7 @@ unsigned int ServerObject::innerDoSend(int fd, const char * pBuffer, unsigned in
 		else
 		{
 			LOG(LOG_ERR, "ServerObject::innerDoSend send errno=%d\n", errno);
+			assert(false);
 			break;
 		}
 	} while (ret > 0 && offset < nLen);

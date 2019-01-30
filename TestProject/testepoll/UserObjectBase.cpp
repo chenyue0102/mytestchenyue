@@ -1,4 +1,5 @@
 #include "UserObjectBase.h"
+#include <assert.h>
 #include <memory.h>
 #include <list>
 #include <string>
@@ -20,11 +21,13 @@ UserObjectBase::UserObjectBase()
 	, m_recvBuffer()
 	, m_tLastMsgTime(time(nullptr))
 {
+	LOG(LOG_DBG, "UserObjectBase::UserObjectBase\n");
 }
 
 
 UserObjectBase::~UserObjectBase()
 {
+	LOG(LOG_DBG, "UserObjectBase::~UserObjectBase\n");
 }
 
 void UserObjectBase::setSockInfo(int fd, const sockaddr_in & addr)
@@ -46,6 +49,7 @@ void UserObjectBase::notifyRecv(const char * pBuffer, unsigned int recvLen)
 	if (ObjectStatusRecv != m_objectStatus)
 	{
 		LOG(LOG_ERR, "UserObjectBase::notifyRecv m_objectStatus=%d failed", m_objectStatus);
+		assert(false);
 		return;
 	}
 

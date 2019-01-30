@@ -1,4 +1,5 @@
 #include "EPollObject.h"
+#include <assert.h>
 #include <sys/epoll.h>
 #include "Log.h"
 
@@ -25,11 +26,13 @@ bool EPollObject::init()
 		if ((m_epollfd = epoll_create(1024)) < 0)
 		{
 			LOG(LOG_ERR, "EPollObject::init epoll_create errno=%d\n", errno);
+			assert(false);
 			break;
 		}
 		if (0 != pthread_create(&m_waitThreadId, nullptr, &EPollObject::innerStaticWaitThread, this))
 		{
 			LOG(LOG_ERR, "EPollObject::init pthread_create errno=%d\n", errno);
+			assert(false);
 			break;
 		}
 
@@ -69,19 +72,23 @@ bool EPollObject::removeFun(int fd, EventType eventType)
 		if (iter == m_fdEventFun.end())
 		{
 			LOG(LOG_DEBUG, "EPollObject::removeFun iter == m_fdEventFun.end() failed");
+			assert(false);
 			break;
 		}
 		EVENT_FUN_ARRAY &eventFunArray = iter->second;
 		if (0 == eventFunArray.erase(eventType))
 		{
 			LOG(LOG_DEBUG, "EPollObject::removeFun 0 == eventFunArray.erase(eventType) failed");
+			assert(false);
 			break;
 		}
 		if (0 == eventFunArray.size())
 		{
+			m_fdEventFun.erase(iter);
 			if (epoll_ctl(m_epollfd, EPOLL_CTL_DEL, fd, 0) < 0)
 			{
 				LOG(LOG_ERR, "EPollObject::removeFun epoll_ctl errno=%d\n", errno);
+				assert(false);
 				break;
 			}
 		}
@@ -90,6 +97,7 @@ bool EPollObject::removeFun(int fd, EventType eventType)
 			if (!innerEpollUpdate(fd, EPOLL_CTL_MOD))
 			{
 				LOG(LOG_ERR, "EPollObject::removeFun !innerEpollUpdate failed");
+				assert(false);
 				break;
 			}
 		}
@@ -110,11 +118,14 @@ bool EPollObject::removeFun(int fd)
 		if (iter == m_fdEventFun.end())
 		{
 			LOG(LOG_ERR, "EPollObject::removeFun iter == m_fdEventFun.end() failed");
+			assert(false);
 			break;
 		}
+		m_fdEventFun.erase(iter);
 		if (epoll_ctl(m_epollfd, EPOLL_CTL_DEL, fd, 0) < 0)
 		{
 			LOG(LOG_ERR, "EPollObject::removeFun epoll_ctl errno=%d\n", errno);
+			assert(false);
 			break;
 		}
 		bRet = true;
@@ -136,6 +147,7 @@ bool EPollObject::innerEpollUpdate(int fd, int epoll_op)
 			break;
 		default:
 			LOG(LOG_ERR, "EPollObject::innerEpollUpdate event=%d failed", eventPair.first);
+			assert(false);
 			break;
 		}
 	}
