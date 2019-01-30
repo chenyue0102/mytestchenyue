@@ -1,4 +1,5 @@
 #include "ServerObject.h"
+#include <algorithm>
 #include <assert.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>//sockaddr_in
@@ -86,6 +87,8 @@ bool ServerObject::init(IUserObjectManager *pUserObjectManager)
 bool ServerObject::destory()
 {
 	std::lock_guard<std::mutex> lk(m_mutex);
+
+
 	return false;
 }
 
@@ -118,13 +121,11 @@ bool ServerObject::send(int fd, const char * pBuffer, unsigned int nLen)
 			if (sendLen < nLen)
 			{
 				sockInfo.sendBytes.append(pBuffer + sendLen, nLen - sendLen);
-				break;
 			}
 		}
 		else
 		{
 			sockInfo.sendBytes.append(pBuffer, nLen);
-			break;
 		}
 		bRet = true;
 	} while (false);
@@ -173,13 +174,24 @@ bool ServerObject::onAccept()
 			break;
 		}
 
+		EPollObject &epollObject = Single<EPollObject>::Instance();
+
 		auto readFun = [this, acpSock]()
 			{
 				while (onRead(acpSock));
 			};
-
-		EPollObject &epollObject = Single<EPollObject>::Instance();
 		if (!epollObject.updateFun(acpSock, ET_READ, readFun))
+		{
+			LOG(LOG_ERR, "ServerObject::onAccept updateFun errno=%d\n", errno);
+			assert(false);
+			break;
+		}
+
+		auto sendFun = [this, acpSock]()
+		{
+			onSend(acpSock);
+		};
+		if (!epollObject.updateFun(acpSock, ET_WRITE, sendFun))
 		{
 			LOG(LOG_ERR, "ServerObject::onAccept updateFun errno=%d\n", errno);
 			assert(false);
@@ -190,6 +202,8 @@ bool ServerObject::onAccept()
 
 		lk.unlock();
 		m_pUserObjectManager->notifyAccept(acpSock, addr);
+		lk.lock();
+
 		bRet = true;
 	} while (false);
 
@@ -223,37 +237,50 @@ bool ServerObject::onRead(int fd)
 			break;
 		}
 		ssize_t ret = recv(fd, buf, sizeof(buf), 0);
+		bool bCleanSocket = false;
 		if (ret > 0)
 		{
 			lk.unlock();
 			m_pUserObjectManager->notifyRecv(fd, buf, static_cast<unsigned int>(ret));
 			lk.lock();
 		}
+		else if (0 == ret)
+		{
+			//client close
+			bCleanSocket = true;
+		}
 		else
 		{
-			//ret==0 client close, ret < 0 error
-			if (ret < 0)
+			//error
+			if (EAGAIN == errno
+				|| EINTR == errno)
 			{
-				if (EAGAIN != errno)
-				{
-					LOG(LOG_ERR, "ServerObject::onAccept accept errno=%d\n", errno);
-				}
+				break;
 			}
+			else
+			{
+				LOG(LOG_ERR, "ServerObject::onRead recv errno=%d\n", errno);
+				bCleanSocket = true;
+			}
+		}
+		
+		if (bCleanSocket)
+		{
 			if (0 == m_acceptSocketArray.erase(fd))
 			{
-				LOG(LOG_ERR, "ServerObject::onAccept 0 == m_acceptSocketArray.erase(fd) failed\n");
+				LOG(LOG_ERR, "ServerObject::onRead 0 == m_acceptSocketArray.erase(fd) failed\n");
 			}
 			EPollObject &epollObject = Single<EPollObject>::Instance();
 			if (!epollObject.removeFun(fd))
 			{
-				LOG(LOG_ERR, "ServerObject::onAccept !epollObject.removeFun(fd) failed\n");
+				LOG(LOG_ERR, "ServerObject::onRead !epollObject.removeFun(fd) failed\n");
 			}
 			lk.unlock();
 			m_pUserObjectManager->notifyClose(fd);
 			lk.lock();
 			if (close(fd) < 0)
 			{
-				LOG(LOG_ERR, "ServerObject::onAccept close errno=%d\n", errno);
+				LOG(LOG_ERR, "ServerObject::onRead close errno=%d\n", errno);
 				assert(false);
 			}
 			break;
@@ -263,12 +290,46 @@ bool ServerObject::onRead(int fd)
 	return bRet;
 }
 
+bool ServerObject::onSend(int fd)
+{
+	std::unique_lock<std::mutex> lk(m_mutex);
+
+	bool bRet = false;
+
+	do
+	{
+		if (nullptr == m_pUserObjectManager)
+		{
+			LOG(LOG_ERR, "ServerObject::onSend nullptr == m_pUserObjectManager failed\n");
+			assert(false);
+			break;
+		}
+		auto iter = m_acceptSocketArray.find(fd);
+		if (iter == m_acceptSocketArray.end())
+		{
+			LOG(LOG_ERR, "ServerObject::onSend iter == m_acceptSocketArray.end() failed\n");
+			break;
+		}
+		SOCKET_INFO &sockInfo = iter->second;
+		auto &sendBytes = sockInfo.sendBytes;
+		if (sendBytes.empty())
+		{
+			break;
+		}
+		unsigned int sendLen = innerDoSend(fd, sendBytes.data(), sendBytes.size());
+		sendBytes.erase(0, sendLen);
+
+		//bRet = true;
+	} while (false);
+	return bRet;
+}
+
 unsigned int ServerObject::innerDoSend(int fd, const char * pBuffer, unsigned int nLen)
 {
 	ssize_t ret = 0, offset = 0;
 	do
 	{
-		ret = ::send(fd, pBuffer + offset, nLen - offset, 0);
+		ret = ::send(fd, pBuffer + offset, std::min(nLen - offset, static_cast<ssize_t>(MAX_SENDLEN)), 0);
 		if (ret > 0)
 		{
 			offset += ret;
@@ -279,8 +340,12 @@ unsigned int ServerObject::innerDoSend(int fd, const char * pBuffer, unsigned in
 		}
 		else
 		{
-			LOG(LOG_ERR, "ServerObject::innerDoSend send errno=%d\n", errno);
-			assert(false);
+			if (!(EAGAIN == errno
+				|| EINTR == errno))
+			{
+				LOG(LOG_ERR, "ServerObject::innerDoSend send errno=%d\n", errno);
+				assert(false);
+			}
 			break;
 		}
 	} while (ret > 0 && offset < nLen);

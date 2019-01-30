@@ -8,6 +8,7 @@
 enum EventType
 {
 	ET_READ,
+	ET_WRITE,
 };
 class EPollObject
 {

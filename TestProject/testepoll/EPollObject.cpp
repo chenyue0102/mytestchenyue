@@ -145,6 +145,9 @@ bool EPollObject::innerEpollUpdate(int fd, int epoll_op)
 		case ET_READ:
 			ev.events |= EPOLLIN;
 			break;
+		case ET_WRITE:
+			ev.events |= EPOLLOUT;
+			break;
 		default:
 			LOG(LOG_ERR, "EPollObject::innerEpollUpdate event=%d failed", eventPair.first);
 			assert(false);
@@ -197,24 +200,25 @@ void EPollObject::innerWaitThread()
 		for (int i = 0; i < ret; i++)
 		{
 			int fd = events[i].data.fd;
-			auto iterFD = m_fdEventFun.find(fd);
-			if (iterFD == m_fdEventFun.end())
-			{
-				continue;
-			}
-			EVENT_FUN_ARRAY &eventFunArray = iterFD->second;
+			//m_fdEventFun内容，在循环中，有可能被修改，随时使用，随时查找
 			int flags = events[i].events;
 			if ((flags | EPOLLIN)
-				&& eventFunArray.find(ET_READ) != eventFunArray.end())
+				&& m_fdEventFun.find(fd) != m_fdEventFun.end()
+				&& m_fdEventFun[fd].find(ET_READ) != m_fdEventFun[fd].end())
 			{
-				std::function<void()> f = eventFunArray[ET_READ];
+				std::function<void()> f = m_fdEventFun[fd][ET_READ];
 				lk.unlock();
 				f();
 				lk.lock();
 			}
-			if (flags | EPOLLOUT)
+			if ((flags | EPOLLOUT)
+				&& m_fdEventFun.find(fd) != m_fdEventFun.end()
+				&& m_fdEventFun[fd].find(ET_WRITE) != m_fdEventFun[fd].end())
 			{
-		
+				std::function<void()> f = m_fdEventFun[fd][ET_WRITE];
+				lk.unlock();
+				f();
+				lk.lock();
 			}
 			if (flags | EPOLLHUP | EPOLLRDHUP)
 			{

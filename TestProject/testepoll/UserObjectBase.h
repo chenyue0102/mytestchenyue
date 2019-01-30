@@ -5,8 +5,8 @@
 #include <arpa/inet.h>//sockaddr_in
 #include "InterfaceDefine.h"
 
+struct MSGHEADER;
 struct sockaddr_in;
-struct MSGHEADERLOCAL;
 class UserObjectBase : public IUnknownEx
 {
 	enum ObjectStatus
@@ -23,7 +23,7 @@ public:
 	void notifyRecv(const char * pBuffer, unsigned int recvLen);
 	void notifyClose();
 	int getSocket()const;
-	bool sendMsg(MSGHEADERLOCAL *pHeader);
+	bool sendMsg(const char *pBuffer, unsigned int nLen);
 	std::size_t getTaskGroupId()const;
 private:
 	void InnerDoRecvMsg();
@@ -32,13 +32,14 @@ public:
 
 	virtual unsigned long Release(void)override;
 protected:
-	virtual bool onMsg(MSGHEADERLOCAL *pHeader);
+	virtual bool onMsg(const char *pBuffer, unsigned int nLen);
 private:
 	mutable std::mutex m_mutex;
 	ObjectStatus m_objectStatus;
 	std::atomic_ulong m_ulRef;
 	int m_fd;
-	sockaddr_in m_addr;
+	unsigned short m_port;
+	char m_ipAddress[INET_ADDRSTRLEN];
 	std::string m_recvBuffer;
 	time_t m_tLastMsgTime;
 };

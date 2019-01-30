@@ -1,4 +1,5 @@
 #include "UserObjectBase.h"
+#include <type_traits>
 #include <assert.h>
 #include <memory.h>
 #include <list>
@@ -9,15 +10,22 @@
 #include "TaskPool.h"
 #include "Single.h"
 #include "SmartPtr.h"
+#include "Single.h"
+#include "ServerObject.h"
 
-
+template < typename T, size_t N >
+size_t _countof(T(&arr)[N])
+{
+	return std::extent< T[N] >::value;
+}
 
 UserObjectBase::UserObjectBase()
 	: m_mutex()
 	, m_objectStatus(ObjectStatusAccept)
 	, m_ulRef(0)
 	, m_fd(-1)
-	, m_addr()
+	, m_port(0)
+	, m_ipAddress()
 	, m_recvBuffer()
 	, m_tLastMsgTime(time(nullptr))
 {
@@ -35,7 +43,8 @@ void UserObjectBase::setSockInfo(int fd, const sockaddr_in & addr)
 	std::lock_guard<std::mutex> lk(m_mutex);
 
 	m_fd = fd;
-	m_addr = addr;
+	m_port = ntohs(addr.sin_port);
+	inet_ntop(AF_INET, &addr.sin_addr, m_ipAddress, sizeof(m_ipAddress));
 }
 
 void UserObjectBase::notifyRecv(const char * pBuffer, unsigned int recvLen)
@@ -59,12 +68,12 @@ void UserObjectBase::notifyRecv(const char * pBuffer, unsigned int recvLen)
 	{
 		m_recvBuffer.append(pBuffer, recvLen);
 
-		if (m_recvBuffer.size() >= sizeof(MSGHEADERNET))
+		if (m_recvBuffer.size() >= sizeof(MSGHEADER))
 		{
-			MSGHEADERNET net = { 0 };
-			memcpy(&net, m_recvBuffer.data(), sizeof(MSGHEADERNET));
-			MSGHEADERLOCAL local = Net2Local(net);
-			if (m_recvBuffer.size() >= local.dwMsgLen)
+			MSGHEADER header = { 0 };
+			memcpy(&header, m_recvBuffer.data(), sizeof(MSGHEADER));
+			header = Net2Host(header);
+			if (m_recvBuffer.size() >= header.dwMsgLen)
 			{
 				SmartPtr<UserObjectBase> pTempObject(this);
 				auto processRecvFun = [pTempObject]()mutable->void
@@ -99,11 +108,48 @@ int UserObjectBase::getSocket() const
 	return m_fd;
 }
 
-bool UserObjectBase::sendMsg(MSGHEADERLOCAL * pHeader)
+bool UserObjectBase::sendMsg(const char *pBuffer, unsigned int nLen)
 {
+	std::lock_guard<std::mutex> lk(m_mutex);
+
 	bool bRet = false;
 
+	do
+	{
+		if (ObjectStatusRecv != m_objectStatus)
+		{
+			LOG(LOG_ERR, "UserObjectBase::sendMsg m_objectStatus failed\n");
+			break;
+		}
+		if (nullptr == pBuffer || nLen < sizeof(MSGHEADER))
+		{
+			LOG(LOG_ERR, "UserObjectBase::sendMsg param failed\n");
+			assert(false);
+			break;
+		}
+		MSGHEADER header = { 0 };
+		memcpy(&header, pBuffer, sizeof(header));
+		if (header.dwMsgLen != nLen)
+		{
+			LOG(LOG_ERR, "UserObjectBase::sendMsg len failed\n");
+			assert(false);
+			break;
+		}
+		MSGHEADER netHeader = Host2Net(header);
+		memcpy(const_cast<char*>(pBuffer), &netHeader, sizeof(netHeader));
 
+		ServerObject &serverObject = Single<ServerObject>::Instance();
+		if (!serverObject.send(m_fd, pBuffer, nLen))
+		{
+			memcpy(const_cast<char*>(pBuffer), &header, sizeof(header));
+			LOG(LOG_ERR, "UserObjectBase::sendMsg send failed\n");
+			assert(false);
+			break;
+		}
+		memcpy(const_cast<char*>(pBuffer), &header, sizeof(header));
+
+		bRet = true;
+	} while (false);
 	return bRet;
 }
 
@@ -120,19 +166,19 @@ void UserObjectBase::InnerDoRecvMsg()
 
 		if (ObjectStatusRecv == m_objectStatus)
 		{
-			while (m_recvBuffer.size() >= sizeof(MSGHEADERNET))
+			while (m_recvBuffer.size() >= sizeof(MSGHEADER))
 			{
-				MSGHEADERNET net = { 0 };
-				memcpy(&net, m_recvBuffer.data(), sizeof(MSGHEADERNET));
-				MSGHEADERLOCAL local = Net2Local(net);
-				if (m_recvBuffer.size() >= local.dwMsgLen)
+				MSGHEADER header = { 0 };
+				memcpy(&header, m_recvBuffer.data(), sizeof(MSGHEADER));
+				header = Net2Host(header);
+				if (m_recvBuffer.size() >= header.dwMsgLen)
 				{
-					memcpy(&*m_recvBuffer.begin(), &local, sizeof(MSGHEADERLOCAL));//包头转换成本地结构体
-					if (0 != local.dwMsgID)//msgid为0，表示心跳
+					memcpy(&*m_recvBuffer.begin(), &header, sizeof(MSGHEADER));//包头转换成本地结构体
+					if (0 != header.dwMsgID)//msgid为0，表示心跳
 					{
-						tempMsgArray.push_back(std::string(m_recvBuffer.data(), local.dwMsgLen));
+						tempMsgArray.push_back(std::string(m_recvBuffer.data(), header.dwMsgLen));
 					}
-					m_recvBuffer.erase(0, local.dwMsgLen);
+					m_recvBuffer.erase(0, header.dwMsgLen);
 				}
 				else
 				{
@@ -148,7 +194,7 @@ void UserObjectBase::InnerDoRecvMsg()
 	bool bError = false;
 	for (auto &oneMsg : tempMsgArray)
 	{
-		if (!onMsg((MSGHEADERLOCAL*)oneMsg.data()))
+		if (!onMsg(oneMsg.data(), static_cast<unsigned int>(oneMsg.size())))
 		{
 			bError = true;
 			break;
@@ -179,12 +225,82 @@ unsigned long UserObjectBase::Release(void)
 	return ulResult;
 }
 
-bool UserObjectBase::onMsg(MSGHEADERLOCAL *pHeader)
+bool UserObjectBase::onMsg(const char *pBuffer, unsigned int nLen)
 {
-	switch (pHeader->dwMsgID)
+	if (nullptr == pBuffer || nLen < sizeof(MSGHEADER))
 	{
-	case 1:
+		LOG(LOG_ERR, "UserObjectBase::onMsg param failed\n");
+		assert(false);
+		return false;
+	}
+	MSGHEADER header = { 0 };
+	memcpy(&header, pBuffer, sizeof(header));
+	if (header.dwMsgLen != nLen)
+	{
+		LOG(LOG_ERR, "UserObjectBase::onMsg dwMsgLen failed\n");
+		assert(false);
+		return false;
+	}
+	switch (header.dwMsgID)
+	{
+	case PID_GET_IPADDRESS:
+	{
+		MSG_GET_IPADDRESS_ACK ack = { 0 };
+		ack.header.dwMsgLen = sizeof(ack);
+		ack.header.dwMsgID = PID_GET_IPADDRESS | PID_ACK;
+		strncpy(ack.szIpAddress, m_ipAddress, _countof(ack.szIpAddress));
+		sendMsg((char*)&ack, sizeof(ack));
 		break;
+	}
+	case PID_SEND_BIG_DATA:
+	{
+		MSG_BIG_DATA_REQ *pBigData = (MSG_BIG_DATA_REQ*)pBuffer;
+		assert(pBigData->header.dwMsgLen == sizeof(MSG_BIG_DATA_REQ));
+		assert(pBigData->header.dwMsgLen == sizeof(MSG_BIG_DATA_REQ));
+		for (auto &x : pBigData->a)
+		{
+			assert('a' == x);
+		}
+		for (auto &x : pBigData->b)
+		{
+			assert('b' == x);
+		}
+		for (auto &x : pBigData->d)
+		{
+			assert('d' == x);
+		}
+		for (auto &x : pBigData->e)
+		{
+			assert('e' == x);
+		}
+		for (auto &x : pBigData->f)
+		{
+			assert('f' == x);
+		}
+
+		MSG_BIG_DATA_ACK ack = { 0 };
+		ack.header.dwMsgID = PID_SEND_BIG_DATA | PID_ACK;
+		ack.header.dwMsgLen = sizeof(ack);
+		sendMsg((char*)&ack, sizeof(ack));
+		break;
+	}
+	case PID_GET_BIG_DATA:
+	{
+		MSG_GET_BIG_DATA_REQ req = { 0 };
+		memcpy(&req, pBuffer, sizeof(MSG_GET_BIG_DATA_REQ));
+
+		MSG_GET_BIG_DATA_ACK *pBigData = new MSG_GET_BIG_DATA_ACK();
+		pBigData->header.dwMsgLen = sizeof(MSG_GET_BIG_DATA_ACK);
+		pBigData->header.dwMsgID = PID_GET_BIG_DATA | PID_ACK;
+		memset(pBigData->a, 'a', sizeof(pBigData->a));
+		memset(pBigData->b, 'b', sizeof(pBigData->b));
+		memset(pBigData->c, 'c', sizeof(pBigData->c));
+		memset(pBigData->d, 'd', sizeof(pBigData->d));
+		memset(pBigData->e, 'e', sizeof(pBigData->e));
+		memset(pBigData->f, 'f', sizeof(pBigData->f));
+		sendMsg((char*)pBigData, sizeof(MSG_GET_BIG_DATA_ACK));
+		break;
+	}
 	default:
 		break;
 	}

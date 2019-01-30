@@ -26,6 +26,7 @@ public:
 private:
 	bool onAccept();
 	bool onRead(int fd);
+	bool onSend(int fd);
 	unsigned int innerDoSend(int fd, const char *pBuffer, unsigned int nLen);
 private:
 	int m_fdListen;
