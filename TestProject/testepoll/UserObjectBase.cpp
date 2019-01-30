@@ -202,11 +202,8 @@ void UserObjectBase::InnerDoRecvMsg()
 	}
 	if (bError)
 	{
-		int fd = getSocket();
-		if (close(fd) < 0)
-		{
-			LOG(LOG_ERR, "UserObjectBase::InnerDoRecvMsg close errno=%d\n", errno);
-		}
+		ServerObject &serverObject = Single<ServerObject>::Instance();
+		serverObject.closeSocket(getSocket());
 	}
 }
 
@@ -250,6 +247,7 @@ bool UserObjectBase::onMsg(const char *pBuffer, unsigned int nLen)
 		ack.header.dwMsgID = PID_GET_IPADDRESS | PID_ACK;
 		strncpy(ack.szIpAddress, m_ipAddress, _countof(ack.szIpAddress));
 		sendMsg((char*)&ack, sizeof(ack));
+		return false;
 		break;
 	}
 	case PID_SEND_BIG_DATA:
@@ -299,6 +297,8 @@ bool UserObjectBase::onMsg(const char *pBuffer, unsigned int nLen)
 		memset(pBigData->e, 'e', sizeof(pBigData->e));
 		memset(pBigData->f, 'f', sizeof(pBigData->f));
 		sendMsg((char*)pBigData, sizeof(MSG_GET_BIG_DATA_ACK));
+
+		return false;
 		break;
 	}
 	default:

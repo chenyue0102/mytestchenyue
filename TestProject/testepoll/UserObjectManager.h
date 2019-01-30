@@ -14,7 +14,7 @@ class UserObjectManager : public IUserObjectManager
 public:
 	UserObjectManager();
 	~UserObjectManager();
-public:
+public://回掉接口中，不能够再反调ServerObject函数
 	void notifyAccept(int fd, sockaddr_in &addr)override;
 
 	void notifyClose(int fd)override;

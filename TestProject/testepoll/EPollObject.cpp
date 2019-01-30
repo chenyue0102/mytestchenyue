@@ -199,7 +199,7 @@ void EPollObject::innerWaitThread()
 			LOG(LOG_DEBUG, "EPollObject::innerWaitThread epoll_wait timeout");
 			continue;
 		}
-		std::unique_lock<std::mutex> lk(m_mutex);
+		std::lock_guard<std::mutex> lk(m_mutex);
 		for (int i = 0; i < ret; i++)
 		{
 			int fd = events[i].data.fd;
@@ -210,31 +210,25 @@ void EPollObject::innerWaitThread()
 				&& m_fdEventFun[fd].find(ET_READ) != m_fdEventFun[fd].end())
 			{
 				std::function<void()> f = m_fdEventFun[fd][ET_READ];
-				lk.unlock();
 				f();
-				lk.lock();
 			}
 			if ((flags & EPOLLOUT)
 				&& m_fdEventFun.find(fd) != m_fdEventFun.end()
 				&& m_fdEventFun[fd].find(ET_WRITE) != m_fdEventFun[fd].end())
 			{
 				std::function<void()> f = m_fdEventFun[fd][ET_WRITE];
-				lk.unlock();
 				f();
-				lk.lock();
 			}
-			bool bError = (!(events[i].events & EPOLLIN)) && ((flags & EPOLLHUP) || (flags & EPOLLRDHUP) || (flags | EPOLLERR));
+			bool bError = (!(events[i].events & EPOLLIN)) && ((flags & EPOLLHUP) || (flags & EPOLLRDHUP) || (flags & EPOLLERR));
 			if (bError
 				&& m_fdEventFun.find(fd) != m_fdEventFun.end()
 				&& m_fdEventFun[fd].find(ET_ERROR) != m_fdEventFun[fd].end())
 			{
 				bool bEpollHup = flags & EPOLLHUP;
 				bool bEopllRDHup = flags & EPOLLRDHUP;
-				bool bEopollErr = flags | EPOLLERR;
+				bool bEopollErr = flags & EPOLLERR;
 				std::function<void()> f = m_fdEventFun[fd][ET_ERROR];
-				lk.unlock();
 				f();
-				lk.lock();
 			}
 		}
 	}

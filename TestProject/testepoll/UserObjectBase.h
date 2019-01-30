@@ -18,10 +18,11 @@ class UserObjectBase : public IUnknownEx
 public:
 	UserObjectBase();
 	virtual ~UserObjectBase();
-public:
+public://回掉接口中，不能够再反调ServerObject函数
 	void setSockInfo(int fd, const sockaddr_in &addr);
 	void notifyRecv(const char * pBuffer, unsigned int recvLen);
 	void notifyClose();
+public:
 	int getSocket()const;
 	bool sendMsg(const char *pBuffer, unsigned int nLen);
 	std::size_t getTaskGroupId()const;
