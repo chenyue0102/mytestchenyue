@@ -37,7 +37,9 @@ int main()
 
 	do
 	{
-		printf("0:exit 1:init and connect 2:send 3: 4:close 5:heart beat 6:getipaddress 7:send big data 8:recv big data\n");
+		printf("0:exit 1:init and connect 2:send 3: 4:close 5:heart beat \n");
+		printf("6:getipaddress 7:send big data 8:recv big data 9:shutdown send\n");
+		printf("10:shutdown recv\n");
 		scanf("%d", &a);
 		switch (a)
 		{
@@ -133,6 +135,16 @@ int main()
 				assert('f' == x);
 			}
 			printf("");
+			break;
+		}
+		case 9:
+		{
+			shutdown(s, SD_SEND);
+			break;
+		}
+		case 10:
+		{
+			shutdown(s, SD_RECEIVE);
 			break;
 		}
 		default:

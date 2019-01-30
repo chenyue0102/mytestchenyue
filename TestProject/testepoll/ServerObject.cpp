@@ -198,6 +198,17 @@ bool ServerObject::onAccept()
 			break;
 		}
 
+		auto errorFun = [this, acpSock]()
+			{
+				onError(acpSock);
+			};
+		if (!epollObject.updateFun(acpSock, ET_ERROR, errorFun))
+		{
+			LOG(LOG_ERR, "ServerObject::onAccept updateFun errno=%d\n", errno);
+			assert(false);
+			break;
+		}
+
 		m_acceptSocketArray.insert(std::make_pair(acpSock, SOCKET_INFO()));
 
 		lk.unlock();
@@ -266,23 +277,10 @@ bool ServerObject::onRead(int fd)
 		
 		if (bCleanSocket)
 		{
-			if (0 == m_acceptSocketArray.erase(fd))
-			{
-				LOG(LOG_ERR, "ServerObject::onRead 0 == m_acceptSocketArray.erase(fd) failed\n");
-			}
-			EPollObject &epollObject = Single<EPollObject>::Instance();
-			if (!epollObject.removeFun(fd))
-			{
-				LOG(LOG_ERR, "ServerObject::onRead !epollObject.removeFun(fd) failed\n");
-			}
+			innerCleanSocket(fd);
 			lk.unlock();
 			m_pUserObjectManager->notifyClose(fd);
 			lk.lock();
-			if (close(fd) < 0)
-			{
-				LOG(LOG_ERR, "ServerObject::onRead close errno=%d\n", errno);
-				assert(false);
-			}
 			break;
 		}
 		bRet = true;
@@ -316,12 +314,20 @@ bool ServerObject::onSend(int fd)
 		{
 			break;
 		}
-		unsigned int sendLen = innerDoSend(fd, sendBytes.data(), sendBytes.size());
+		unsigned int sendLen = innerDoSend(fd, sendBytes.data(), static_cast<unsigned int>(sendBytes.size()));
 		sendBytes.erase(0, sendLen);
 
 		//bRet = true;
 	} while (false);
 	return bRet;
+}
+
+bool ServerObject::onError(int fd)
+{
+	std::unique_lock<std::mutex> lk(m_mutex);
+
+	innerCleanSocket(fd);
+	return false;
 }
 
 unsigned int ServerObject::innerDoSend(int fd, const char * pBuffer, unsigned int nLen)
@@ -351,4 +357,23 @@ unsigned int ServerObject::innerDoSend(int fd, const char * pBuffer, unsigned in
 	} while (ret > 0 && offset < nLen);
 
 	return static_cast<unsigned int>(offset);
+}
+
+bool ServerObject::innerCleanSocket(int fd)
+{
+	if (0 == m_acceptSocketArray.erase(fd))
+	{
+		LOG(LOG_ERR, "ServerObject::onRead 0 == m_acceptSocketArray.erase(fd) failed\n");
+	}
+	EPollObject &epollObject = Single<EPollObject>::Instance();
+	if (!epollObject.removeFun(fd))
+	{
+		LOG(LOG_ERR, "ServerObject::onRead !epollObject.removeFun(fd) failed\n");
+	}
+	if (close(fd) < 0)
+	{
+		LOG(LOG_ERR, "ServerObject::onRead close errno=%d\n", errno);
+		assert(false);
+	}
+	return true;
 }
