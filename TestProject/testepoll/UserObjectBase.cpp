@@ -7,27 +7,23 @@
 #include <unistd.h>
 #include "../include/ProtocolBase.h"
 #include "Log.h"
-#include "TaskPool.h"
-#include "Single.h"
 #include "SmartPtr.h"
 #include "Single.h"
 #include "ServerObject.h"
+#include "UserObjectBasePrivate.h"
 
 template < typename T, size_t N >
 size_t _countof(T(&arr)[N])
 {
 	return std::extent< T[N] >::value;
 }
-
-UserObjectBase::UserObjectBase()
-	: m_mutex()
-	, m_objectStatus(ObjectStatusAccept)
-	, m_ulRef(0)
-	, m_fd(-1)
-	, m_port(0)
-	, m_ipAddress()
-	, m_recvBuffer()
-	, m_tLastMsgTime(time(nullptr))
+//m_port = ntohs(addr.sin_port);
+//inet_ntop(AF_INET, &addr.sin_addr, m_ipAddress, sizeof(m_ipAddress));
+UserObjectBase::UserObjectBase(int fd, const sockaddr_in &addr)
+	: m_ulRef(0)
+	, m_fd(fd)
+	, m_addr(addr)
+	, m_pUserObjectBasePrivate(new UserObjectBasePrivate(*this))
 {
 	LOG(LOG_DBG, "UserObjectBase::UserObjectBase\n");
 }
@@ -36,87 +32,32 @@ UserObjectBase::UserObjectBase()
 UserObjectBase::~UserObjectBase()
 {
 	LOG(LOG_DBG, "UserObjectBase::~UserObjectBase\n");
-}
-
-void UserObjectBase::setSockInfo(int fd, const sockaddr_in & addr)
-{
-	std::lock_guard<std::mutex> lk(m_mutex);
-
-	m_fd = fd;
-	m_port = ntohs(addr.sin_port);
-	inet_ntop(AF_INET, &addr.sin_addr, m_ipAddress, sizeof(m_ipAddress));
+	delete m_pUserObjectBasePrivate;
+	m_pUserObjectBasePrivate = nullptr;
 }
 
 void UserObjectBase::notifyRecv(const char * pBuffer, unsigned int recvLen)
 {
-	std::lock_guard<std::mutex> lk(m_mutex);
-	
-	if (ObjectStatusAccept == m_objectStatus)
-	{
-		m_objectStatus = ObjectStatusRecv;
-	}
-	if (ObjectStatusRecv != m_objectStatus)
-	{
-		LOG(LOG_ERR, "UserObjectBase::notifyRecv m_objectStatus=%d failed", m_objectStatus);
-		assert(false);
-		return;
-	}
-
-	m_tLastMsgTime = time(nullptr);
-
-	if (nullptr != pBuffer && 0 != recvLen)
-	{
-		m_recvBuffer.append(pBuffer, recvLen);
-
-		if (m_recvBuffer.size() >= sizeof(MSGHEADER))
-		{
-			MSGHEADER header = { 0 };
-			memcpy(&header, m_recvBuffer.data(), sizeof(MSGHEADER));
-			header = Net2Host(header);
-			if (m_recvBuffer.size() >= header.dwMsgLen)
-			{
-				SmartPtr<UserObjectBase> pTempObject(this);
-				auto processRecvFun = [pTempObject]()mutable->void
-				{
-					if (pTempObject)
-					{
-						pTempObject->InnerDoRecvMsg();
-					}
-				};
-				CTaskPool &taskPool = Single<CTaskPool>::Instance();
-				taskPool.AddOrderTask(processRecvFun, getTaskGroupId());
-			}
-		}
-	}
-	else
-	{
-		LOG(LOG_ERR, "UserObjectBase::notifyRecv pBuffer failed");
-	}
+	return m_pUserObjectBasePrivate->notifyRecv(pBuffer, recvLen);
 }
 
 void UserObjectBase::notifyClose()
 {
-	std::lock_guard<std::mutex> lk(m_mutex);
-
-	m_objectStatus = ObjectStatusClose;
+	return m_pUserObjectBasePrivate->notifyClose();
 }
 
 int UserObjectBase::getSocket() const
 {
-	std::lock_guard<std::mutex> lk(m_mutex);
-
 	return m_fd;
 }
 
-bool UserObjectBase::sendMsg(const char *pBuffer, unsigned int nLen)
+bool UserObjectBase::sendMsg(const char *pBuffer, unsigned int nLen)const
 {
-	std::lock_guard<std::mutex> lk(m_mutex);
-
 	bool bRet = false;
 
 	do
 	{
-		if (ObjectStatusRecv != m_objectStatus)
+		if (ObjectStatusRecv != m_pUserObjectBasePrivate->getObjectStatus())
 		{
 			LOG(LOG_ERR, "UserObjectBase::sendMsg m_objectStatus failed\n");
 			break;
@@ -143,7 +84,7 @@ bool UserObjectBase::sendMsg(const char *pBuffer, unsigned int nLen)
 		{
 			memcpy(const_cast<char*>(pBuffer), &header, sizeof(header));
 			LOG(LOG_ERR, "UserObjectBase::sendMsg send failed\n");
-			assert(false);
+			//assert(false);
 			break;
 		}
 		memcpy(const_cast<char*>(pBuffer), &header, sizeof(header));
@@ -153,58 +94,15 @@ bool UserObjectBase::sendMsg(const char *pBuffer, unsigned int nLen)
 	return bRet;
 }
 
+bool UserObjectBase::closeSocket() const
+{
+	ServerObject &serverObject = Single<ServerObject>::Instance();
+	return serverObject.closeSocket(getSocket());
+}
+
 std::size_t UserObjectBase::getTaskGroupId() const
 {
 	return reinterpret_cast<std::size_t>(this);
-}
-
-void UserObjectBase::InnerDoRecvMsg()
-{
-	std::list<std::string> tempMsgArray;
-	{
-		std::lock_guard<std::mutex> lk(m_mutex);
-
-		if (ObjectStatusRecv == m_objectStatus)
-		{
-			while (m_recvBuffer.size() >= sizeof(MSGHEADER))
-			{
-				MSGHEADER header = { 0 };
-				memcpy(&header, m_recvBuffer.data(), sizeof(MSGHEADER));
-				header = Net2Host(header);
-				if (m_recvBuffer.size() >= header.dwMsgLen)
-				{
-					memcpy(&*m_recvBuffer.begin(), &header, sizeof(MSGHEADER));//包头转换成本地结构体
-					if (0 != header.dwMsgID)//msgid为0，表示心跳
-					{
-						tempMsgArray.push_back(std::string(m_recvBuffer.data(), header.dwMsgLen));
-					}
-					m_recvBuffer.erase(0, header.dwMsgLen);
-				}
-				else
-				{
-					break;
-				}
-			}
-		}
-		else
-		{
-			return;
-		}
-	}
-	bool bError = false;
-	for (auto &oneMsg : tempMsgArray)
-	{
-		if (!onMsg(oneMsg.data(), static_cast<unsigned int>(oneMsg.size())))
-		{
-			bError = true;
-			break;
-		}
-	}
-	if (bError)
-	{
-		ServerObject &serverObject = Single<ServerObject>::Instance();
-		serverObject.closeSocket(getSocket());
-	}
 }
 
 unsigned long UserObjectBase::AddRef(void)
@@ -245,7 +143,7 @@ bool UserObjectBase::onMsg(const char *pBuffer, unsigned int nLen)
 		MSG_GET_IPADDRESS_ACK ack = { 0 };
 		ack.header.dwMsgLen = sizeof(ack);
 		ack.header.dwMsgID = PID_GET_IPADDRESS | PID_ACK;
-		strncpy(ack.szIpAddress, m_ipAddress, _countof(ack.szIpAddress));
+		inet_ntop(AF_INET, &m_addr.sin_addr, ack.szIpAddress, sizeof(ack.szIpAddress));
 		sendMsg((char*)&ack, sizeof(ack));
 		return false;
 		break;
@@ -297,7 +195,7 @@ bool UserObjectBase::onMsg(const char *pBuffer, unsigned int nLen)
 		memset(pBigData->e, 'e', sizeof(pBigData->e));
 		memset(pBigData->f, 'f', sizeof(pBigData->f));
 		sendMsg((char*)pBigData, sizeof(MSG_GET_BIG_DATA_ACK));
-
+		delete pBigData;
 		return false;
 		break;
 	}

@@ -22,8 +22,7 @@ void UserObjectManager::notifyAccept(int fd, sockaddr_in & addr)
 	std::lock_guard<std::mutex> lk(m_mutex);
 	if (m_fdObjectArray.find(fd) == m_fdObjectArray.end())
 	{
-		SmartPtr<UserObjectBase> pUserObject(new UserObjectBase);
-		pUserObject->setSockInfo(fd, addr);
+		SmartPtr<UserObjectBase> pUserObject(new UserObjectBase(fd, addr));
 		m_fdObjectArray.insert(std::make_pair(fd, pUserObject));
 	}
 	else

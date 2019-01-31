@@ -68,12 +68,24 @@ bool ServerObject::init(IUserObjectManager *pUserObjectManager)
 			assert(false);
 			break;
 		}
-		auto accpentFun = [this]() 
-			{
-				onAsyncAccept();
-			};
 		EPollObject &epollObject = Single<EPollObject>::Instance();
-		if (!epollObject.updateFun(m_fdListen, ET_READ, accpentFun))
+
+		auto acceptFun = [this]()
+		{
+			onAsyncAccept();
+		};
+		if (!epollObject.updateFun(m_fdListen, ET_READ, acceptFun))
+		{
+			LOG(LOG_ERR, "ServerObject::init updateFun errno=%d\n", errno);
+			assert(false);
+			break;
+		}
+
+		auto acceptErrorFun = [this]()
+		{
+			onAsyncAcceptError();
+		};
+		if (!epollObject.updateFun(m_fdListen, ET_ERROR, acceptErrorFun))
 		{
 			LOG(LOG_ERR, "ServerObject::init updateFun errno=%d\n", errno);
 			assert(false);
@@ -112,16 +124,25 @@ bool ServerObject::send(int fd, const char * pBuffer, unsigned int nLen)
 		if (iter == m_acceptSocketArray.end())
 		{
 			LOG(LOG_ERR, "ServerObject::send iter == m_acceptSocketArray.end() failed\n");
-			assert(false);
+			//assert(false);
 			break;
 		}
 		SOCKET_INFO &sockInfo = iter->second;
 		if (sockInfo.sendBytes.empty())
 		{
-			unsigned int sendLen = innerDoSend(fd, pBuffer, nLen);
-			if (sendLen < nLen)
+			ssize_t sendLen = innerDoSend(fd, pBuffer, nLen);
+			if (sendLen < 0)
 			{
-				sockInfo.sendBytes.append(pBuffer + sendLen, nLen - sendLen);
+				sockInfo.bClosing = true;
+				//assert(false);
+				break;
+			}
+			else
+			{
+				if (sendLen < nLen)
+				{
+					sockInfo.sendBytes.append(pBuffer + sendLen, nLen - sendLen);
+				}
 			}
 		}
 		else
@@ -145,7 +166,7 @@ bool ServerObject::closeSocket(int fd)
 		if (iter == m_acceptSocketArray.end())
 		{
 			LOG(LOG_ERR, "ServerObject::closeSocket iter == m_acceptSocketArray.end() failed\n");
-			assert(false);
+			//assert(false);
 			break;
 		}
 		SOCKET_INFO &sockInfo = iter->second;
@@ -180,6 +201,16 @@ void ServerObject::onAsyncAccept()const
 	auto asyncFun = [this]()
 	{
 		callInnerAccept();
+	};
+	CTaskPool &taskPool = Single<CTaskPool>::Instance();
+	taskPool.AddOrderTask(asyncFun, getTaskGroupId());
+}
+
+void ServerObject::onAsyncAcceptError() const
+{
+	auto asyncFun = [this]()
+	{
+		callInnerAcceptError();
 	};
 	CTaskPool &taskPool = Single<CTaskPool>::Instance();
 	taskPool.AddOrderTask(asyncFun, getTaskGroupId());
@@ -229,6 +260,14 @@ void ServerObject::callInnerAccept()
 	while (innerAccept());
 }
 
+void ServerObject::callInnerAcceptError()
+{
+	std::lock_guard<std::mutex> lk(m_mutex);
+
+	LOG(LOG_ERR, "ServerObject::callInnerAcceptError\n");
+	assert(false);
+}
+
 void ServerObject::callInnerRead(int fd)
 {
 	std::lock_guard<std::mutex> lk(m_mutex);
@@ -240,21 +279,25 @@ void ServerObject::callInnerSend(int fd)
 {
 	std::lock_guard<std::mutex> lk(m_mutex);
 
-	innerSend(fd);
+	innerSendCachingData(fd);
 }
 
-unsigned int ServerObject::innerDoSend(int fd, const char * pBuffer, unsigned int nLen)
+ssize_t ServerObject::innerDoSend(int fd, const char * pBuffer, ssize_t nLen)
 {
 	ssize_t ret = 0, offset = 0;
+	bool bRet = true;
 	do
 	{
-		ret = ::send(fd, pBuffer + offset, std::min(nLen - offset, static_cast<ssize_t>(MAX_SENDLEN)), 0);
+		//MSG_NOSIGNAL标记，发送失败，不发送信号SIGPIPE 
+		ret = ::send(fd, pBuffer + offset, std::min(nLen - offset, static_cast<ssize_t>(MAX_SENDLEN)), MSG_NOSIGNAL);
 		if (ret > 0)
 		{
 			offset += ret;
 		}
 		else if (0 == ret)
 		{
+			LOG(LOG_ERR, "ServerObject::innerDoSend send 0\n");
+			assert(false);
 			break;
 		}
 		else
@@ -263,13 +306,12 @@ unsigned int ServerObject::innerDoSend(int fd, const char * pBuffer, unsigned in
 				|| EINTR == errno))
 			{
 				LOG(LOG_ERR, "ServerObject::innerDoSend send errno=%d\n", errno);
-				assert(false);
+				offset = ret;
 			}
 			break;
 		}
 	} while (ret > 0 && offset < nLen);
-
-	return static_cast<unsigned int>(offset);
+	return offset;
 }
 
 bool ServerObject::innerCleanSocket(int fd)
@@ -400,11 +442,6 @@ bool ServerObject::innerRead(int fd)
 		if (iter == m_acceptSocketArray.end())
 		{
 			LOG(LOG_ERR, "ServerObject::onRead iter == m_acceptSocketArray.end() failed\n");
-			assert(false);
-			break;
-		}
-		if (iter->second.bClosing)
-		{
 			break;
 		}
 
@@ -412,7 +449,10 @@ bool ServerObject::innerRead(int fd)
 		bool bCleanSocket = false;
 		if (ret > 0)
 		{
-			m_pUserObjectManager->notifyRecv(fd, buf, static_cast<unsigned int>(ret));
+			if (!iter->second.bClosing)
+			{
+				m_pUserObjectManager->notifyRecv(fd, buf, static_cast<unsigned int>(ret));
+			}
 		}
 		else if (0 == ret)
 		{
@@ -444,7 +484,7 @@ bool ServerObject::innerRead(int fd)
 	return bRet;
 }
 
-bool ServerObject::innerSend(int fd)
+bool ServerObject::innerSendCachingData(int fd)
 {
 	bool bRet = false;
 
@@ -452,14 +492,14 @@ bool ServerObject::innerSend(int fd)
 	{
 		if (nullptr == m_pUserObjectManager)
 		{
-			LOG(LOG_ERR, "ServerObject::onSend nullptr == m_pUserObjectManager failed\n");
+			LOG(LOG_ERR, "ServerObject::innerSendCachingData nullptr == m_pUserObjectManager failed\n");
 			assert(false);
 			break;
 		}
 		auto iter = m_acceptSocketArray.find(fd);
 		if (iter == m_acceptSocketArray.end())
 		{
-			LOG(LOG_ERR, "ServerObject::onSend iter == m_acceptSocketArray.end() failed\n");
+			LOG(LOG_ERR, "ServerObject::innerSendCachingData iter == m_acceptSocketArray.end() failed\n");
 			break;
 		}
 		SOCKET_INFO &sockInfo = iter->second;
@@ -468,13 +508,22 @@ bool ServerObject::innerSend(int fd)
 		{
 			break;
 		}
-		unsigned int sendLen = innerDoSend(fd, sendBytes.data(), static_cast<unsigned int>(sendBytes.size()));
-		sendBytes.erase(0, sendLen);
-
-		if (sendBytes.empty()
-			&& sockInfo.bClosing)
+		ssize_t sendLen = innerDoSend(fd, sendBytes.data(), sendBytes.size());
+		if (sendLen < 0)
 		{
 			innerCleanSocket(fd);
+			break;
+		}
+		else
+		{
+			sendBytes.erase(0, sendLen);
+
+			if (sendBytes.empty()
+				&& sockInfo.bClosing)
+			{
+				innerCleanSocket(fd);
+				break;
+			}
 		}
 
 		//bRet = true;

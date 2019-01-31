@@ -1,5 +1,6 @@
 #include <cstdio>
 #include <syslog.h>
+#include <signal.h>
 #include "daemon.h"
 #include "ServerObject.h"
 #include "Single.h"
@@ -10,6 +11,8 @@
 int main()
 {
 	//testepoll::init_daemon("test");
+	signal(SIGPIPE, SIG_IGN);
+	signal(SIGHUP, SIG_IGN);
 	openlog("test", LOG_CONS | LOG_PID, LOG_DAEMON);
 
 	CTaskPool &taskPool = Single<CTaskPool>::Instance();

@@ -81,6 +81,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ServerObject.cpp" />
     <ClCompile Include="TaskPool.cpp" />
+    <ClCompile Include="UserObjectBasePrivate.cpp" />
     <ClCompile Include="UserObjectManager.cpp" />
     <ClCompile Include="UserObjectBase.cpp" />
   </ItemGroup>
@@ -95,6 +96,7 @@
     <ClInclude Include="Single.h" />
     <ClInclude Include="SmartPtr.h" />
     <ClInclude Include="TaskPool.h" />
+    <ClInclude Include="UserObjectBasePrivate.h" />
     <ClInclude Include="UserObjectManager.h" />
     <ClInclude Include="UserObjectBase.h" />
   </ItemGroup>

@@ -34,19 +34,22 @@ public:
 	void eventLoop();
 private://不加锁，不访问成员变量
 	void onAsyncAccept()const;
+	void onAsyncAcceptError()const;
 	void onAsyncRead(int fd)const;
 	void onAsyncSend(int fd)const;
 	void onAsyncError(int fd)const;
 private:
 	void callInnerCleanSocket(int fd);
 	void callInnerAccept();
+	void callInnerAcceptError();
 	void callInnerRead(int fd);
 	void callInnerSend(int fd);
-	unsigned int innerDoSend(int fd, const char *pBuffer, unsigned int nLen);
+	ssize_t innerDoSend(int fd, const char *pBuffer, ssize_t nLen);
 	bool innerCleanSocket(int fd);
 	bool innerAccept();
 	bool innerRead(int fd);
-	bool innerSend(int fd);
+	//发送缓冲数据
+	bool innerSendCachingData(int fd);
 	std::size_t getTaskGroupId()const;
 private:
 	int m_fdListen;

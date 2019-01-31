@@ -146,6 +146,31 @@ std::unique_ptr<CTaskPool::TaskInfo> CTaskPool::InnerGetTaskInfo()
 	return pTaskInfo;
 }
 
+bool CTaskPool::innerCheckTask()
+{
+	bool bRet = false;
+	auto iter = m_taskInfos.begin();
+	while (iter != m_taskInfos.end())
+	{
+		if (!(*iter))
+		{
+			iter = m_taskInfos.erase(iter);
+			assert(false);
+			continue;
+		}
+		std::unique_ptr<TaskInfo> &pFindTaskInfo = *iter;
+		if (pFindTaskInfo->groupIdValid
+			&& m_curGroupIds.find(pFindTaskInfo->groupId) != m_curGroupIds.end())
+		{
+			++iter;
+			continue;
+		}
+		bRet = true;
+		break;
+	}
+	return bRet;
+}
+
 void CTaskPool::TaskThread(ThreadInfo &threadInfo)
 {
 	auto &threadStatus = threadInfo.s;
@@ -162,7 +187,7 @@ void CTaskPool::TaskThread(ThreadInfo &threadInfo)
 			[&]()->bool
 		{
 			if (m_bExit
-				|| !m_taskInfos.empty())
+				|| innerCheckTask())
 			{
 				return true;
 			}

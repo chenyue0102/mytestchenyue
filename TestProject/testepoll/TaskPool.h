@@ -37,6 +37,7 @@ public:
 private:
 	bool InnerAddOrderTask(const TASK_JOB &fun, bool groupIdValid, TASK_GROUPID groupId);
 	std::unique_ptr<TaskInfo> InnerGetTaskInfo();
+	bool innerCheckTask();
 	void TaskThread(ThreadInfo &threadInfo);
 public:
 	typedef std::list<std::unique_ptr<TaskInfo>> TASK_INFO_ARRAY;

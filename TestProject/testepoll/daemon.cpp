@@ -48,13 +48,16 @@ namespace testepoll
 		/*
 		* Ensure future opens won't allocate controlling TTYs.
 		*/
-		sa.sa_handler = SIG_IGN;
+		signal(SIGPIPE, SIG_IGN);
+		signal(SIGHUP, SIG_IGN);
+
+		/*sa.sa_handler = SIG_IGN;
 		sigemptyset(&sa.sa_mask);
 		sa.sa_flags = 0;
 		if (sigaction(SIGHUP, &sa, nullptr) < 0)
 		{
 			printf("init_daemon sigaction errno=%d\n", errno);
-		}
+		}*/
 
 		if ((pid = fork()) < 0)
 		{
