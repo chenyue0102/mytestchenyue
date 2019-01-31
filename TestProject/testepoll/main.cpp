@@ -19,6 +19,7 @@ int main()
 	taskPool.Open(0);
 
 	UserObjectManager &userObjectManager = Single<UserObjectManager>::Instance();
+	userObjectManager.init();
 
 	EPollObject &epollObject = Single<EPollObject>::Instance();
 	epollObject.init();

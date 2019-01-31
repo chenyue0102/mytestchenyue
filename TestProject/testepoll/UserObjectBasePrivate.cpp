@@ -15,7 +15,6 @@ UserObjectBasePrivate::UserObjectBasePrivate(UserObjectBase &userObjectBase)
 	, m_mutex()
 	, m_objectStatus(ObjectStatusAccept)
 	, m_recvBuffer()
-	, m_tLastMsgTime(time(nullptr))
 {
 }
 
@@ -125,8 +124,6 @@ void UserObjectBasePrivate::innerNotifyRecv(const char * pBuffer, unsigned int r
 		assert(false);
 		return;
 	}
-
-	m_tLastMsgTime = time(nullptr);
 
 	if (nullptr != pBuffer && 0 != recvLen)
 	{

@@ -35,7 +35,6 @@ private:
 	mutable std::mutex m_mutex;
 	ObjectStatus m_objectStatus;
 	std::string m_recvBuffer;
-	time_t m_tLastMsgTime;
 };
 
 #endif
