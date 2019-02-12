@@ -86,15 +86,16 @@ void UserObjectManager::notifyClose(int fd)
 		{
 			innerClearRecvFD(objInfo.tLastMsgTime, fd);
 		}
+
+		CTaskPool &taskPool = Single<CTaskPool>::Instance();
 		SmartPtr<UserObjectBase> pTempObject = objInfo.pUserObject;
-		auto processCloseFun = [pTempObject]()mutable->void
+		auto processFun = [pTempObject]()mutable->void
 			{
 				pTempObject->notifyClose();
 			};
-		m_fdObjectArray.erase(iter);
+		taskPool.AddOrderTask(processFun, pTempObject->getTaskGroupId());
 
-		CTaskPool &taskPool = Single<CTaskPool>::Instance();
-		taskPool.AddOrderTask(processCloseFun, pTempObject->getTaskGroupId());
+		m_fdObjectArray.erase(iter);
 	}
 	else
 	{
@@ -129,7 +130,14 @@ void UserObjectManager::notifyRecv(int fd, const char * pBuffer, unsigned int re
 			m_recvMsgFD[objInfo.tLastMsgTime].insert(fd);
 		}
 
-		objInfo.pUserObject->notifyRecv(pBuffer, recvLen);
+		std::string strTempData(pBuffer, recvLen);
+		CTaskPool &taskPool = Single<CTaskPool>::Instance();
+		SmartPtr<UserObjectBase> pTempObject = objInfo.pUserObject;
+		auto processFun = [pTempObject, strTempData]()mutable->void
+		{
+			pTempObject->notifyRecv(strTempData.data(), strTempData.size());
+		};
+		taskPool.AddOrderTask(processFun, pTempObject->getTaskGroupId());
 	}
 	else
 	{
