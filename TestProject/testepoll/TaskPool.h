@@ -49,6 +49,5 @@ public:
 	TASK_INFO_ARRAY m_taskInfos;
 	std::unordered_set<TASK_GROUPID> m_curGroupIds;
 	volatile bool m_bExit;
-	unsigned int m_nPoolSize;
 };
 

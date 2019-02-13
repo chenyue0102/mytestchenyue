@@ -9,7 +9,6 @@ CTaskPool::CTaskPool()
 	, m_taskInfos()
 	, m_curGroupIds()
 	, m_bExit(false)
-	, m_nPoolSize(0)
 {
 }
 
@@ -29,7 +28,6 @@ bool CTaskPool::Open(unsigned int nPoolSize)
 		{
 			nPoolSize = std::thread::hardware_concurrency() * 2 + 1;
 		}
-		m_nPoolSize = nPoolSize;
 		
 		bool bError = false;
 		std::lock_guard<std::mutex> lk(m_mutex);
@@ -73,6 +71,10 @@ bool CTaskPool::Close()
 		if (pThreadInfo
 			&& pThreadInfo->t.joinable())
 		{
+			if (std::this_thread::get_id() == pThreadInfo->t.get_id())
+			{
+				assert(false);
+			}
 			pThreadInfo->t.join();
 		}
 	}
@@ -80,7 +82,6 @@ bool CTaskPool::Close()
 	//m_cv
 	m_curGroupIds.clear();
 	m_taskInfos.clear();
-	m_nPoolSize = 0;
 	return true;
 }
 
@@ -215,7 +216,14 @@ void CTaskPool::TaskThread(ThreadInfo &threadInfo)
 
 		if (pTaskInfo)
 		{
-			pTaskInfo->job();
+			try
+			{
+				pTaskInfo->job();
+			}
+			catch (...)
+			{
+				assert(false);
+			}
 			if (pTaskInfo->groupIdValid)
 			{
 				std::lock_guard<std::mutex> lkguard(m_mutex);
