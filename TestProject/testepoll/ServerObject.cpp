@@ -44,6 +44,13 @@ bool ServerObject::init(IUserObjectManager *pUserObjectManager)
 			assert(false);
 			break;
 		}
+		int optval = 1;
+		if (setsockopt(m_fdListen, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) == -1)
+		{
+			printf("ServerObject::init setsockopt errno=%d\n", errno);
+			break;
+		}
+
 		int flags = fcntl(m_fdListen, F_GETFL, 0);
 		if (fcntl(m_fdListen, F_SETFL, flags | O_NONBLOCK) < 0)
 		{
@@ -154,7 +161,7 @@ bool ServerObject::send(int fd, const char * pBuffer, unsigned int nLen)
 	return bRet;
 }
 
-bool ServerObject::closeSocket(int fd)
+bool ServerObject::closeSocket(int fd, bool bFocus)
 {
 	std::lock_guard<std::mutex> lk(m_mutex);
 
@@ -169,9 +176,15 @@ bool ServerObject::closeSocket(int fd)
 			//assert(false);
 			break;
 		}
-		SOCKET_INFO &sockInfo = iter->second;
-		if (sockInfo.sendBytes.empty())
+		if (bFocus)
 		{
+			linger optval;
+			optval.l_onoff = 1;
+			optval.l_linger = 0;
+			if (-1 == setsockopt(fd, SOL_SOCKET, SO_LINGER, &optval, sizeof(optval)))
+			{
+				LOG(LOG_ERR, "ServerObject::closeSocket setsockopt errno=%d\n", errno);
+			}
 			if (!innerCleanSocket(fd))
 			{
 				LOG(LOG_ERR, "ServerObject::closeSocket innerCleanSocket failed\n");
@@ -181,7 +194,20 @@ bool ServerObject::closeSocket(int fd)
 		}
 		else
 		{
-			sockInfo.bClosing = true;//等待所有数据包都发送后再关闭
+			SOCKET_INFO &sockInfo = iter->second;
+			if (sockInfo.sendBytes.empty())
+			{
+				if (!innerCleanSocket(fd))
+				{
+					LOG(LOG_ERR, "ServerObject::closeSocket innerCleanSocket failed\n");
+					assert(false);
+					break;
+				}
+			}
+			else
+			{
+				sockInfo.bClosing = true;//等待所有数据包都发送后再关闭
+			}
 		}
 		bRet = true;
 	} while (false);

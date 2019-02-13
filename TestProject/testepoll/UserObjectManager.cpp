@@ -270,7 +270,7 @@ void UserObjectManager::timerProc()
 		lk.unlock();
 		for (auto onefd : closefd)
 		{
-			serverObject.closeSocket(onefd);
+			serverObject.closeSocket(onefd, true);
 		}
 	}
 }

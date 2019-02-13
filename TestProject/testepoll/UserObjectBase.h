@@ -15,9 +15,7 @@ public://回掉接口中，不能够再反调ServerObject函数
 	void notifyRecv(const char * pBuffer, unsigned int recvLen);
 	void notifyClose();
 public:
-	int getSocket()const;
 	bool sendMsg(const char *pBuffer, unsigned int nLen)const;
-	bool closeSocket()const;
 	std::size_t getTaskGroupId()const;
 public:
 	virtual unsigned long AddRef(void)override;
@@ -25,6 +23,7 @@ public:
 public:
 	virtual bool onMsg(const char *pBuffer, unsigned int nLen);
 private:
+	friend class UserObjectBasePrivate;
 	std::atomic_ulong m_ulRef;
 	const int m_fd;
 	const sockaddr_in m_addr;

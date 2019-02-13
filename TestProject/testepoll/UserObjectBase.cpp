@@ -46,11 +46,6 @@ void UserObjectBase::notifyClose()
 	return m_pUserObjectBasePrivate->notifyClose();
 }
 
-int UserObjectBase::getSocket() const
-{
-	return m_fd;
-}
-
 bool UserObjectBase::sendMsg(const char *pBuffer, unsigned int nLen)const
 {
 	bool bRet = false;
@@ -92,12 +87,6 @@ bool UserObjectBase::sendMsg(const char *pBuffer, unsigned int nLen)const
 		bRet = true;
 	} while (false);
 	return bRet;
-}
-
-bool UserObjectBase::closeSocket() const
-{
-	ServerObject &serverObject = Single<ServerObject>::Instance();
-	return serverObject.closeSocket(getSocket());
 }
 
 std::size_t UserObjectBase::getTaskGroupId() const

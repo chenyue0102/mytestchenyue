@@ -5,6 +5,7 @@
 #include "Log.h"
 #include "../include/ProtocolBase.h"
 #include "UserObjectBase.h"
+#include "ServerObject.h"
 #include "SmartPtr.h"
 #include "TaskPool.h"
 #include "Single.h"
@@ -60,7 +61,8 @@ void UserObjectBasePrivate::asyncDoRecvMsg()
 	}
 	if (bError)
 	{
-		m_userObjectBase.closeSocket();
+		ServerObject &serverObject = Single<ServerObject>::Instance();
+		serverObject.closeSocket(m_userObjectBase.m_fd, true);
 		stopRecv();
 	}
 }
@@ -139,7 +141,8 @@ void UserObjectBasePrivate::innerNotifyRecv(const char * pBuffer, unsigned int r
 				SmartPtr<UserObjectBase> pTempObject(&m_userObjectBase);
 				auto processRecvFun = [pTempObject, this]()mutable->void
 				{
-					pTempObject->getSocket();//使得UserObjectBase容器不被释放，从而保证Private类有效
+					pTempObject->AddRef();//使得UserObjectBase容器不被释放，从而保证Private类有效
+					pTempObject->Release();
 					asyncDoRecvMsg();
 				};
 				CTaskPool &taskPool = Single<CTaskPool>::Instance();

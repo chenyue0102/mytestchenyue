@@ -30,7 +30,7 @@ public:
 	bool init(IUserObjectManager *pUserObjectManager);
 	bool destory();
 	bool send(int fd, const char *pBuffer, unsigned int nLen);
-	bool closeSocket(int fd);
+	bool closeSocket(int fd, bool bFocus);
 	void eventLoop();
 private://不加锁，不访问成员变量
 	void onAsyncAccept()const;
