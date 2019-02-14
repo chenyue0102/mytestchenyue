@@ -87,15 +87,9 @@ void UserObjectManager::notifyClose(int fd)
 			innerClearRecvFD(objInfo.tLastMsgTime, fd);
 		}
 
-		CTaskPool &taskPool = Single<CTaskPool>::Instance();
 		SmartPtr<UserObjectBase> pTempObject = objInfo.pUserObject;
-		auto processFun = [pTempObject]()mutable->void
-			{
-				pTempObject->notifyClose();
-			};
-		taskPool.AddOrderTask(processFun, pTempObject->getTaskGroupId());
-
 		m_fdObjectArray.erase(iter);
+		pTempObject->notifyClose();
 	}
 	else
 	{
@@ -130,14 +124,8 @@ void UserObjectManager::notifyRecv(int fd, const char * pBuffer, unsigned int re
 			m_recvMsgFD[objInfo.tLastMsgTime].insert(fd);
 		}
 
-		std::string strTempData(pBuffer, recvLen);
-		CTaskPool &taskPool = Single<CTaskPool>::Instance();
 		SmartPtr<UserObjectBase> pTempObject = objInfo.pUserObject;
-		auto processFun = [pTempObject, strTempData]()mutable->void
-		{
-			pTempObject->notifyRecv(strTempData.data(), strTempData.size());
-		};
-		taskPool.AddOrderTask(processFun, pTempObject->getTaskGroupId());
+		pTempObject->notifyRecv(pBuffer, recvLen);
 	}
 	else
 	{

@@ -9,6 +9,7 @@ enum ObjectStatus
 {
 	ObjectStatusAccept,
 	ObjectStatusRecv,
+	ObjectStatusProcess,
 	ObjectStatusClose,
 };
 
@@ -25,11 +26,10 @@ public:
 	void asyncDoRecvMsg();
 public:
 	ObjectStatus getObjectStatus()const;
+	void setStopProcess();
 private:
 	bool getMsgArray(std::list<std::string> &msgArray);
 	void stopRecv();
-private:
-	void innerNotifyRecv(const char * pBuffer, unsigned int recvLen);
 private:
 	UserObjectBase &m_userObjectBase;
 	mutable std::mutex m_mutex;
