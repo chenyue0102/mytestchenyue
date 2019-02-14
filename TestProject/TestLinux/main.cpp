@@ -2,6 +2,7 @@
 #include <type_traits>
 #include <stdlib.h>
 #include <unistd.h>//read,close
+#include <fcntl.h>//fcntl
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>//sockaddr_un
@@ -644,7 +645,7 @@ void print_udp(const char *buf)
 	memcpy(&hdr, buf, sizeof(hdr));
 	u_int16_t totallen = ntohs(hdr.len);
 	u_int16_t datalen = totallen - sizeof(udphdr);
-	printf("source:%hu dest:%hu totallen:%hu datalen:%hu \n", ntohs(hdr.source), ntohs(hdr.dest), totallen, datalen);
+	printf("source:%hu dest:%hu totallen:%hu datalen:%hu check:%hu \n", ntohs(hdr.source), ntohs(hdr.dest), totallen, datalen, ntohs(hdr.check));
 }
 
 struct ip_frame
@@ -701,7 +702,7 @@ void print_iphdr(const char *buf, int len)
 	int mf = (frag_off & IP_MF) ? 1 : 0;
 	int offset = (frag_off & IP_OFFMASK) * 8;
 	int datalen = tot_len - hdrlen;
-	printf("header id:%d hdrlen:%d bytes version:%d len:%d df:%d mf:%d frag_off:%d bytes ttl:%d ", ntohs(hdr.id), hdrlen, (int)hdr.version, tot_len, df, mf, offset, hdr.ttl);
+	printf("header id:%d hdrlen:%d bytes version:%d len:%d df:%d mf:%d frag_off:%d bytes ttl:%d check:%hu ", ntohs(hdr.id), hdrlen, (int)hdr.version, tot_len, df, mf, offset, hdr.ttl, ntohs(hdr.check));
 
 	char saddr[INET_ADDRSTRLEN] = { 0 };
 	char daddr[INET_ADDRSTRLEN] = { 0 };
@@ -851,6 +852,12 @@ void test_norecv()
 			printf("test_inet_stream socket errno=%d\n", errno);
 			break;
 		}
+		int optval = 1;
+		if (setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) == -1)
+		{
+			printf("test_inet_stream setsockopt errno=%d\n", errno);
+			break;
+		}
 		memset(&addr, 0, sizeof(addr));
 		addr.sin_family = AF_INET;
 		addr.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -870,14 +877,32 @@ void test_norecv()
 			sockaddr_in acceptAddr;
 			socklen_t acceptAddrLen = sizeof(acceptAddr);
 			int acp = accept(sfd, (sockaddr*)&acceptAddr, &acceptAddrLen);
-			shutdown(acp, SHUT_RD);
+			//shutdown(acp, SHUT_RD);
 			linger optval;
 			optval.l_onoff = 1;
 			optval.l_linger = 0;
-			if (-1 == setsockopt(acp, SOL_SOCKET, SO_LINGER, &optval, sizeof(optval)))
+			char sz[1024];
+			/*int flags = fcntl(acp, F_GETFL, 0);
+			if (fcntl(acp, F_SETFL, flags | O_NONBLOCK) < 0)
 			{
-				printf("test_inet_stream setsockopt errno=%d\n", errno);
-				break;
+				printf("ServerObject::init fcntl errno=%d\n", errno);
+			}*/
+			recv(acp, sz, sizeof(sz), 0);
+			static int i = 1;
+			i++;
+			
+			timeval tv = { 0 };
+			if (ioctl(acp, SIOCGSTAMP, &tv) == -1)
+			{
+				printf("test_inet_stream ioctl errno=%d\n", errno);
+			}
+			if (i % 2 == 0)
+			{
+				if (-1 == setsockopt(acp, SOL_SOCKET, SO_LINGER, &optval, sizeof(optval)))
+				{
+					printf("test_inet_stream setsockopt errno=%d\n", errno);
+					break;
+				}
 			}
 			close(acp);
 		}
@@ -893,16 +918,131 @@ void test_norecv()
 
 }
 
+void test_ioctl()
+{
+	ifreq ifr;
+	int s = socket(AF_INET, SOCK_DGRAM, 0);
+	ifr.ifr_ifindex = 2;//first index=1
+	int ret = ioctl(s, SIOCGIFNAME, &ifr);
+	strcpy(ifr.ifr_name, "ens33");
+	ret = ioctl(s, SIOCGIFMTU, &ifr);
+	auto mtu = ifr.ifr_mtu;
+	ret = ioctl(s, SIOCGIFHWADDR, &ifr);
+	char hwaddr[6];
+	memcpy(hwaddr, &ifr.ifr_hwaddr.sa_data, sizeof(hwaddr));
+	ret = ioctl(s, SIOCGIFINDEX, &ifr);
+	int ifindex = ifr.ifr_ifindex;
+	std::string name = ifr.ifr_name;
+	printf("%s\n", ifr.ifr_name);
+}
+
+uint16_t checksum(const void *pBuffer, uint32_t size)
+{
+	uint32_t cksum = 0;
+	uint32_t num = 0;
+	unsigned char *p = (unsigned char *)pBuffer;
+
+	if ((NULL == pBuffer) || (0 == size))
+	{
+		return cksum;
+	}
+
+	while (size > 1)
+	{
+		cksum += ((uint16_t)p[num] << 8 & 0xff00) | (uint16_t)p[num + 1] & 0x00FF;
+		//cksum = (cksum >> 16) + (cksum & 0xffff);
+		//２个字节累加，先取网络字节序低位左移8位（变成主机字节序高位），与（加）上　网络字节序中的高位（主机字节序地位），即网络字节序要先变成主机字节序在进行累加，
+		size -= 2;
+		num += 2;
+	}
+
+	if (size > 0)		//如果长度为奇数
+	{
+		cksum += ((uint16_t)p[num] << 8) & 0xFFFF;
+		//如果总的字节数为奇数，则最后一个字节单独相加
+		num += 1;
+	}
+
+	while (cksum >> 16)
+	{
+		cksum = (cksum & 0xFFFF) + (cksum >> 16);
+		//累加完毕将结果中高16位再加到低16位上，重复这一过程直到高16位为全0
+	}
+
+	return cksum;
+}
+
+struct psdheader_t
+{
+	u_int32_t saddr;//源IP地址      
+	u_int32_t daddr;//目的IP地址      
+	u_int8_t mbz;   // mbz = must be zero, 用于填充对齐
+	u_int8_t protocol; //8位协议号   
+	u_int16_t len;//长度 
+};
+
+void test_udp_raw()
+{
+	sockaddr_in addr = { 0 };
+	addr.sin_family = AF_INET;
+	addr.sin_addr.s_addr = inet_addr("192.168.100.1");
+	addr.sin_port = htons(5618);
+	std::string strData(50, 'a');
+	int ret = -1;
+	
+	int s = socket(AF_INET, SOCK_RAW, IPPROTO_UDP);
+	int set = 1;
+	ret = setsockopt(s, IPPROTO_IP, IP_HDRINCL, &set, sizeof(set));
+	
+	std::string strSendData;
+	strSendData.resize(sizeof(iphdr) + sizeof(udphdr), '\0');
+	strSendData.append(strData);
+	u_int32_t saddr = inet_addr("192.168.100.136"), daddr = inet_addr("192.168.100.1");
+	
+	psdheader_t *ppsdheader = (psdheader_t*)(strSendData.data() + sizeof(iphdr) - sizeof(psdheader_t));
+	memset(ppsdheader, 0, sizeof(psdheader_t));
+	ppsdheader->saddr = saddr;
+	ppsdheader->daddr = daddr;
+	ppsdheader->protocol = IPPROTO_UDP;
+	ppsdheader->len = htons(strData.size() + sizeof(udphdr));
+
+	udphdr *pudp_hdr = (udphdr*)(strSendData.data() + sizeof(iphdr));
+	pudp_hdr->source = htons(58525);
+	pudp_hdr->dest = htons(5618);
+	pudp_hdr->len = htons(strData.size() + sizeof(udphdr));
+	pudp_hdr->check = 0;
+	pudp_hdr->check = htons(~checksum(ppsdheader, sizeof(psdheader_t) + sizeof(udphdr) + strData.size()));
+	
+	iphdr *pip_hdr = (iphdr*)strSendData.data();
+	memset(pip_hdr, 0, sizeof(iphdr));
+	pip_hdr->ihl = sizeof(iphdr) / 4;
+	pip_hdr->version = 4;
+	pip_hdr->tos = 0;
+	pip_hdr->tot_len = htons(strSendData.size());
+	pip_hdr->id = htons(29942);
+	pip_hdr->frag_off = htons(IP_DF);
+	pip_hdr->ttl = 64;
+	pip_hdr->protocol = IPPROTO_UDP;
+	pip_hdr->check = 0;
+	pip_hdr->saddr = saddr;
+	pip_hdr->daddr = daddr;
+	pip_hdr->check = htons(~checksum(pip_hdr, sizeof(iphdr)));
+	
+	ret = sendto(s, strSendData.data(), strSendData.size(), 0, (sockaddr*)&addr, sizeof(addr));
+	close(s);
+}
+
 int main()
 {
 	//test_unix_stream();
 	//test_inet_stream();
 	//test_udp();
 	//test_broad();
-	if (0 == fork())
+	/*if (0 != fork())
 		test_norecv();
-	else 
-		test_packet();
-	
+	else */
+	//	test_packet();
+	//test_ioctl();
+	test_udp_raw();
     return 0;
 }
