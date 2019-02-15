@@ -535,6 +535,16 @@ void test_broad()
 			printf("test_broad socket errno=%d\n", errno);
 			break;
 		}
+		sockaddr_in bindAddr;
+		bindAddr.sin_family = AF_INET;
+		bindAddr.sin_addr.s_addr = htonl(INADDR_ANY);
+		bindAddr.sin_port = htons(MY_UDP_PORT);
+		if (bind(s, (sockaddr*)&bindAddr, sizeof(bindAddr)) == -1)
+		{
+			printf("test_broad bind errno=%d\n", errno);
+			break;
+		}
+
 		strcpy(ifr.ifr_name, "ens33");
 		if (ioctl(s, SIOCGIFBRDADDR, &ifr) == -1)
 		{
