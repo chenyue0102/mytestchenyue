@@ -21,6 +21,7 @@
 #include <linux/if_packet.h>//sockaddr_ll
 //#include <linux/filter.h>
 //#include <arpa/inet.h> 
+#include <dlfcn.h>//dlopen
 #include <vector>
 #include <map>
 #include <algorithm>
@@ -991,6 +992,70 @@ struct psdheader_t
 	u_int16_t len;//长度 
 };
 
+static inline unsigned short from32to16(unsigned int x)
+{
+	/* add up 16-bit and 16-bit for 16+c bit */
+	x = (x & 0xffff) + (x >> 16);
+	/* add up carry.. */
+	x = (x & 0xffff) + (x >> 16);
+	return x;
+}
+
+static unsigned int do_csum(const unsigned char *buff, int len)
+{
+	int odd;
+	unsigned int result = 0;
+
+	if (len <= 0)
+		goto out;
+	odd = 1 & (unsigned long)buff;
+	if (odd) {
+#ifdef __LITTLE_ENDIAN
+		result += (*buff << 8);
+#else
+		result = *buff;
+#endif
+		len--;
+		buff++;
+	}
+	if (len >= 2) {
+		if (2 & (unsigned long)buff) {
+			result += *(unsigned short *)buff;
+			len -= 2;
+			buff += 2;
+		}
+		if (len >= 4) {
+			const unsigned char *end = buff + ((unsigned)len & ~3);
+			unsigned int carry = 0;
+			do {
+				unsigned int w = *(unsigned int *)buff;
+				buff += 4;
+				result += carry;
+				result += w;
+				carry = (w > result);
+			} while (buff < end);
+			result += carry;
+			result = (result & 0xffff) + (result >> 16);
+		}
+		if (len & 2) {
+			result += *(unsigned short *)buff;
+			buff += 2;
+		}
+	}
+	if (len & 1)
+#ifdef __LITTLE_ENDIAN
+		result += *buff;
+#else
+		result += (*buff << 8);
+#endif
+	result = from32to16(result);
+	if (odd)
+		result = ((result >> 8) & 0xff) | ((result & 0xff) << 8);
+out:
+	return result;
+}
+
+
 void test_udp_raw()
 {
 	sockaddr_in addr = { 0 };
@@ -1022,6 +1087,9 @@ void test_udp_raw()
 	pudp_hdr->len = htons(strData.size() + sizeof(udphdr));
 	pudp_hdr->check = 0;
 	pudp_hdr->check = htons(~checksum(ppsdheader, sizeof(psdheader_t) + sizeof(udphdr) + strData.size()));
+
+	pudp_hdr->check = 0;
+	pudp_hdr->check = ~do_csum((const unsigned char*)ppsdheader, sizeof(psdheader_t) + sizeof(udphdr) + strData.size());
 	
 	iphdr *pip_hdr = (iphdr*)strSendData.data();
 	memset(pip_hdr, 0, sizeof(iphdr));
@@ -1036,10 +1104,44 @@ void test_udp_raw()
 	pip_hdr->check = 0;
 	pip_hdr->saddr = saddr;
 	pip_hdr->daddr = daddr;
-	pip_hdr->check = htons(~checksum(pip_hdr, sizeof(iphdr)));
+	pip_hdr->check = ~do_csum((const unsigned char*)pip_hdr, sizeof(iphdr));
 	
 	ret = sendto(s, strSendData.data(), strSendData.size(), 0, (sockaddr*)&addr, sizeof(addr));
 	close(s);
+}
+
+void test_load_dll()
+{
+	void *phandle = nullptr;
+	const char *perr = nullptr;
+	do
+	{
+		if ((phandle = dlopen("/root/projects/testlinuxdll/libtestlinuxdll.so.1", /*RTLD_LAZY*/RTLD_NOW)) == nullptr)
+		{
+			if ((perr = dlerror()) != nullptr)
+			{
+				printf("test_load_dll dlopen errno=%s\n", perr);
+			}
+			break;
+		}
+		typedef int(*SUMFUN)(int, int);
+		SUMFUN sum = (SUMFUN)dlsym(phandle, "sum");
+		if (nullptr == sum)
+		{
+			if ((perr = dlerror()) != nullptr)
+			{
+				printf("test_load_dll dlopen errno=%s\n", perr);
+			}
+			break;
+		}
+		int s = sum(1, 2);
+		printf("sum=%d\n", s);
+	} while (false);
+	if (nullptr != phandle)
+	{
+		dlclose(phandle);
+		phandle = nullptr;
+	}
 }
 
 int main()
@@ -1054,5 +1156,6 @@ int main()
 	//	test_packet();
 	//test_ioctl();
 	test_udp_raw();
+	//test_load_dll();
     return 0;
 }

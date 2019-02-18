@@ -5,6 +5,8 @@ VisualStudioVersion = 15.0.28307.271
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TestLinux", "TestLinux.vcxproj", "{62390121-4881-4B0B-B619-C54EAD55A8EE}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "testlinuxdll", "..\testlinuxdll\testlinuxdll.vcxproj", "{90C2519F-5A8F-47FF-966C-C141E50DFDEA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM = Debug|ARM
@@ -33,6 +35,22 @@ Global
 		{62390121-4881-4B0B-B619-C54EAD55A8EE}.Release|x64.Build.0 = Release|x64
 		{62390121-4881-4B0B-B619-C54EAD55A8EE}.Release|x86.ActiveCfg = Release|x86
 		{62390121-4881-4B0B-B619-C54EAD55A8EE}.Release|x86.Build.0 = Release|x86
+		{90C2519F-5A8F-47FF-966C-C141E50DFDEA}.Debug|ARM.ActiveCfg = Debug|ARM
+		{90C2519F-5A8F-47FF-966C-C141E50DFDEA}.Debug|ARM.Build.0 = Debug|ARM
+		{90C2519F-5A8F-47FF-966C-C141E50DFDEA}.Debug|ARM64.ActiveCfg = Debug|ARM64
+		{90C2519F-5A8F-47FF-966C-C141E50DFDEA}.Debug|ARM64.Build.0 = Debug|ARM64
+		{90C2519F-5A8F-47FF-966C-C141E50DFDEA}.Debug|x64.ActiveCfg = Debug|x64
+		{90C2519F-5A8F-47FF-966C-C141E50DFDEA}.Debug|x64.Build.0 = Debug|x64
+		{90C2519F-5A8F-47FF-966C-C141E50DFDEA}.Debug|x86.ActiveCfg = Debug|x86
+		{90C2519F-5A8F-47FF-966C-C141E50DFDEA}.Debug|x86.Build.0 = Debug|x86
+		{90C2519F-5A8F-47FF-966C-C141E50DFDEA}.Release|ARM.ActiveCfg = Release|ARM
+		{90C2519F-5A8F-47FF-966C-C141E50DFDEA}.Release|ARM.Build.0 = Release|ARM
+		{90C2519F-5A8F-47FF-966C-C141E50DFDEA}.Release|ARM64.ActiveCfg = Release|ARM64
+		{90C2519F-5A8F-47FF-966C-C141E50DFDEA}.Release|ARM64.Build.0 = Release|ARM64
+		{90C2519F-5A8F-47FF-966C-C141E50DFDEA}.Release|x64.ActiveCfg = Release|x64
+		{90C2519F-5A8F-47FF-966C-C141E50DFDEA}.Release|x64.Build.0 = Release|x64
+		{90C2519F-5A8F-47FF-966C-C141E50DFDEA}.Release|x86.ActiveCfg = Release|x86
+		{90C2519F-5A8F-47FF-966C-C141E50DFDEA}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
