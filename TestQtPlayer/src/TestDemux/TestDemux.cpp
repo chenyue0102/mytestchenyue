@@ -7,11 +7,15 @@ extern "C"
 {
 #include "libavcodec/avcodec.h"
 #include "libavformat/avformat.h"
+#include "libswscale/swscale.h"
+#include "libswresample/swresample.h"
 }
 
 #pragma comment(lib, "avcodec.lib")
 #pragma comment(lib, "avformat.lib")
 #pragma comment(lib, "avutil.lib")
+#pragma comment(lib, "swscale.lib")
+#pragma comment(lib, "swresample.lib")
 
 static double r2d(AVRational r)
 {
@@ -174,6 +178,31 @@ int main()
 	//malloc AVPacket init AVPacket
 	AVPacket *pkt = av_packet_alloc();
 	AVFrame *frame = av_frame_alloc();//frame占用空间大
+	//像素格式与尺寸转换上下文
+	SwsContext *vctx = nullptr;
+	//格式转换后的缓冲区
+	unsigned char *rgb = nullptr;
+	//音频重采样与格式转换
+	//声道，格式，样本率
+	unsigned char *pcm = nullptr;
+	SwrContext *actx = swr_alloc();
+	actx = swr_alloc_set_opts(
+		actx,
+		av_get_default_channel_layout(2),//输出格式，2通道
+		AV_SAMPLE_FMT_S16,//输出样本格式
+		acc->sample_rate,//输出采样率，1秒钟，音频样本数量
+		av_get_default_channel_layout(acc->channels),//输入
+		acc->sample_fmt,
+		acc->sample_rate,
+		0,0);
+	ret = swr_init(actx);
+	if (0 != ret)
+	{
+		char buf[1024] = { 0 };
+		av_strerror(ret, buf, sizeof(buf) - 1);
+		std::cout << buf << std::endl;
+		return -1;
+	}
 	for (;;)
 	{
 
@@ -231,6 +260,58 @@ int main()
 					<< " format:" << frame->format
 					<< " linesize:"<< frame->linesize[0]
 					<< std::endl;
+				//是视频，进行格式转换，可以用shader转换
+				if (cc == vcc)
+				{
+					vctx = sws_getCachedContext(
+						vctx, //传null会新创建
+						frame->width,frame->height,//输入的宽高
+						(AVPixelFormat)frame->format,//输入的格式
+						frame->width, frame->height, //输出宽高
+						AV_PIX_FMT_RGBA,//输出格式
+						SWS_FAST_BILINEAR,//尺寸插值算法
+						0,0,0);
+					if (nullptr != vctx)
+					{
+						if (nullptr == rgb)
+						{
+							rgb = new unsigned char[frame->width * frame->height * 4];//考虑对齐
+						}
+						uint8_t *data[2] = { 0 };
+						data[0] = rgb;
+						int lines[2] = { 0 };
+						lines[0] = frame->width * 4;//一行字节数
+						int height = sws_scale(
+							vctx,
+							frame->data,//输入数据
+							frame->linesize,//输入行大小，考虑对齐
+							0,
+							frame->height,//输入高度
+							data,		//输出数据
+							lines
+							);
+						std::cout << "sws_scale:" << height << std::endl;
+					}
+				}
+				else if (cc == acc)
+				{
+					//音频重采样
+					if (nullptr == pcm)
+					{
+						//nb_samples*样本大小*通道数
+						pcm = new unsigned char[frame->nb_samples * 2 * 2];
+						uint8_t *data[2] = { 0 };
+						data[0] = pcm;
+						int nb_samples = swr_convert(
+							actx,
+							data, //输出数据
+							frame->nb_samples,
+							(const uint8_t **)frame->data,
+							frame->nb_samples
+						);
+						std::cout << "swr_convert:" << nb_samples << std::endl;
+					}
+				}
 			}
 
 		}
@@ -238,6 +319,11 @@ int main()
 		//引用计数减一，为0，释放数据空间
 		av_packet_unref(pkt);
 	}
+
+	sws_freeContext(vctx);
+	vctx = nullptr;
+
+	swr_free(&actx);
 
 	av_frame_free(&frame);
 	av_packet_free(&pkt);
