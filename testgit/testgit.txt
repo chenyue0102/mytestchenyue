@@ -3,3 +3,4 @@ nextline
 nextnextline
 testgit22222
 nextlineline
+testmerge2
