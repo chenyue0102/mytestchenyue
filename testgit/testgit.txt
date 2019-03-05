@@ -1,6 +1,0 @@
-testgit
-nextline
-nextnextline
-testgit22222
-nextlineline
-testmerge1
