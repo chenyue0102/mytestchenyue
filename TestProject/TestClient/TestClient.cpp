@@ -153,7 +153,7 @@ int main()
 	sockaddr_in addr = { 0 };
 	addr.sin_family = AF_INET;
 	addr.sin_port = htons(5617);
-	addr.sin_addr.S_un.S_addr = inet_addr("192.168.100.135");//inet_addr("192.168.56.101");
+	addr.sin_addr.S_un.S_addr = inet_addr("192.168.100.100");//inet_addr("192.168.56.101");
 
 	SOCKET s = socket(AF_INET, SOCK_STREAM, 0);
 	MSGHEADER local = { 0 };
@@ -179,7 +179,6 @@ int main()
 			break;
 		case 3:
 		{
-			
 			for (int i = 0; i < 30; i++)
 			{
 				std::unique_ptr<std::thread> pThread(new std::thread(&threadproc7));
@@ -284,6 +283,36 @@ int main()
 			printf("recv udp %s\n");
 			sendto(s, "echo", 4, 0, (sockaddr*)&recvAddr, sizeof(recvAddr));
 			closesocket(s);
+			break;
+		}
+		case 13:
+		{
+			SOCKET s = socket(AF_INET, SOCK_DGRAM, 0);
+			sockaddr_in addr;
+			addr.sin_family = AF_INET;
+			addr.sin_addr.S_un.S_addr = inet_addr("192.168.100.1");
+			addr.sin_port = htons(5618);
+			int ret = bind(s, (sockaddr*)&addr, sizeof(addr));
+
+			addr.sin_addr.S_un.S_addr = inet_addr("192.168.100.136");
+			sendto(s, "echo", 4, 0, (sockaddr*)&addr, sizeof(addr));
+
+			char buf[1024] = { 0 };
+			sockaddr_in recvAddr;
+			int recvAddrLen = sizeof(recvAddr);
+			int nrecv = recvfrom(s, buf, sizeof(buf), 0, (sockaddr*)&recvAddr, &recvAddrLen);
+			buf[nrecv] = '\0';
+			printf("recv udp %s\n");
+			
+			closesocket(s);
+			break;
+		}
+		case 14:
+		{
+			send(s, "1234", 4, 0);
+			char sz[1024] = { 0 };
+			recv(s, sz, sizeof(sz), 0);
+			printf("%s\n", sz);
 			break;
 		}
 		default:

@@ -599,6 +599,29 @@ std::string format_hardware_address(unsigned char(&hardware_address)[ETH_ALEN])
 	return strText;
 }
 
+bool is_ip(const char *buf, int len)
+{
+	ethhdr hdr;
+	memcpy(&hdr, buf, sizeof(hdr));
+	return ntohs(hdr.h_proto) == ETH_P_IP;
+}
+
+bool is_tcp(const char *buf, int len)
+{
+	iphdr hdr;
+	memcpy(&hdr, buf, sizeof(hdr));
+
+	return hdr.protocol == IPPROTO_TCP;
+}
+
+bool is_tcp5617(const char *buf, int len)
+{
+	tcphdr hdr;
+	memcpy(&hdr, buf, sizeof(hdr));
+
+	return (5617 == ntohs(hdr.source) || 5617 == ntohs(hdr.dest));
+}
+
 void print_iphdr(const char *buf, int len);
 void printf_arp(const char *buf, int len);
 void print_ethhdr(const char *buf, int len)
@@ -606,6 +629,24 @@ void print_ethhdr(const char *buf, int len)
 	if (len < sizeof(ethhdr))
 	{
 		printf("print_ethhdr len failed\n");
+		return;
+	}
+	bool b = false;
+	if (is_ip(buf, len))
+	{
+		iphdr hdr;
+		memcpy(&hdr, buf + ETH_HLEN, sizeof(hdr));
+		int hdrlen = ((int)hdr.ihl) * 4;
+		if (is_tcp(buf + ETH_HLEN, len - ETH_HLEN))
+		{
+			if (is_tcp5617(buf + ETH_HLEN + hdrlen, len - ETH_HLEN - hdrlen))
+			{
+				b = true;
+			}
+		}
+	}
+	if (!b)
+	{
 		return;
 	}
 	ethhdr hdr;
@@ -644,6 +685,7 @@ void print_tcp(const char *buf, u_int16_t len)
 	tcphdr hdr;
 	memcpy(&hdr, buf, sizeof(hdr));
 	u_int16_t hdrlen = hdr.doff * 4;
+	
 	printf("source:%hu dest:%hu seq:%u ack_seq:%u hdrlen:%d bytes datalen:%hu ", ntohs(hdr.source), ntohs(hdr.dest), ntohl(hdr.seq), ntohl(hdr.ack_seq), hdrlen, len - hdrlen);
 	printf("syn:%d fin:%d rst:%d ack:%d psh:%d ", (int)hdr.syn, (int)hdr.fin, (int)hdr.rst, (int)hdr.ack, (int)hdr.psh);
 	printf("window:%hu ", hdr.window);
@@ -888,34 +930,51 @@ void test_norecv()
 			sockaddr_in acceptAddr;
 			socklen_t acceptAddrLen = sizeof(acceptAddr);
 			int acp = accept(sfd, (sockaddr*)&acceptAddr, &acceptAddrLen);
-			//shutdown(acp, SHUT_RD);
-			linger optval;
-			optval.l_onoff = 1;
-			optval.l_linger = 0;
-			char sz[1024];
-			/*int flags = fcntl(acp, F_GETFL, 0);
-			if (fcntl(acp, F_SETFL, flags | O_NONBLOCK) < 0)
+			if (0 == fork())
 			{
-				printf("ServerObject::init fcntl errno=%d\n", errno);
-			}*/
-			recv(acp, sz, sizeof(sz), 0);
-			static int i = 1;
-			i++;
-			
-			timeval tv = { 0 };
-			if (ioctl(acp, SIOCGSTAMP, &tv) == -1)
-			{
-				printf("test_inet_stream ioctl errno=%d\n", errno);
-			}
-			if (i % 2 == 0)
-			{
-				if (-1 == setsockopt(acp, SOL_SOCKET, SO_LINGER, &optval, sizeof(optval)))
+				close(sfd);
+				//shutdown(acp, SHUT_RD);
+				linger optval;
+				optval.l_onoff = 1;
+				optval.l_linger = 10;
+				char sz[1024] = { 0 };
+				/*int flags = fcntl(acp, F_GETFL, 0);
+				if (fcntl(acp, F_SETFL, flags | O_NONBLOCK) < 0)
 				{
-					printf("test_inet_stream setsockopt errno=%d\n", errno);
-					break;
+					printf("ServerObject::init fcntl errno=%d\n", errno);
+				}*/
+				if (recv(acp, sz, sizeof(sz), 0) < 0)
+				{
+					printf("test_norecv recv failed\n");
 				}
+				else
+				{
+					printf("test_norecv recv %s\n", sz);
+				}
+				static int i = 1;
+				i++;
+
+				//timeval tv = { 0 };
+				//if (ioctl(acp, SIOCGSTAMP, &tv) == -1)
+				{
+					//printf("test_inet_stream ioctl errno=%d\n", errno);
+				}
+				//if (i % 2 == 0)
+				{
+					if (-1 == setsockopt(acp, SOL_SOCKET, SO_LINGER, &optval, sizeof(optval)))
+					{
+						printf("test_inet_stream setsockopt errno=%d\n", errno);
+						break;
+					}
+				}
+				send(acp, "echo back", 9, 0);
+				close(acp);
+				break;
 			}
-			close(acp);
+			else
+			{
+				close(acp);
+			}
 		}
 	} while (false);
 	if (-1 != sfd)
@@ -926,7 +985,6 @@ void test_norecv()
 		}
 		sfd = -1;
 	}
-
 }
 
 void test_ioctl()
@@ -1144,18 +1202,36 @@ void test_load_dll()
 	}
 }
 
+void test()
+{
+	sockaddr_in addr = { 0 };
+	addr.sin_family = AF_INET;
+	addr.sin_port = htons(5617);
+	addr.sin_addr.s_addr = inet_addr("192.168.100.100");//inet_addr("192.168.56.101");
+
+	int s = socket(AF_INET, SOCK_STREAM, 0);
+	connect(s, (const sockaddr*)&addr, sizeof(addr));
+	send(s, "1234", 4, 0);
+	char sz[1024] = { 0 };
+	recv(s, sz, sizeof(sz), 0);
+	printf("%s\n", sz);
+	close(s);
+}
 int main()
 {
 	//test_unix_stream();
 	//test_inet_stream();
 	//test_udp();
 	//test_broad();
+	//test_norecv();
 	/*if (0 != fork())
-		test_norecv();
+		
 	else */
 	//	test_packet();
 	//test_ioctl();
-	test_udp_raw();
+	//test_udp_raw();
 	//test_load_dll();
+	//test();
+
     return 0;
 }

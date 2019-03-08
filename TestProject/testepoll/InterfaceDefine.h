@@ -9,7 +9,11 @@ struct IUserObjectManager
 	virtual void notifyClose(int fd) = 0;
 	
 	virtual void notifyRecv(int fd, const char *pBuffer, unsigned int recvLen) = 0;
-	
+};
+
+struct IUDPUserObjectManager
+{
+	virtual void notifyRecv(const char *pBuffer, unsigned int recvLen, sockaddr_in &addr) = 0;
 };
 
 struct IUnknownEx

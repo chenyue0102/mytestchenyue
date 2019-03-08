@@ -28,6 +28,7 @@ public:
 	~ServerObject();
 public:
 	bool init(IUserObjectManager *pUserObjectManager);
+	bool init_udp(IUDPUserObjectManager *pUserObjectManager);
 	bool destory();
 	bool send(int fd, const char *pBuffer, unsigned int nLen);
 	bool closeSocket(int fd, bool bFocus);
@@ -53,9 +54,11 @@ private:
 	std::size_t getTaskGroupId()const;
 private:
 	int m_fdListen;
+	int m_fdUdp;
 	std::mutex m_mutex;
 	std::map<int, SOCKET_INFO> m_acceptSocketArray;
 	IUserObjectManager *m_pUserObjectManager;
+	IUDPUserObjectManager *m_pUDPUserObjectManager;
 };
 
 #endif
