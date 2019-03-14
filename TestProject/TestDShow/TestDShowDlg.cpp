@@ -3,6 +3,13 @@
 //
 
 #include "stdafx.h"
+extern "C"
+{
+#include "libavcodec/avcodec.h"
+#include "libavformat/avformat.h"
+#include "libswscale/swscale.h"
+#include "libavutil/opt.h"
+}
 #include "TestDShow.h"
 #include "TestDShowDlg.h"
 #include "afxdialogex.h"
@@ -10,12 +17,20 @@
 #include "Test.h"
 #include <atlbase.h>
 #include <gdiplus.h>
+#include <thread>
+#include <mutex>
+#include <list>
+#pragma comment(lib, "avcodec.lib")
+#pragma comment(lib, "avformat.lib")
+#pragma comment(lib, "avutil.lib")
 #include "CaptureVideo.h"
 #include "CaptureAudio.h"
 #pragma comment(lib, "Strmiids.lib")
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
+
+
 
 void errhandler(const char *, HWND)
 {
@@ -266,29 +281,363 @@ int GetEncoderClsid(const WCHAR* format, CLSID* pClsid)
 CCaptureVideo m_cap_vdo;
 CCaptureAudio   m_cap_ado;
 HWND g_h = 0;
+
+
+//void test()
+//{
+//	CFile file[5];
+//	BYTE *szTxt[5];
+//
+//	int nWidth = 0;
+//	int nHeight = 0;
+//
+//	int nDataLen = 0;
+//
+//	int nLen;
+//
+//	CString csFileName;
+//	for (int fileI = 1; fileI <= 5; fileI++)
+//	{
+//		csFileName.Format(L"e:\\pics\\%d.bmp", fileI);
+//		file[fileI - 1].Open(csFileName, CFile::modeRead | CFile::typeBinary);
+//		nLen = file[fileI - 1].GetLength();
+//
+//		szTxt[fileI - 1] = new BYTE[nLen];
+//		file[fileI - 1].Read(szTxt[fileI - 1], nLen);
+//		file[fileI - 1].Close();
+//
+//		//BMP bmi;//BITMAPINFO bmi;
+//		//int nHeadLen = sizeof(BMP);
+//		BITMAPFILEHEADER bmpFHeader;
+//		BITMAPINFOHEADER bmpIHeader;
+//		memcpy(&bmpFHeader, szTxt[fileI - 1], sizeof(BITMAPFILEHEADER));
+//
+//		int nHeadLen = bmpFHeader.bfOffBits - sizeof(BITMAPFILEHEADER);
+//		memcpy(&bmpIHeader, szTxt[fileI - 1] + sizeof(BITMAPFILEHEADER), nHeadLen);
+//
+//		nWidth = bmpIHeader.biWidth;// 464;// bmi.bmpInfo.bmiHeader.biWidth;// ;
+//		nHeight = bmpIHeader.biHeight;//362;// bmi.bmpInfo.bmiHeader.biHeight;// ;
+//
+//		szTxt[fileI - 1] += bmpFHeader.bfOffBits;
+//		nDataLen = nLen - bmpFHeader.bfOffBits;
+//	}
+//
+//	av_register_all();
+//	avcodec_register_all();
+//	AVFrame *m_pRGBFrame = new AVFrame[1];  //RGB帧数据  
+//	AVFrame *m_pYUVFrame = new AVFrame[1];;  //YUV帧数据
+//	AVCodecContext *c = NULL;
+//	AVCodecContext *in_c = NULL;
+//	AVCodec *pCodecH264; //编码器
+//	uint8_t * yuv_buff;//
+//
+//					   //查找h264编码器
+//	pCodecH264 = avcodec_find_encoder(AV_CODEC_ID_H264);
+//	if (!pCodecH264)
+//	{
+//		fprintf(stderr, "h264 codec not found\n");
+//		exit(1);
+//	}
+//
+//	c = avcodec_alloc_context3(pCodecH264);
+//	c->bit_rate = 3000000;// put sample parameters 
+//	c->width = nWidth;// 
+//	c->height = nHeight;// 
+//
+//						// frames per second 
+//	AVRational rate;
+//	rate.num = 1;
+//	rate.den = 25;
+//	c->time_base = rate;//(AVRational){1,25};
+//	c->gop_size = 10; // emit one intra frame every ten frames 
+//	c->max_b_frames = 1;
+//	c->thread_count = 1;
+//	c->pix_fmt = PIX_FMT_YUV420P;//PIX_FMT_RGB24;
+//
+//								 //av_opt_set(c->priv_data, /*"preset"*/"libvpx-1080p.ffpreset", /*"slow"*/NULL, 0);
+//								 //打开编码器
+//	if (avcodec_open2(c, pCodecH264, NULL)<0)
+//		TRACE("不能打开编码库");
+//
+//	int size = c->width * c->height;
+//
+//	yuv_buff = (uint8_t *)malloc((size * 3) / 2); // size for YUV 420 
+//
+//												  //将rgb图像数据填充rgb帧
+//	uint8_t * rgb_buff = new uint8_t[nDataLen];
+//
+//	//图象编码
+//	int outbuf_size = 100000;
+//	uint8_t * outbuf = (uint8_t*)malloc(outbuf_size);
+//	int u_size = 0;
+//	FILE *f = NULL;
+//	char * filename = "e:\\pics\\myData.h264";
+//	f = fopen(filename, "wb");
+//	if (!f)
+//	{
+//		TRACE("could not open %s\n", filename);
+//		exit(1);
+//	}
+//
+//	//初始化SwsContext
+//	SwsContext * scxt = sws_getContext(c->width, c->height, PIX_FMT_BGR24, c->width, c->height, PIX_FMT_YUV420P, SWS_POINT, NULL, NULL, NULL);
+//
+//	AVPacket avpkt;
+//
+//	//AVFrame *pTFrame=new AVFrame
+//	for (int i = 0; i<250; ++i)
+//	{
+//
+//		//AVFrame *m_pYUVFrame = new AVFrame[1];
+//
+//		int index = (i / 25) % 5;
+//		memcpy(rgb_buff, szTxt[index], nDataLen);
+//
+//		avpicture_fill((AVPicture*)m_pRGBFrame, (uint8_t*)rgb_buff, PIX_FMT_RGB24, nWidth, nHeight);
+//
+//		//将YUV buffer 填充YUV Frame
+//		avpicture_fill((AVPicture*)m_pYUVFrame, (uint8_t*)yuv_buff, PIX_FMT_YUV420P, nWidth, nHeight);
+//
+//		// 翻转RGB图像
+//		m_pRGBFrame->data[0] += m_pRGBFrame->linesize[0] * (nHeight - 1);
+//		m_pRGBFrame->linesize[0] *= -1;
+//		m_pRGBFrame->data[1] += m_pRGBFrame->linesize[1] * (nHeight / 2 - 1);
+//		m_pRGBFrame->linesize[1] *= -1;
+//		m_pRGBFrame->data[2] += m_pRGBFrame->linesize[2] * (nHeight / 2 - 1);
+//		m_pRGBFrame->linesize[2] *= -1;
+//
+//
+//		//将RGB转化为YUV
+//		sws_scale(scxt, m_pRGBFrame->data, m_pRGBFrame->linesize, 0, c->height, m_pYUVFrame->data, m_pYUVFrame->linesize);
+//
+//		int got_packet_ptr = 0;
+//		av_init_packet(&avpkt);
+//		avpkt.data = outbuf;
+//		avpkt.size = outbuf_size;
+//		u_size = avcodec_encode_video2(c, &avpkt, m_pYUVFrame, &got_packet_ptr);
+//		if (u_size == 0)
+//		{
+//			fwrite(avpkt.data, 1, avpkt.size, f);
+//		}
+//	}
+//
+//	fclose(f);
+//	delete[]m_pRGBFrame;
+//	delete[]m_pYUVFrame;
+//	delete[]rgb_buff;
+//	free(outbuf);
+//	avcodec_close(c);
+//	av_free(c);
+//}
+
+std::list<std::string> g_data;
+std::mutex g_mutex;
+
+void RGB24ToYUV420(int Width, int Height, uint8_t* RgbBuffer, uint8_t*bufY, uint8_t*bufU, uint8_t*bufV)
+{
+	int nWidth = Width;
+	int nHeight = Height;
+	/////////////////////下面转换算法是网上查到的
+	int i, j;
+	uint8_t*Y = bufY;
+	uint8_t*U = bufU;
+	uint8_t*V = bufV;
+	uint8_t*bufRGB;
+	unsigned char y, u, v, r, g, b, testu, testv;
+	if (NULL == RgbBuffer)
+	{
+		return;
+	}
+	for (j = 0; j<nHeight; j++)
+	{
+		bufRGB = RgbBuffer + nWidth * (nHeight - 1 - j) * 3;
+		for (i = 0; i<nWidth; i++)
+		{
+			int pos = nWidth * i + j;
+			r = *(bufRGB++);
+			g = *(bufRGB++);
+			b = *(bufRGB++);
+			y = (unsigned char)((66 * r + 129 * g + 25 * b + 128) >> 8) + 16;//16
+			v = (unsigned char)((-38 * r - 74 * g + 112 * b + 128) >> 8) + 128; //128          
+			u = (unsigned char)((112 * r - 94 * g - 18 * b + 128) >> 8) + 128;
+			*(bufY++) = max(0, min(y, 255));
+
+			if (j % 2 == 0 && i % 2 == 0)
+			{
+				if (u>255)
+				{
+					u = 255;
+				}
+				if (u<0)
+				{
+					u = 0;
+				}
+				*(bufU++) = u;
+				//存u分量
+			}
+			else
+			{
+				//存v分量
+				if (i % 2 == 0)
+				{
+					if (v>255)
+					{
+						v = 255;
+					}
+					if (v<0)
+					{
+						v = 0;
+					}
+					*(bufV++) = v;
+				}
+			}
+		}
+	}
+}
+
+void RGB24ToYUV420(int Width, int Height, uint8_t* RgbBuffer, uint8_t*yuvBuf)
+{
+	uint8_t*bufY = yuvBuf;
+	uint8_t*bufU = yuvBuf + Width * Height;
+	uint8_t*bufV = bufU + (Width* Height * 1 / 4);
+	return RGB24ToYUV420(Width, Height, RgbBuffer, bufY, bufU, bufV);
+}
+void encode(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket *pkt,
+	FILE *outfile)
+{
+	int ret;
+	/* send the frame to the encoder */
+	if (frame)
+	{
+		//printf("Send frame %3"PRId64"\n", frame->pts);
+	}
+	ret = avcodec_send_frame(enc_ctx, frame);
+	if (ret < 0) {
+		fprintf(stderr, "Error sending a frame for encoding\n");
+		exit(1);
+	}
+	while (ret >= 0) {
+		ret = avcodec_receive_packet(enc_ctx, pkt);
+		if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
+			return;
+		else if (ret < 0) {
+			fprintf(stderr, "Error during encoding\n");
+			exit(1);
+		}
+		//printf("Write packet %3"PRId64" (size=%5d)\n", pkt->pts, pkt->size);
+		fwrite(pkt->data, 1, pkt->size, outfile);
+		av_packet_unref(pkt);
+	}
+}
+void writeThread()
+{
+	av_register_all();
+	avformat_network_init();
+	const AVCodec *codec = avcodec_find_encoder(AV_CODEC_ID_H264);
+	AVCodecContext *c = avcodec_alloc_context3(codec);
+	AVPacket *pkt = av_packet_alloc();
+	c->bit_rate = 400000;
+	c->width = 640;
+	c->height = 480;
+	AVRational time_base = { 1, 25 };
+	c->time_base = time_base;
+	AVRational framerate = { 25, 1 };
+	c->framerate = framerate;
+	c->gop_size = 10;
+	c->max_b_frames = 1;
+	c->pix_fmt = AV_PIX_FMT_YUV420P;
+
+	if (codec->id == AV_CODEC_ID_H264)
+		av_opt_set(c->priv_data, "preset", "slow", 0);
+
+	int ret = 0;
+	ret = avcodec_open2(c, codec, nullptr);
+	if (ret < 0)
+	{
+		assert(false);
+		return;
+	}
+	FILE *fp = fopen("d:/test.mp4", "wb");
+
+	AVFrame *frame = av_frame_alloc();
+	frame->format = c->pix_fmt;
+	frame->width = c->width;
+	frame->height = c->height;
+	ret = av_frame_get_buffer(frame, 32);
+	if (ret < 0)
+	{
+		assert(false);
+		return;
+	}
+	int pts = 0;
+	unsigned char *pYUV = new unsigned char[c->width * c->height * 3 / 2];
+	bool bContinue = true;
+	while (bContinue)
+	{
+		std::this_thread::sleep_for(std::chrono::microseconds(1));
+		std::string strData;
+		{
+			std::lock_guard<std::mutex> lk(g_mutex);
+			if (!g_data.empty())
+			{
+				strData = g_data.front();
+				g_data.pop_front();
+			}
+		}
+		if (strData.empty())
+		{
+			continue;
+		}
+		ret = av_frame_make_writable(frame);
+		if (ret < 0)
+		{
+			assert(false);
+			return;
+		}
+		
+		RGB24ToYUV420(c->width, c->height, (unsigned char*)strData.data(), frame->data[0], frame->data[1], frame->data[2]);
+		frame->pts = pts;
+		pts++;
+		encode(c, frame, pkt, fp);
+		//frame->data[0] = 
+	}
+
+	/* flush the encoder */
+	encode(c, NULL, pkt, fp);
+	uint8_t endcode[] = { 0, 0, 1, 0xb7 };
+	/* add sequence end code to have a real MPEG file */
+	fwrite(endcode, 1, sizeof(endcode), fp);
+	fclose(fp);
+	avcodec_free_context(&c);
+	av_frame_free(&frame);
+	av_packet_free(&pkt);
+}
+
 void CTestDShowDlg::VdoFrameData(double dblSampleTime, BYTE * pBuffer, long lBufferSize)
 {
-	int a = 0;
-	a++;
-	static bool b = true;
-	if (b)
-	{
-		Gdiplus::GdiplusStartupInput gdiplusStartupInput;
-		ULONG_PTR	 gdiplusToken;
-		GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
-		b = false;
-		//FILE *fp = fopen("d:/1.bmp", "wb");
-		//fwrite(pBuffer, 1, lBufferSize, fp);
-		HBITMAP h = CreateBitmap(640, 480, 1, 24, pBuffer);
-		Gdiplus::Bitmap bmp(h, nullptr);
-		auto s = bmp.GetLastStatus();
-		CLSID myClsId;
-		int retVal = GetEncoderClsid(L"image/bmp", &myClsId);
-		bmp.Save(L"d:/1.jpg", &myClsId, NULL);
-		//fclose(fp);
-		//CClientDC cdc(CWnd::FromHandle(g_h));
-		//CreateBMPFile(g_h, L"d:/1.jpg", CreateBitmapInfoStruct(g_h, h), h, cdc.GetSafeHdc());
-	}
+	//int a = 0;
+	//a++;
+	//static bool b = true;
+	//if (b)
+	//{
+	//	Gdiplus::GdiplusStartupInput gdiplusStartupInput;
+	//	ULONG_PTR	 gdiplusToken;
+	//	GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
+	//	b = false;
+	//	//FILE *fp = fopen("d:/1.bmp", "wb");
+	//	//fwrite(pBuffer, 1, lBufferSize, fp);
+	//	HBITMAP h = CreateBitmap(640, 480, 1, 24, pBuffer);
+	//	Gdiplus::Bitmap bmp(h, nullptr);
+	//	auto s = bmp.GetLastStatus();
+	//	CLSID myClsId;
+	//	int retVal = GetEncoderClsid(L"image/bmp", &myClsId);
+	//	bmp.Save(L"d:/1.jpg", &myClsId, NULL);
+	//	//fclose(fp);
+	//	//CClientDC cdc(CWnd::FromHandle(g_h));
+	//	//CreateBMPFile(g_h, L"d:/1.jpg", CreateBitmapInfoStruct(g_h, h), h, cdc.GetSafeHdc());
+	//}
+	std::lock_guard<std::mutex> lk(g_mutex);
+	g_data.push_back(std::string((char*)pBuffer, lBufferSize));
 }
 
 void CTestDShowDlg::AdoFrameData(BYTE* pBuffer, long lBufferSize)
@@ -447,6 +796,8 @@ BOOL CTestDShowDlg::OnInitDialog()
 	pGraph->QueryInterface(IID_IMediaControl, (void **)&pControl);
 	pControl->Run();
 	*/
+	std::thread *p = new std::thread(&writeThread);
+
 	m_cap_vdo.Open(0, GetSafeHwnd());
 	m_cap_vdo.GrabVideoFrames(TRUE, this);
 	//m_cap_vdo.GrabVideoFrames(FALSE, NULL);
@@ -464,6 +815,8 @@ BOOL CTestDShowDlg::OnInitDialog()
 
 	//关闭mic，同时释放directsound：
 		//m_cap_ado.Close();
+
+
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
