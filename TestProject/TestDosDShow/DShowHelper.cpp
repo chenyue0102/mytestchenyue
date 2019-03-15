@@ -8,7 +8,7 @@ namespace DShowHelper
 {
 HRESULT EnumerateDevices(REFGUID category, IEnumMoniker ** ppEnum)
 {
-	HRESULT hr = S_FALSE;
+	HRESULT hr = E_FAIL;
 
 	do
 	{
@@ -73,13 +73,13 @@ HRESULT BindFilter(REFGUID category, LPCTSTR lpFriendlyName, IBaseFilter ** ppFi
 		|| nullptr == ppFilter)
 	{
 		assert(false);
-		return S_FALSE;
+		return E_FAIL;
 	}
 	CComPtr<IEnumMoniker> pEnum;
 	if (FAILED(EnumerateDevices(category, &pEnum)))
 	{
 		assert(false);
-		return S_FALSE;
+		return E_FAIL;
 	}
 	pEnum->Reset();
 	for (CComPtr<IMoniker> pMoniker;pEnum->Next(1, &pMoniker, nullptr) == S_OK; pMoniker = nullptr)
@@ -104,11 +104,11 @@ HRESULT BindFilter(REFGUID category, LPCTSTR lpFriendlyName, IBaseFilter ** ppFi
 			return pMoniker->BindToObject(0, 0, IID_IBaseFilter, (void**)ppFilter);
 		}
 	}
-	return S_FALSE;
+	return E_FAIL;
 }
 HRESULT AddFilterByCLSID(IGraphBuilder * pGraph, const GUID & clsid, LPCWSTR wszName, IBaseFilter ** ppF)
 {
-	HRESULT hr = S_FALSE;
+	HRESULT hr = E_FAIL;
 
 do
 {
@@ -138,7 +138,7 @@ return hr;
 }
 HRESULT GetPin(IBaseFilter * pFilter, PIN_DIRECTION dirrequired, int iNum, IPin ** ppPin)
 {
-	HRESULT hr = S_FALSE;
+	HRESULT hr = E_FAIL;
 
 	do
 	{
@@ -173,14 +173,14 @@ HRESULT GetPin(IBaseFilter * pFilter, PIN_DIRECTION dirrequired, int iNum, IPin 
 			pPin->Release();
 			pPin = nullptr;
 		}
-		hr = (nullptr == *ppPin) ? S_FALSE : S_OK;
+		hr = (nullptr == *ppPin) ? E_FAIL : S_OK;
 	} while (false);
 
 	return hr;
 }
 HRESULT ConnectFilters(IGraphBuilder * pGraph, IBaseFilter * pSrc, IBaseFilter * pDest)
 {
-	HRESULT hr = S_FALSE;
+	HRESULT hr = E_FAIL;
 
 	do
 	{
