@@ -122,10 +122,13 @@ public:
 		BYTE *pBuffer,
 		long BufferLen)override
 	{
-		//SaveBitmap("d:/1.bmp", 1920, 1080, 16, pBuffer, BufferLen);
 		if (bvideo)
 		{
-			
+			if (bfirst)
+			{
+				bfirst = false;
+				SaveBitmap("d:/1.bmp", width, height, biBitCount, pBuffer, BufferLen);
+			}
 			return S_OK;
 		}
 		return S_OK;
@@ -134,6 +137,10 @@ private:
 	std::atomic_ulong m_nRef;
 public:
 	bool bvideo = false;
+	bool bfirst = true;
+	int biBitCount = 32;
+	int width = 0;
+	int height = 0;
 };
 const char* GetFormatTypeName(REFGUID formattype)
 {
@@ -184,6 +191,9 @@ const char* GetSubTypeName(REFGUID subtype)
 	}
 }
 HRESULT hr = S_OK;
+
+static const GUID CLSID_Tee = 
+{ 0x22b8142, 0x946, 0x11cf, 0xbc, 0xb1, 0x44, 0x45, 0x53, 0x54, 0x0, 0x0 };
 void testAudio()
 {
 	CComPtr<ICaptureGraphBuilder2> pCaptureGraphBuilder2;
@@ -215,9 +225,9 @@ void testAudio()
 		pMediaType = nullptr;
 	}
 #define DEFAULT_BUFFER_TIME 0.05 //50ms
-	int nChannels = 1;//1,2
-	int nBytesPerSample = 1;//1,2
-	int nFrequency = 11025;//11025,22050,44100
+	int nChannels = 2;//1,2
+	int nBytesPerSample = 2;//1,2
+	int nFrequency = 44100;//11025,22050,44100
 	long lBytesPerSecond = (nBytesPerSample * nFrequency * nChannels);
 	long lBufferSize = (float)lBytesPerSecond * DEFAULT_BUFFER_TIME;
 
@@ -257,7 +267,13 @@ void testAudio()
 		pmt = nullptr;
 	}
 
+
+	CComPtr<IBaseFilter> pTee;
+	hr = CoCreateInstance(CLSID_Tee, nullptr, CLSCTX_INPROC_SERVER, IID_IBaseFilter, (void**)&pTee);
+	hr = pGraphBuilder->AddFilter(pTee, L"Tee");
+
 	bool bMpeg2 = false;
+	bool bToFile = false;
 
 	//“Ù∆µ±‡¬Î
 	std::vector<std::wstring> friendlyNamesLegacyAmFilterCategory;
@@ -283,8 +299,16 @@ void testAudio()
 	CComPtr<IBaseFilter> pFilewriterFilter;
 	hr = DShowHelper::BindFilter(CLSID_LegacyAmFilterCategory, L"File writer", &pFilewriterFilter);
 	CComQIPtr<IFileSinkFilter, &IID_IFileSinkFilter> pFileSinkFilter(pFilewriterFilter);
-	hr = pFileSinkFilter->SetFileName(L"d:/test.mp2", nullptr);
+	hr = pFileSinkFilter->SetFileName(L"d:/test.wav", nullptr);
+
+	//“Ù∆µ ‰≥ˆµΩ“ÙœÏ
+	CComPtr<IBaseFilter> pSoundFilter;
+	std::vector<std::wstring> soundFriendlyNames;
+	DShowHelper::GetFriendlyNames(CLSID_AudioRendererCategory, soundFriendlyNames);
+	hr = DShowHelper::BindFilter(CLSID_AudioRendererCategory, soundFriendlyNames[0].c_str(), &pSoundFilter);
+	
 	hr = pGraphBuilder->AddFilter(pFilewriterFilter, L"File writer");
+	hr = pGraphBuilder->AddFilter(pSoundFilter, L"sound Filter");
 
 	pPin = nullptr;
 	hr = DShowHelper::GetPin(pFilewriterFilter, PINDIR_INPUT, 0, &pPin);
@@ -318,7 +342,7 @@ void testAudio()
 		//hr = pSampleGrabber->SetMediaType(&mediaType);
 	}
 	hr = pGraphBuilder->AddFilter(pSampleGrabberFilter, L"SampleGrabberFilter");
-
+	
 	if (bMpeg2)
 	{
 		hr = DShowHelper::ConnectFilters(pGraphBuilder, pDeviceFilter, pMpeg2Filter);
@@ -327,8 +351,12 @@ void testAudio()
 	}
 	else
 	{
-		hr = DShowHelper::ConnectFilters(pGraphBuilder, pDeviceFilter, pWavFilter);
+		hr = DShowHelper::ConnectFilters(pGraphBuilder, pDeviceFilter, pTee);
+		hr = DShowHelper::ConnectFilters(pGraphBuilder, pTee, pWavFilter);
 		hr = DShowHelper::ConnectFilters(pGraphBuilder, pWavFilter, pFilewriterFilter);
+		CComPtr<IPin> pOutPin;
+		hr = DShowHelper::GetPin(pTee, PINDIR_OUTPUT, 1, &pOutPin);
+		hr = DShowHelper::ConnectFilters(pGraphBuilder, pOutPin, pSoundFilter);
 	}
 
 	//ªÒ»°“Ù∆µ ‰≥ˆ
@@ -354,8 +382,10 @@ void testVideo()
 	std::vector<std::wstring> vfriendlyNames;
 	DShowHelper::GetFriendlyNames(CLSID_VideoInputDeviceCategory, vfriendlyNames);
 	CComPtr<IBaseFilter> pVDeviceFilter;
-	hr = DShowHelper::BindFilter(CLSID_VideoInputDeviceCategory, L"screen-capture-recorder", &pVDeviceFilter);
+	hr = DShowHelper::BindFilter(CLSID_VideoInputDeviceCategory, /*L"screen-capture-recorder"*/vfriendlyNames[0].c_str(), &pVDeviceFilter);
 	hr = pVGraphBuilder->AddFilter(pVDeviceFilter, L"Video Capture");
+	bool bWDMCard = DShowHelper::IsWDMCard(pVDeviceFilter);
+	bool bVFWCard = DShowHelper::IsVFWCard(pVDeviceFilter);
 
 	/*CComPtr<IBaseFilter> pVMpeg2Filter;
 	hr = DShowHelper::BindFilter(CLSID_LegacyAmFilterCategory, L"Microsoft MPEG-2 Video Encoder", &pVMpeg2Filter);
@@ -410,7 +440,10 @@ void testVideo()
 	VIDEOINFOHEADER *vih = (VIDEOINFOHEADER*)mediaType.pbFormat;
 	int width = vih->bmiHeader.biWidth;
 	int height = vih->bmiHeader.biHeight;
-	hr = pVSampleGrabber->SetOneShot(FALSE);
+	pVSampleGrabberCB->width = width;
+	pVSampleGrabberCB->height = height;
+	pVSampleGrabberCB->biBitCount = iBitDepth;
+	hr = pVSampleGrabber->SetOneShot(TRUE);
 	hr = pVSampleGrabber->SetBufferSamples(TRUE);
 
 	CComPtr<IBaseFilter> pVFilewriterFilter;
@@ -424,11 +457,13 @@ void testVideo()
 
 	CComQIPtr<IVideoWindow, &IID_IVideoWindow> pVVideoWindow(pVGraphBuilder);
 	pVVideoWindow->put_Owner((OAHWND)GetDesktopWindow());
-	pVVideoWindow->put_Width(400);
-	pVVideoWindow->put_Height(400);
+	pVVideoWindow->put_Width(640);
+	pVVideoWindow->put_Height(480);
 	pVVideoWindow->put_Visible(OATRUE);
 	CComQIPtr<IMediaControl, &IID_IMediaControl> pVMediaControl(pVGraphBuilder);
 	hr = pVMediaControl->Run();
+
+	getchar();
 }
 
 void testCaptureVideo()

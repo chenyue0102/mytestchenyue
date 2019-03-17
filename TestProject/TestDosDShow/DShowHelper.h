@@ -23,10 +23,16 @@ HRESULT AddFilterByCLSID(
 HRESULT GetPin(IBaseFilter * pFilter, PIN_DIRECTION dirrequired,
 	int iNum, IPin **ppPin);
 
+HRESULT ConnectFilters(IGraphBuilder *pGraph, IPin *pOutPin,IBaseFilter *pDest);
+
 HRESULT ConnectFilters(
 	IGraphBuilder *pGraph,
 	IBaseFilter *pSrc,
 	IBaseFilter *pDest);
+
+bool IsVFWCard(IBaseFilter *pDeviceFilter);
+bool IsWDMCard(IBaseFilter *pDeviceFilter);
+
 
 };
 

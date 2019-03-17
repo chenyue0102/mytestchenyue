@@ -178,6 +178,35 @@ HRESULT GetPin(IBaseFilter * pFilter, PIN_DIRECTION dirrequired, int iNum, IPin 
 
 	return hr;
 }
+
+HRESULT ConnectFilters(IGraphBuilder *pGraph, IPin *pOutPin, IBaseFilter *pDest)
+{
+	HRESULT hr = E_FAIL;
+
+	do
+	{
+		if (nullptr == pGraph
+			|| nullptr == pOutPin
+			|| nullptr == pDest)
+		{
+			assert(false);
+			break;
+		}
+		CComPtr<IPin> pInPin;
+		if (FAILED(hr = GetPin(pDest, PINDIR_INPUT, 0, &pInPin)))
+		{
+			assert(false);
+			break;
+		}
+		if (FAILED(hr = pGraph->Connect(pOutPin, pInPin)))
+		{
+			assert(false);
+			break;
+		}
+	} while (false);
+	return hr;
+}
+
 HRESULT ConnectFilters(IGraphBuilder * pGraph, IBaseFilter * pSrc, IBaseFilter * pDest)
 {
 	HRESULT hr = E_FAIL;
@@ -210,6 +239,49 @@ HRESULT ConnectFilters(IGraphBuilder * pGraph, IBaseFilter * pSrc, IBaseFilter *
 		hr = S_OK;
 	} while (false);
 	return hr;
+}
+
+bool IsVFWCard(IBaseFilter *pDeviceFilter)
+{
+	bool bRet = false;
+
+	do
+	{
+		if (nullptr == pDeviceFilter)
+		{
+			assert(false);
+			break;
+		}
+		CComQIPtr<IAMVfwCaptureDialogs, &IID_IAMVfwCaptureDialogs> pIAMVfwCaptureDialogs(pDeviceFilter);
+		if (!pIAMVfwCaptureDialogs)
+		{
+			break;
+		}
+		bRet = true;
+	} while (false);
+	return bRet;
+}
+
+bool IsWDMCard(IBaseFilter *pDeviceFilter)
+{
+	bool bRet = false;
+
+	do
+	{
+		if (nullptr == pDeviceFilter)
+		{
+			assert(false);
+			break;
+		}
+		CComQIPtr<IAMAnalogVideoDecoder, &IID_IAMAnalogVideoDecoder> pAMAnalogVideoDecoder(pDeviceFilter);
+		if (!pAMAnalogVideoDecoder)
+		{
+			break;
+		}
+
+		bRet = true;
+	} while (false);
+	return bRet;
 }
 
 };
