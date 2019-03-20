@@ -179,6 +179,51 @@ HRESULT GetPin(IBaseFilter * pFilter, PIN_DIRECTION dirrequired, int iNum, IPin 
 	return hr;
 }
 
+HRESULT GetUnConnectedPin(IBaseFilter * pFilter, PIN_DIRECTION dirrequired, IPin ** ppPin)
+{
+	HRESULT hr = E_FAIL;
+
+	do
+	{
+		if (nullptr == pFilter
+			|| nullptr == ppPin)
+		{
+			assert(false);
+			break;
+		}
+		*ppPin = nullptr;
+		CComPtr<IEnumPins> pEnumPins;
+		if (FAILED(hr = pFilter->EnumPins(&pEnumPins)))
+		{
+			assert(false);
+			break;
+		}
+		pEnumPins->Reset();
+		IPin *pPin = nullptr;
+		while (pEnumPins->Next(1, &pPin, nullptr) == S_OK)
+		{
+			PIN_DIRECTION pindir = (PIN_DIRECTION)3;
+			if (SUCCEEDED(pPin->QueryDirection(&pindir))
+				&& pindir == dirrequired)
+			{
+				CComPtr<IPin> pConnectTo;// 
+				hr = pPin->ConnectedTo(&pConnectTo);
+				if (VFW_E_NOT_CONNECTED == hr 
+					&& !pConnectTo)
+				{
+					*ppPin = pPin;
+					break;
+				}
+			}
+			pPin->Release();
+			pPin = nullptr;
+		}
+		hr = (nullptr == *ppPin) ? E_FAIL : S_OK;
+	} while (false);
+
+	return hr;
+}
+
 HRESULT ConnectFilters(IGraphBuilder *pGraph, IPin *pOutPin, IBaseFilter *pDest)
 {
 	HRESULT hr = E_FAIL;

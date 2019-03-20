@@ -23,6 +23,8 @@ HRESULT AddFilterByCLSID(
 HRESULT GetPin(IBaseFilter * pFilter, PIN_DIRECTION dirrequired,
 	int iNum, IPin **ppPin);
 
+HRESULT GetUnConnectedPin(IBaseFilter * pFilter, PIN_DIRECTION dirrequired, IPin **ppPin);
+
 HRESULT ConnectFilters(IGraphBuilder *pGraph, IPin *pOutPin,IBaseFilter *pDest);
 
 HRESULT ConnectFilters(
