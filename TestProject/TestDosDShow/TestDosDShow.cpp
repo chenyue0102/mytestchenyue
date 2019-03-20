@@ -269,8 +269,8 @@ void testAudio()
 
 
 	CComPtr<IBaseFilter> pTee;
-	hr = CoCreateInstance(CLSID_Tee, nullptr, CLSCTX_INPROC_SERVER, IID_IBaseFilter, (void**)&pTee);
-	hr = pGraphBuilder->AddFilter(pTee, L"Tee");
+	hr = CoCreateInstance(CLSID_InfTee, nullptr, CLSCTX_INPROC_SERVER, IID_IBaseFilter, (void**)&pTee);
+	hr = pGraphBuilder->AddFilter(pTee, L"InfTee");
 
 	bool bMpeg2 = false;
 	bool bToFile = false;
@@ -335,7 +335,7 @@ void testAudio()
 	if (!bMpeg2)
 	{
 		AM_MEDIA_TYPE mediaType = { 0 };
-		mediaType.majortype = FORMAT_WaveFormatEx;
+		//mediaType.majortype = FORMAT_WaveFormatEx;
 		mediaType.subtype = MEDIASUBTYPE_PCM;
 		mediaType.lSampleSize = 1;
 		mediaType.bFixedSizeSamples = TRUE;
@@ -355,7 +355,7 @@ void testAudio()
 		hr = DShowHelper::ConnectFilters(pGraphBuilder, pTee, pWavFilter);
 		hr = DShowHelper::ConnectFilters(pGraphBuilder, pWavFilter, pFilewriterFilter);
 		CComPtr<IPin> pOutPin;
-		hr = DShowHelper::GetPin(pTee, PINDIR_OUTPUT, 1, &pOutPin);
+		hr = DShowHelper::GetUnConnectedPin(pTee, PINDIR_OUTPUT, &pOutPin);
 		hr = DShowHelper::ConnectFilters(pGraphBuilder, pOutPin, pSoundFilter);
 	}
 
@@ -398,31 +398,31 @@ void testVideo()
 	mediaType.majortype = MEDIATYPE_Video;
 	switch (iBitDepth)
 	{
-	case 8:
-	{
-		mediaType.subtype = MEDIASUBTYPE_RGB8;
-		break;
-	}
-	case 16:
-	{
-		mediaType.subtype = MEDIASUBTYPE_RGB555;
-		break;
-	}
-	case 24:
-	{
-		mediaType.subtype = MEDIASUBTYPE_RGB24;
-		break;
-	}
-	case 32:
-	{
-		mediaType.subtype = MEDIASUBTYPE_RGB32;
-		break;
-	}
-	default:
-	{
-		assert(false);
-		break;
-	}
+		case 8:
+		{
+			mediaType.subtype = MEDIASUBTYPE_RGB8;
+			break;
+		}
+		case 16:
+		{
+			mediaType.subtype = MEDIASUBTYPE_RGB555;
+			break;
+		}
+		case 24:
+		{
+			mediaType.subtype = MEDIASUBTYPE_RGB24;
+			break;
+		}
+		case 32:
+		{
+			mediaType.subtype = MEDIASUBTYPE_RGB32;
+			break;
+		}
+		default:
+		{
+			assert(false);
+			break;
+		}
 	}
 	mediaType.formattype = FORMAT_VideoInfo;
 	CComPtr<IBaseFilter> pVSampleGrabberFilter;
@@ -510,9 +510,7 @@ void testCaptureVideo()
 
 int main()
 {
-	
 	CoInitialize(nullptr);
-
 	testAudio();
 	//testVideo();
 	//testCaptureVideo();
