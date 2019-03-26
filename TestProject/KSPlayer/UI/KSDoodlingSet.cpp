@@ -1,6 +1,7 @@
 #include "KSDoodlingSet.h"
 #include <assert.h>
 #include <QPen>
+#include "KSDoodling.h"
 #include "ui_KSDoodlingSet.h"
 #include "SystemConfig.h"
 #include "Single.h"
@@ -12,44 +13,40 @@ struct KSDoodlingSetData
 	Ui::KSDoodlingSet ui;
 	QPen pen;
 	int nScreen;
+	KSDoodling *widgetDoodling;
 
 	KSDoodlingSetData()
 		: ui()
 		, pen()
 		, nScreen(0)
+		, widgetDoodling(nullptr)
 	{
 
 	}
 };
 KSDoodlingSet::KSDoodlingSet(QWidget *parent)
 	: QWidget(parent)
-	, m_pKSDoodlingSetData(new KSDoodlingSetData)
+	, m_pData(new KSDoodlingSetData)
 {
-	Ui::KSDoodlingSet &ui = m_pKSDoodlingSetData->ui;
+	Ui::KSDoodlingSet &ui = m_pData->ui;
+	auto &pen = m_pData->pen;
+	auto &widgetDoodling = m_pData->widgetDoodling;
+
 	ui.setupUi(this);
-}
+	widgetDoodling = new KSDoodling();
 
-KSDoodlingSet::~KSDoodlingSet()
-{
-	delete m_pKSDoodlingSetData;
-	m_pKSDoodlingSetData = nullptr;
-}
-
-void KSDoodlingSet::init()
-{
 	auto &setting = Single<SystemConfig>::Instance();
 	int nScreen = setting.getScreen();
 	int nPenWidth = setting.getPenWidth();
 	const QList<QRgb> clrs = setting.getPenColors();
-	auto &ui = m_pKSDoodlingSetData->ui;
-	auto &pen = m_pKSDoodlingSetData->pen;
-	QAbstractButton *pBtnPenColors[] = { ui.pushButtonPenColor0, ui.pushButtonPenColor1, ui.pushButtonPenColor2, ui.pushButtonPenColor3, ui.pushButtonPenColor4, ui.pushButtonPenColor5 };
-	QButtonGroup *pBtnGroup = new QButtonGroup(this);
 
 	pen.setWidth(nPenWidth);
-	m_pKSDoodlingSetData->nScreen = nScreen;
+	m_pData->nScreen = nScreen;
 	ui.spinBox->setValue(nPenWidth);
-	connect(ui.spinBox, SIGNAL(valueChanged(int)), this, SLOT(slotPenWidthChanged(int)));
+	ui.pushButtonHideDoodling->hide();
+	
+	QAbstractButton *pBtnPenColors[] = { ui.pushButtonPenColor0, ui.pushButtonPenColor1, ui.pushButtonPenColor2, ui.pushButtonPenColor3, ui.pushButtonPenColor4, ui.pushButtonPenColor5 };
+	QButtonGroup *pBtnGroup = new QButtonGroup(this);
 	if (clrs.size() == _countof(pBtnPenColors))
 	{
 		for (unsigned int i = 0; i < clrs.size(); i++)
@@ -67,9 +64,6 @@ void KSDoodlingSet::init()
 	{
 		assert(false);
 	}
-	ui.pushButtonHideDoodling->hide();
-	connect(ui.pushButtonHideDoodling, &QAbstractButton::clicked, this, [this]() {onDoodlingVisilbe(false); });
-	connect(ui.pushButtonShowDoodling, &QAbstractButton::clicked, this, [this]() {onDoodlingVisilbe(true); });
 
 	switch (nScreen)
 	{
@@ -88,16 +82,32 @@ void KSDoodlingSet::init()
 			break;
 		}
 	}
+
+	connect(ui.pushButtonHideDoodling, &QAbstractButton::clicked, this, [this]() {onDoodlingVisilbe(false); });
+	connect(ui.pushButtonShowDoodling, &QAbstractButton::clicked, this, [this]() {onDoodlingVisilbe(true); });
+	connect(this, SIGNAL(signalPenChanged(const QPen &)), widgetDoodling, SLOT(setPen(const QPen &)));
+	connect(this, SIGNAL(signalDoodlingVisilbe(bool)), widgetDoodling, SLOT(setDoodlingVisible(bool)));
+	connect(this, SIGNAL(signalScreenChanged(int)), widgetDoodling, SLOT(setScreen(int)));
+	connect(ui.spinBox, SIGNAL(valueChanged(int)), this, SLOT(slotPenWidthChanged(int)));
 	connect(ui.radioButtonScreen0, SIGNAL(toggled(bool)), this, SLOT(slotScreenToggled(bool)));
 	connect(ui.radioButtonScreen1, SIGNAL(toggled(bool)), this, SLOT(slotScreenToggled(bool)));
 
-	emit signalPenChanged(pen);
-	emit signalScreenChanged(nScreen);
+	widgetDoodling->setPen(pen);
+	widgetDoodling->setScreen(nScreen);
+	widgetDoodling->hide();
+}
+
+KSDoodlingSet::~KSDoodlingSet()
+{
+	delete m_pData->widgetDoodling;
+	m_pData->widgetDoodling = nullptr;
+	delete m_pData;
+	m_pData = nullptr;
 }
 
 void KSDoodlingSet::slotPenWidthChanged(int nWidth)
 {
-	auto &pen = m_pKSDoodlingSetData->pen;
+	auto &pen = m_pData->pen;
 	pen.setWidth(nWidth);
 	emit signalPenChanged(pen);
 
@@ -123,7 +133,7 @@ void KSDoodlingSet::slotScreenToggled(bool bToggled)
 
 void KSDoodlingSet::onDoodlingVisilbe(bool bVisible)
 {
-	auto &ui = m_pKSDoodlingSetData->ui;
+	auto &ui = m_pData->ui;
 	ui.pushButtonHideDoodling->setVisible(bVisible);
 	ui.pushButtonShowDoodling->setVisible(!bVisible);
 	emit signalDoodlingVisilbe(bVisible);
@@ -135,7 +145,7 @@ void KSDoodlingSet::slotColorToggled(QAbstractButton *pBtn, bool bToggled)
 		&& nullptr != pBtn)
 	{
 		QRgb rgb = pBtn->property(PROPERTY_COLOR).toUInt();
-		QPen &pen = m_pKSDoodlingSetData->pen;
+		QPen &pen = m_pData->pen;
 		pen.setColor(QColor(rgb));
 		emit signalPenChanged(pen);
 	}

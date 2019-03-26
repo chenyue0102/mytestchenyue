@@ -16,7 +16,7 @@ struct KSPlayerCtrlData
 	libvlc_media_t          * m_Media;
 	libvlc_time_t	m_totalTime;
 	QTimer timer;
-	bool bSliderPressed;
+	bool bSliderPressed;			//是否按下了滑动条，按下的时候，不更新滑动条当前位置
 
 	KSPlayerCtrlData()
 		: ui()
@@ -33,12 +33,12 @@ struct KSPlayerCtrlData
 };
 KSPlayerCtrl::KSPlayerCtrl(QWidget *parent)
 	: QWidget(parent)
-	, m_pKSPlayerCtrlData(new KSPlayerCtrlData)
+	, m_pData(new KSPlayerCtrlData)
 {
-	auto &ui = m_pKSPlayerCtrlData->ui;
+	auto &ui = m_pData->ui;
 	ui.setupUi(this);
 
-	auto &timer = m_pKSPlayerCtrlData->timer;
+	auto &timer = m_pData->timer;
 	timer.setSingleShot(false);
 	timer.setInterval(50);
 
@@ -55,22 +55,23 @@ KSPlayerCtrl::KSPlayerCtrl(QWidget *parent)
 
 KSPlayerCtrl::~KSPlayerCtrl()
 {
-	delete m_pKSPlayerCtrlData;
-	m_pKSPlayerCtrlData = nullptr;
+	destroyMovie();
+	delete m_pData;
+	m_pData = nullptr;
 }
 
 void KSPlayerCtrl::setDrawWindow(void *pDrawWindow)
 {
-	m_pKSPlayerCtrlData->m_pDrawWindow = pDrawWindow;
+	m_pData->m_pDrawWindow = pDrawWindow;
 }
 
-void KSPlayerCtrl::init(const QString & strFileName)
+void KSPlayerCtrl::initMovie(const QString & strFileName)
 {
-	destroy();
+	destroyMovie();
 	bool bRet = false;
-	auto &m_Instance = m_pKSPlayerCtrlData->m_Instance;
-	auto &m_MediaPlayer = m_pKSPlayerCtrlData->m_MediaPlayer;
-	auto &m_Media = m_pKSPlayerCtrlData->m_Media;
+	auto &m_Instance = m_pData->m_Instance;
+	auto &m_MediaPlayer = m_pData->m_MediaPlayer;
+	auto &m_Media = m_pData->m_Media;
 
 	do
 	{
@@ -98,25 +99,27 @@ void KSPlayerCtrl::init(const QString & strFileName)
 			break;
 		}
 		libvlc_media_parse(m_Media);
-		libvlc_media_player_set_hwnd(m_MediaPlayer, m_pKSPlayerCtrlData->m_pDrawWindow);
-		m_pKSPlayerCtrlData->m_totalTime = libvlc_media_get_duration(m_Media);
-		m_pKSPlayerCtrlData->timer.start();
+		libvlc_media_player_set_hwnd(m_MediaPlayer, m_pData->m_pDrawWindow);
+		m_pData->m_totalTime = libvlc_media_get_duration(m_Media);
+		m_pData->timer.start();
 
 		bRet = true;
 	} while (false);
 	if (!bRet)
 	{
-		destroy();
+		destroyMovie();
 	}
 }
 
-void KSPlayerCtrl::destroy()
+void KSPlayerCtrl::destroyMovie()
 {
-	auto &m_Instance = m_pKSPlayerCtrlData->m_Instance;
-	auto &m_MediaPlayer = m_pKSPlayerCtrlData->m_MediaPlayer;
-	auto &m_Media = m_pKSPlayerCtrlData->m_Media;
+	auto &m_Instance = m_pData->m_Instance;
+	auto &m_MediaPlayer = m_pData->m_MediaPlayer;
+	auto &m_Media = m_pData->m_Media;
 
-	m_pKSPlayerCtrlData->timer.stop();
+	m_pData->timer.stop();
+	m_pData->m_totalTime = 0;
+	m_pData->bSliderPressed = false;
 	if (m_Media)
 	{
 		libvlc_media_release(m_Media);
@@ -138,7 +141,7 @@ void KSPlayerCtrl::destroy()
 
 void KSPlayerCtrl::slotPlay()
 {
-	auto &m_MediaPlayer = m_pKSPlayerCtrlData->m_MediaPlayer;
+	auto &m_MediaPlayer = m_pData->m_MediaPlayer;
 	if (m_MediaPlayer)
 	{
 		libvlc_media_player_play(m_MediaPlayer);
@@ -147,7 +150,7 @@ void KSPlayerCtrl::slotPlay()
 
 void KSPlayerCtrl::slotStop()
 {
-	auto &m_MediaPlayer = m_pKSPlayerCtrlData->m_MediaPlayer;
+	auto &m_MediaPlayer = m_pData->m_MediaPlayer;
 	if (m_MediaPlayer)
 	{
 		libvlc_media_player_stop(m_MediaPlayer);
@@ -156,7 +159,7 @@ void KSPlayerCtrl::slotStop()
 
 void KSPlayerCtrl::slotPause()
 {
-	auto &m_MediaPlayer = m_pKSPlayerCtrlData->m_MediaPlayer;
+	auto &m_MediaPlayer = m_pData->m_MediaPlayer;
 	if (m_MediaPlayer)
 	{
 		libvlc_media_player_pause(m_MediaPlayer);
@@ -170,15 +173,15 @@ void KSPlayerCtrl::slotOpen()
 	strFileName = strFileName.replace(QChar(L'/'), QChar(L'\\'));
 	if (!strFileName.isEmpty())
 	{
-		init(strFileName);
+		initMovie(strFileName);
 	}
 #endif
-	init(QStringLiteral("C:\\Users\\EDZ\\Desktop\\软件\\v1080.mp4"));
+	initMovie(QStringLiteral("C:\\Users\\EDZ\\Desktop\\软件\\v1080.mp4"));
 }
 
 void KSPlayerCtrl::slotResume()
 {
-	auto &m_MediaPlayer = m_pKSPlayerCtrlData->m_MediaPlayer;
+	auto &m_MediaPlayer = m_pData->m_MediaPlayer;
 	if (m_MediaPlayer)
 	{
 		libvlc_media_player_play(m_MediaPlayer);
@@ -187,38 +190,45 @@ void KSPlayerCtrl::slotResume()
 
 void KSPlayerCtrl::slotRefreshSlider()
 {
-	auto &ui = m_pKSPlayerCtrlData->ui;
-	auto &m_MediaPlayer = m_pKSPlayerCtrlData->m_MediaPlayer;
-	auto &m_totalTime = m_pKSPlayerCtrlData->m_totalTime;
+	auto &ui = m_pData->ui;
+	auto &m_MediaPlayer = m_pData->m_MediaPlayer;
+	auto &m_totalTime = m_pData->m_totalTime;
 
 	if (nullptr != m_MediaPlayer
-		&& !m_pKSPlayerCtrlData->bSliderPressed
 		&& 0 != m_totalTime)
 	{
 		libvlc_time_t curTime = libvlc_media_player_get_time(m_MediaPlayer);
-		libvlc_time_t pos = curTime * ui.horizontalSlider->maximum() / m_totalTime;
-		ui.horizontalSlider->setValue(pos);
+		if (!m_pData->bSliderPressed)
+		{
+			libvlc_time_t pos = curTime * ui.horizontalSlider->maximum() / m_totalTime;
+			ui.horizontalSlider->setValue(pos);
+		}
+		if (curTime >= m_totalTime)
+		{
+			emit playFinished();
+			m_pData->timer.stop();
+		}
 	}
 }
 
 void KSPlayerCtrl::slotSliderPressed()
 {
-	m_pKSPlayerCtrlData->bSliderPressed = true;
+	m_pData->bSliderPressed = true;
 }
 
 void KSPlayerCtrl::slotSliderReleased()
 {
-	m_pKSPlayerCtrlData->bSliderPressed = false;
-	auto &ui = m_pKSPlayerCtrlData->ui;
+	m_pData->bSliderPressed = false;
+	auto &ui = m_pData->ui;
 	int position = ui.horizontalSlider->sliderPosition();
 	return slotSliderMoved(position);
 }
 
 void KSPlayerCtrl::slotSliderMoved(int position)
 {
-	auto &ui = m_pKSPlayerCtrlData->ui;
-	auto &m_MediaPlayer = m_pKSPlayerCtrlData->m_MediaPlayer;
-	auto &m_totalTime = m_pKSPlayerCtrlData->m_totalTime;
+	auto &ui = m_pData->ui;
+	auto &m_MediaPlayer = m_pData->m_MediaPlayer;
+	auto &m_totalTime = m_pData->m_totalTime;
 	int maximum = ui.horizontalSlider->maximum();
 
 	if (nullptr != m_MediaPlayer

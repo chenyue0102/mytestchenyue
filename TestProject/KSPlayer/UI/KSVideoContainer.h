@@ -2,13 +2,13 @@
 
 #include <QWidget>
 
-class KSPlayerContainer : public QWidget
+class KSVideoContainer : public QWidget
 {
 	Q_OBJECT
 
 public:
-	KSPlayerContainer(QWidget *parent = 0);
-	~KSPlayerContainer();
+	KSVideoContainer(QWidget *parent = 0);
+	~KSVideoContainer();
 public slots:
 	void setScreen(int nScreen);
 	void showDesktop();

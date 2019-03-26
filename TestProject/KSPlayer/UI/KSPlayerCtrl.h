@@ -12,8 +12,10 @@ public:
 	~KSPlayerCtrl();
 public:
 	void setDrawWindow(void *pDrawWindow);
-	void init(const QString &strFileName);
-	void destroy();
+	void initMovie(const QString &strFileName);
+	void destroyMovie();
+Q_SIGNALS:
+	void playFinished();
 public slots:
 	void slotPlay();
 	void slotStop();
@@ -25,5 +27,6 @@ public slots:
 	void slotSliderReleased();
 	void slotSliderMoved(int position);
 private:
-	KSPlayerCtrlData *m_pKSPlayerCtrlData;
+	Q_DISABLE_COPY(KSPlayerCtrl)
+	KSPlayerCtrlData *m_pData;
 };

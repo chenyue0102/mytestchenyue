@@ -1,35 +1,22 @@
 #include "KSPlayer.h"
-#include "KSDoodling.h"
-#include "KSPlayerContainer.h"
+#include "KSVideoContainer.h"
 
 
 KSPlayer::KSPlayer(QWidget *parent)
 	: QWidget(parent)
-	, m_pKSDoodling(nullptr)
-	, m_pKSPlayerContainer(nullptr)
+	, m_pKSVideoContainer(nullptr)
 {
 	ui.setupUi(this);
 
-	m_pKSPlayerContainer = new KSPlayerContainer();
-	connect(ui.widgetDoodlingSet, SIGNAL(signalScreenChanged(int)), m_pKSPlayerContainer, SLOT(setScreen(int)));
+	m_pKSVideoContainer = new KSVideoContainer();
+	connect(ui.widgetDoodlingSet, SIGNAL(signalScreenChanged(int)), m_pKSVideoContainer, SLOT(setScreen(int)));
 
-	m_pKSDoodling = new KSDoodling();
-
-	connect(ui.widgetDoodlingSet, SIGNAL(signalPenChanged(const QPen &)), m_pKSDoodling, SLOT(setPen(const QPen &)));
-	connect(ui.widgetDoodlingSet, SIGNAL(signalDoodlingVisilbe(bool)), m_pKSDoodling, SLOT(setDoodlingVisible(bool)));
-	connect(ui.widgetDoodlingSet, SIGNAL(signalScreenChanged(int)), m_pKSDoodling, SLOT(setScreen(int)));
-
-	ui.widgetDoodlingSet->init();
-	
-	m_pKSPlayerContainer->showDesktop();
-	ui.widgetPlayCtrl->setDrawWindow((void*)m_pKSPlayerContainer->winId());
+	m_pKSVideoContainer->showDesktop();
+	ui.widgetPlayCtrl->setDrawWindow((void*)m_pKSVideoContainer->winId());
 }
 
 KSPlayer::~KSPlayer()
 {
-	delete m_pKSDoodling;
-	m_pKSDoodling = nullptr;
-
-	delete m_pKSPlayerContainer;
-	m_pKSPlayerContainer = nullptr;
+	delete m_pKSVideoContainer;
+	m_pKSVideoContainer = nullptr;
 }
