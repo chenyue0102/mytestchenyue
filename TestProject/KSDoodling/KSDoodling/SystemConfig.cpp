@@ -8,6 +8,8 @@ SystemConfig::SystemConfig()
 	, m_penColors()
 	, m_strShowShortcut()
 	, m_nPenWidth(1)
+	, m_maskColor(qRgba(0xff, 0xff, 0xff, 0x01))
+	, m_strExitShortcur()
 {
 	init();
 }
@@ -34,6 +36,18 @@ int SystemConfig::getPenWidth() const
 	return m_nPenWidth;
 }
 
+QRgb SystemConfig::getMaskColor() const
+{
+	std::lock_guard<std::mutex> lk(m_mutex);
+	return m_maskColor;
+}
+
+QString SystemConfig::getExitShortcur() const
+{
+	std::lock_guard<std::mutex> lk(m_mutex);
+	return m_strExitShortcur;
+}
+
 void SystemConfig::init()
 {
 	std::lock_guard<std::mutex> lk(m_mutex);
@@ -52,4 +66,9 @@ void SystemConfig::init()
 	m_strShowShortcut = settings.value("setting/showShortcut", QString()).toString();
 
 	m_nPenWidth = settings.value("setting/penWidth", 1).toInt();
+
+	QString strMaskColor = settings.value("setting/maskColor", 0x01FFFFFF).toString();
+	m_maskColor = strMaskColor.toUInt(nullptr, 16);
+
+	m_strExitShortcur = settings.value("setting/exitShortcut", QStringLiteral("Alt+F4")).toString();
 }
