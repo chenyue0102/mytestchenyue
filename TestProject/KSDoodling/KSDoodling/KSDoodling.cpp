@@ -5,6 +5,7 @@
 #include <QDesktopWidget>
 #include <QMouseEvent>
 #include <QPushButton>
+#include <QSystemTrayIcon>
 #include "Single.h"
 #include "SystemConfig.h"
 
@@ -17,12 +18,15 @@ KSDoodling::KSDoodling(QWidget *parent)
 	, m_pen(QPen(QBrush(QColor(255, 0, 0)), 2, Qt::SolidLine))
 	, m_objectArray()
 	, m_showShortcut()
+	, m_exitShortcut()
 	, m_tmpImg()
 	, m_ptLastPos()
 	, m_nLeft(0)
 	, m_nRight(0)
 	, m_nTop(0)
 	, m_nBottom(0)
+	, m_bkClr(0x01FFFFFF)
+	, m_nScreen(0)
 	, ui()
 {
 	ui.setupUi(this);
@@ -39,6 +43,7 @@ KSDoodling::KSDoodling(QWidget *parent)
 		connect(pBtnPenColor, SIGNAL(clicked()), this, SLOT(slotClickPenColor()));
 		ui.horizontalLayoutPenColor->addWidget(pBtnPenColor);
 	}
+
 	m_pen.setWidth(systemConfig.getPenWidth());
 	ui.spinBoxPenWidth->setValue(m_pen.width());
 	connect(ui.spinBoxPenWidth, SIGNAL(valueChanged(int)), this, SLOT(slotPenWidthChanged(int)));
@@ -48,21 +53,35 @@ KSDoodling::KSDoodling(QWidget *parent)
 
 	setAttribute(Qt::WA_TranslucentBackground, true);
 	setMouseTracking(true);
+
+	QRgb clr = systemConfig.getMaskColor();
+	m_bkClr = QColor(qRed(clr), qGreen(clr), qBlue(clr), qAlpha(clr));
 }
 
 void KSDoodling::showDesktop()
 {
-	QSize sz = QApplication::desktop()->screenGeometry().size();
-	resize(sz);
-	if (m_tmpImg.size() != sz)
+	QDesktopWidget *pDesktopWidget = QApplication::desktop();
+	if (m_nScreen < 0
+		|| m_nScreen >= pDesktopWidget->screenCount())
 	{
-		m_tmpImg = QImage(sz, QImage::Format_ARGB32);
+		m_nScreen = 0;
+	}
+	QRect rcScreen = pDesktopWidget->screenGeometry(m_nScreen);
+	QSize szScreen = rcScreen.size();
+	resize(szScreen);
+	if (m_tmpImg.size() != szScreen)
+	{
+		m_tmpImg = QImage(szScreen, QImage::Format_ARGB32);
 	}
 	m_tmpImg.fill(QColor(255, 255, 255, 0));
 	m_objectArray.clear();
-	move(QPoint(0, 0));
+	move(rcScreen.topLeft());
 
-	showFullScreen();
+	//showFullScreen();
+	setWindowFlags(static_cast<Qt::WindowFlags>(windowFlags() | Qt::WA_AlwaysStackOnTop));
+	show();
+	raise();
+	activateWindow();
 }
 
 void KSDoodling::calcMinRect(const QPoint & dotPos)
@@ -85,6 +104,11 @@ void KSDoodling::calcMinRect(const QPoint & dotPos)
 	}
 }
 
+void KSDoodling::setScreen(int nScreen)
+{
+	m_nScreen = nScreen;
+}
+
 void KSDoodling::slotClickPenColor()
 {
 	auto pSender = sender();
@@ -104,6 +128,7 @@ void KSDoodling::slotShowShortcut()
 		m_objectArray.clear();
 		m_tmpImg.fill(QColor(255, 255, 255, 0));
 		repaint();
+		setWindowFlags(static_cast<Qt::WindowFlags>(windowFlags() & ~Qt::WA_AlwaysStackOnTop));
 		hide();
 	}
 	else
@@ -120,13 +145,8 @@ void KSDoodling::slotPenWidthChanged(int nPenWidth)
 void KSDoodling::paintEvent(QPaintEvent * event)
 {
 	QPainter painter(this);
-#ifdef _DEBUG
-	QColor clr = QColor(0, 0, 255, 80);
-#else
-	QColor clr = QColor(255, 255, 255, 1);
-#endif
 	
-	painter.fillRect(this->rect(), clr);
+	painter.fillRect(this->rect(), m_bkClr);
 
 	for (auto &obj : m_objectArray)
 	{
@@ -200,4 +220,10 @@ void KSDoodling::mouseMoveEvent(QMouseEvent * event)
 		m_ptLastPos = curPos;
 		calcMinRect(m_ptLastPos);
 	}
+}
+
+void KSDoodling::closeEvent(QCloseEvent * event)
+{
+	__super::closeEvent(event);
+	QCoreApplication::exit();
 }
