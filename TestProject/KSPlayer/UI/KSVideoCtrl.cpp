@@ -1,15 +1,15 @@
-#include "KSPlayerCtrl.h"
+#include "KSVideoCtrl.h"
 #include <assert.h>
 #include <QFileDialog>
 #include <QTimer>
 #include <QDebug>
-#include "ui_KSPlayerCtrl.h"
+#include "ui_KSVideoCtrl.h"
 #include "vlc.h"
 
 
-struct KSPlayerCtrlData
+struct KSVideoCtrlData
 {
-	Ui::KSPlayerCtrl ui;
+	Ui::KSVideoCtrl ui;
 	void *m_pDrawWindow;
 	libvlc_instance_t		* m_Instance;
 	libvlc_media_player_t	* m_MediaPlayer;
@@ -18,7 +18,7 @@ struct KSPlayerCtrlData
 	QTimer timer;
 	bool bSliderPressed;			//是否按下了滑动条，按下的时候，不更新滑动条当前位置
 
-	KSPlayerCtrlData()
+	KSVideoCtrlData()
 		: ui()
 		, m_pDrawWindow(nullptr)
 		, m_Instance(nullptr)
@@ -31,9 +31,9 @@ struct KSPlayerCtrlData
 
 	}
 };
-KSPlayerCtrl::KSPlayerCtrl(QWidget *parent)
+KSVideoCtrl::KSVideoCtrl(QWidget *parent)
 	: QWidget(parent)
-	, m_pData(new KSPlayerCtrlData)
+	, m_pData(new KSVideoCtrlData)
 {
 	auto &ui = m_pData->ui;
 	ui.setupUi(this);
@@ -53,21 +53,21 @@ KSPlayerCtrl::KSPlayerCtrl(QWidget *parent)
 	connect(ui.horizontalSlider, SIGNAL(signalClick(int)), SLOT(slotSliderMoved(int)));
 }
 
-KSPlayerCtrl::~KSPlayerCtrl()
+KSVideoCtrl::~KSVideoCtrl()
 {
-	destroyMovie();
+	close();
 	delete m_pData;
 	m_pData = nullptr;
 }
 
-void KSPlayerCtrl::setDrawWindow(void *pDrawWindow)
+void KSVideoCtrl::setDrawWindow(void *pDrawWindow)
 {
 	m_pData->m_pDrawWindow = pDrawWindow;
 }
 
-void KSPlayerCtrl::initMovie(const QString & strFileName)
+void KSVideoCtrl::open(const QString &strName, EVideoSrc videoSrc)
 {
-	destroyMovie();
+	close();
 	bool bRet = false;
 	auto &m_Instance = m_pData->m_Instance;
 	auto &m_MediaPlayer = m_pData->m_MediaPlayer;
@@ -87,8 +87,27 @@ void KSPlayerCtrl::initMovie(const QString & strFileName)
 			assert(false);
 			break;
 		}
-		std::string strFilePath = strFileName.toStdString();
-		if ((m_Media = libvlc_media_new_path(m_Instance, strFilePath.c_str())) == nullptr)
+		std::string strTempName = strName.toStdString();
+		if (EVideoSrcFile == videoSrc)
+		{
+			if ((m_Media = libvlc_media_new_path(m_Instance, strTempName.c_str())) == nullptr)
+			{
+				assert(false);
+				break;
+			}
+		}
+		else if (EVideoSrcDevice == videoSrc)
+		{
+			std::string strDevice = "dshow://";
+			if ((m_Media = libvlc_media_new_location(m_Instance, strDevice.c_str())) == nullptr)
+			{
+				assert(false);
+				break;
+			}
+			std::string strOption = ":dshow-adev=" + strName.toStdString();
+			libvlc_media_add_option(m_Media, strOption.c_str());
+		}
+		else
 		{
 			assert(false);
 			break;
@@ -99,19 +118,25 @@ void KSPlayerCtrl::initMovie(const QString & strFileName)
 			break;
 		}
 		libvlc_media_parse(m_Media);
-		libvlc_media_player_set_hwnd(m_MediaPlayer, m_pData->m_pDrawWindow);
+		if (nullptr != m_pData->m_pDrawWindow)
+		{
+			libvlc_media_player_set_hwnd(m_MediaPlayer, m_pData->m_pDrawWindow);
+		}
 		m_pData->m_totalTime = libvlc_media_get_duration(m_Media);
-		m_pData->timer.start();
+		if (0 != m_pData->m_totalTime)
+		{
+			m_pData->timer.start();
+		}
 
 		bRet = true;
 	} while (false);
 	if (!bRet)
 	{
-		destroyMovie();
+		close();
 	}
 }
 
-void KSPlayerCtrl::destroyMovie()
+void KSVideoCtrl::close()
 {
 	auto &m_Instance = m_pData->m_Instance;
 	auto &m_MediaPlayer = m_pData->m_MediaPlayer;
@@ -139,7 +164,7 @@ void KSPlayerCtrl::destroyMovie()
 	}
 }
 
-void KSPlayerCtrl::slotPlay()
+void KSVideoCtrl::slotPlay()
 {
 	auto &m_MediaPlayer = m_pData->m_MediaPlayer;
 	if (m_MediaPlayer)
@@ -148,7 +173,7 @@ void KSPlayerCtrl::slotPlay()
 	}
 }
 
-void KSPlayerCtrl::slotStop()
+void KSVideoCtrl::slotStop()
 {
 	auto &m_MediaPlayer = m_pData->m_MediaPlayer;
 	if (m_MediaPlayer)
@@ -157,7 +182,7 @@ void KSPlayerCtrl::slotStop()
 	}
 }
 
-void KSPlayerCtrl::slotPause()
+void KSVideoCtrl::slotPause()
 {
 	auto &m_MediaPlayer = m_pData->m_MediaPlayer;
 	if (m_MediaPlayer)
@@ -166,20 +191,21 @@ void KSPlayerCtrl::slotPause()
 	}
 }
 
-void KSPlayerCtrl::slotOpen()
+void KSVideoCtrl::slotOpen()
 {
 #if 0
 	QString strFileName = QFileDialog::getOpenFileName(this, QStringLiteral("打开视频"), QStringLiteral(""), QStringLiteral("视频文件 (*.avi *.mp4 *.wmv"));
 	strFileName = strFileName.replace(QChar(L'/'), QChar(L'\\'));
 	if (!strFileName.isEmpty())
 	{
-		initMovie(strFileName);
+		open(strFileName, EVideoSrcFile);
 	}
 #endif
-	initMovie(QStringLiteral("C:\\Users\\EDZ\\Desktop\\软件\\v1080.mp4"));
+	//open(QStringLiteral("C:\\Users\\EDZ\\Desktop\\软件\\v1080.mp4"), EVideoSrcFile);
+	open(QStringLiteral("麦克风 (Realtek High Definition Audio)"), EVideoSrcDevice);
 }
 
-void KSPlayerCtrl::slotResume()
+void KSVideoCtrl::slotResume()
 {
 	auto &m_MediaPlayer = m_pData->m_MediaPlayer;
 	if (m_MediaPlayer)
@@ -188,7 +214,7 @@ void KSPlayerCtrl::slotResume()
 	}
 }
 
-void KSPlayerCtrl::slotRefreshSlider()
+void KSVideoCtrl::slotRefreshSlider()
 {
 	auto &ui = m_pData->ui;
 	auto &m_MediaPlayer = m_pData->m_MediaPlayer;
@@ -211,12 +237,12 @@ void KSPlayerCtrl::slotRefreshSlider()
 	}
 }
 
-void KSPlayerCtrl::slotSliderPressed()
+void KSVideoCtrl::slotSliderPressed()
 {
 	m_pData->bSliderPressed = true;
 }
 
-void KSPlayerCtrl::slotSliderReleased()
+void KSVideoCtrl::slotSliderReleased()
 {
 	m_pData->bSliderPressed = false;
 	auto &ui = m_pData->ui;
@@ -224,7 +250,7 @@ void KSPlayerCtrl::slotSliderReleased()
 	return slotSliderMoved(position);
 }
 
-void KSPlayerCtrl::slotSliderMoved(int position)
+void KSVideoCtrl::slotSliderMoved(int position)
 {
 	auto &ui = m_pData->ui;
 	auto &m_MediaPlayer = m_pData->m_MediaPlayer;
