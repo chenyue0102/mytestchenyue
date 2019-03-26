@@ -1,23 +1,23 @@
-#include "KSPlayerContainer.h"
+#include "KSVideoContainer.h"
 #include <QApplication>
 #include <QDesktopWidget>
 
-KSPlayerContainer::KSPlayerContainer(QWidget *parent)
+KSVideoContainer::KSVideoContainer(QWidget *parent)
 	: QWidget(parent, Qt::Window | Qt::FramelessWindowHint)
 	, m_nScreen(0)
 {
 }
 
-KSPlayerContainer::~KSPlayerContainer()
+KSVideoContainer::~KSVideoContainer()
 {
 }
 
-void KSPlayerContainer::setScreen(int nScreen)
+void KSVideoContainer::setScreen(int nScreen)
 {
 	m_nScreen = nScreen;
 }
 
-void KSPlayerContainer::showDesktop()
+void KSVideoContainer::showDesktop()
 {
 	QDesktopWidget *pDesktopWidget = QApplication::desktop();
 	if (m_nScreen < 0

@@ -12,8 +12,6 @@ class KSDoodlingSet : public QWidget
 public:
 	KSDoodlingSet(QWidget *parent = Q_NULLPTR);
 	~KSDoodlingSet();
-public:
-	void init();
 Q_SIGNALS:
 	void signalPenChanged(const QPen &pen);
 	void signalDoodlingVisilbe(bool bVisible);
@@ -25,5 +23,5 @@ private slots:
 private:
 	void onDoodlingVisilbe(bool bVisible);
 private:
-	KSDoodlingSetData *m_pKSDoodlingSetData;
+	KSDoodlingSetData *m_pData;
 };

@@ -3,8 +3,7 @@
 #include <QtWidgets/QWidget>
 #include "ui_KSPlayer.h"
 
-class KSDoodling;
-class KSPlayerContainer;
+class KSVideoContainer;
 class KSPlayer : public QWidget
 {
 	Q_OBJECT
@@ -14,6 +13,5 @@ public:
 	virtual ~KSPlayer();
 private:
 	Ui::KSPlayerClass ui;
-	KSDoodling *m_pKSDoodling;
-	KSPlayerContainer *m_pKSPlayerContainer;
+	KSVideoContainer *m_pKSVideoContainer;
 };
