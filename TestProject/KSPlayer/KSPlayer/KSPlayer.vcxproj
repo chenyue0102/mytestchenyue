@@ -121,7 +121,7 @@
     <ClCompile Include="..\UI\KSDoodlingSet.cpp" />
     <ClCompile Include="..\UI\KSPlayer.cpp" />
     <ClCompile Include="..\UI\KSVideoContainer.cpp" />
-    <ClCompile Include="..\UI\KSPlayerCtrl.cpp" />
+    <ClCompile Include="..\UI\KSVideoCtrl.cpp" />
     <ClCompile Include="..\UI\MySlider.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
@@ -129,7 +129,7 @@
     <QtUic Include="..\UI\KSAudioCapture.ui" />
     <QtUic Include="..\UI\KSDoodlingSet.ui" />
     <QtUic Include="..\UI\KSPlayer.ui" />
-    <QtUic Include="..\UI\KSPlayerCtrl.ui" />
+    <QtUic Include="..\UI\KSVideoCtrl.ui" />
   </ItemGroup>
   <ItemGroup>
     <QtRcc Include="KSPlayer.qrc" />
@@ -144,16 +144,16 @@
     <ClInclude Include="..\Common\DShowHelper.h" />
     <ClInclude Include="..\Common\Single.h" />
     <ClInclude Include="..\Config\SystemConfig.h" />
+    <QtMoc Include="..\UI\KSVideoCtrl.h">
+      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\GeneratedFiles;.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName);$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets;.\..\UI;.\..\Common;.\..\Config;.\..\..\include;.\..\..\include\dshow;.\..\..\include\vlc</IncludePath>
+      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\GeneratedFiles;.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName);$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets;.\..\UI;.\..\Common;.\..\Config;.\..\include;.\..\include\dshow;.\..\include\vlc</IncludePath>
+    </QtMoc>
     <QtMoc Include="..\UI\MySlider.h">
       <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\GeneratedFiles;.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName);$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets;.\..\UI;.\..\Common;.\..\Config;.\..\..\include;.\..\..\include\dshow;.\..\..\include\vlc</IncludePath>
       <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\GeneratedFiles;.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName);$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets;.\..\UI;.\..\Common;.\..\Config;.\..\include;.\..\include\dshow;.\..\include\vlc</IncludePath>
     </QtMoc>
     <QtMoc Include="..\UI\KSVideoContainer.h">
       <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\GeneratedFiles;.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName);$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets;.\..\UI;.\..\Common;.\..\Config;.\..\..\include;.\..\..\include\dshow;.\..\..\include\vlc</IncludePath>
-      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\GeneratedFiles;.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName);$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets;.\..\UI;.\..\Common;.\..\Config;.\..\include;.\..\include\dshow;.\..\include\vlc</IncludePath>
-    </QtMoc>
-    <QtMoc Include="..\UI\KSPlayerCtrl.h">
-      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\GeneratedFiles;.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName);$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets;.\..\UI;.\..\Common;.\..\Config;.\..\include;.\..\include\dshow;.\..\include\vlc</IncludePath>
       <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\GeneratedFiles;.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName);$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets;.\..\UI;.\..\Common;.\..\Config;.\..\include;.\..\include\dshow;.\..\include\vlc</IncludePath>
     </QtMoc>
     <QtMoc Include="..\UI\KSPlayer.h">

@@ -60,13 +60,13 @@
     <ClCompile Include="..\UI\KSPlayer.cpp">
       <Filter>UI</Filter>
     </ClCompile>
-    <ClCompile Include="..\UI\KSPlayerCtrl.cpp">
-      <Filter>UI</Filter>
-    </ClCompile>
     <ClCompile Include="..\UI\MySlider.cpp">
       <Filter>UI</Filter>
     </ClCompile>
     <ClCompile Include="..\UI\KSVideoContainer.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\UI\KSVideoCtrl.cpp">
       <Filter>UI</Filter>
     </ClCompile>
   </ItemGroup>
@@ -83,13 +83,13 @@
     <QtMoc Include="..\UI\KSPlayer.h">
       <Filter>UI</Filter>
     </QtMoc>
-    <QtMoc Include="..\UI\KSPlayerCtrl.h">
-      <Filter>UI</Filter>
-    </QtMoc>
     <QtMoc Include="..\UI\MySlider.h">
       <Filter>UI</Filter>
     </QtMoc>
     <QtMoc Include="..\UI\KSVideoContainer.h">
+      <Filter>UI</Filter>
+    </QtMoc>
+    <QtMoc Include="..\UI\KSVideoCtrl.h">
       <Filter>UI</Filter>
     </QtMoc>
   </ItemGroup>
@@ -103,7 +103,7 @@
     <QtUic Include="..\UI\KSPlayer.ui">
       <Filter>Form Files</Filter>
     </QtUic>
-    <QtUic Include="..\UI\KSPlayerCtrl.ui">
+    <QtUic Include="..\UI\KSVideoCtrl.ui">
       <Filter>Form Files</Filter>
     </QtUic>
   </ItemGroup>

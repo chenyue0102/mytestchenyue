@@ -2,18 +2,23 @@
 
 #include <QWidget>
 
-struct KSPlayerCtrlData;
-class KSPlayerCtrl : public QWidget
+struct KSVideoCtrlData;
+class KSVideoCtrl : public QWidget
 {
 	Q_OBJECT
-
 public:
-	KSPlayerCtrl(QWidget *parent = Q_NULLPTR);
-	~KSPlayerCtrl();
+	enum EVideoSrc
+	{
+		EVideoSrcFile,
+		EVideoSrcDevice,
+	};
+public:
+	KSVideoCtrl(QWidget *parent = Q_NULLPTR);
+	~KSVideoCtrl();
 public:
 	void setDrawWindow(void *pDrawWindow);
-	void initMovie(const QString &strFileName);
-	void destroyMovie();
+	void open(const QString &strName, EVideoSrc videoSrc);
+	void close();
 Q_SIGNALS:
 	void playFinished();
 public slots:
@@ -27,6 +32,6 @@ public slots:
 	void slotSliderReleased();
 	void slotSliderMoved(int position);
 private:
-	Q_DISABLE_COPY(KSPlayerCtrl)
-	KSPlayerCtrlData *m_pData;
+	Q_DISABLE_COPY(KSVideoCtrl)
+	KSVideoCtrlData *m_pData;
 };
