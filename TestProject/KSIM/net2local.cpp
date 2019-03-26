@@ -12,6 +12,8 @@
 #include "message/emfilemessagebody.h"
 #include "message/emimagemessagebody.h"
 #include "message/emvideomessagebody.h"
+#include "message/emlocationmessagebody.h"
+#include "message/emvoicemessagebody.h"
 
 namespace net2local
 {
@@ -40,7 +42,7 @@ KSIMMessage Conver(easemob::EMMessage &in)
 	return ret;
 }
 
-template<typename ResultType, typename NetTypePointer>
+template<typename LocalType, typename NetTypePointer>
 std::string ConverAndPack(easemob::EMMessageBodyPtr &in)
 {
 	std::string ret;
@@ -53,8 +55,8 @@ std::string ConverAndPack(easemob::EMMessageBodyPtr &in)
 			assert(false);
 			break;
 		}
-		ResultType resultBody = Conver(*body);
-		if (!SerializeHelper::PackValue(resultBody, ret, SerializeExport::EnumSerializeFormatJson))
+		LocalType localBody = Conver(*body);
+		if (!SerializeHelper::PackValue(localBody, ret, SerializeExport::EnumSerializeFormatJson))
 		{
 			assert(false);
 			break;
@@ -90,9 +92,10 @@ KSIMCmdMessageBody Conver(const easemob::EMCmdMessageBody &in)
 	return ret;
 }
 
-KSIMSize Conver(const easemob::EMImageMessageBody::Size &in)
+template<typename MsgBodyTypeSize>
+KSIMSize Conver(const typename MsgBodyTypeSize &in)
 {
-	KSIMSize ret;
+	KSIMSize ret = KSIMSize();
 	ret.mWidth = in.mWidth;
 	ret.mHeight = in.mHeight;
 	return ret;
@@ -119,51 +122,95 @@ KSIMImageMessageBody Conver(const easemob::EMImageMessageBody &in)
 	return ret;
 }
 
+KSIMVideoMessageBody Conver(const easemob::EMVideoMessageBody &in)
+{
+	KSIMVideoMessageBody ret;
+	ret.displayName = in.displayName();
+	ret.localPath = in.localPath();
+	ret.remotePath = in.remotePath();
+	ret.secretKey = in.secretKey();
+	ret.fileLength = in.fileLength();
+	ret.downloadStatus = in.downloadStatus();
+
+	ret.thumbnailLocalPath = in.thumbnailLocalPath();
+	ret.thumbnailRemotePath = in.thumbnailRemotePath();
+	ret.thumbnailSecretKey = in.thumbnailSecretKey();
+	ret.thumbnailDownloadStatus = in.thumbnailDownloadStatus();
+	ret.size = Conver(in.size());
+	ret.duration = in.duration();
+	return ret;
+}
+
+KSIMLocationMessageBody Conver(const easemob::EMLocationMessageBody &in)
+{
+	KSIMLocationMessageBody ret;
+	ret.latitude = in.latitude();
+	ret.longitude = in.longitude();
+	ret.address = in.address();
+	return ret;
+}
+
+KSIMVoiceMessageBody Conver(const easemob::EMVoiceMessageBody &in)
+{
+	KSIMVoiceMessageBody ret;
+	ret.displayName = in.displayName();
+	ret.localPath = in.localPath();
+	ret.remotePath = in.remotePath();
+	ret.secretKey = in.secretKey();
+	ret.fileLength = in.fileLength();
+	ret.downloadStatus = in.downloadStatus();
+
+	ret.duration = in.duration();
+	return ret;
+}
+
 KSIMMessageBody makeBody(easemob::EMMessageBodyPtr &in)
 {
 	KSIMMessageBody ret;
 	ret.type = in->type();
 	switch (in->type())
 	{
-	case easemob::EMMessageBody::TEXT:
-	{
-		ret.body = ConverAndPack<KSIMTextMessageBody, easemob::EMTextMessageBody>(in);
-		break;
-	}
-	case easemob::EMMessageBody::IMAGE:
-	{
-		ret.body = ConverAndPack<KSIMImageMessageBody, easemob::EMImageMessageBody>(in);
-		break;
-	}
-	case easemob::EMMessageBody::VIDEO:
-	{
-		break;
-	}
-	case easemob::EMMessageBody::LOCATION:
-	{
-		break;
-	}
-	case easemob::EMMessageBody::VOICE:
-	{
-		//ret.body = ConverAndPack<KSIMFileMessageBody, easemob::EMFileMessageBody>(in);
-		break;
-	}
-	case easemob::EMMessageBody::FILE:
-	{
-		ret.body = ConverAndPack<KSIMFileMessageBody, easemob::EMFileMessageBody>(in);
-		break;
-	}
-	case easemob::EMMessageBody::COMMAND:
-	{
-		ret.body = ConverAndPack<KSIMCmdMessageBody, easemob::EMCmdMessageBody>(in);
-		break;
-	}
-	default:
-	{
-		ret.type = in->type();
-		assert(false);
-		break;
-	}
+		case easemob::EMMessageBody::TEXT:
+		{
+			ret.body = ConverAndPack<KSIMTextMessageBody, easemob::EMTextMessageBody>(in);
+			break;
+		}
+		case easemob::EMMessageBody::IMAGE:
+		{
+			ret.body = ConverAndPack<KSIMImageMessageBody, easemob::EMImageMessageBody>(in);
+			break;
+		}
+		case easemob::EMMessageBody::VIDEO:
+		{
+			ret.body = ConverAndPack<KSIMVideoMessageBody, easemob::EMVideoMessageBody>(in);
+			break;
+		}
+		case easemob::EMMessageBody::LOCATION:
+		{
+			ret.body = ConverAndPack<KSIMLocationMessageBody, easemob::EMLocationMessageBody>(in);
+			break;
+		}
+		case easemob::EMMessageBody::VOICE:
+		{
+			ret.body = ConverAndPack<KSIMVoiceMessageBody, easemob::EMVoiceMessageBody>(in);
+			break;
+		}
+		case easemob::EMMessageBody::FILE:
+		{
+			ret.body = ConverAndPack<KSIMFileMessageBody, easemob::EMFileMessageBody>(in);
+			break;
+		}
+		case easemob::EMMessageBody::COMMAND:
+		{
+			ret.body = ConverAndPack<KSIMCmdMessageBody, easemob::EMCmdMessageBody>(in);
+			break;
+		}
+		default:
+		{
+			ret.type = in->type();
+			assert(false);
+			break;
+		}
 	}
 
 	return ret;

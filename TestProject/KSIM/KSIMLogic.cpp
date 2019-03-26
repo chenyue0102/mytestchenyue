@@ -8,6 +8,7 @@
 #include "KSStructSerialize.h"
 
 #include "net2local.h"
+#include "local2net.h"
 
 #include "emerror.h"
 #include "EMClient.h"
@@ -15,6 +16,7 @@
 #include "emgroup.h"
 #include "emlogininfo.h"
 #include "emchatmanager_interface.h"
+#include "emcontactmanager_interface.h"
 
 #include "message/emmessage.h"
 #include "message/emtextmessagebody.h"
@@ -51,6 +53,22 @@ int KSIMLogic::invoke(easemob::EMClient & client, int msgid, KSIMBuffer & data)
 		case EKSMsgIMLogout:
 		{
 			ret = logout(client);
+			break;
+		}
+		case EKSMsgIMGetContacts:
+		{
+			ret = innerInvoke(client, data, &KSIMLogic::getContacts);
+			break;
+		}
+		//case EKSMsgIMAddContact://此消息为推送消息
+		case EKSMsgIMDeleteContact:
+		{
+			ret = innerInvoke(client, data, &KSIMLogic::deleteContact);
+			break;
+		}
+		case EKSMsgIMInviteContact:
+		{
+			ret = innerInvoke(client, data, &KSIMLogic::InviteContact);
 			break;
 		}
 		case EKSMsgIMGetGroupList:
@@ -134,48 +152,6 @@ int KSIMLogic::logout(easemob::EMClient & client)
 	return 0;
 }
 
-easemob::EMMessageBodyPtr makeMessageBody(const KSIMMessageBody & req)
-{
-	easemob::EMMessageBodyPtr body;
-	switch (req.type)
-	{
-		case EMessageBodyTypeText:
-		{
-			KSIMTextMessageBody textBody;
-			if (SerializeHelper::UnpackValue(req.body.data(), req.body.size(), textBody, SerializeExport::EnumSerializeFormatJson))
-			{
-				body = easemob::EMTextMessageBodyPtr(new easemob::EMTextMessageBody(textBody.text.c_str()));
-			}
-			else
-			{
-				assert(false);
-			}
-			break;
-		}
-		case EMessageBodyTypeCommand:
-		{
-			KSIMCmdMessageBody cmdBody;
-			if (SerializeHelper::UnpackValue(req.body.data(), req.body.size(), cmdBody, SerializeExport::EnumSerializeFormatJson))
-			{
-				easemob::EMCmdMessageBodyPtr tempBody = easemob::EMCmdMessageBodyPtr(new easemob::EMCmdMessageBody(cmdBody.action));
-				tempBody->setParams(cmdBody.params);
-				body = tempBody;
-			}
-			else
-			{
-				assert(false);
-			}
-			break;
-		}
-		default:
-		{
-			assert(false);
-			break;
-		}
-	}
-	return body;
-}
-
 int KSIMLogic::sendMessage(easemob::EMClient & client, const KSIMMessage & req)
 {
 	int ret = -1;
@@ -187,7 +163,7 @@ int KSIMLogic::sendMessage(easemob::EMClient & client, const KSIMMessage & req)
 			assert(false);
 			break;
 		}
-		easemob::EMMessageBodyPtr body = makeMessageBody(req.bodies[0]);
+		easemob::EMMessageBodyPtr body = local2net::makeMessageBody(req.bodies[0]);
 		easemob::EMMessagePtr msg = easemob::EMMessage::createSendMessage(
 			client.getLoginInfo().loginUser(), req.to, body, static_cast<easemob::EMMessage::EMChatType>(req.chatType));
 
@@ -208,6 +184,85 @@ int KSIMLogic::sendMessage(easemob::EMClient & client, const KSIMMessage & req)
 
 		//发送消息
 		client.getChatManager().sendMessage(msg);
+		ret = 0;
+	} while (false);
+	return ret;
+}
+
+int KSIMLogic::getContacts(easemob::EMClient & client, KSIMGetContacts & out)
+{
+	int ret = -1;
+
+	do
+	{
+		EMError error;
+		std::vector<std::string> mContacts = client.getContactManager().getContactsFromServer(error);
+		if (error.mErrorCode != EMError::EM_NO_ERROR)
+		{
+			assert(false);
+			break;
+		}
+		out.contacts = std::move(mContacts);
+		ret = 0;
+	} while (false);
+	return ret;
+}
+
+int KSIMLogic::deleteContact(easemob::EMClient & client, const KSIMDeleteContact & out)
+{
+	int ret = -1;
+
+	do
+	{
+		EMError error;
+		client.getContactManager().deleteContact(out.username, error);
+		if (error.mErrorCode != EMError::EM_NO_ERROR)
+		{
+			assert(false);
+			break;
+		}
+		ret = 0;
+	} while (false);
+	return ret;
+}
+
+int KSIMLogic::InviteContact(easemob::EMClient & client, const KSIMInviteContact & out)
+{
+	int ret = -1;
+
+	do
+	{
+		EMError error;
+		if (EKSIMInviteReq == out.type)
+		{
+			client.getContactManager().inviteContact(out.username, out.reason, error);
+		}
+		else if (EKSIMInviteAck == out.type)
+		{
+			if (EKSIMResultAgree == out.result)
+			{
+				client.getContactManager().acceptInvitation(out.username, error);
+			}
+			else if (EKSIMResultRefuse == out.result)
+			{
+				client.getContactManager().declineInvitation(out.username, error);
+			}
+			else
+			{
+				assert(false);
+				break;
+			}
+		}
+		else
+		{
+			assert(false);
+			break;
+		}
+		if (error.mErrorCode != EMError::EM_NO_ERROR)
+		{
+			assert(false);
+			break;
+		}
 		ret = 0;
 	} while (false);
 	return ret;
