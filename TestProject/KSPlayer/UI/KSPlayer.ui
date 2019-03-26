@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>KSPlayerClass</class>
+ <widget class="QWidget" name="KSPlayerClass">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>600</width>
+    <height>400</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>KSPlayer</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QWidget" name="widget" native="true">
+     <layout class="QHBoxLayout" name="horizontalLayout">
+      <item>
+       <widget class="KSDoodlingSet" name="widgetDoodlingSet" native="true"/>
+      </item>
+      <item>
+       <widget class="KSAudioCapture" name="widgetAudioCapture" native="true"/>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="KSPlayerCtrl" name="widgetPlayCtrl" native="true"/>
+   </item>
+   <item>
+    <spacer name="verticalSpacer">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>40</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+  </layout>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>KSDoodlingSet</class>
+   <extends>QWidget</extends>
+   <header>KSDoodlingSet.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>KSAudioCapture</class>
+   <extends>QWidget</extends>
+   <header>KSAudioCapture.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>KSPlayerCtrl</class>
+   <extends>QWidget</extends>
+   <header>KSPlayerCtrl.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources>
+  <include location="../KSPlayer/KSPlayer.qrc"/>
+ </resources>
+ <connections/>
+</ui>
