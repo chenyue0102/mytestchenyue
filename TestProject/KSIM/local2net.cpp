@@ -18,10 +18,6 @@
 
 namespace local2net
 {
-void test()
-{
-
-}
 
 template<typename MsgBodyTypeSize>
 typename MsgBodyTypeSize Conver(const KSIMSize &in)
@@ -190,6 +186,14 @@ easemob::EMMessageBodyPtr makeMessageBody(const KSIMMessageBody & req)
 	}
 	assert(body);
 	return body;
+}
+
+easemob::EMGroupSetting Conver(const KSIMGroupSetting & req)
+{
+	easemob::EMGroupSetting ret;
+	ret.setStyle(static_cast<easemob::EMGroupSetting::EMGroupStyle>(req.style));
+	ret.setMaxUserCount(req.maxUserCount);
+	return ret;
 }
 
 }
