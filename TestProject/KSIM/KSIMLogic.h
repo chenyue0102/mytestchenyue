@@ -26,9 +26,11 @@ private:
 	int sendMessage(easemob::EMClient &client, const KSIMMessage &req);
 private:
 	int getContacts(easemob::EMClient &client, KSIMGetContacts &out);
-	int deleteContact(easemob::EMClient &client, const KSIMDeleteContact &out);
-	int InviteContact(easemob::EMClient &client, const KSIMInviteContact &out);
+	int deleteContact(easemob::EMClient &client, const KSIMDeleteContact &req);
+	int InviteContact(easemob::EMClient &client, const KSIMInviteContact &req);
+private:
 	int getGroupList(easemob::EMClient &client, KSIMGetGroupList &out);
+	int createGroup(easemob::EMClient &client, const KSIMCreateGroup &req);
 };
 
 }

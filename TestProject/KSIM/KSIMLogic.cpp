@@ -76,6 +76,11 @@ int KSIMLogic::invoke(easemob::EMClient & client, int msgid, KSIMBuffer & data)
 			ret = innerInvoke(client, data, &KSIMLogic::getGroupList);
 			break;
 		}
+		case EKSMsgIMCreateGroup:
+		{
+			ret = innerInvoke(client, data, &KSIMLogic::createGroup);
+			break;
+		}
 		case EKSMsgIMMMessage:
 		{
 			ret = innerInvoke(client, data, &KSIMLogic::sendMessage);
@@ -208,14 +213,14 @@ int KSIMLogic::getContacts(easemob::EMClient & client, KSIMGetContacts & out)
 	return ret;
 }
 
-int KSIMLogic::deleteContact(easemob::EMClient & client, const KSIMDeleteContact & out)
+int KSIMLogic::deleteContact(easemob::EMClient & client, const KSIMDeleteContact & req)
 {
 	int ret = -1;
 
 	do
 	{
 		EMError error;
-		client.getContactManager().deleteContact(out.username, error);
+		client.getContactManager().deleteContact(req.username, error);
 		if (error.mErrorCode != EMError::EM_NO_ERROR)
 		{
 			assert(false);
@@ -226,26 +231,26 @@ int KSIMLogic::deleteContact(easemob::EMClient & client, const KSIMDeleteContact
 	return ret;
 }
 
-int KSIMLogic::InviteContact(easemob::EMClient & client, const KSIMInviteContact & out)
+int KSIMLogic::InviteContact(easemob::EMClient & client, const KSIMInviteContact & req)
 {
 	int ret = -1;
 
 	do
 	{
 		EMError error;
-		if (EKSIMInviteReq == out.type)
+		if (EKSIMInviteReq == req.type)
 		{
-			client.getContactManager().inviteContact(out.username, out.reason, error);
+			client.getContactManager().inviteContact(req.username, req.reason, error);
 		}
-		else if (EKSIMInviteAck == out.type)
+		else if (EKSIMInviteAck == req.type)
 		{
-			if (EKSIMResultAgree == out.result)
+			if (EKSIMResultAgree == req.result)
 			{
-				client.getContactManager().acceptInvitation(out.username, error);
+				client.getContactManager().acceptInvitation(req.username, error);
 			}
-			else if (EKSIMResultRefuse == out.result)
+			else if (EKSIMResultRefuse == req.result)
 			{
-				client.getContactManager().declineInvitation(out.username, error);
+				client.getContactManager().declineInvitation(req.username, error);
 			}
 			else
 			{
@@ -291,6 +296,25 @@ int KSIMLogic::getGroupList(easemob::EMClient & client, KSIMGetGroupList & out)
 			{
 				assert(false);
 			}
+		}
+		ret = 0;
+	} while (false);
+	return ret;
+}
+int KSIMLogic::createGroup(easemob::EMClient & client, const KSIMCreateGroup & req)
+{
+	int ret = -1;
+
+	do
+	{
+		EMError error;
+		EMGroupSetting setting = local2net::Conver(req.groupSetting);
+		EMGroupMemberList members = req.groupMembers;
+		EMGroupPtr group = client.getGroupManager().createGroup(req.groupSubject, req.groupDescription, req.groupWelcomeMessage, setting, members, error);
+		if (error.mErrorCode != EMError::EM_NO_ERROR)
+		{
+			assert(false);
+			break;
 		}
 		ret = 0;
 	} while (false);
