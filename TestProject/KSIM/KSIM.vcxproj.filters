@@ -63,6 +63,9 @@
     <ClInclude Include="local2net.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="ContactListener.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -99,6 +102,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="local2net.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ContactListener.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

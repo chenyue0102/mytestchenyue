@@ -3,10 +3,12 @@
 #include "KSIMInstance.h"
 #include "ChatListener.h"
 #include "ConnectionListener.h"
+#include "ContactListener.h"
 //
 #include "EMClient.h"
 #include "emchatconfigs.h"
 #include "emchatmanager_interface.h"
+#include "emcontactmanager_interface.h"
 
 #ifdef _DEBUG
 #pragma comment(lib, "../lib/easemob_d.lib")
@@ -108,12 +110,16 @@ int KSIMInstance::createClient(int *pclientId)
 
 		std::shared_ptr<ConnectionListener> connectionListener(new ConnectionListener(clientId));
 		chatClient->addConnectionListener(connectionListener.get());
+
+		std::shared_ptr<ContactListener> contactListener(new ContactListener(clientId));
+		chatClient->getContactManager().registerContactListener(contactListener.get());
 		
 		ClientInfo info;
 		info.client = chatClient;
 		info.callback = nullptr;
 		info.chatListener = chatListener;
 		info.connectionListener = connectionListener;
+		info.contactListener = contactListener;
 		m_clientArray[clientId] = info;
 		*pclientId = clientId;
 		
@@ -139,6 +145,10 @@ int KSIMInstance::destroyClient(int clientId)
 			if (info.connectionListener)
 			{
 				info.client->removeConnectionListener(info.connectionListener.get());
+			}
+			if (info.contactListener)
+			{
+				info.client->getContactManager().removeContactListener(info.contactListener.get());
 			}
 			info.client->logout();
 		}

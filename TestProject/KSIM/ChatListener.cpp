@@ -28,6 +28,11 @@ void ChatListener::onReceiveMessages(const easemob::EMMessageList &messages)
 {
 	for (const easemob::EMMessagePtr &msg : messages)
 	{
+		if (!msg)
+		{
+			assert(false);
+			continue;
+		}
 		KSIMMessage data = net2local::Conver(*msg);
 		KSIM::g_KSIMInstance.doCallback(m_nClientId, EKSMsgIMMMessage, data);
 	}

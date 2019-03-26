@@ -92,6 +92,7 @@
     <ClInclude Include="..\include\KSIM\KSStructSerialize.h" />
     <ClInclude Include="ChatListener.h" />
     <ClInclude Include="ConnectionListener.h" />
+    <ClInclude Include="ContactListener.h" />
     <ClInclude Include="GroupManagerListener.h" />
     <ClInclude Include="KSIMInstance.h" />
     <ClInclude Include="KSIMLogic.h" />
@@ -103,6 +104,7 @@
   <ItemGroup>
     <ClCompile Include="ChatListener.cpp" />
     <ClCompile Include="ConnectionListener.cpp" />
+    <ClCompile Include="ContactListener.cpp" />
     <ClCompile Include="dllmain.cpp">
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</CompileAsManaged>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
