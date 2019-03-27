@@ -14,16 +14,21 @@ public:
 	{
 		EnumRequestNone,
 		EnumRequestDownload,
+		EnumRequestGetData,
 	};
 	struct RequestInfo
 	{
 		EnumRequest type;
 		std::string strUrl;
 		std::string strFileName;
+		std::string strData;
+		void *pUserData;
 		RequestInfo()
 			: type(EnumRequestNone)
 			, strUrl()
 			, strFileName()
+			, strData()
+			, pUserData(nullptr)
 		{
 
 		}
@@ -31,11 +36,11 @@ public:
 	typedef std::list<RequestInfo> RequestInfoArray;
 	struct InnerRequestInfo
 	{
-		RequestInfo info;
+		RequestInfo *pRefInfo;
 		CURLWrapBase *pThis;
 		FILE *fp;
 		InnerRequestInfo()
-			: info()
+			: pRefInfo(nullptr)
 			, pThis(nullptr)
 			, fp(nullptr)
 		{
@@ -48,13 +53,15 @@ public:
 public:
 	void init();
 	void destroy();
-	bool downloadFile(const std::string &strUrl, const std::string &strFileName);
+public:
+	bool downloadFile(const std::string &strUrl, const std::string &strFileName, void *pUserData);
+	bool getData(const std::string &strUrl, void *pUserData);
 protected:
 	virtual void notifyProcess(const RequestInfo &info, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow);
 	virtual void notifyRequestResult(const RequestInfo &info, bool bResult);
 private:
 	void threadProc();
-	bool downloadFile(CURL *curl, const RequestInfo &info);
+	bool processRequest(CURL *curl, RequestInfo &info);
 	static size_t write_callback(char *ptr, size_t size, size_t nmemb, void *userdata);
 	static int xferinfo(void *p, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow);
 public:

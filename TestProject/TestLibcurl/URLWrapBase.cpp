@@ -45,7 +45,7 @@ void CURLWrapBase::destroy()
 	m_requestInfoArray.clear();
 }
 
-bool CURLWrapBase::downloadFile(const std::string & strUrl, const std::string & strFileName)
+bool CURLWrapBase::downloadFile(const std::string & strUrl, const std::string & strFileName, void *pUserData)
 {
 	bool bRet = false;
 
@@ -61,6 +61,32 @@ bool CURLWrapBase::downloadFile(const std::string & strUrl, const std::string & 
 		info.type = EnumRequestDownload;
 		info.strUrl = strUrl;
 		info.strFileName = strFileName;
+		info.pUserData = pUserData;
+
+		std::lock_guard<std::mutex> lk(m_mutex);
+		m_requestInfoArray.push_back(info);
+		m_cv.notify_one();
+
+		bRet = true;
+	} while (false);
+	return bRet;
+}
+
+bool CURLWrapBase::getData(const std::string & strUrl, void * pUserData)
+{
+	bool bRet = false;
+
+	do
+	{
+		if (strUrl.empty())
+		{
+			assert(false);
+			break;
+		}
+		RequestInfo info;
+		info.type = EnumRequestGetData;
+		info.strUrl = strUrl;
+		info.pUserData = pUserData;
 
 		std::lock_guard<std::mutex> lk(m_mutex);
 		m_requestInfoArray.push_back(info);
@@ -90,9 +116,9 @@ void CURLWrapBase::threadProc()
 		return;
 	}
 
-	std::unique_lock<std::mutex> lk(m_mutex);
 	while (true)
 	{
+		std::unique_lock<std::mutex> lk(m_mutex);
 		m_cv.wait(lk, 
 			[this]() ->bool
 			{
@@ -110,14 +136,14 @@ void CURLWrapBase::threadProc()
 		m_requestInfoArray.pop_front();
 		lk.unlock();
 
-		bool bResult = downloadFile(curl, info);
+		bool bResult = processRequest(curl, info);
 		notifyRequestResult(info, bResult);
 	}
 	curl_easy_cleanup(curl);
 	curl = nullptr;
 }
 
-bool CURLWrapBase::downloadFile(CURL * curl, const RequestInfo &info)
+bool CURLWrapBase::processRequest(CURL * curl, RequestInfo &info)
 {
 	bool bRet = false;
 	CURLcode ret = CURLE_OK;
@@ -125,13 +151,23 @@ bool CURLWrapBase::downloadFile(CURL * curl, const RequestInfo &info)
 
 	do
 	{
-		struct stat st = { 0 };
-		stat(info.strFileName.c_str(), &st);
-
-		
-		innerInfo.info = info;
+		innerInfo.pRefInfo = &info;
 		innerInfo.pThis = this;
-		innerInfo.fp = fopen(info.strFileName.c_str(), "ab+");
+
+		struct stat st = { 0 };
+		if (info.type == EnumRequestDownload)
+		{
+			stat(info.strFileName.c_str(), &st);
+			innerInfo.fp = fopen(info.strFileName.c_str(), "ab+");
+		}
+		else if (EnumRequestGetData == info.type)
+		{
+			//do nothing
+		}
+		else
+		{
+			assert(false);
+		}
 		
 		curl_easy_reset(curl);
 		if ((ret = curl_easy_setopt(curl, CURLOPT_URL, info.strUrl.c_str())) != CURLE_OK)
@@ -169,14 +205,17 @@ bool CURLWrapBase::downloadFile(CURL * curl, const RequestInfo &info)
 			assert(false);
 			break;
 		}
-		if (0 != st.st_size)
+		if (EnumRequestDownload == info.type)
 		{
-			std::string strRange = std::to_string(st.st_size);
-			strRange += "-";
-			if ((ret = curl_easy_setopt(curl, CURLOPT_RANGE, strRange.c_str())) != CURLE_OK)
+			if (0 != st.st_size)
 			{
-				assert(false);
-				break;
+				std::string strRange = std::to_string(st.st_size);
+				strRange += "-";
+				if ((ret = curl_easy_setopt(curl, CURLOPT_RANGE, strRange.c_str())) != CURLE_OK)
+				{
+					assert(false);
+					break;
+				}
 			}
 		}
 
@@ -200,10 +239,15 @@ bool CURLWrapBase::downloadFile(CURL * curl, const RequestInfo &info)
 size_t CURLWrapBase::write_callback(char * ptr, size_t size, size_t nmemb, void * userdata)
 {
 	InnerRequestInfo *pInfo = reinterpret_cast<InnerRequestInfo*>(userdata);
-	assert(pInfo->info.type == EnumRequestDownload);
 	if (nullptr == pInfo
-		|| pInfo->pThis == nullptr
-		|| pInfo->fp == nullptr)
+		|| nullptr == pInfo->pThis
+		|| nullptr == pInfo->pRefInfo)
+	{
+		assert(false);
+		return 0;
+	}
+	if (EnumRequestDownload == pInfo->pRefInfo->type
+		&& pInfo->fp == nullptr)
 	{
 		assert(false);
 		return 0;
@@ -216,7 +260,26 @@ size_t CURLWrapBase::write_callback(char * ptr, size_t size, size_t nmemb, void 
 			return 0;
 		}
 	}
-	fwrite(ptr, 1, size * nmemb, pInfo->fp);
+	switch (pInfo->pRefInfo->type)
+	{
+		case EnumRequestDownload:
+		{
+			fwrite(ptr, 1, size * nmemb, pInfo->fp);
+			break;
+		}
+		case EnumRequestGetData:
+		{
+			pInfo->pRefInfo->strData.append(ptr, size * nmemb);
+			break;
+		}
+		default:
+		{
+			assert(false);
+			return 0;
+			break;
+		}
+	}
+	
 	return size * nmemb;
 }
 
@@ -224,12 +287,18 @@ int CURLWrapBase::xferinfo(void *p, curl_off_t dltotal, curl_off_t dlnow, curl_o
 {
 	InnerRequestInfo *pInfo = reinterpret_cast<InnerRequestInfo*>(p);
 	if (nullptr == pInfo
-		|| pInfo->pThis == nullptr
-		|| pInfo->fp == nullptr)
+		|| nullptr == pInfo->pThis
+		|| nullptr == pInfo->pRefInfo)
 	{
 		assert(false);
 		return 0;
 	}
-	pInfo->pThis->notifyProcess(pInfo->info, dltotal, dlnow, ultotal, ulnow);
+	if (EnumRequestDownload == pInfo->pRefInfo->type
+		&& pInfo->fp == nullptr)
+	{
+		assert(false);
+		return 0;
+	}
+	pInfo->pThis->notifyProcess(*(pInfo->pRefInfo), dltotal, dlnow, ultotal, ulnow);
 	return 0;
 }
