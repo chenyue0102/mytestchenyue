@@ -7,7 +7,7 @@ class ChatListener : public easemob::EMChatManagerListener
 {
 public:
 	ChatListener(int nClientId);
-	~ChatListener();
+	virtual ~ChatListener();
 public:
 	virtual void onReceiveMessages(const easemob::EMMessageList &messages)override;
 private:

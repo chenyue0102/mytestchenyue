@@ -248,4 +248,16 @@ KSIMGroup Conver(const easemob::EMGroup &in)
 	}
 	return ret;
 }
+KSIMChatRoom Conver(const easemob::EMChatroom & in)
+{
+	KSIMChatRoom ret;
+	ret.chatroomId = in.chatroomId();
+	ret.chatroomSubject = in.chatroomSubject();
+	ret.chatroomDescription = in.chatroomDescription();
+	ret.owner = in.owner();
+	ret.chatroomMemberCount = in.chatroomMemberCount();
+	ret.chatroomMemberMaxCount = in.chatroomMemberMaxCount();
+	ret.chatroomMembers = in.chatroomMembers();
+	return ret;
+}
 }

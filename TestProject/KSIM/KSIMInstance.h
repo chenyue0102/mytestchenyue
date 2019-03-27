@@ -12,6 +12,7 @@ namespace easemob {
 class ChatListener;
 class ConnectionListener;
 class ContactListener;
+class ChatroomListener;
 namespace KSIM{
 class KSIMBuffer;
 class KSIMInstance
@@ -23,6 +24,7 @@ private:
 		std::shared_ptr<ChatListener> chatListener;
 		std::shared_ptr<ConnectionListener> connectionListener;
 		std::shared_ptr<ContactListener> contactListener;
+		std::shared_ptr<ChatroomListener> chatroomListener;
 		KSIMCALLBACK callback;
 		void *pUserData;
 		ClientInfo()
@@ -30,6 +32,7 @@ private:
 			, chatListener()
 			, connectionListener()
 			, contactListener()
+			, chatroomListener()
 			, callback(nullptr)
 			, pUserData(nullptr)
 		{

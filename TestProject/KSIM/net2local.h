@@ -1,6 +1,7 @@
 #pragma once
 #include "KSStructDefine.h"
 #include "message/emmessagebody.h"
+#include "emchatroom.h"
 
 namespace easemob
 {
@@ -14,5 +15,6 @@ KSIMMessage Conver(easemob::EMMessage &in);
 KSIMMessageBody makeBody(easemob::EMMessageBodyPtr &in);
 KSIMGroupSetting Conver(const easemob::EMGroupSetting &in);
 KSIMGroup Conver(const easemob::EMGroup &in);
+KSIMChatRoom Conver(const easemob::EMChatroom &in);
 };
 
