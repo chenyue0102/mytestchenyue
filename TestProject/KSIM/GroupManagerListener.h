@@ -6,7 +6,7 @@ class GroupManagerListener : public easemob::EMGroupManagerListener
 {
 public:
 	GroupManagerListener(int clientId);
-	~GroupManagerListener();
+	virtual ~GroupManagerListener();
 public:
 	//邀请的请求
 	virtual void onReceiveInviteFromGroup(const std::string groupId, const std::string& inviter, const std::string& inviteMessage)override;
@@ -27,7 +27,7 @@ public:
 	//离开群组
 	virtual void onLeaveGroup(const easemob::EMGroupPtr group, easemob::EMGroup::EMGroupLeaveReason reason)override;
 private:
-	int m_clientId;
+	const int m_clientId;
 };
 
 #endif

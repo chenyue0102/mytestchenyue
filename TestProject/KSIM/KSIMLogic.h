@@ -31,6 +31,13 @@ private:
 private:
 	int getGroupList(easemob::EMClient &client, KSIMGetGroupList &out);
 	int createGroup(easemob::EMClient &client, const KSIMCreateGroup &req);
+	int leaveGroup(easemob::EMClient &client, const KSIMLeaveGroupReq &req);
+	int destroyGroup(easemob::EMClient &client, const KSIMDestroyGroupReq &req);
+	int ModifyGroupPropery(easemob::EMClient &client, const KSIMModifyGroupProperty &req);
+private:
+	int getChatRoomList(easemob::EMClient &client, KSIMGetChatRoomList &out);
+	int joinChatRoom(easemob::EMClient &client, const KSIMJoinChatRoom &req);
+	int leaveChatRoom(easemob::EMClient &client, const KSIMLeaveChatRoomReq &req);
 };
 
 }

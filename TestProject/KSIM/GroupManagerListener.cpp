@@ -144,7 +144,7 @@ void GroupManagerListener::onLeaveGroup(const easemob::EMGroupPtr group, easemob
 {
 	if (group)
 	{
-		KSIMLeaveGroup data;
+		KSIMLeaveGroupAck data;
 		data.group = net2local::Conver(*group);
 		data.reason = reason;
 		KSIM::g_KSIMInstance.doCallback(m_clientId, EKSMsgIMLeaveGroup, data);

@@ -7,7 +7,7 @@ class ContactListener : public easemob::EMContactListener
 {
 public:
 	ContactListener(int clientId);
-	~ContactListener();
+	virtual ~ContactListener();
 public:
 	virtual void onContactAdded(const std::string &username)override;
 	virtual void onContactDeleted(const std::string &username)override;
@@ -15,6 +15,6 @@ public:
 	virtual void onContactAgreed(const std::string &username)override;
 	virtual void onContactRefused(const std::string &username)override;
 private:
-	int m_clientId;
+	const int m_clientId;
 };
 #endif

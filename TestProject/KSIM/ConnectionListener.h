@@ -6,12 +6,12 @@ class ConnectionListener : public easemob::EMConnectionListener
 {
 public:
 	ConnectionListener(int clientId);
-	~ConnectionListener();
+	virtual ~ConnectionListener();
 public:
 	virtual void onDisconnect(easemob::EMErrorPtr error)override;
 	virtual void onConnect()override;
 private:
-	int m_clientId;
+	const int m_clientId;
 };
 
 #endif

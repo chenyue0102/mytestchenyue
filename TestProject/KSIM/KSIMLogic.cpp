@@ -18,6 +18,8 @@
 #include "emchatmanager_interface.h"
 #include "emcontactmanager_interface.h"
 
+#include "emchatroommanager_interface.h"
+
 #include "message/emmessage.h"
 #include "message/emtextmessagebody.h"
 #include "message/emmessagebody.h"
@@ -55,6 +57,7 @@ int KSIMLogic::invoke(easemob::EMClient & client, int msgid, KSIMBuffer & data)
 			ret = logout(client);
 			break;
 		}
+		//contact
 		case EKSMsgIMGetContacts:
 		{
 			ret = innerInvoke(client, data, &KSIMLogic::getContacts);
@@ -71,6 +74,7 @@ int KSIMLogic::invoke(easemob::EMClient & client, int msgid, KSIMBuffer & data)
 			ret = innerInvoke(client, data, &KSIMLogic::InviteContact);
 			break;
 		}
+		//group
 		case EKSMsgIMGetGroupList:
 		{
 			ret = innerInvoke(client, data, &KSIMLogic::getGroupList);
@@ -81,6 +85,38 @@ int KSIMLogic::invoke(easemob::EMClient & client, int msgid, KSIMBuffer & data)
 			ret = innerInvoke(client, data, &KSIMLogic::createGroup);
 			break;
 		}
+		case EKSMsgIMLeaveGroup:
+		{
+			ret = innerInvoke(client, data, &KSIMLogic::leaveGroup);
+			break;
+		}
+		case EKSMsgIMDestroyGroup:
+		{
+			ret = innerInvoke(client, data, &KSIMLogic::destroyGroup);
+			break;
+		}
+		case EKSMsgIMModifyGroupProperty:
+		{
+			ret = innerInvoke(client, data, &KSIMLogic::ModifyGroupPropery);
+			break;
+		}
+		//chatroom
+		case EKSMsgIMGetChatRoomList:
+		{
+			ret = innerInvoke(client, data, &KSIMLogic::getChatRoomList);
+			break;
+		}
+		case EKSMsgIMJoinChatRoom:
+		{
+			ret = innerInvoke(client, data, &KSIMLogic::joinChatRoom);
+			break;
+		}
+		case EKSMsgIMLeaveChatRoom:
+		{
+			ret = innerInvoke(client, data, &KSIMLogic::leaveChatRoom);
+			break;
+		}
+		//ÏûÏ¢
 		case EKSMsgIMMMessage:
 		{
 			ret = innerInvoke(client, data, &KSIMLogic::sendMessage);
@@ -320,4 +356,132 @@ int KSIMLogic::createGroup(easemob::EMClient & client, const KSIMCreateGroup & r
 	} while (false);
 	return ret;
 }
+int KSIMLogic::leaveGroup(easemob::EMClient & client, const KSIMLeaveGroupReq & req)
+{
+	int ret = -1;
+
+	do
+	{
+		EMError error;
+		client.getGroupManager().leaveGroup(req.groupId, error);
+		if (error.mErrorCode != EMError::EM_NO_ERROR)
+		{
+			assert(false);
+			break;
+		}
+		ret = 0;
+	} while (false);
+	return ret;
+}
+int KSIMLogic::destroyGroup(easemob::EMClient & client, const KSIMDestroyGroupReq & req)
+{
+	int ret = -1;
+	
+	do
+	{
+		EMError error;
+		client.getGroupManager().destroyGroup(req.groupId, error);
+		if (error.mErrorCode != EMError::EM_NO_ERROR)
+		{
+			assert(false);
+			break;
+		}
+		ret = 0;
+	} while (false);
+
+	return ret;
+}
+int KSIMLogic::ModifyGroupPropery(easemob::EMClient & client, const KSIMModifyGroupProperty & req)
+{
+	int ret = -1;
+
+	do
+	{
+		if (req.mask & EKSIMGroupMaskSubject)
+		{
+			EMError error;
+			client.getGroupManager().changeGroupSubject(req.groupId, req.groupSubject, error);
+			if (error.mErrorCode != EMError::EM_NO_ERROR)
+			{
+				assert(false);
+				break;
+			}
+		}
+		if (req.mask & EKSIMGroupMaskDescription)
+		{
+			EMError error;
+			client.getGroupManager().changeGroupDescription(req.groupId, req.groupDescription, error);
+			if (error.mErrorCode != EMError::EM_NO_ERROR)
+			{
+				assert(false);
+				break;
+			}
+		}
+		ret = 0;
+	} while (false);
+	return ret;
+}
+int KSIMLogic::getChatRoomList(easemob::EMClient & client, KSIMGetChatRoomList & out)
+{
+	int ret = -1;
+
+	do
+	{
+		EMError error;
+		EMChatroomList roomList = client.getChatroomManager().fetchAllChatrooms(error);
+		if (error.mErrorCode != EMError::EM_NO_ERROR)
+		{
+			assert(false);
+			break;
+		}
+		for (auto chatRoom : roomList)
+		{
+			if (!chatRoom)
+			{
+				assert(false);
+				break;
+			}
+			out.chatroomList.push_back(net2local::Conver(*chatRoom));
+		}
+		ret = 0;
+	} while (false);
+	return ret;
+}
+
+int KSIMLogic::joinChatRoom(easemob::EMClient & client, const KSIMJoinChatRoom & req)
+{
+	int ret = -1;
+
+	do
+	{
+		EMError error;
+		client.getChatroomManager().joinChatroom(req.chatroomId, error);
+		if (error.mErrorCode != EMError::EM_NO_ERROR)
+		{
+			assert(false);
+			break;
+		}
+		ret = 0;
+	} while (false);
+	return ret;
+}
+
+int KSIMLogic::leaveChatRoom(easemob::EMClient & client, const KSIMLeaveChatRoomReq & req)
+{
+	int ret = -1;
+
+	do
+	{
+		EMError error;
+		client.getChatroomManager().leaveChatroom(req.chatroomId, error);
+		if (error.mErrorCode != EMError::EM_NO_ERROR)
+		{
+			assert(false);
+			break;
+		}
+		ret = 0;
+	} while (false);
+	return ret;
+}
+
 }

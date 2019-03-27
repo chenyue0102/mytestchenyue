@@ -91,6 +91,7 @@
     <ClInclude Include="..\include\KSIM\KSStructDefine.h" />
     <ClInclude Include="..\include\KSIM\KSStructSerialize.h" />
     <ClInclude Include="ChatListener.h" />
+    <ClInclude Include="ChatroomListener.h" />
     <ClInclude Include="ConnectionListener.h" />
     <ClInclude Include="ContactListener.h" />
     <ClInclude Include="GroupManagerListener.h" />
@@ -103,6 +104,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ChatListener.cpp" />
+    <ClCompile Include="ChatroomListener.cpp" />
     <ClCompile Include="ConnectionListener.cpp" />
     <ClCompile Include="ContactListener.cpp" />
     <ClCompile Include="dllmain.cpp">
