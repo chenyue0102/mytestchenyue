@@ -65,7 +65,7 @@ private:
 	static size_t write_callback(char *ptr, size_t size, size_t nmemb, void *userdata);
 	static int xferinfo(void *p, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow);
 public:
-	std::mutex m_mutex;
+	mutable std::mutex m_mutex;
 	std::thread m_thread;
 	std::condition_variable m_cv;
 	volatile bool m_bExit;
