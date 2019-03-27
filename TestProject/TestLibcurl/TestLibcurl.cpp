@@ -57,7 +57,7 @@ int main()
 
 	do
 	{
-		printf("0:exit 1:destroy 2:download \n");
+		printf("0:exit 1:destroy 2:download 3:query\n");
 		scanf("%d", &a);
 		switch (a)
 		{
@@ -67,7 +67,12 @@ int main()
 			base.destroy();
 			break;
 		case 2:
-			base.downloadFile("https://cn.bing.com/th?id=OHR.TaoiseachDept_ZH-CN0902989482_1920x1080.jpg&rf=NorthMale_1920x1080.jpg&pid=hp", "d:/1.png");
+			base.downloadFile("https://cn.bing.com/th?id=OHR.TaoiseachDept_ZH-CN0902989482_1920x1080.jpg&rf=NorthMale_1920x1080.jpg&pid=hp", 
+				"d:/1.png", &base);
+			break;
+		case 3:
+			base.getData("https://cn.bing.com/th?id=OHR.TaoiseachDept_ZH-CN0902989482_1920x1080.jpg&rf=NorthMale_1920x1080.jpg&pid=hp",
+				&base);
 			break;
 		}
 	} while (0 != a);
