@@ -6,6 +6,7 @@
 #include "ui_KSVideoCtrl.h"
 #include "vlc.h"
 
+#define MAX_VOLUME 200
 
 struct KSVideoCtrlData
 {
@@ -51,6 +52,9 @@ KSVideoCtrl::KSVideoCtrl(QWidget *parent)
 	connect(ui.horizontalSlider, SIGNAL(sliderReleased()), SLOT(slotSliderReleased()));
 	connect(ui.horizontalSlider, SIGNAL(sliderPressed()), SLOT(slotSliderPressed()));
 	connect(ui.horizontalSlider, SIGNAL(signalClick(int)), SLOT(slotSliderMoved(int)));
+	connect(ui.horizontalSliderVolume, SIGNAL(sliderReleased()), SLOT(slotSliderVolumeReleased()));
+	connect(ui.horizontalSliderVolume, SIGNAL(sliderPressed()), SLOT(slotSliderVolumePressed()));
+	connect(ui.horizontalSliderVolume, SIGNAL(signalClick(int)), SLOT(slotSliderVolumeMoved(int)));
 }
 
 KSVideoCtrl::~KSVideoCtrl()
@@ -72,6 +76,7 @@ void KSVideoCtrl::open(const QString &strName, EVideoSrc videoSrc)
 	auto &m_Instance = m_pData->m_Instance;
 	auto &m_MediaPlayer = m_pData->m_MediaPlayer;
 	auto &m_Media = m_pData->m_Media;
+	auto &ui = m_pData->ui;
 
 	do
 	{
@@ -117,6 +122,9 @@ void KSVideoCtrl::open(const QString &strName, EVideoSrc videoSrc)
 			assert(false);
 			break;
 		}
+		int curVolume = libvlc_audio_get_volume(m_MediaPlayer);
+		ui.horizontalSliderVolume->setValue(curVolume);
+
 		libvlc_media_parse(m_Media);
 		if (nullptr != m_pData->m_pDrawWindow)
 		{
@@ -201,8 +209,8 @@ void KSVideoCtrl::slotOpen()
 		open(strFileName, EVideoSrcFile);
 	}
 #endif
-	//open(QStringLiteral("C:\\Users\\EDZ\\Desktop\\软件\\v1080.mp4"), EVideoSrcFile);
-	open(QStringLiteral("麦克风 (Realtek High Definition Audio)"), EVideoSrcDevice);
+	open(QStringLiteral("C:\\Users\\EDZ\\Desktop\\软件\\v1080.mp4"), EVideoSrcFile);
+	//open(QStringLiteral("麦克风 (Realtek High Definition Audio)"), EVideoSrcDevice);
 }
 
 void KSVideoCtrl::slotResume()
@@ -264,5 +272,35 @@ void KSVideoCtrl::slotSliderMoved(int position)
 		libvlc_time_t curTime = m_totalTime * position / maximum;
 		libvlc_media_player_set_time(m_MediaPlayer, curTime);
 		slotRefreshSlider();
+	}
+}
+
+void KSVideoCtrl::slotSliderVolumePressed()
+{
+	m_pData->bSliderPressed = false;
+	auto &ui = m_pData->ui;
+	int volume = ui.horizontalSliderVolume->sliderPosition();
+	return slotSliderVolumeMoved(volume);
+}
+
+void KSVideoCtrl::slotSliderVolumeReleased()
+{
+	m_pData->bSliderPressed = false;
+	auto &ui = m_pData->ui;
+	int volume = ui.horizontalSliderVolume->sliderPosition();
+	return slotSliderVolumeMoved(volume);
+}
+
+void KSVideoCtrl::slotSliderVolumeMoved(int volume)
+{
+	auto &ui = m_pData->ui;
+	auto &m_MediaPlayer = m_pData->m_MediaPlayer;
+	if (nullptr != m_MediaPlayer)
+	{
+		if (0 != libvlc_audio_set_volume(m_MediaPlayer, volume))
+		{
+			assert(false);
+		}
+		ui.horizontalSliderVolume->setValue(volume);
 	}
 }

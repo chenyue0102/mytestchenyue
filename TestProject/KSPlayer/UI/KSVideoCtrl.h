@@ -31,6 +31,9 @@ public slots:
 	void slotSliderPressed();
 	void slotSliderReleased();
 	void slotSliderMoved(int position);
+	void slotSliderVolumePressed();
+	void slotSliderVolumeReleased();
+	void slotSliderVolumeMoved(int volume);
 private:
 	Q_DISABLE_COPY(KSVideoCtrl)
 	KSVideoCtrlData *m_pData;
