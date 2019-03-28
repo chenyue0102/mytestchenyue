@@ -3,6 +3,7 @@
 #include <sys/stat.h>
 #include "curl.h"
 
+#define CONNECT_TIMEOUT_SECOND 5
 
 CURLWrapBase::CURLWrapBase()
 	: m_mutex()
@@ -45,7 +46,7 @@ void CURLWrapBase::destroy()
 	m_requestInfoArray.clear();
 }
 
-bool CURLWrapBase::downloadFile(const std::string & strUrl, const std::string & strFileName, void *pUserData)
+bool CURLWrapBase::downloadFile(const std::string & strUrl, const std::string & strFileName, USER_KEY userKey)
 {
 	bool bRet = false;
 
@@ -61,7 +62,7 @@ bool CURLWrapBase::downloadFile(const std::string & strUrl, const std::string & 
 		info.type = EnumRequestDownload;
 		info.strUrl = strUrl;
 		info.strFileName = strFileName;
-		info.pUserData = pUserData;
+		info.userKey = userKey;
 
 		std::lock_guard<std::mutex> lk(m_mutex);
 		m_requestInfoArray.push_back(info);
@@ -72,7 +73,7 @@ bool CURLWrapBase::downloadFile(const std::string & strUrl, const std::string & 
 	return bRet;
 }
 
-bool CURLWrapBase::getData(const std::string & strUrl, void * pUserData)
+bool CURLWrapBase::getData(const std::string & strUrl, USER_KEY userKey)
 {
 	bool bRet = false;
 
@@ -86,7 +87,33 @@ bool CURLWrapBase::getData(const std::string & strUrl, void * pUserData)
 		RequestInfo info;
 		info.type = EnumRequestGetData;
 		info.strUrl = strUrl;
-		info.pUserData = pUserData;
+		info.userKey = userKey;
+
+		std::lock_guard<std::mutex> lk(m_mutex);
+		m_requestInfoArray.push_back(info);
+		m_cv.notify_one();
+
+		bRet = true;
+	} while (false);
+	return bRet;
+}
+
+bool CURLWrapBase::postData(const std::string &strUrl, const std::string &strPostData, USER_KEY userKey)
+{
+	bool bRet = false;
+
+	do
+	{
+		if (strUrl.empty())
+		{
+			assert(false);
+			break;
+		}
+		RequestInfo info;
+		info.type = EnumRequestPostData;
+		info.strUrl = strUrl;
+		info.strPostData = strPostData;
+		info.userKey = userKey;
 
 		std::lock_guard<std::mutex> lk(m_mutex);
 		m_requestInfoArray.push_back(info);
@@ -158,7 +185,10 @@ bool CURLWrapBase::processRequest(CURL * curl, RequestInfo &info)
 		if (info.type == EnumRequestDownload)
 		{
 			stat(info.strFileName.c_str(), &st);
+#pragma warning(push)
+#pragma warning(disable:4996)
 			innerInfo.fp = fopen(info.strFileName.c_str(), "ab+");
+#pragma warning(pop)
 		}
 		else if (EnumRequestGetData == info.type)
 		{
@@ -170,6 +200,39 @@ bool CURLWrapBase::processRequest(CURL * curl, RequestInfo &info)
 		}
 		
 		curl_easy_reset(curl);
+#ifdef _DEBUG
+		if ((ret = curl_easy_setopt(curl, CURLOPT_VERBOSE, 1)) != CURLE_OK)
+		{
+			assert(false);
+			break;
+		}
+		
+#endif
+		if (EnumRequestPostData == info.type)
+		{
+			if ((ret = curl_easy_setopt(curl, CURLOPT_POST, 1)) != CURLE_OK)
+			{
+				assert(false);
+				break;
+			}
+			//要保证发送的缓冲区在传输时有效，除非设置CURLOPT_COPYPOSTFIELDS
+			if ((ret = curl_easy_setopt(curl, CURLOPT_POSTFIELDS, info.strPostData.c_str())) != CURLE_OK)
+			{
+				assert(false);
+				break;
+			}
+			//enable the cookie engine without reading any initial cookies
+			if ((ret = curl_easy_setopt(curl, CURLOPT_COOKIEFILE, "")) != CURLE_OK)
+			{
+				assert(false);
+				break;
+			}
+		}
+		if ((ret = curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, CONNECT_TIMEOUT_SECOND)) != CURLE_OK)
+		{
+			assert(false);
+			break;
+		}
 		if ((ret = curl_easy_setopt(curl, CURLOPT_URL, info.strUrl.c_str())) != CURLE_OK)
 		{
 			assert(false);
@@ -269,7 +332,7 @@ size_t CURLWrapBase::write_callback(char * ptr, size_t size, size_t nmemb, void 
 		}
 		case EnumRequestGetData:
 		{
-			pInfo->pRefInfo->strData.append(ptr, size * nmemb);
+			pInfo->pRefInfo->strResultData.append(ptr, size * nmemb);
 			break;
 		}
 		default:

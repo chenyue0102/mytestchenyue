@@ -68,11 +68,11 @@ int main()
 			break;
 		case 2:
 			base.downloadFile("https://cn.bing.com/th?id=OHR.TaoiseachDept_ZH-CN0902989482_1920x1080.jpg&rf=NorthMale_1920x1080.jpg&pid=hp", 
-				"d:/1.png", &base);
+				"d:/1.png", 1);
 			break;
 		case 3:
 			base.getData("https://cn.bing.com/th?id=OHR.TaoiseachDept_ZH-CN0902989482_1920x1080.jpg&rf=NorthMale_1920x1080.jpg&pid=hp",
-				&base);
+				1);
 			break;
 		}
 	} while (0 != a);
