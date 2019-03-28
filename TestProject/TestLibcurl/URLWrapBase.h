@@ -10,25 +10,29 @@
 class CURLWrapBase
 {
 public:
+	typedef unsigned long long USER_KEY;
 	enum EnumRequest
 	{
 		EnumRequestNone,
 		EnumRequestDownload,
 		EnumRequestGetData,
+		EnumRequestPostData,
 	};
 	struct RequestInfo
 	{
 		EnumRequest type;
 		std::string strUrl;
 		std::string strFileName;
-		std::string strData;
-		void *pUserData;
+		std::string strPostData;
+		std::string strResultData;
+		USER_KEY userKey;
 		RequestInfo()
 			: type(EnumRequestNone)
 			, strUrl()
 			, strFileName()
-			, strData()
-			, pUserData(nullptr)
+			, strPostData()
+			, strResultData()
+			, userKey(0)
 		{
 
 		}
@@ -54,8 +58,9 @@ public:
 	void init();
 	void destroy();
 public:
-	bool downloadFile(const std::string &strUrl, const std::string &strFileName, void *pUserData);
-	bool getData(const std::string &strUrl, void *pUserData);
+	bool downloadFile(const std::string &strUrl, const std::string &strFileName, USER_KEY userKey);
+	bool getData(const std::string &strUrl, USER_KEY userKey);
+	bool postData(const std::string &strUrl, const std::string &strPostData, USER_KEY userKey);
 protected:
 	virtual void notifyProcess(const RequestInfo &info, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow);
 	virtual void notifyRequestResult(const RequestInfo &info, bool bResult);
