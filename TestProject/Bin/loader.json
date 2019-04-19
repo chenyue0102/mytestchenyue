@@ -1,0 +1,15 @@
+[
+	{
+		"fileName":"testloader1.dll",
+		"pluginGuid":"{680111D4-B97D-404B-BE49-0FBAECC83B2F}",
+		"dependentPluginGuids":
+		[
+			"{EB26AF74-E41D-4B9C-8FE9-ADB497CBFCBD}"
+		]
+	},
+	{
+		"fileName":"testloader2.dll",
+		"pluginGuid":"{EB26AF74-E41D-4B9C-8FE9-ADB497CBFCBD}",
+		"dependentPluginGuids":[]
+	}
+]
