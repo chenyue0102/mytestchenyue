@@ -6,7 +6,7 @@
 
 struct ILoader : public IUnknown
 {
-	virtual HRESULT STDMETHODCALLTYPE Init(const char *configFilePath) = 0;
+	virtual HRESULT STDMETHODCALLTYPE Init(const char *configFile) = 0;
 	virtual HRESULT STDMETHODCALLTYPE Destroy() = 0;
 	virtual HRESULT STDMETHODCALLTYPE LoadPlugin(REFGUID pluginId) = 0;
 	virtual HRESULT STDMETHODCALLTYPE FreePlugin(REFGUID pluginId) = 0;
@@ -37,5 +37,7 @@ struct IPlugin : public IUnknown
 	//获取依赖的组件
 	virtual HRESULT STDMETHODCALLTYPE GetDependentPlugin(GUID *pluginIds, INT32 *count) = 0;
 };
+
+typedef int (*CREATEPLUGININTERFACE)(IPlugin **pp);
 
 #endif
