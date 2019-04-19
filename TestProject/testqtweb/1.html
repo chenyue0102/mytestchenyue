@@ -1,0 +1,44 @@
+<!DOCTYPE html> 
+<html> 
+<head> 
+<meta charset="utf-8"> 
+<title>test</title> 
+<script type="text/javascript" src="qrc:///qtwebchannel/qwebchannel.js"></script>
+</head> 
+<body style="background:#282c34;" onload="initialize()"> 
+<h3 style="color:#ffffff;">this is web page</h3>
+ <input type="button" value="C++ function callback" onclick="onShowMsgBox()"> 
+ <script>
+		
+      function initialize() {
+	    initialize_qt() ;
+      }
+	  
+      function initialize_qt() {
+        if (typeof qt != 'undefined') {
+			
+			var v = new QWebChannel(qt.webChannelTransport, 
+										function(channel){
+											window.webobj = channel.objects.webobj;
+									});
+		}
+		else{
+			alert("initialize_qt failed")
+		}
+      }
+     
+      function onShowMsgBox() {
+	    if (window.webobj) {
+			window.webobj.showMsgBox()
+        }
+		else{
+		
+		}
+      }
+
+      function showAlert() {
+        alert('this is web alert');
+      }
+ </script> 
+ </body> 
+ </html>
