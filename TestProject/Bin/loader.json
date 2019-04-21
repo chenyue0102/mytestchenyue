@@ -1,15 +1,17 @@
 [
 	{
-		"fileName":"testloader1.dll",
+		"fileName":"testloaderdllD.dll",
 		"pluginGuid":"{680111D4-B97D-404B-BE49-0FBAECC83B2F}",
+		"lazyLoad":true,
 		"dependentPluginGuids":
 		[
 			"{EB26AF74-E41D-4B9C-8FE9-ADB497CBFCBD}"
 		]
 	},
 	{
-		"fileName":"testloader2.dll",
+		"fileName":"testloaderdll2D.dll",
 		"pluginGuid":"{EB26AF74-E41D-4B9C-8FE9-ADB497CBFCBD}",
+		"lazyLoad":true,
 		"dependentPluginGuids":[]
 	}
 ]

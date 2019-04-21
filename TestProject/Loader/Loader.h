@@ -30,12 +30,14 @@ struct LoaderPluginInfo
 	PluginDllInfo dllInfo;
 	std::wstring fileName;
 	GUID pluginGuid;
+	bool lazyLoad;
 	std::vector<GUID> dependentPluginGuids;
 
 	LoaderPluginInfo()
 		: dllInfo()
 		, fileName()
 		, pluginGuid()
+		, lazyLoad(false)
 		, dependentPluginGuids()
 	{}
 };
@@ -75,6 +77,7 @@ private:
 	bool innerParsePluginInfo(const std::wstring &strDir, const Json::Value &value, LoaderPluginInfo &info);
 	bool innerGetLoadOrder(REFGUID pluginId, std::vector<GUID> &loadPlugins);
 	bool innerLoadPlugin(REFGUID pluginId, PluginDllInfo &dllInfo);
+	void innnerDestroy(REFGUID pluginId);
 private:
 	std::mutex m_mutex;
 	std::wstring m_strAppPath;

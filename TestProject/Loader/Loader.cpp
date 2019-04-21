@@ -7,7 +7,6 @@
 #include "json/reader.h"
 
 static const unsigned char utf8BOM[] = { 0xEF,0xBB,0xBF };
-#define THROW throw -1
 
 
 Loader::Loader()
@@ -92,7 +91,13 @@ HRESULT Loader::Init(const char * configFile)
 
 HRESULT Loader::Destroy()
 {
-	return E_NOTIMPL;
+	std::lock_guard<std::mutex> lk(m_mutex);
+
+	for (auto &info : m_pluginInfos)
+	{
+		innnerDestroy(info.second.pluginGuid);
+	}
+	return S_OK;
 }
 
 HRESULT Loader::LoadPlugin(REFGUID pluginId)
@@ -240,7 +245,45 @@ HRESULT Loader::FreePlugin(REFGUID pluginId)
 
 HRESULT Loader::QueryPluginInterface(REFCLSID PlugidId, REFIID iid, void ** ppvObject)
 {
-	return E_NOTIMPL;
+	std::unique_lock<std::mutex> lk(m_mutex);
+	HRESULT hr = E_FAIL;
+
+	do
+	{
+		if (nullptr == ppvObject)
+		{
+			assert(false);
+		}
+		auto iter = m_pluginInfos.find(PlugidId);
+		if (iter == m_pluginInfos.end())
+		{
+			assert(false);
+			break;
+		}
+		auto &dllInfo = iter->second.dllInfo;
+		if (nullptr == dllInfo.plugin)
+		{
+			lk.unlock();
+			if (FAILED(LoadPlugin(PlugidId)))
+			{
+				assert(false);
+				break;
+			}
+			lk.lock();
+		}
+		if (nullptr == dllInfo.plugin)
+		{
+			assert(false);
+			break;
+		}
+		if (FAILED(hr = dllInfo.plugin->QueryPluginInterface(iid, ppvObject)))
+		{
+			assert(false);
+			break;
+		}
+		hr = S_OK;
+	} while (false);
+	return hr;
 }
 
 bool Loader::innerParsePluginInfo(const std::wstring &strDir, const Json::Value &value, LoaderPluginInfo &info)
@@ -275,6 +318,12 @@ bool Loader::innerParsePluginInfo(const std::wstring &strDir, const Json::Value 
 			assert(false);
 			break;
 		}
+		const Json::Value &lazyLoad = value["lazyLoad"];
+		if (lazyLoad.isBool())
+		{
+			info.lazyLoad = lazyLoad.asBool();
+		}
+
 		const Json::Value &dependentPluginGuids = value["dependentPluginGuids"];
 		if (dependentPluginGuids.isArray())
 		{
@@ -309,7 +358,7 @@ bool Loader::innerGetLoadOrder(REFGUID pluginId, std::vector<GUID> &loadPlugins)
 		return false;
 	}
 	auto &pluginInfo = iter->second;
-	assert(nullptr == pluginInfo.module);
+	assert(nullptr == pluginInfo.dllInfo.module);
 
 	for (auto &dependent : pluginInfo.dependentPluginGuids)
 	{
@@ -321,7 +370,7 @@ bool Loader::innerGetLoadOrder(REFGUID pluginId, std::vector<GUID> &loadPlugins)
 		}
 		auto &findPlugin = iterDependent->second;
 		//ря╬╜╪сть
-		if (nullptr != findPlugin.module)
+		if (nullptr != findPlugin.dllInfo.module)
 		{
 			continue;
 		}
@@ -335,7 +384,6 @@ bool Loader::innerGetLoadOrder(REFGUID pluginId, std::vector<GUID> &loadPlugins)
 			assert(false);
 			return false;
 		}
-		loadPlugins.push_back(findPlugin.pluginGuid);
 	}
 	if (loadPlugins.end() == std::find_if(loadPlugins.begin(), loadPlugins.end(), GUIDEqual(pluginId)))
 	{
@@ -393,4 +441,40 @@ bool Loader::innerLoadPlugin(REFGUID pluginId, PluginDllInfo & dllInfo)
 		module = nullptr;
 	}
 	return bRet;
+}
+
+void Loader::innnerDestroy(REFGUID pluginId)
+{
+	do
+	{
+		auto iter = m_pluginInfos.find(pluginId);
+		if (iter == m_pluginInfos.end())
+		{
+			assert(false);
+			break;
+		}
+		auto &info = iter->second;
+		if (nullptr == info.dllInfo.module)
+		{
+			break;
+		}
+
+		auto &dependentPluginGuids = info.dependentPluginGuids;
+		for (auto &guid : info.dependentPluginGuids)
+		{
+			innnerDestroy(guid);
+		}
+		auto &dllInfo = info.dllInfo;
+		if (nullptr != dllInfo.plugin)
+		{
+			dllInfo.plugin->Destroy();
+			dllInfo.plugin->Release();
+			dllInfo.plugin = nullptr;
+		}
+		if (nullptr != dllInfo.module)
+		{
+			FreeLibrary(dllInfo.module);
+			dllInfo.module = nullptr;
+		}
+	} while (false);
 }
