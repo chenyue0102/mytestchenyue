@@ -1,0 +1,3 @@
+LIBRARY
+EXPORTS
+	CreatePluginInterface @1
