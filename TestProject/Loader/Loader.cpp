@@ -93,9 +93,9 @@ HRESULT Loader::Destroy()
 {
 	std::lock_guard<std::mutex> lk(m_mutex);
 
-	for (auto &info : m_pluginInfos)
+	for (auto riter = m_pluginInfos.rbegin(); riter != m_pluginInfos.rend(); ++riter)
 	{
-		innnerDestroy(info.second.pluginGuid);
+		innnerDestroy(riter->second.pluginGuid);
 	}
 	return S_OK;
 }

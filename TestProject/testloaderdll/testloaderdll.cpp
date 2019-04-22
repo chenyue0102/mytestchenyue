@@ -39,9 +39,21 @@ Ctestloaderdll::Ctestloaderdll()
 Ctestloaderdll::~Ctestloaderdll()
 {
 }
+// {4228A16F-4A4F-48F5-B280-E44D76B391DE}
+static const GUID dll2iid =
+{ 0x4228a16f, 0x4a4f, 0x48f5,{ 0xb2, 0x80, 0xe4, 0x4d, 0x76, 0xb3, 0x91, 0xde } };
 
 HRESULT Ctestloaderdll::Init(ILoader * loader)
 {
+	if (nullptr != loader)
+	{
+		GUID pluginGuid = { 0 };
+		wchar_t guidString[] = L"{EB26AF74-E41D-4B9C-8FE9-ADB497CBFCBD}";
+		CLSIDFromString(guidString, &pluginGuid);
+		IUnknown *p = nullptr;
+		loader->QueryPluginInterface(pluginGuid, dll2iid, (void**)&p);
+		p->Release();
+	}
 	return S_OK;
 }
 
