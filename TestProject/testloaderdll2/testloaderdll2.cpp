@@ -48,10 +48,22 @@ HRESULT Ctestloaderdll2::Destroy()
 {
 	return E_NOTIMPL;
 }
+// {4228A16F-4A4F-48F5-B280-E44D76B391DE}
+static const GUID dll2iid =
+{ 0x4228a16f, 0x4a4f, 0x48f5,{ 0xb2, 0x80, 0xe4, 0x4d, 0x76, 0xb3, 0x91, 0xde } };
 
 HRESULT Ctestloaderdll2::QueryPluginInterface(REFIID iid, void ** ppvObject)
 {
-	return E_NOTIMPL;
+	if (0 == memcmp(&iid, &dll2iid, sizeof(GUID)))
+	{
+		AddRef();
+		*ppvObject = static_cast<IUnknown*>(this);
+		return S_OK;
+	}
+	else
+	{
+		return E_NOTIMPL;
+	}
 }
 
 HRESULT Ctestloaderdll2::CallUnload()
