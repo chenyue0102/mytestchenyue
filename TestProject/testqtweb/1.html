@@ -29,15 +29,15 @@
      
       function onShowMsgBox() {
 	    if (window.webobj) {
-			window.webobj.showMsgBox()
+			window.webobj.showMsgBox('web call')
         }
 		else{
 		
 		}
       }
 
-      function showAlert() {
-        alert('this is web alert');
+      function showAlert(text) {
+        alert('this is web alert ' + text);
       }
  </script> 
  </body> 
