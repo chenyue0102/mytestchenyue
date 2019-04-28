@@ -19,5 +19,5 @@ testqtweb::testqtweb(QWidget *parent)
 
 void testqtweb::onRunScript()
 {
-	ui.web->page()->runJavaScript("showAlert()");
+	ui.web->page()->runJavaScript("showAlert('c++')");
 }

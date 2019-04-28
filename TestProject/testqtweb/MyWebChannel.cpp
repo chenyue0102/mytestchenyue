@@ -10,7 +10,7 @@ MyWebChannel::~MyWebChannel()
 {
 }
 
-void MyWebChannel::showMsgBox()
+void MyWebChannel::showMsgBox(const QString &text)
 {
-	QMessageBox::warning(nullptr, u8"提示", u8"MyWebChannel::showMsgBox");
+	QMessageBox::warning(nullptr, u8"提示", u8"MyWebChannel::showMsgBox " + text);
 }

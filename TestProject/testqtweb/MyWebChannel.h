@@ -10,5 +10,5 @@ public:
 	MyWebChannel(QObject *parent);
 	~MyWebChannel();
 public slots:
-	void showMsgBox();
+	void showMsgBox(const QString &text);
 };
