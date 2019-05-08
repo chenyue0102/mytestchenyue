@@ -11,6 +11,13 @@ public:
 	testqtweb(QWidget *parent = Q_NULLPTR);
 public slots:
 	void onRunScript();
+	void onUrlChanged(const QUrl &url);
+	void onLoadFinished(bool b);
+	void onBack();
+public slots:
+	void showMsgBox(const QString &text);
+	void getAppInfos(const QString &funName);
 private:
 	Ui::testqtwebClass ui;
+	std::vector<QUrl> urls;
 };

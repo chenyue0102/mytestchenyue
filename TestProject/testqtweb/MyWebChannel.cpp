@@ -1,5 +1,6 @@
 #include "MyWebChannel.h"
 #include <QMessageBox>
+#include <QDebug>
 
 MyWebChannel::MyWebChannel(QObject *parent)
 	: QWebChannel(parent)
@@ -8,9 +9,4 @@ MyWebChannel::MyWebChannel(QObject *parent)
 
 MyWebChannel::~MyWebChannel()
 {
-}
-
-void MyWebChannel::showMsgBox(const QString &text)
-{
-	QMessageBox::warning(nullptr, u8"ÌבÊ¾", u8"MyWebChannel::showMsgBox " + text);
 }
