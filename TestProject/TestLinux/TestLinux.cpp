@@ -21,6 +21,7 @@
 #include <pthread.h>
 #include <sys/shm.h>
 #include <signal.h>
+#include <sys/wait.h> //waitpid
 
 #define TEST_FILE_NAME "/home/test/1.txt"
 #define MSG_QUIT 100
@@ -69,6 +70,13 @@ void testWriteFile()
 		if (-1 == write(fd, pText2, strlen(pText2)))
 		{
 			printf("errno=%d\n", errno);
+			assert(false);
+			break;
+		}
+		//缓存写入到磁盘,sync是系统的缓存写入磁盘
+		if (-1 == fsync(fd))
+		{
+			printf("fsync errno=%d\n", errno);
 			assert(false);
 			break;
 		}
@@ -312,13 +320,52 @@ void test_system()
 
 void test_exec()
 {
-	char *args[] = { "/bin/ls", nullptr };
-	int ret = -1;
-	if ((ret = execve("/bin/ls", args, nullptr)) < 0)
+	pid_t pid = fork();
+	if (-1 == pid)
 	{
-		printf("execuve failed result=%d\n", ret);
+		printf("errno=%d\n", errno);
+		assert(false);
 	}
-	printf("error");
+	else if (0 == pid)
+	{
+		printf("child process mypid=%d parentpid=%d\n", getpid(), getppid());
+		char *argv[] = {"ls", "-al", NULL};
+		//if (-1 == execl("/bin/ls", "ls", "-al", NULL))
+		//if (-1 == execlp("ls", "ls", "-al", NULL))
+		if (-1 == execvp("ls", argv))
+		{
+			printf("execl errno=%d\n", errno);
+		}
+	}
+	else
+	{
+		printf("fork child pid=%d mypid=%d parentpid=%d\n", pid, getpid(), getppid());
+		printf("parent wait child\n");
+		int status = 0;
+		pid_t wpid = waitpid(pid, &status, 0);
+		if (-1 == wpid)
+		{
+			printf("wait failed\n");
+		}
+		else
+		{
+			printf("wait successed pid=%d\n", wpid);
+		}
+	}
+}
+
+void test_daemon()
+{
+	printf("test_daemon begin\n");
+	printf("test_daemon pid=%d\n", getpid());
+	int ret = daemon(0, 1);
+	printf("test_daemon ret=%d", ret);
+	printf("test_daemon pid=%d\n", getpid());
+	while (true)
+	{
+		printf("test_daemon print time=%lld", time(NULL));
+		usleep(1000 * 1000);
+	}
 }
 
 void test_unmaed_pipe()

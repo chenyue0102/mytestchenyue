@@ -89,6 +89,7 @@
     <Link />
     <Link>
       <AdditionalOptions>-ldl -lpthread %(AdditionalOptions)</AdditionalOptions>
+      <LibraryDependencies>dl;pthread</LibraryDependencies>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

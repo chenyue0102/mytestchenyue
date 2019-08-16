@@ -1174,7 +1174,8 @@ void test_load_dll()
 	const char *perr = nullptr;
 	do
 	{
-		if ((phandle = dlopen("/root/projects/testlinuxdll/libtestlinuxdll.so.1", /*RTLD_LAZY*/RTLD_NOW)) == nullptr)
+		const char *pstrDllPath = "/home/test/projects/testlinuxdll/bin/x64/Debug/libtestlinuxdll.so";
+		if ((phandle = dlopen(pstrDllPath, /*RTLD_LAZY*/RTLD_NOW)) == nullptr)
 		{
 			if ((perr = dlerror()) != nullptr)
 			{
@@ -1217,6 +1218,8 @@ void test()
 	printf("%s\n", sz);
 	close(s);
 }
+extern void test_exec();
+extern void test_daemon();
 int main()
 {
 	//test_unix_stream();
@@ -1232,6 +1235,8 @@ int main()
 	//test_udp_raw();
 	//test_load_dll();
 	//test();
+	//test_exec();
+	test_daemon();
 
     return 0;
 }
