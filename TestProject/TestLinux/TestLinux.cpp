@@ -1,6 +1,7 @@
 #include "TestLinux.h"
 #include <cstdio>
 #include <stdlib.h>
+#include <stdio.h>
 #include <assert.h>
 #include <type_traits>
 #include <string.h>
@@ -883,6 +884,29 @@ void sig_handle(int signo)
 	else
 	{
 		printf("sig_int error signo=%d\n", signo);
+	}
+}
+struct sigaction g_sigaction;
+struct sigaction g_oldsigaction;
+
+void sigacton_fun(int sig)
+{
+	printf("sigacton_fun %d\n", sig);
+}
+void test_sigaction()
+{
+	g_sigaction.sa_handler = &sigacton_fun;
+	sigemptyset(&g_sigaction.sa_mask);
+	sigaction(SIGTERM, &g_sigaction, &g_oldsigaction);
+	if (0 == fork())
+	{
+		printf("test_sigaction fork \n");
+		while (true)
+		{
+			usleep(1024 * 1024 * 1024);
+		}
+		
+		printf("test_sigaction fork end\n");
 	}
 }
 

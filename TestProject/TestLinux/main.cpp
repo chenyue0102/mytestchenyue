@@ -1220,6 +1220,16 @@ void test()
 }
 extern void test_exec();
 extern void test_daemon();
+extern void test_sigaction();
+
+void test_unname_sem()
+{
+	sem_init
+}
+void test_sem()
+{
+	test_unname_sem();
+}
 int main()
 {
 	//test_unix_stream();
@@ -1236,7 +1246,8 @@ int main()
 	//test_load_dll();
 	//test();
 	//test_exec();
-	test_daemon();
-
+	//test_daemon();
+	//test_sigaction();
+	test_sem();
     return 0;
 }
