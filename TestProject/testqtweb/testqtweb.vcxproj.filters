@@ -39,9 +39,6 @@
     <ClCompile Include="MyWebChannel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="edrtyert.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="testqtweb.h">
@@ -50,15 +47,9 @@
     <QtMoc Include="MyWebChannel.h">
       <Filter>Header Files</Filter>
     </QtMoc>
-    <QtMoc Include="edrtyert.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
   </ItemGroup>
   <ItemGroup>
     <QtUic Include="testqtweb.ui">
-      <Filter>Form Files</Filter>
-    </QtUic>
-    <QtUic Include="edrtyert.ui">
       <Filter>Form Files</Filter>
     </QtUic>
   </ItemGroup>
