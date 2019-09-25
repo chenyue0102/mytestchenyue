@@ -127,7 +127,10 @@
     <QtRcc Include="testqtopengl.qrc" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="MyOpenGLWidget.h" />
+    <QtMoc Include="MyOpenGLWidget.h">
+      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\GeneratedFiles;.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName);$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtOpenGL;$(QTDIR)\include\QtOpenGLExtensions;$(QTDIR)\include\QtWidgets</IncludePath>
+      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\GeneratedFiles;.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName);$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtOpenGL;$(QTDIR)\include\QtOpenGLExtensions;$(QTDIR)\include\QtWidgets</IncludePath>
+    </QtMoc>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">

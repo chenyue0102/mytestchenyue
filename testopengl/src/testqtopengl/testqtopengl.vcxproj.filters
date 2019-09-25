@@ -44,6 +44,9 @@
     <QtMoc Include="testqtopengl.h">
       <Filter>Header Files</Filter>
     </QtMoc>
+    <QtMoc Include="MyOpenGLWidget.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
   </ItemGroup>
   <ItemGroup>
     <QtUic Include="testqtopengl.ui">
@@ -54,10 +57,5 @@
     <QtRcc Include="testqtopengl.qrc">
       <Filter>Resource Files</Filter>
     </QtRcc>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="MyOpenGLWidget.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
 </Project>
