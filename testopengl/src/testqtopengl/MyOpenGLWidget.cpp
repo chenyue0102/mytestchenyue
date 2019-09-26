@@ -141,17 +141,15 @@ void MyOpenGLWidget::paintGL()
 	glVertex2f(-1.0f, 1.0f);
 	glEnd();
 
-	/*glColor3f(0.0f, 1.0f, 0.0f);
-	m_texture.bind();
-	glBegin(GL_TRIANGLE_STRIP);
-	glTexCoord2f(0.0f, 1.0f); glVertex2f(-1.0f, -1.0f);
-	glTexCoord2f(1.0f, 1.0f); glVertex2f(1.0f, -1.0f);
-	glTexCoord2f(0.0f, 0.0f); glVertex2f(-1.0f, 1.0f);
-	glTexCoord2f(1.0f, 0.0f); glVertex2f(1.0f, 1.0f);
-	glEnd();
-	m_texture.release();*/
-
 	QMatrix4x4 m;
+	program.bind();
+	program.setUniformValue("matrix", m);
+	m_texture.bind();
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	m_texture.release();
+	program.release();
+
+	
 	m.translate(m_translateX, -0.8f, 0.0f);
 	m.scale(0.1, 0.1, 1);
 	program.bind();
@@ -162,6 +160,7 @@ void MyOpenGLWidget::paintGL()
 	glUniform1i(m_uni, 0);
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 	program.release();
+
 
 	
 }
