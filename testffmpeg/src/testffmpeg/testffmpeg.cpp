@@ -21,6 +21,119 @@ void getCurrentDir(char *str, int len)
 	}
 }
 
+void processVideoThread(AVCodecContext *vcc)
+{
+	AVFrame *frame = av_frame_alloc();
+	for (;;)
+	{
+		int ret = avcodec_receive_frame(vcc, frame);
+		if (0 != ret)
+		{
+
+			if (AVERROR_EOF == ret)
+			{
+				break;
+			}
+			else if (AVERROR(EAGAIN) == ret)
+			{
+				continue;
+			}
+			break;
+		}
+		frame->width;
+		frame->height;
+		//av_frame_unref(frame);
+	}
+	av_frame_free(&frame);
+}
+
+void processAudioThread(AVCodecContext *acc)
+{
+	AVFrame *frame = av_frame_alloc();
+
+	for (;;)
+	{
+		int ret = avcodec_receive_frame(acc, frame);
+
+		//av_frame_unref(frame);
+	}
+	av_frame_free(&frame);
+}
+void readThread(AVFormatContext *ic, int videoStream, int audioStream, AVCodecContext *vcc, AVCodecContext *acc)
+{
+	AVPacket *pkt = av_packet_alloc();
+	AVFrame *frame = av_frame_alloc();
+	std::thread *videoThread = 0;
+	std::thread *audioThread = 0;
+	for (;;)
+	{
+		int ret = av_read_frame(ic, pkt);
+		assert(0 == ret);
+		AVCodecContext *cc = 0;
+		std::thread **pp = 0;
+		if (pkt->stream_index == videoStream)
+		{
+			cc = vcc;
+		}
+		else if (pkt->stream_index == audioStream)
+		{
+			cc = acc;
+		}
+		else
+		{
+			//other
+		}
+		if (0 == cc)
+		{
+			av_packet_unref(pkt);
+			continue;
+		}
+		avcodec_send_packet(cc, pkt);
+		av_packet_unref(pkt);
+		if (0 != cc)
+		{
+			for (;;)
+			{
+				//内部会调用av_frame_unref(frame)
+				ret = avcodec_receive_frame(cc, frame);
+				if (0 != ret)
+				{
+					if (ret == AVERROR_EOF)
+					{
+						break;
+					}
+					else if (AVERROR(EAGAIN) == ret)
+					{
+						break;
+					}
+					break;
+				}
+				if (cc == vcc)
+				{
+					printf("%d %d\n", frame->width, frame->height);
+				}
+				else if (cc == acc)
+				{
+					printf("%d\n", frame->sample_rate);
+				}
+			}
+		}
+		std::this_thread::sleep_for(std::chrono::milliseconds(30));
+	}
+	if (0 != videoThread)
+	{
+		videoThread->join();
+		delete videoThread;
+	}
+	if (0 != audioThread)
+	{
+		audioThread->join();
+		delete audioThread;
+	}
+	av_packet_free(&pkt);
+	av_frame_free(&frame);
+}
+
 int main()
 {
 	char szError[128] = { 0 };
@@ -59,6 +172,9 @@ int main()
 	acc->thread_count = std::thread::hardware_concurrency();
 	ret = avcodec_open2(acc, 0, 0);
 
+	std::thread readThread(&readThread, ic, videoStream, audioStream, vcc, acc);
+	readThread.join();
+		
 
 	avcodec_close(acc);
 	avcodec_free_context(&acc);
