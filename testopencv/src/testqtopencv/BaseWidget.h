@@ -16,7 +16,7 @@ public:
 	static void addCreateFun(int id, CREATE_FUN fun);
 	static QWidget* createWidget(int id);
 public:
-	virtual void coverImage(const cv::Mat &origin, cv::Mat &m, std::vector<cv::Rect> &r) = 0;
+	virtual void coverImage(const cv::Mat &origin, cv::Mat &m, std::vector<cv::Rect> &rcs) = 0;
 };
 struct AutoCreator
 {

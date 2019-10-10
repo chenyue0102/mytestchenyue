@@ -15,7 +15,7 @@ WhiteWidget::~WhiteWidget()
 {
 }
 
-void WhiteWidget::coverImage(const cv::Mat & origin, cv::Mat & m, std::vector<cv::Rect>& r)
+void WhiteWidget::coverImage(const cv::Mat & origin, cv::Mat & m, std::vector<cv::Rect>& rcs)
 {
 	int beta = ui.lineEditBeta->text().toInt();
 	if (beta > 1)
@@ -25,13 +25,16 @@ void WhiteWidget::coverImage(const cv::Mat & origin, cv::Mat & m, std::vector<cv
 			m_beta = beta;
 			fillTable(256, beta);
 		}
-		for (int row = 0; row < m.rows; row++)
+		if (rcs.empty() || true)
 		{
-			for (int col = 0; col < m.cols; col++)
+			makeWhite(m);
+		}
+		else
+		{
+			for (auto &r : rcs)
 			{
-				m.at<cv::Vec3b>(row, col)[0] = m_vTable[m.at<cv::Vec3b>(row, col)[0]];
-				m.at<cv::Vec3b>(row, col)[1] = m_vTable[m.at<cv::Vec3b>(row, col)[1]];
-				m.at<cv::Vec3b>(row, col)[2] = m_vTable[m.at<cv::Vec3b>(row, col)[2]];
+				cv::Mat tmpM = m(r);
+				makeWhite(tmpM);
 			}
 		}
 	}
@@ -88,4 +91,17 @@ double WhiteWidget::getWhiteRatio(double d, int beta)
 		assert(false);
 	}
 	return ret;
+}
+
+void WhiteWidget::makeWhite(cv::Mat & m)
+{
+	for (int row = 0; row < m.rows; row++)
+	{
+		for (int col = 0; col < m.cols; col++)
+		{
+			m.at<cv::Vec3b>(row, col)[0] = m_vTable[m.at<cv::Vec3b>(row, col)[0]];
+			m.at<cv::Vec3b>(row, col)[1] = m_vTable[m.at<cv::Vec3b>(row, col)[1]];
+			m.at<cv::Vec3b>(row, col)[2] = m_vTable[m.at<cv::Vec3b>(row, col)[2]];
+		}
+	}
 }
