@@ -23,11 +23,42 @@ void CascadeWidget::coverImage(const cv::Mat &origin, cv::Mat & m, std::vector<c
 {
 	if (m_bLoadCascade)
 	{
+		double scaleX = ui.lineEditX->text().toDouble();
+		double scaleY = ui.lineEditY->text().toDouble();
 		std::vector<cv::Rect> tmpRects;
 		cv::Mat grayMat;
 		cv::cvtColor(m, grayMat, CV_BGR2GRAY);
 
 		m_cascade.detectMultiScale(m, tmpRects, 1.1, 2, 0);
+
+		cv::Size matSize = m.size();
+		std::for_each(tmpRects.begin(), tmpRects.end(), [scaleX, scaleY, matSize](cv::Rect &r)
+		{
+			int w = r.width * scaleX;
+			int h = r.height * scaleY;
+			r.x = r.x + (r.width - w) / 2;
+			if (r.x < 0)
+			{
+				r.x = 0;
+			}
+			r.width = w;
+			if (r.x + r.width > matSize.width)
+			{
+				r.width = matSize.width - r.x;
+			}
+
+			r.y = r.y + (r.height - h) / 2;
+			if (r.y < 0)
+			{
+				r.y = 0;
+			}
+			r.height = h;
+			if (r.y + r.height > matSize.height)
+			{
+				r.height = matSize.height - r.y;
+			}
+
+		});
 		rcs.insert(rcs.end(), tmpRects.begin(), tmpRects.end());
 
 		cv::Mat tmpMat = m.clone();

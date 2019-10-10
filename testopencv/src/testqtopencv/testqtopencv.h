@@ -15,6 +15,7 @@ public Q_SLOTS:
 	void onLoadImage();
 	void onAddWidget();
 	void onParamChanged();
+	void onDeleteWidget();
 private:
 	void addWidget(int id);
 private:

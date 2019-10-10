@@ -57,14 +57,14 @@ void testqtopencv::onLoadImage()
 
 		cv::Mat dst = (m_originMat*(100 - p) + temp4*p) / 100;
 
-		cv::namedWindow("test");
-		cv::imshow("temp1", temp1);
+		//cv::namedWindow("test");
+		/*cv::imshow("temp1", temp1);
 		cv::imshow("temp2", temp2);
 		cv::imshow("temp3", temp3);
 		cv::imshow("temp4", temp4);
 		cv::imshow("temp5", temp5);
-		cv::imshow("dst", dst);
-		cv::imshow("m_originMat", m_originMat);
+		cv::imshow("dst", dst);*/
+		//cv::imshow("test", m_originMat);
 	} while (false);
 }
 
@@ -100,6 +100,15 @@ void testqtopencv::onParamChanged()
 	}
 }
 
+void testqtopencv::onDeleteWidget()
+{
+	auto children = ui.widgetContainer->findChildren<BaseWidget*>();
+	if (!children.isEmpty())
+	{
+		children.back()->deleteLater();
+	}
+}
+
 void testqtopencv::addWidget(int id)
 {
 	QWidget *w = BaseWidget::createWidget(id);
@@ -108,7 +117,7 @@ void testqtopencv::addWidget(int id)
 		int width = ui.lineEditWidth->text().toInt();
 		int height = ui.lineEditHeight->text().toInt();
 		w->setFixedSize(width, height);
-		connect(w, SIGNAL(paramChanged()), SLOT(onParamChanged()));
+		//connect(w, SIGNAL(paramChanged()), SLOT(onParamChanged()));
 		m_flowLayout->addWidget(w);
 
 		onParamChanged();

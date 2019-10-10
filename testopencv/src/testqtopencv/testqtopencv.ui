@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>600</width>
+    <width>861</width>
     <height>400</height>
    </rect>
   </property>
@@ -101,6 +101,20 @@
        </widget>
       </item>
       <item>
+       <widget class="QPushButton" name="pushButtonRefresh">
+        <property name="text">
+         <string>刷新</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButtonDelete">
+        <property name="text">
+         <string>删除控件</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="pushButtonAddOrigin">
         <property name="text">
          <string>原始图1</string>
@@ -137,6 +151,16 @@
         </property>
         <property name="type" stdset="0">
          <number>4</number>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButtonAddWhite">
+        <property name="text">
+         <string>美白5</string>
+        </property>
+        <property name="type" stdset="0">
+         <number>5</number>
         </property>
        </widget>
       </item>
@@ -230,8 +254,58 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>pushButtonRefresh</sender>
+   <signal>clicked()</signal>
+   <receiver>testqtopencvClass</receiver>
+   <slot>onParamChanged()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>228</x>
+     <y>11</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>373</x>
+     <y>199</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButtonDelete</sender>
+   <signal>clicked()</signal>
+   <receiver>testqtopencvClass</receiver>
+   <slot>onDeleteWidget()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>309</x>
+     <y>11</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>373</x>
+     <y>199</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButtonAddWhite</sender>
+   <signal>clicked()</signal>
+   <receiver>testqtopencvClass</receiver>
+   <slot>onAddWidget()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>714</x>
+     <y>11</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>430</x>
+     <y>199</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>onAddWidget()</slot>
+  <slot>onParamChanged()</slot>
+  <slot>onDeleteWidget()</slot>
  </slots>
 </ui>

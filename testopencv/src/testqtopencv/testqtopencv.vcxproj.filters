@@ -52,6 +52,9 @@
     <ClCompile Include="GaussianWidget.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="WhiteWidget.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="testqtopencv.h">
@@ -72,6 +75,9 @@
     <QtMoc Include="GaussianWidget.h">
       <Filter>Header Files</Filter>
     </QtMoc>
+    <QtMoc Include="WhiteWidget.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
   </ItemGroup>
   <ItemGroup>
     <QtUic Include="testqtopencv.ui">
@@ -87,6 +93,9 @@
       <Filter>Form Files</Filter>
     </QtUic>
     <QtUic Include="GaussianWidget.ui">
+      <Filter>Form Files</Filter>
+    </QtUic>
+    <QtUic Include="WhiteWidget.ui">
       <Filter>Form Files</Filter>
     </QtUic>
   </ItemGroup>

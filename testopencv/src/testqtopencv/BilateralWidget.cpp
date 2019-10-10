@@ -17,12 +17,13 @@ BilateralWidget::~BilateralWidget()
 void BilateralWidget::coverImage(const cv::Mat &origin, cv::Mat & m, std::vector<cv::Rect>& rcs)
 {
 	cv::Mat bilateralMat;
-	int value = 5;
-	int dx = value * 5;
-	double fc = value * 12.5;
+	int d = ui.lineEditD->text().toInt();
+	double sigmaColor = ui.lineEditSigmaColor->text().toDouble();
+	double sigmaSpace = ui.lineEditSigmaSpace->text().toDouble();
+	int borderType = ui.lineEditBorderType->text().toInt();
 	if (rcs.empty())
 	{
-		cv::bilateralFilter(m, bilateralMat, dx, fc, fc);
+		cv::bilateralFilter(m, bilateralMat, d, sigmaColor, sigmaSpace, borderType);
 		bilateralMat.copyTo(m);
 	}
 	else
@@ -30,7 +31,7 @@ void BilateralWidget::coverImage(const cv::Mat &origin, cv::Mat & m, std::vector
 		for (auto &rc : rcs)
 		{
 			cv::Mat tmpMat = m(rc);
-			cv::bilateralFilter(tmpMat, bilateralMat, dx, fc, fc);
+			cv::bilateralFilter(tmpMat, bilateralMat, d, sigmaColor, sigmaSpace, borderType);
 			bilateralMat.copyTo(tmpMat);
 		}
 	}

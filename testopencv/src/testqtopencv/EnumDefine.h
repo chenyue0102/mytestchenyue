@@ -7,4 +7,5 @@ enum EWidget
 	EWidgetCascade,
 	EWidgetBilateral,
 	EWidgetGaussian,
+	EWidgetGWhite,
 };
