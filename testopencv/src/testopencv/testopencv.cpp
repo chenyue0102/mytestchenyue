@@ -126,12 +126,13 @@ int main()
 	//auto cuda_face_cascade = cv::cuda::CascadeClassifier::create("C:/opencv/opencv/sources/data/haarcascades_cuda/haarcascade_frontalface_alt.xml");
 
 	//Mat img = imread("lena512color.tiff");
-	Mat img = imread("2.jpg");
-	Mat origin_img = img.clone();
+	Mat origin_img = imread("2.jpg");
+	Mat img = origin_img.clone();
 	Mat img_gray;
 	cvtColor(img, img_gray, COLOR_BGR2GRAY);
 	std::vector<Rect> faces;
-	//face_cascade.detectMultiScale(img_gray, faces, 1.1, 2, 0, Size(30, 30));
+	face_cascade.detectMultiScale(img_gray, faces, 1.1, 2, 0, Size(30, 30));
+	//rectangle(img, faces[0], Scalar(255, 0, 0));
 
 	detectAndDraw(img, face_cascade, 1.0);
 	//img = test(img, 3, 3);
@@ -220,6 +221,17 @@ void detectAndDraw(Mat& img,
 		//| CV_HAAR_SCALE_IMAGE
 		,
 		Size(30, 30));
+
+	vector<Rect> faces2;
+	cascade.detectMultiScale(gray, faces2,
+		1.1, 3, 0
+		//|CV_HAAR_FIND_BIGGEST_OBJECT
+		//|CV_HAAR_DO_ROUGH_SEARCH
+		//| CV_HAAR_SCALE_IMAGE
+		,
+		Size(30, 30));
+	//rectangle(img, faces2[0], Scalar(255,0,0));
+
 	bool isDetected = false;
 	for (vector<Rect>::const_iterator r = faces.begin(); r != faces.end(); r++, i++)
 	{
