@@ -173,6 +173,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="OriginWidget.cpp" />
     <ClCompile Include="QtOpenCV.cpp" />
+    <ClCompile Include="SharpWidget.cpp" />
     <ClCompile Include="testqtopencv.cpp" />
     <ClCompile Include="BaseWidget.cpp" />
     <ClCompile Include="WhiteWidget.cpp" />
@@ -185,6 +186,7 @@
     <QtUic Include="CascadeWidget.ui" />
     <QtUic Include="GaussianWidget.ui" />
     <QtUic Include="OriginWidget.ui" />
+    <QtUic Include="SharpWidget.ui" />
     <QtUic Include="testqtopencv.ui" />
     <QtUic Include="WhiteWidget.ui" />
   </ItemGroup>
@@ -197,6 +199,7 @@
   <ItemGroup>
     <ClInclude Include="EnumDefine.h" />
     <ClInclude Include="flowlayout.h" />
+    <QtMoc Include="SharpWidget.h" />
     <QtMoc Include="WhiteWidget.h" />
     <QtMoc Include="GaussianWidget.h" />
     <QtMoc Include="BaseWidget.h" />

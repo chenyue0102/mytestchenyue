@@ -8,4 +8,5 @@ enum EWidget
 	EWidgetBilateral,
 	EWidgetGaussian,
 	EWidgetGWhite,
+	EWidgetSharp,
 };

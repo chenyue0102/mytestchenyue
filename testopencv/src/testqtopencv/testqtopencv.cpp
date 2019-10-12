@@ -5,6 +5,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include "BaseWidget.h"
 #include "QtOpenCV.h"
+#include "WhiteWidget.h"
 
 testqtopencv::testqtopencv(QWidget *parent)
 	: QWidget(parent)
@@ -45,8 +46,57 @@ void testqtopencv::onLoadImage()
 		cv::Mat temp1, temp2, temp3, temp4;
 
 		//Ë«±ßÂË²¨
-		bilateralFilter(tmpMat, temp1, dx, fc, fc);
+		//bilateralFilter(tmpMat, temp1, dx, fc, fc);
+		temp1 = tmpMat;
 
+		cv::Mat whiteMat = temp1.clone();
+		for (int row = 0; row < whiteMat.rows; row++)
+		{
+			for (int col = 0; col < whiteMat.cols; col++)
+			{
+				for (int i = 0; i < 3; i++)
+				{
+					int v = whiteMat.at<cv::Vec3b>(row, col)[i];
+					v += 10;
+					v = std::min(v, 255);
+					whiteMat.at<cv::Vec3b>(row, col)[i] = v;
+				}
+			}
+		}
+
+
+		cv::Mat gaussianMat;
+		GaussianBlur(temp1, gaussianMat, cv::Size(5, 5), 0, 0);
+		cv::Mat sharpMask = temp1 - gaussianMat;
+
+		cv::Mat sharpMat = temp1.clone();
+		int opt = 50;
+		int threshold = 10;
+		for (int row = 0; row < temp1.rows; row++)
+		{
+			for (int col = 0; col < temp1.cols; col++)
+			{
+				auto &item = sharpMask.at<cv::Vec3b>(row, col);
+				int opt = ((int)item[0] + item[1] + item[2])*10000/ (3 * 256);
+				if (opt > 100) opt = 100;
+				if (opt > 0)
+				{
+					for (int i = 0; i < 3; i++)
+					{
+						sharpMat.at<cv::Vec3b>(row, col)[i] = (int)sharpMat.at<cv::Vec3b>(row, col)[i] * (100 - opt) / 100 + whiteMat.at<cv::Vec3b>(row, col)[i]*opt / 100;
+					}
+					
+				}
+				else
+				{
+					//sharpMat.at<cv::Vec3b>(row, col) = (sharpMat.at<cv::Vec3b>(row, col) * (100 - opt) + whiteMat.at<cv::Vec3b>(row, col)*opt) / 100;
+				}
+			}
+		}
+		cv::imshow("temp1", temp1);
+		cv::imshow("whiteMat", whiteMat);
+		cv::imshow("sharpMat", sharpMat);
+		temp1 = sharpMat;
 		temp2 = (temp1 - tmpMat + 128);
 
 		//¸ßË¹Ä£ºý
@@ -63,8 +113,9 @@ void testqtopencv::onLoadImage()
 		cv::imshow("temp3", temp3);
 		cv::imshow("temp4", temp4);
 		cv::imshow("temp5", temp5);
-		cv::imshow("dst", dst);*/
+		*/
 		//cv::imshow("test", m_originMat);
+		cv::imshow("dst", dst);
 	} while (false);
 }
 
