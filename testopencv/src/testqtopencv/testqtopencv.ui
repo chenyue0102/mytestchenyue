@@ -101,6 +101,13 @@
        </widget>
       </item>
       <item>
+       <widget class="QPushButton" name="pushButtonCamera">
+        <property name="text">
+         <string>打开相机</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="pushButtonRefresh">
         <property name="text">
          <string>刷新</string>
@@ -302,10 +309,27 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>pushButtonCamera</sender>
+   <signal>clicked()</signal>
+   <receiver>testqtopencvClass</receiver>
+   <slot>onOpenCamera()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>228</x>
+     <y>11</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>430</x>
+     <y>199</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>onAddWidget()</slot>
   <slot>onParamChanged()</slot>
   <slot>onDeleteWidget()</slot>
+  <slot>onOpenCamera()</slot>
  </slots>
 </ui>

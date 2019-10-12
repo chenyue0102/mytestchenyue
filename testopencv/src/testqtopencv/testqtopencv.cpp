@@ -7,13 +7,18 @@
 #include "QtOpenCV.h"
 #include "WhiteWidget.h"
 
+
+#define FRAME_RATE 5
 testqtopencv::testqtopencv(QWidget *parent)
 	: QWidget(parent)
 	, m_flowLayout(new FlowLayout())
+	, m_videoCapture()
 {
 	ui.setupUi(this);
 	ui.widgetContainer->setLayout(m_flowLayout);
 	connect(ui.pushButtonLoad, SIGNAL(clicked()), SLOT(onLoadImage()));
+	m_timerRefreshCamera.setInterval(1000 / FRAME_RATE);
+	connect(&m_timerRefreshCamera, SIGNAL(timeout()), SLOT(onRefreshCamera()));
 }
 
 void testqtopencv::onLoadImage()
@@ -142,13 +147,7 @@ void testqtopencv::onAddWidget()
 
 void testqtopencv::onParamChanged()
 {
-	auto children = ui.widgetContainer->findChildren<BaseWidget*>();
-	m_tmpMat = m_originMat.clone();
-	std::vector<cv::Rect> r;
-	for (auto w : children)
-	{
-		w->coverImage(m_originMat, m_tmpMat, r);
-	}
+	doRefreshWidgets();
 }
 
 void testqtopencv::onDeleteWidget()
@@ -157,6 +156,29 @@ void testqtopencv::onDeleteWidget()
 	if (!children.isEmpty())
 	{
 		children.back()->deleteLater();
+	}
+}
+
+void testqtopencv::onOpenCamera()
+{
+	if (!m_videoCapture.isOpened())
+	{
+		if (!m_videoCapture.open(0))
+		{
+			assert(false);
+		}
+	}
+	if (!m_timerRefreshCamera.isActive())
+	{
+		m_timerRefreshCamera.start();
+	}
+}
+
+void testqtopencv::onRefreshCamera()
+{
+	if (m_videoCapture.read(m_originMat))
+	{
+		doRefreshWidgets();
 	}
 }
 
@@ -172,5 +194,16 @@ void testqtopencv::addWidget(int id)
 		m_flowLayout->addWidget(w);
 
 		onParamChanged();
+	}
+}
+
+void testqtopencv::doRefreshWidgets()
+{
+	auto children = ui.widgetContainer->findChildren<BaseWidget*>();
+	m_tmpMat = m_originMat.clone();
+	std::vector<cv::Rect> r;
+	for (auto w : children)
+	{
+		w->coverImage(m_originMat, m_tmpMat, r);
 	}
 }
