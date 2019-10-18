@@ -124,7 +124,7 @@
       <AdditionalIncludeDirectories>$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets;.\;C:\opencv\opencv\build\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <SubSystem>Windows</SubSystem>
+      <SubSystem>Console</SubSystem>
       <OutputFile>$(OutDir)\$(ProjectName).exe</OutputFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>opencv_world411d.lib;Qt5Cored.lib;Qt5Guid.lib;Qt5Widgetsd.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -168,6 +168,7 @@
   <ItemGroup>
     <ClCompile Include="BilateralWidget.cpp" />
     <ClCompile Include="CascadeWidget.cpp" />
+    <ClCompile Include="Common.cpp" />
     <ClCompile Include="flowlayout.cpp" />
     <ClCompile Include="GaussianWidget.cpp" />
     <ClCompile Include="main.cpp" />
@@ -197,6 +198,7 @@
     <QtMoc Include="OriginWidget.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Common.h" />
     <ClInclude Include="EnumDefine.h" />
     <ClInclude Include="flowlayout.h" />
     <QtMoc Include="SharpWidget.h" />

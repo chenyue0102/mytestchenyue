@@ -3,6 +3,7 @@
 #include <QFileDialog>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include <opencv2/videoio/legacy/constants_c.h>
 #include "BaseWidget.h"
 #include "QtOpenCV.h"
 #include "WhiteWidget.h"
@@ -30,6 +31,38 @@ void testqtopencv::onLoadImage()
 		{
 			break;
 		}
+		m_originMat = cv::imread(strFileName.toStdString());
+		if (m_originMat.empty())
+		{
+			break;
+		}
+		int type = m_originMat.type();
+		int type1 = CV_8UC4;
+		int type2 = CV_8UC3;
+		if (m_originMat.type() == CV_8UC4)
+		{
+			cv::cvtColor(m_originMat, m_originMat, cv::COLOR_RGBA2RGB);
+		}
+		cv::Mat tmp;
+		cv::cvtColor(m_originMat, tmp, cv::COLOR_BGR2GRAY);
+		cv::imshow("gray", tmp);
+		//Canny 有2个阈值，可能阈值与绝对阈值
+		cv::Canny(tmp, tmp, 10, 100, 3, true);
+		cv::imshow("canny", tmp);
+		int y = 0, x = 1;
+		cv::Vec3b pt = m_originMat.at<cv::Vec3b>(y, x);
+		uchar blue = pt[0];
+		uchar green = pt[1];
+		uchar red = pt[2];
+		//cv::GaussianBlur(m_originMat, tmp, cv::Size(5, 5), 3, 3);
+		//cv::imshow("tmp1", tmp);
+		//高斯模糊并降低图片采样率
+		//cv::pyrDown(m_originMat, tmp);
+		//cv::imshow("tmp2", tmp);
+
+
+
+		break;
 		QImage img;
 		if (!img.load(strFileName))
 		{
@@ -170,7 +203,16 @@ void testqtopencv::onOpenCamera()
 	}
 	if (!m_timerRefreshCamera.isActive())
 	{
-		m_timerRefreshCamera.start();
+		double d = m_videoCapture.get(CV_CAP_PROP_FPS);
+		if (d > 0.0)
+		{
+			int n = 1000 / d;
+			m_timerRefreshCamera.start(n);
+		}
+		else
+		{
+			m_timerRefreshCamera.start();
+		}
 	}
 }
 
