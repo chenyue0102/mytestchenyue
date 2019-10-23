@@ -15,4 +15,6 @@ public:
 	void coverImage(const cv::Mat &origin, cv::Mat &m, std::vector<cv::Rect> &r);
 private:
 	Ui::OriginWidget ui;
+	int m_width;
+	int m_height;
 };

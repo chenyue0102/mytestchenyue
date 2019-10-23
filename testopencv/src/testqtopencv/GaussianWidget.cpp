@@ -16,6 +16,17 @@ GaussianWidget::~GaussianWidget()
 
 void GaussianWidget::coverImage(const cv::Mat & origin, cv::Mat & m, std::vector<cv::Rect>& rcs)
 {
+	coverImage<cv::Mat>(origin, m, rcs);
+}
+
+void GaussianWidget::coverImage(const cv::cuda::GpuMat & origin, cv::cuda::GpuMat & m, std::vector<cv::Rect>& rcs)
+{
+	coverImage<cv::cuda::GpuMat>(origin, m, rcs);
+}
+
+template<typename MATTYPE>
+void GaussianWidget::coverImage(const MATTYPE &origin, MATTYPE &m, std::vector<cv::Rect> &rcs)
+{
 	int w = 0, h = 0;
 	double sigmaX = ui.lineEditSigmaX->text().toDouble();
 	double sigmaY = ui.lineEditSigmaY->text().toDouble();
@@ -37,15 +48,18 @@ void GaussianWidget::coverImage(const cv::Mat & origin, cv::Mat & m, std::vector
 	{
 		for (auto &r : rcs)
 		{
-			cv::Mat oriMat, processedMat;
+			MATTYPE oriMat, processedMat;
 			oriMat = origin(r);
 			processedMat = m(r);
 			doGaussian(oriMat, processedMat, w, h, sigmaX, sigmaY, opacity);
 		}
 	}
-	QImage img = QtOpenCV::Mat2QImage(m);
-	ui.labelImage->setPixmap(QPixmap::fromImage(img));
-	ui.labelImage->setFixedSize(img.size());
+	if (ui.checkBoxRender->isChecked())
+	{
+		QImage img = QtOpenCV::Mat2QImage(m);
+		ui.labelImage->setPixmap(QPixmap::fromImage(img));
+		ui.labelImage->setFixedSize(img.size());
+	}
 }
 
 void GaussianWidget::doGaussian(const cv::Mat & origin, cv::Mat & m, int w, int h, double sigmaX, double sigmaY, int opacity)
@@ -56,4 +70,13 @@ void GaussianWidget::doGaussian(const cv::Mat & origin, cv::Mat & m, int w, int 
 	cv::GaussianBlur(tmpMat, gaussianMat, cv::Size(w, h), sigmaX, sigmaY);
 	tmpMat = origin + 2 * gaussianMat - 256;
 	m = (origin * (100 - opacity) + tmpMat * opacity) / 100;
+}
+
+extern "C"
+{
+	void doGaussianGPU(const cv::cuda::GpuMat & origin, cv::cuda::GpuMat & m, int w, int h, double sigmaX, double sigmaY, int opacity);
+}
+void GaussianWidget::doGaussian(const cv::cuda::GpuMat & origin, cv::cuda::GpuMat & m, int w, int h, double sigmaX, double sigmaY, int opacity)
+{
+	doGaussianGPU(origin, m, w, h, sigmaX, sigmaY, opacity);
 }

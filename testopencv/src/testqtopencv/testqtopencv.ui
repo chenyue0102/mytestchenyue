@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>861</width>
+    <width>1062</width>
     <height>400</height>
    </rect>
   </property>
@@ -94,6 +94,20 @@
        </widget>
       </item>
       <item>
+       <widget class="QLabel" name="labelFPS">
+        <property name="text">
+         <string>FPS</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="checkBoxGPU">
+        <property name="text">
+         <string>GPU</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="pushButtonLoad">
         <property name="text">
          <string>加载图片</string>
@@ -104,6 +118,13 @@
        <widget class="QPushButton" name="pushButtonCamera">
         <property name="text">
          <string>打开相机</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButtonVideo">
+        <property name="text">
+         <string>打开视频</string>
         </property>
        </widget>
       </item>
@@ -168,6 +189,16 @@
         </property>
         <property name="type" stdset="0">
          <number>5</number>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButtonAddSharp">
+        <property name="text">
+         <string>锐化6</string>
+        </property>
+        <property name="type" stdset="0">
+         <number>6</number>
         </property>
        </widget>
       </item>
@@ -325,11 +356,44 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>pushButtonAddSharp</sender>
+   <signal>clicked()</signal>
+   <receiver>testqtopencvClass</receiver>
+   <slot>onAddWidget()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>876</x>
+     <y>11</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>530</x>
+     <y>199</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButtonVideo</sender>
+   <signal>clicked()</signal>
+   <receiver>testqtopencvClass</receiver>
+   <slot>onOpenVideo()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>309</x>
+     <y>11</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>530</x>
+     <y>199</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>onAddWidget()</slot>
   <slot>onParamChanged()</slot>
   <slot>onDeleteWidget()</slot>
   <slot>onOpenCamera()</slot>
+  <slot>onOpenVideo()</slot>
  </slots>
 </ui>

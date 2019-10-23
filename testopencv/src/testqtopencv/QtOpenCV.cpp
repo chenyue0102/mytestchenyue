@@ -1,7 +1,7 @@
 #include "QtOpenCV.h"
 #include <assert.h>
 #include <opencv2/imgproc/imgproc.hpp>
-
+#include <opencv2/cudacodec.hpp>
 
 namespace QtOpenCV
 {
@@ -79,5 +79,11 @@ cv::Mat QImage2Mat(const QImage & img)
 	break;
 	}
 	return mat;
+}
+QImage Mat2QImage(const cv::cuda::GpuMat & mat)
+{
+	cv::Mat m;
+	mat.download(m);
+	return Mat2QImage(m);
 }
 }
