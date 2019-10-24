@@ -223,7 +223,7 @@ void testqtopencv::onOpenCamera()
 	if (!m_timerRefreshCamera.isActive())
 	{
 		double d = m_cameraCapture.get(CV_CAP_PROP_FPS);
-		if (d > 0.0&&false)
+		if (d > 0.0)
 		{
 			int n = 1000 / d;
 			m_timerRefreshCamera.start(n);
@@ -272,7 +272,10 @@ void testqtopencv::onRefreshVideo()
 	{
 		if (m_videoCapture.read(m_originMat))
 		{
-			cv::resize(m_originMat, m_originMat, cv::Size(240, 480));
+			if (ui.checkBoxGPU->isChecked())
+			{
+				m_originMatGPU.upload(m_originMat);
+			}
 			doRefreshWidgets();
 		}
 	}

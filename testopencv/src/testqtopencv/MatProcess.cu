@@ -35,13 +35,9 @@ void doGaussianGPUFirst(const uchar *origin, const uchar *processed, uchar *resu
 	const uchar *orginTmp = origin + (bytesPerLine * row);
 	const uchar *processedTmp = processed + (bytesPerLine * row);
 	uchar *resultTmp = result + (bytesPerLine * row);
-	for (int i = 0; i < width; i++)
+	for (int i = 0; i < width * channels; i++)
 	{
-		for (int channel = 0; channel < channels; channel++)
-		{
-			int index = channel + i * channels;
-			resultTmp[index] = saturate_cast((int)processedTmp[index] - (int)orginTmp[index] + 128);
-		}
+		resultTmp[i] = saturate_cast((int)processedTmp[i] - (int)orginTmp[i] + 128);
 	}
 }
 
@@ -60,18 +56,16 @@ void doGaussianGPUSecond(const uchar *origin, const uchar *gaussian, uchar *resu
 	const uchar *orginTmp = origin + (bytesPerLine * row);
 	const uchar *gaussianTmp = gaussian + (bytesPerLine * row);
 	uchar *resultTmp = result + (bytesPerLine * row);
-	for (int i = 0; i < width; i++)
+	for (int i = 0; i < width * channels; i++)
 	{
-		for (int channel = 0; channel < channels; channel++)
-		{
-			int index = channel + i * channels;
-			int v = ((int)orginTmp[index] * (100 - opacity) + ((int)orginTmp[index] + 2 * (int)gaussianTmp[index] - 256) * opacity) / 100;
-			resultTmp[index] = saturate_cast(v);
-		}
+		int v = ((int)orginTmp[i] * (100 - opacity) + ((int)orginTmp[i] + 2 * (int)gaussianTmp[i] - 256) * opacity) / 100;
+		resultTmp[i] = saturate_cast(v);
 	}
 }
 
 extern CUDACache g_CUDACache;
+
+#define BLOCK_SIZE 32 * 2
 
 extern "C" void doGaussianGPU(const cv::cuda::GpuMat & origin, cv::cuda::GpuMat & m, int w, int h, double sigmaX, double sigmaY, int opacity)
 {
@@ -81,7 +75,7 @@ extern "C" void doGaussianGPU(const cv::cuda::GpuMat & origin, cv::cuda::GpuMat 
 	int channels = origin.channels();
 	int bytesPerLine = origin.step;
 
-	const int blockSize = 32;
+	const int blockSize = BLOCK_SIZE;
 	int gridSize = height / blockSize;
 	if (height % blockSize != 0)
 	{
@@ -108,6 +102,70 @@ extern "C" void doGaussianGPU(const cv::cuda::GpuMat & origin, cv::cuda::GpuMat 
 	m = (origin * (100 - opacity) + tmpMat * opacity) / 100;
 	*/
 	doGaussianGPUSecond << <gridSize, blockSize >> > (origin.data, gaussianMat.data, m.data, width, height, channels, bytesPerLine, opacity);
+	checkCudaErrors(cudaDeviceSynchronize());
+}
+
+__device__
+void cudargb2yuv(uchar r, uchar g, uchar b, uchar *y, uchar *u, uchar *v)
+{
+	*y = 0.299f * r + 0.587f * g + 0.114f * b;
+	*u = -0.169f * r - 0.331f * g + 0.5f * b + 128;
+	*v = 0.5f * r - 0.419f * g - 0.081f * b + 128;
+}
+
+__device__
+void cudayuv2rgb(uchar y, uchar u, uchar v, uchar * r, uchar * g, uchar * b)
+{
+	int tmp = y + 1.13983 * (v - 128);
+	*r = saturate_cast(tmp);
+
+	tmp = y - 0.39465 * (u - 128) - 0.58060 * (v - 128);
+	*g = saturate_cast(tmp);
+
+	tmp = y + 2.03211 * (u - 128);
+	*b = saturate_cast(tmp);
+}
+
+__global__
+void makeWhiteGPU(uchar *data, int width, int height, int channels, int bytesPerLine, const int *mapTable)
+{
+	int row = blockIdx.x * blockDim.x + threadIdx.x;
+	if (row >= height)
+	{
+		return;
+	}
+	uchar *dataTmp = data + (row * bytesPerLine);
+	uchar y, u, v;
+	
+#if 0
+	for (int i = 0; i < width * channels; i += 3)
+	{
+		cudargb2yuv(dataTmp[i + 2], dataTmp[i + 1], dataTmp[i + 0], &y, &u, &v);
+		y = saturate_cast(mapTable[y]);
+		cudayuv2rgb(y, u, v, &(dataTmp[i + 2]), &(dataTmp[i + 1]), &(dataTmp[i + 0]));
+	}
+#else
+	for (int i = 0; i < width * channels; i++)
+	{
+		dataTmp[i] = mapTable[dataTmp[i]];
+	}
+#endif
+	
+}
+
+extern "C" void doMakeWhiteGPU(cv::cuda::GpuMat & origin, const int *mapTable)
+{
+	int width = origin.cols, height = origin.rows;
+	int channels = origin.channels();
+	int bytesPerLine = origin.step;
+	const int blockSize = BLOCK_SIZE;
+	int gridSize = height / blockSize;
+	if (height % blockSize != 0)
+	{
+		gridSize++;
+	}
+	
+	makeWhiteGPU << <gridSize, blockSize >> > (origin.data, width, height, channels, bytesPerLine, mapTable);
 	checkCudaErrors(cudaDeviceSynchronize());
 }
 #endif

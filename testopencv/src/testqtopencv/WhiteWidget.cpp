@@ -1,21 +1,46 @@
 #include "WhiteWidget.h"
 #include <math.h>
+#include <type_traits>
 #include "EnumDefine.h"
 #include "QtOpenCV.h"
+#include <cuda_runtime.h>
+#include <helper_cuda.h>
 
 REG_CREATEFUN(EWidgetGWhite, WhiteWidget);
 WhiteWidget::WhiteWidget(QWidget *parent)
 	: BaseWidget(parent)
 	, m_beta(0)
+	, m_mapTable(0)
 {
 	ui.setupUi(this);
 }
 
 WhiteWidget::~WhiteWidget()
 {
+	if (nullptr != m_mapTable)
+	{
+		checkCudaErrors(cudaFree(m_mapTable));
+		m_mapTable = nullptr;
+	}
 }
 
 void WhiteWidget::coverImage(const cv::Mat & origin, cv::Mat & m, std::vector<cv::Rect>& rcs)
+{
+	coverImage<cv::Mat>(origin, m, rcs);
+}
+
+void WhiteWidget::coverImage(const cv::cuda::GpuMat & origin, cv::cuda::GpuMat & m, std::vector<cv::Rect>& rcs)
+{
+	coverImage<cv::cuda::GpuMat>(origin, m, rcs);
+}
+
+void fillCuda()
+{
+
+}
+
+template<typename MATTYPE>
+void WhiteWidget::coverImage(const MATTYPE &origin, MATTYPE &m, std::vector<cv::Rect> &rcs)
 {
 	int beta = ui.lineEditBeta->text().toInt();
 	if (beta > 1)
@@ -24,23 +49,33 @@ void WhiteWidget::coverImage(const cv::Mat & origin, cv::Mat & m, std::vector<cv
 		{
 			m_beta = beta;
 			fillTable(256, beta, m_vTable);
+			if (nullptr != m_mapTable)
+			{
+				checkCudaErrors(cudaFree(m_mapTable));
+				m_mapTable = nullptr;
+			}
+			checkCudaErrors(cudaMalloc(&m_mapTable, sizeof(int) * m_vTable.size()));
+			checkCudaErrors(cudaMemcpy(m_mapTable, &m_vTable[0], sizeof(int) * m_vTable.size(), cudaMemcpyHostToDevice));
 		}
-		if (rcs.empty() || true)
+		//if (rcs.empty())
 		{
-			makeWhite(m, m_vTable);
+			makeWhite(m);
 		}
-		else
+		/*else
 		{
 			for (auto &r : rcs)
 			{
-				cv::Mat tmpM = m(r);
+				MATTYPE tmpM = m(r);
 				makeWhite(tmpM, m_vTable);
 			}
-		}
+		}*/
 	}
-	QImage img = QtOpenCV::Mat2QImage(m);
-	ui.labelImage->setPixmap(QPixmap::fromImage(img));
-	ui.labelImage->setFixedSize(img.size());
+	if (ui.checkBoxRender->isChecked())
+	{
+		QImage img = QtOpenCV::Mat2QImage(m);
+		ui.labelImage->setPixmap(QPixmap::fromImage(img));
+		ui.labelImage->setFixedSize(img.size());
+	}
 }
 
 void WhiteWidget::fillTable(int count, int beta, std::vector<int> &vTable)
@@ -93,7 +128,7 @@ double WhiteWidget::getWhiteRatio(double d, int beta)
 	return ret;
 }
 
-void WhiteWidget::makeWhite(cv::Mat & m, const std::vector<int> &vTable)
+void WhiteWidget::makeWhite(cv::Mat & m)
 {
 	for (int row = 0; row < m.rows; row++)
 	{
@@ -102,9 +137,9 @@ void WhiteWidget::makeWhite(cv::Mat & m, const std::vector<int> &vTable)
 			for (int i = 0; i < 3; i++)
 			{
 				auto v = m.at<cv::Vec3b>(row, col)[i];
-				if (v >= 0 && v < vTable.size())
+				if (v >= 0 && v < m_vTable.size())
 				{
-					m.at<cv::Vec3b>(row, col)[i] = vTable[v];
+					m.at<cv::Vec3b>(row, col)[i] = m_vTable[v];
 				}
 				else
 				{
@@ -113,4 +148,10 @@ void WhiteWidget::makeWhite(cv::Mat & m, const std::vector<int> &vTable)
 			}
 		}
 	}
+}
+
+extern "C" void doMakeWhiteGPU(cv::cuda::GpuMat & origin, const int *mapTable);
+void WhiteWidget::makeWhite(cv::cuda::GpuMat & m)
+{
+	doMakeWhiteGPU(m, m_mapTable);
 }

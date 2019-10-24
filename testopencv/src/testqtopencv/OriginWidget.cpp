@@ -16,7 +16,18 @@ OriginWidget::~OriginWidget()
 {
 }
 
-void OriginWidget::coverImage(const cv::Mat &origin, cv::Mat & m, std::vector<cv::Rect>& r)
+void OriginWidget::coverImage(const cv::Mat &origin, cv::Mat & m, std::vector<cv::Rect>& rcs)
+{
+	coverImage<cv::Mat>(origin, m, rcs);
+}
+
+void OriginWidget::coverImage(const cv::cuda::GpuMat & origin, cv::cuda::GpuMat & m, std::vector<cv::Rect>& rcs)
+{
+	coverImage<cv::cuda::GpuMat>(origin, m, rcs);
+}
+
+template<typename MATTYPE>
+void OriginWidget::coverImage(const MATTYPE &origin, MATTYPE &m, std::vector<cv::Rect> &rcs)
 {
 	if (ui.checkBoxRender->isChecked())
 	{
@@ -32,4 +43,3 @@ void OriginWidget::coverImage(const cv::Mat &origin, cv::Mat & m, std::vector<cv
 		ui.labelSize->setText(QStringLiteral("%1X%2").arg(m_width).arg(m_height));
 	}
 }
-
