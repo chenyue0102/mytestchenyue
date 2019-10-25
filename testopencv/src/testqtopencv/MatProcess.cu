@@ -135,9 +135,8 @@ void makeWhiteGPU(uchar *data, int width, int height, int channels, int bytesPer
 		return;
 	}
 	uchar *dataTmp = data + (row * bytesPerLine);
-	uchar y, u, v;
-	
 #if 0
+	uchar y, u, v;
 	for (int i = 0; i < width * channels; i += 3)
 	{
 		cudargb2yuv(dataTmp[i + 2], dataTmp[i + 1], dataTmp[i + 0], &y, &u, &v);

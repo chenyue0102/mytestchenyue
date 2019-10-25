@@ -188,17 +188,6 @@ void testqtopencv::onAddWidget()
 
 void testqtopencv::onParamChanged()
 {
-	if (ui.checkBoxGPU->isChecked())
-	{
-		if (m_originMatGPU.empty())
-		{
-			if (m_originMat.empty())
-			{
-				return;
-			}
-			m_originMatGPU.upload(m_originMat);
-		}
-	}
 	doRefreshWidgets();
 }
 
@@ -239,10 +228,6 @@ void testqtopencv::onRefreshCamera()
 {
 	if (m_cameraCapture.read(m_originMat))
 	{
-		if (ui.checkBoxGPU->isChecked())
-		{
-			m_originMatGPU.upload(m_originMat);
-		}
 		doRefreshWidgets();
 	}
 }
@@ -272,10 +257,6 @@ void testqtopencv::onRefreshVideo()
 	{
 		if (m_videoCapture.read(m_originMat))
 		{
-			if (ui.checkBoxGPU->isChecked())
-			{
-				m_originMatGPU.upload(m_originMat);
-			}
 			doRefreshWidgets();
 		}
 	}
@@ -308,12 +289,15 @@ void testqtopencv::doRefreshWidgets()
 
 	if (ui.checkBoxGPU->isChecked())
 	{
+		cv::cuda::registerPageLocked(m_originMat);
+		m_originMatGPU.upload(m_originMat);
 		m_tmpMatGPU = m_originMatGPU.clone();
 		std::vector<cv::Rect> r;
 		for (auto w : children)
 		{
 			w->coverImage(m_originMatGPU, m_tmpMatGPU, r);
 		}
+		cv::cuda::unregisterPageLocked(m_originMat);
 	}
 	else
 	{
