@@ -1,0 +1,15 @@
+{
+	"item":[
+		{
+			"name":"name",
+			"type":"QLabel",
+			"pos":"10,20",
+		}
+	],
+	"animation":[
+		{
+			"type":"",
+			"itemName":"",
+		}
+	]
+}
