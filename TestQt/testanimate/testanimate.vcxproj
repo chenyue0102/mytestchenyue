@@ -67,6 +67,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
+      <AdditionalIncludeDirectories>./;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -91,8 +92,16 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AnimationLoader.cpp" />
+    <ClCompile Include="json\json_reader.cpp" />
+    <ClCompile Include="json\json_value.cpp" />
+    <ClCompile Include="json\json_writer.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="MyGraphicsTextItem.cpp" />
+    <ClCompile Include="MyGraphicsView.cpp" />
+    <ClCompile Include="ObjectMaker.cpp" />
+    <ClCompile Include="PropertyApply.cpp" />
     <ClCompile Include="testanimate.cpp" />
+    <ClCompile Include="TypeCover.cpp" />
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="testanimate.h" />
@@ -106,6 +115,26 @@
   <ItemGroup>
     <ClInclude Include="AnimationLoader.h" />
     <ClInclude Include="AnimationStruct.h" />
+    <ClInclude Include="json\allocator.h" />
+    <ClInclude Include="json\assertions.h" />
+    <ClInclude Include="json\autolink.h" />
+    <ClInclude Include="json\config.h" />
+    <ClInclude Include="json\features.h" />
+    <ClInclude Include="json\forwards.h" />
+    <ClInclude Include="json\json.h" />
+    <ClInclude Include="json\json_tool.h" />
+    <ClInclude Include="json\reader.h" />
+    <ClInclude Include="json\value.h" />
+    <ClInclude Include="json\version.h" />
+    <ClInclude Include="json\writer.h" />
+    <QtMoc Include="MyGraphicsTextItem.h" />
+    <QtMoc Include="MyGraphicsView.h" />
+    <ClInclude Include="ObjectMaker.h" />
+    <ClInclude Include="PropertyApply.h" />
+    <ClInclude Include="TypeCover.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="json\json_valueiterator.inl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">

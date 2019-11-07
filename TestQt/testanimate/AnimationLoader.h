@@ -1,8 +1,9 @@
 #pragma once
-#include "AnimationStruct.h"
 
+
+struct AnimationInfo;
 namespace AnimationLoader
 {
-QObject* createObject(const QString &type, const QString &name, const std::vector<AnimationProperty> &propertys);
+bool parseJson(const char *pData, int length, AnimationInfo &info);
 };
 

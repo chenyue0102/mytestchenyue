@@ -9,7 +9,8 @@ class testanimate : public QWidget
 
 public:
 	testanimate(QWidget *parent = Q_NULLPTR);
-
+public slots:
+	void onLoad();
 private:
 	Ui::testanimateClass ui;
 };

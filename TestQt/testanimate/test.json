@@ -1,15 +1,41 @@
 {
-	"item":[
+	"item":
+	[
 		{
-			"name":"name",
-			"type":"QLabel",
-			"pos":"10,20",
+			"name":"testLabel",
+			"type":"MyGraphicsTextItem",
+			"x":"10",
+			"y":"20",
+			"width":"100",
+			"height":"50",
+			"plainText":"testtest"
+		},
+		{
+			"name":"proxyWidget",
+			"type":"QGraphicsProxyWidget",
+			"x":"10",
+			"y":"20",
+			"width":"100",
+			"height":"50",
+			"proxyWidget":{
+				"name":"btn",
+				"type":"QPushButton",
+				"text":"testbutton"
+			}
 		}
 	],
-	"animation":[
-		{
-			"type":"",
-			"itemName":"",
-		}
-	]
+	"animation":
+	{
+		"type":"QSequentialAnimationGroup",
+		"childred":
+		[
+			{
+				"type":"QPropertyAnimation",
+				"targetObjectName":"btn",
+				"propertyName":"x",
+				"startValue":"0",
+				"endValue":"500"
+			}
+		]
+	}
 }

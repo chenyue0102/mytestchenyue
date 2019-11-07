@@ -1,23 +1,32 @@
 #pragma once
+#include <memory>
 #include <QString>
 #include <QVariant>
 
 struct AnimationProperty
 {
-	QString name;
-	QString value;
+	std::string name;
+	std::string value;
 };
-
+//¶¯»­¿Ø¼þ
 struct AnimationItem
 {
-	QString itemType;
-	QString itemName;
+	std::string type;
+	std::string name;
 	std::vector<AnimationProperty> propertys;
+	std::shared_ptr<AnimationItem> pProxyWidget;
 };
-
+//¶¯»­
 struct Animation
 {
-	QString type;
-	QString itemName;
+	std::string type;
+	std::string targetObjectName;
+	std::vector<AnimationProperty> propertys;
+	std::vector<Animation> children;
+};
 
+struct AnimationInfo
+{
+	std::vector<AnimationItem> items;
+	Animation animation;
 };
