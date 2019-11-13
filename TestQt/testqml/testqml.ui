@@ -13,6 +13,9 @@
   <property name="windowTitle">
    <string>testqml</string>
   </property>
+  <property name="styleSheet">
+   <string notr="true">QWidget#testqmlClass{background:blue;}</string>
+  </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <widget class="QWidget" name="widget" native="true">
@@ -21,6 +24,27 @@
        <widget class="QPushButton" name="pushButtonAdd">
         <property name="text">
          <string>增加</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButtonRight">
+        <property name="text">
+         <string>right</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButtonWrong">
+        <property name="text">
+         <string>wrong</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButtonAdd2">
+        <property name="text">
+         <string>增加2</string>
         </property>
        </widget>
       </item>

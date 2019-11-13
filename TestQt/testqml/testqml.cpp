@@ -7,25 +7,26 @@ testqml::testqml(QWidget *parent)
 	: QWidget(parent)
 {
 	ui.setupUi(this);
+
+	ui.quickWidget->setAttribute(Qt::WA_AlwaysStackOnTop);
+	ui.quickWidget->setAttribute(Qt::WA_TranslucentBackground);
+	ui.quickWidget->setClearColor(Qt::transparent);
+	ui.quickWidget->setObjectName(QStringLiteral("quickWidget"));
+	QSizePolicy sizePolicy(QSizePolicy::Preferred, QSizePolicy::MinimumExpanding);
+	sizePolicy.setHorizontalStretch(0);
+	sizePolicy.setVerticalStretch(0);
+	sizePolicy.setHeightForWidth(ui.quickWidget->sizePolicy().hasHeightForWidth());
+	ui.quickWidget->setSizePolicy(sizePolicy);
+	ui.quickWidget->setResizeMode(QQuickWidget::SizeRootObjectToView);
+
 	connect(ui.pushButtonAdd, SIGNAL(clicked()), SLOT(onAddQml()));
+	connect(ui.pushButtonAdd2, SIGNAL(clicked()), SLOT(onAddQml2()));
+	connect(ui.pushButtonRight, SIGNAL(clicked()), SLOT(onCallRight()));
+	connect(ui.pushButtonWrong, SIGNAL(clicked()), SLOT(onCallWrong()));
 }
 
 void testqml::onAddQml()
 {
-	ui.quickWidget->deleteLater();
-	auto &quickWidget = ui.quickWidget;
-
-	quickWidget = new QQuickWidget(this);
-	quickWidget->setObjectName(QStringLiteral("quickWidget"));
-	QSizePolicy sizePolicy(QSizePolicy::Preferred, QSizePolicy::MinimumExpanding);
-	sizePolicy.setHorizontalStretch(0);
-	sizePolicy.setVerticalStretch(0);
-	sizePolicy.setHeightForWidth(quickWidget->sizePolicy().hasHeightForWidth());
-	quickWidget->setSizePolicy(sizePolicy);
-	quickWidget->setResizeMode(QQuickWidget::SizeRootObjectToView);
-
-	ui.verticalLayout->addWidget(quickWidget);
-
 	QUrl url("./test.qml");
 	ui.quickWidget->setSource(url);
 
@@ -53,5 +54,22 @@ void testqml::onAddQml()
 
 void testqml::onPlayFinished()
 {
-	ui.quickWidget->hide();
+//	ui.quickWidget->hide();
+}
+
+void testqml::onCallRight()
+{
+	QQuickItem *rootItem = ui.quickWidget->rootObject();
+	QMetaObject::invokeMethod(rootItem, "setResultGif", Q_ARG(QVariant, QVariant(true)), Q_ARG(QVariant, QVariant("./right.gif")));
+}
+
+void testqml::onCallWrong()
+{
+	QQuickItem *rootItem = ui.quickWidget->rootObject();
+	QMetaObject::invokeMethod(rootItem, "setResultGif", Q_ARG(QVariant, QVariant(false)), Q_ARG(QVariant, QVariant("./wrong.gif")));
+}
+
+void testqml::onAddQml2()
+{
+
 }

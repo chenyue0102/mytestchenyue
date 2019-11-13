@@ -8,14 +8,44 @@ Rectangle{
     visible: true;
     width:840;
     height:840;
-    color: "#2b1e1e"
+    color: "#00ff0000";
     border.color: "#c51e1e"
     signal playFinished;
+    scale: 0.8;
+
+    Button{
+        id:wrongBtn;
+        text: qsTr("wrong");
+        onClicked: {
+            console.log("Button onClicked");
+            setResultGif(false,"./wrong.gif");
+        }
+    }
+    Button{
+        text: qsTr("right");
+        anchors.left:wrongBtn.right;
+        onClicked: {
+            console.log("Button onClicked");
+            setResultGif(false,"./right.gif");
+        }
+    }
+
 
     //设置结果gif
     function setResultGif(win, gifPath){
         console.log("setResultGif" + win + gifPath);
         resultGif.source = gifPath;
+        resultGif.currentFrame = 0;
+        resultGif.playing=true;
+        resultGif.paused=false;
+        console.log("----------------------------------setResultGif "
+                    + " status=" + resultGif.status
+                    + " playing=" + resultGif.playing
+                    + " paused=" + resultGif.paused
+                    + " source=" + resultGif.source
+                    + " currentFrame=" + resultGif.currentFrame
+                    + " frameCount=" + resultGif.frameCount
+                    );
         if (win)
         {
             light1.running = true;
@@ -144,7 +174,7 @@ Rectangle{
         onCurrentFrameChanged:{
             if (currentFrame + 1 == frameCount)
             {
-                paused = true;
+                playing = false;
                 playFinished();
             }
         }

@@ -12,6 +12,9 @@ public:
 public slots:
 	void onAddQml();
 	void onPlayFinished();
+	void onCallRight();
+	void onCallWrong();
+	void onAddQml2();
 private:
 	Ui::testqmlClass ui;
 };
