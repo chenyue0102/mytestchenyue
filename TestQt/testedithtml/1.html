@@ -38,7 +38,8 @@
 			
 			var v = new QWebChannel(qt.webChannelTransport, 
 										function(channel){
-											window.webobj = channel.objects.webobj;
+										    window.webobj = channel.objects.webobj;
+										    window.webobj.notifyAddMsg.connect(appendChatText);
 									});
 		}
 		else{
@@ -146,7 +147,7 @@
       }
 	  function testAppendText()
       {
-	      appendChatText(EGroupType.EGroupTypeCW, "凯糖糖", "收到了收到了收到了收到了收到了收到了收到了收到了收到了收到了收到了收到了收到了收到了收到了收到了收到了收到了收到了收到了");
+	      appendChatText(EGroupType.EGroupTypeCW, "凯糖糖", "收到了收到了收到了收到了收到了收到了收到了收到了收到了收到了收到了收到了收到了收到了收到了收到了收到了收到了收到了收到了<spain>s");
 	  }
  </script> 
  </body> 
