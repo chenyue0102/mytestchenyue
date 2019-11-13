@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/testedithtml"/>
+    <qresource prefix="/qtwebchannel">
+        <file>qwebchannel.js</file>
+    </qresource>
+</RCC>
