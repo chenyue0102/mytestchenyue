@@ -4,9 +4,24 @@
 <meta charset="utf-8"> 
 <title>test</title> 
 <script type="text/javascript" src="qrc:///qtwebchannel/qwebchannel.js"></script>
+    <style>
+        .cangwu {
+            background-color:red;
+        }
+        .dataStyle{
+            font-family:PingFangSC-Medium;
+            font-size:10px;
+            color:#cf9b4b;
+            background:rgb(248,242,233);
+            border-radius:8px;
+            padding-left:17px;
+            padding-right:17px;
+            padding-top:2px;
+            padding-bottom:2px;
+        }
+    </style>
 </head> 
-<body style="background:#282c34;" onload="initialize()"> 
-<h3 style="color:#ffffff;">this is web page</h3>
+<body onload="initialize()"> 
  <input type="button" value="C++ function callback" onclick="onShowMsgBox()"> 
  <input type="button" value="appendChatText" onclick="testAppendText()"> 
  <div id="chatDisplay">
@@ -49,11 +64,25 @@
       function showAlert(text) {
         alert('this is web alert ' + text);
       }
+      function formatWidth(str, width)
+      {
+          str += '';
+          while(str.length < width)
+          {
+              str = '0' + str;
+          }
+          return str;
+      }
       function appendChatText(identity, name, text)
       {
+          var data = new Date(1573633601000);
+          var dateText = formatWidth(data.getFullYear()) + '-' + formatWidth(data.getMonth() + 1, 2) + '-' + formatWidth(data.getDate(), 2) + ' '+ formatWidth(data.getHours(), 2) + ':' + formatWidth(data.getMinutes(), 2)+
+              ':' + formatWidth(data.getSeconds(), 2);
+          alert(dateText);
           var identityTextColor, identityBackgroundColor;
           var teamName;
-          var context = document.createElement('p');
+          var context = document.createElement('div');
+          context.style = 'background:#f00;color:#0f0;';
           switch (identity)
           {
               case EGroupType.EGroupTypeCW:
@@ -84,6 +113,18 @@
           }
           context.style = 'margin:0px;';
 
+          var dateElement = document.createElement('spain');
+          dateElement.setAttribute('class', 'dataStyle');
+          dateElement.innerText = 'abc123';
+
+          var datePElement = document.createElement('p');
+          datePElement.setAttribute('align', 'center');
+          datePElement.style = 'margin:0px;';
+          datePElement.appendChild(dateElement);
+
+          context.appendChild(datePElement);
+          context.appendChild(document.createElement('br'));
+
           //增加身份
           var identityContext = document.createElement('spain');
           identityContext.style = 'color:' + identityTextColor + ';background-color:' + identityBackgroundColor + ';padding:5px;border-radius:15px;font-size:16px;font-family:\'Noto Sans S Chinese Bold\'';
@@ -96,7 +137,8 @@
           context.appendChild(teamContext);
           //增加聊天内容
           var textContext = document.createElement('spain');
-          textContext.style = 'color:#4a4a4a;padding:5px;font-size:26px;font-family:\'Noto Sans S Chinese Medium\'';
+          //textContext.style = 'color:#4a4a4a;padding:5px;font-size:26px;font-family:\'Noto Sans S Chinese Medium\'';
+          textContext.setAttribute('class', 'cangwu');
           textContext.innerText = text;
           context.appendChild(textContext);
 
@@ -104,7 +146,7 @@
       }
 	  function testAppendText()
       {
-	      appendChatText(EGroupType.EGroupTypeCW, "凯糖糖", "收到了~");
+	      appendChatText(EGroupType.EGroupTypeCW, "凯糖糖", "收到了收到了收到了收到了收到了收到了收到了收到了收到了收到了收到了收到了收到了收到了收到了收到了收到了收到了收到了收到了");
 	  }
  </script> 
  </body> 
