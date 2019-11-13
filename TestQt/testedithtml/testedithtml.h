@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QtWidgets/QWidget>
+#include <QWebChannel>
 #include "ui_testedithtml.h"
 
 class testedithtml : public QWidget
@@ -9,8 +10,10 @@ class testedithtml : public QWidget
 
 public:
 	testedithtml(QWidget *parent = Q_NULLPTR);
+	~testedithtml();
 public slots:
 	void onReload();
 private:
 	Ui::testedithtmlClass ui;
+	QWebChannel *m_webChannel;
 };

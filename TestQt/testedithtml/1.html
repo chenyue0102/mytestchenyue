@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+﻿<!DOCTYPE html> 
 <html> 
 <head> 
 <meta charset="utf-8"> 
@@ -8,6 +8,10 @@
 <body style="background:#282c34;" onload="initialize()"> 
 <h3 style="color:#ffffff;">this is web page</h3>
  <input type="button" value="C++ function callback" onclick="onShowMsgBox()"> 
+ <input type="button" value="appendChatText" onclick="testAppendText()"> 
+ <div id="chatDisplay">
+ <span style="color:#ff5500;">test</span>
+ </div>
  <script>
 		
       function initialize() {
@@ -35,10 +39,73 @@
 		
 		}
       }
-
+      var EGroupType =
+       {
+           EGroupTypeNone: 0,
+           EGroupTypeCW: 1,		//苍梧
+           EGroupTypeBH: 2,		//碧海
+           EGroupTypeAdmin: 3,	//助教
+       };
       function showAlert(text) {
         alert('this is web alert ' + text);
       }
+      function appendChatText(identity, name, text)
+      {
+          var identityTextColor, identityBackgroundColor;
+          var teamName;
+          var context = document.createElement('p');
+          switch (identity)
+          {
+              case EGroupType.EGroupTypeCW:
+                  {
+                      identityTextColor = '#ff544e';
+                      identityBackgroundColor = '#ffdfde';
+                      teamName = '苍梧队';
+                      break;
+                  }
+              case EGroupType.EGroupTypeBH:
+                  {
+                      identityTextColor = '#3b8fff';
+                      identityBackgroundColor = '#e2eeff';
+                      teamName = '碧海队';
+                      break;
+                  }
+              case EGroupType.EGroupTypeAdmin:
+                  {
+                      identityTextColor = '#ff9a00';
+                      identityBackgroundColor = '#ffeccf';
+                      teamName = '助教';
+                      break;
+                  }
+              default:
+                  {
+                      break;
+                  }
+          }
+          context.style = 'margin:0px;';
+
+          //增加身份
+          var identityContext = document.createElement('spain');
+          identityContext.style = 'color:' + identityTextColor + ';background-color:' + identityBackgroundColor + ';padding:5px;border-radius:15px;font-size:16px;font-family:\'Noto Sans S Chinese Bold\'';
+          identityContext.innerText = teamName;
+          context.appendChild(identityContext);
+          //增加队伍
+          var teamContext = document.createElement('spain');
+          teamContext.style = 'color:#4a4a4a;padding:5px;font-size:26px;font-family:\'Noto Sans S Chinese Regular\'';
+          teamContext.innerText = name;
+          context.appendChild(teamContext);
+          //增加聊天内容
+          var textContext = document.createElement('spain');
+          textContext.style = 'color:#4a4a4a;padding:5px;font-size:26px;font-family:\'Noto Sans S Chinese Medium\'';
+          textContext.innerText = text;
+          context.appendChild(textContext);
+
+          document.getElementById("chatDisplay").appendChild(context);
+      }
+	  function testAppendText()
+      {
+	      appendChatText(EGroupType.EGroupTypeCW, "凯糖糖", "收到了~");
+	  }
  </script> 
  </body> 
  </html>
