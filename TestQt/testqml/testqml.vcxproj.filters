@@ -31,9 +31,15 @@
     <ClCompile Include="testqml.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="MyQuickWidget.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="testqml.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="MyQuickWidget.h">
       <Filter>Header Files</Filter>
     </QtMoc>
   </ItemGroup>
@@ -57,5 +63,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="test.qml" />
+    <None Include="test2.qml" />
+    <None Include="test3.qml" />
   </ItemGroup>
 </Project>

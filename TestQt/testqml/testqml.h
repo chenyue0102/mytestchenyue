@@ -15,6 +15,10 @@ public slots:
 	void onCallRight();
 	void onCallWrong();
 	void onAddQml2();
+	void onAddQml3();
+	void onAddQml4();
+private:
+	void reallocwidget();
 private:
 	Ui::testqmlClass ui;
 };

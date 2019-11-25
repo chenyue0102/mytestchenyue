@@ -49,6 +49,20 @@
        </widget>
       </item>
       <item>
+       <widget class="QPushButton" name="pushButtonAdd3">
+        <property name="text">
+         <string>增加3</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButtonAdd4">
+        <property name="text">
+         <string>增加4</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <spacer name="horizontalSpacer">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
