@@ -94,4 +94,12 @@ extern "C" void testGridBlock()
 	checkCudaErrors(cudaDeviceSynchronize());
 	memcpy(data, p, sizeof(data));
 }
+
+
+
+
+extern "C" void testYUV2RGB()
+{
+
+}
 #endif
