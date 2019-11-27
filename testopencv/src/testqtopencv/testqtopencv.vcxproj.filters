@@ -67,6 +67,9 @@
     <ClCompile Include="CUDACache.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="DlibDetectWidget.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="testqtopencv.h">
@@ -93,6 +96,9 @@
     <QtMoc Include="SharpWidget.h">
       <Filter>Header Files</Filter>
     </QtMoc>
+    <QtMoc Include="DlibDetectWidget.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
   </ItemGroup>
   <ItemGroup>
     <QtUic Include="testqtopencv.ui">
@@ -114,6 +120,9 @@
       <Filter>Form Files</Filter>
     </QtUic>
     <QtUic Include="SharpWidget.ui">
+      <Filter>Form Files</Filter>
+    </QtUic>
+    <QtUic Include="DlibDetectWidget.ui">
       <Filter>Form Files</Filter>
     </QtUic>
   </ItemGroup>

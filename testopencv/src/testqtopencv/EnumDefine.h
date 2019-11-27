@@ -9,4 +9,5 @@ enum EWidget
 	EWidgetGaussian,
 	EWidgetGWhite,
 	EWidgetSharp,
+	EWidgetDlibDetect,
 };

@@ -2,6 +2,7 @@
 #include <vector>
 #include <iostream>
 #include <QtWidgets/QApplication>
+#include <QImage>
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -168,9 +169,12 @@ void testGPU()
 	cv::imshow("dMat", dMat);
 }
 CUDACache g_CUDACache;
+
+
 int main(int argc, char *argv[])
 {
 	QApplication a(argc, argv);
+
 	//test();
 	//testGPU();
 	g_CUDACache.init();

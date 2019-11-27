@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1072</width>
+    <width>1226</width>
     <height>400</height>
    </rect>
   </property>
@@ -203,6 +203,16 @@
        </widget>
       </item>
       <item>
+       <widget class="QPushButton" name="pushButtondlib">
+        <property name="text">
+         <string>dlib7</string>
+        </property>
+        <property name="type" stdset="0">
+         <number>7</number>
+        </property>
+       </widget>
+      </item>
+      <item>
        <spacer name="horizontalSpacer">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
@@ -384,6 +394,22 @@
     </hint>
     <hint type="destinationlabel">
      <x>530</x>
+     <y>199</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButtondlib</sender>
+   <signal>clicked()</signal>
+   <receiver>testqtopencvClass</receiver>
+   <slot>onAddWidget()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1109</x>
+     <y>11</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>612</x>
      <y>199</y>
     </hint>
    </hints>

@@ -72,6 +72,12 @@ cv::Mat QImage2Mat(const QImage & img)
 		cv::cvtColor(tmp, mat, cv::COLOR_BGR2RGB);
 	}
 	break;
+	case QImage::Format_Grayscale8:
+	{
+		cv::Mat tmp(img.height(), img.width(), CV_8UC1, (void*)img.constBits(), img.bytesPerLine());
+		mat = tmp.clone();//tmp内部直接使用了img的内存，需要clone下，解出与img的依赖
+		break;
+	}
 	default:
 	{
 		assert(false);

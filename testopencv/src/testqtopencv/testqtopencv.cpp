@@ -1,4 +1,5 @@
 #include "testqtopencv.h"
+#include <algorithm>
 #include <QImage>
 #include <QFileDialog>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -11,6 +12,173 @@
 
 #define CAMERA_FRAME_RATE 60
 #define VIDEO_FRAME_RATE 30
+
+const double SQRT2 = sqrt(2);
+template<typename T>
+void calcHaar(const T *in, T *out, size_t matSize, size_t countPerLine)
+{
+	assert((matSize & (matSize - 1)) == 0);
+	const int halfSize = matSize / 2;
+	//先横向后纵向
+	for (int row = 0; row < matSize; row++)
+	{
+		const T *pIn = in + (row * countPerLine);
+		T *pOut = out + (row * countPerLine);
+		for (int step = 0; step < halfSize; step++)
+		{
+			double ave = (static_cast<double>(pIn[2 * step]) + pIn[2 * step + 1]) / 2;
+			double diff = (static_cast<double>(pIn[2 * step]) - pIn[2 * step + 1]) / 2;
+			pOut[step] = ave;
+			pOut[halfSize + step] = diff;
+		}
+	}
+	T *tmp = new T[matSize]();
+	//对上次生成的out做纵向运算
+	for (int col = 0; col < matSize; col++)
+	{
+		for (int step = 0; step < halfSize; step++)
+		{
+			int index = (2 * step) * countPerLine + col;
+			int nextRowIndex = (2 * step + 1) * countPerLine + col;
+			auto curRowValue = out[index];
+			auto nextRowValue = out[nextRowIndex];
+			double ave = (static_cast<double>(curRowValue) + nextRowValue) / 2;
+			double diff = (static_cast<double>(curRowValue) - nextRowValue) / 2;
+			tmp[step] = ave;
+			tmp[step + halfSize] = diff;
+		}
+		for (int i = 0; i < matSize; i++)
+		{
+			out[i * countPerLine + col] = tmp[i];
+		}
+	}
+	delete[]tmp;
+}
+
+template<typename T>
+void dcalcHaar(const T *in, T *out, size_t matSize, size_t countPerLine)
+{
+	assert((matSize & (matSize - 1)) == 0);
+	const int halfSize = matSize / 2;
+	//先纵向后横向
+	for (int col = 0; col < matSize; col++)
+	{
+		for (int step = 0; step < halfSize; step++)
+		{
+			int aveIndex = step * countPerLine + col;
+			int diffIndex = (step + halfSize) * countPerLine + col;
+			auto aveValue = in[aveIndex];
+			auto diffValue = in[diffIndex];
+			double firstValue = (static_cast<double>(aveValue) + diffValue) / 1;
+			double secondValue = (static_cast<double>(aveValue) - diffValue) / 1;
+			out[2 * step * countPerLine + col] = firstValue;
+			out[(2 * step + 1) * countPerLine + col] = secondValue;
+		}
+	}
+	T *tmp = new T[matSize]();
+	//对上一步生成的out做横向运算
+	for (int row = 0; row < matSize; row++)
+	{
+		T *pOut = out + (row * countPerLine);
+		for (int step = 0; step < halfSize; step++)
+		{
+			auto aveValue = pOut[step];
+			auto diffValue = pOut[step + halfSize];
+			double firstValue = (static_cast<double>(aveValue) + diffValue) / 1;
+			double secondValue = (static_cast<double>(aveValue) - diffValue) / 1;
+			tmp[2 * step] = firstValue;
+			tmp[2 * step + 1] = secondValue;
+		}
+		for (int i = 0; i < matSize; i++)
+		{
+			pOut[i] = tmp[i];
+		}
+	}
+	delete[]tmp;
+}
+
+
+template<typename T>
+void calcHaar(const T *in, T *out, size_t _Size)
+{
+	T *tmp = new T[_Size]();
+	int len = _Size;
+	memcpy(out, in, sizeof(in));
+	while (len >= 2)
+	{
+		for (int i = 0; i < len / 2; i++)
+		{
+			double ave = (static_cast<double>(out[2 * i]) + out[2 * i + 1]) / 2;
+			double diff = (static_cast<double>(out[2 * i]) - out[2 * i + 1]) / 2;
+			tmp[i] = ave;
+			tmp[len / 2 + i] = diff;
+		}
+		memcpy(out, tmp, len);
+		len /= 2;
+	}
+	memcpy(out, tmp, sizeof(tmp));
+	delete[]tmp;
+}
+
+template<typename T, size_t _Size>
+void calcHaar(const T(&in)[_Size], T(&out)[_Size])
+{
+	static_assert((_Size & (_Size - 1)) == 0, "");
+	return calcHaar(in, out, _Size);
+}
+
+template<typename T>
+void dcalcHaar(const T *in, T *out, size_t _Size)
+{
+	T *tmp = new T[_Size]();
+	int len = 1;
+	memcpy(out, in, sizeof(in));
+	while (len * 2 <= _Size)
+	{
+		for (int i = 0; i < len; i++)
+		{
+			T first = out[i] + out[len + i];
+			T second = out[i] - out[len + i];
+			tmp[2 * i] = first;
+			tmp[2 * i + 1] = second;
+		}
+		memcpy(out, tmp, len * 2);
+		len *= 2;
+	}
+	delete[]tmp;
+}
+
+template<typename T, size_t _Size>
+void dcalcHaar(const T(&in)[_Size], T(&out)[_Size])
+{
+	static_assert((_Size & (_Size - 1)) == 0, "");
+	return dcalcHaar(in, out, _Size);
+}
+
+template<typename T>
+T setMark(const T &v, bool bin, T &mask)
+{
+	if (bin)
+	{
+		return v | mask;
+	}
+	else
+	{
+		return v & (~mask);
+	}
+}
+
+template<typename T>
+bool isMask(const T &v, T &mask)
+{
+	return v & mask;
+}
+template<typename T>
+T diff(const T &v1, const T &v2)
+{
+	return v1 >= v2 ? v1 - v2 : v2 - v1;
+}
+
 testqtopencv::testqtopencv(QWidget *parent)
 	: QWidget(parent)
 	, m_flowLayout(new FlowLayout())
@@ -31,6 +199,55 @@ void testqtopencv::onLoadImage()
 {
 	do
 	{
+		QImage imgori;
+		imgori.load("lena512color.tiff");
+		imgori = imgori.convertToFormat(QImage::Format_Grayscale8);
+		std::string strData;
+		strData.append((char*)imgori.constBits(), imgori.width() * imgori.height());
+
+		std::vector<double> haarOrigin, haarResult, calcOrigin;
+		std::copy(strData.begin(), strData.end(), std::insert_iterator<std::vector<double>>(haarOrigin, haarOrigin.end()));
+		haarResult.resize(strData.size(), 0);
+		calcOrigin.resize(strData.size(), 0);
+
+		const int step = 8;
+		double *pin = &haarOrigin[0];
+		double *pout = &haarResult[0];
+		int countPerLine = imgori.width();
+		for (int row = 0; row < imgori.height();row += step)
+		{
+			for (int col = 0; col < imgori.width(); col += step)
+			{
+				int offset = row * countPerLine + col;
+				calcHaar(pin + offset, pout + offset, step, countPerLine);
+			}
+		}
+		pin = &haarResult[0];
+		pout = &calcOrigin[0];
+		for (int row = 0; row < imgori.height(); row += step)
+		{
+			for (int col = 0; col < imgori.width(); col += step)
+			{
+				int offset = row * countPerLine + col;
+				dcalcHaar(pin + offset, pout + offset, step, countPerLine);
+			}
+		}
+		std::string after;
+		std::copy(calcOrigin.begin(), calcOrigin.end(), std::insert_iterator<std::string>(after, after.end()));
+		
+		/*char cm = 1 << 6;
+		bool bm = isMask(strout[1], cm);
+		bm = true;
+		strout[1] = setMark(strout[1], bm, cm);
+		
+		for (int i = 0; i < strData.size(); i += step)
+		{
+			dcalcHaar(strout.data() + i, &after[0] + i, step);
+		}*/
+		QImage img2((unsigned char*)after.data(), imgori.width(), imgori.height(), imgori.width(), QImage::Format_Grayscale8);
+		cv::imshow("origin", QtOpenCV::QImage2Mat(imgori));
+		cv::imshow("new", QtOpenCV::QImage2Mat(img2));
+		break;
 		QString strFileName = QFileDialog::getOpenFileName(this);
 		if (strFileName.isEmpty())
 		{
@@ -287,6 +504,11 @@ void testqtopencv::doRefreshWidgets()
 	}
 	auto children = ui.widgetContainer->findChildren<BaseWidget*>();
 
+	if (m_originMat.rows == 0
+		|| m_originMat.cols == 0)
+	{
+		return;
+	}
 	if (ui.checkBoxGPU->isChecked())
 	{
 		cv::cuda::registerPageLocked(m_originMat);
