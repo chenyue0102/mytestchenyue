@@ -2,6 +2,11 @@
 #include <assert.h>
 #include "MyOpenGLWidget.h"
 
+#define CHECKERR\
+if (GL_NO_ERROR != glGetError())\
+	{\
+		assert(false); \
+	}
 
 //varying vertex和fragment共享的数据，vertex修改后传递给fragment
 //attribute 只能够再vertex中使用，一般用作顶带你坐标，法线，纹理坐标，顶点颜色等
@@ -71,6 +76,7 @@ FormatConver g_f;
 //void (GLAPIENTRY *GLDEBUGPROC)(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam);
 void GLAPIENTRY DEBUGPROC(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *userParam)
 {
+	qDebug() << message; return;
 	if (id == 131169 || id == 131185 || id == 131218 || id == 131204) return; // ignore these non-significant error codes
 	qDebug() << message;
 }

@@ -11,6 +11,7 @@ public:
 private:
 	void initTexture();
 	void initProgram();
+	void initVertexArray();
 private:
 	GLuint m_rgbTexture = 0;
 	GLuint m_yuvTexture = 0;
@@ -19,7 +20,7 @@ private:
 	GLuint m_frameBuffer = 0;
 	GLuint m_depthBuffer = 0;
 	GLuint m_program = 0;
-	GLuint m_vShader = 0;
-	GLuint m_fShader = 0;
+	GLuint m_vBuffer = 0;
+	GLuint m_fBuffer = 0;
 };
 

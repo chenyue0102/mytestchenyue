@@ -1,21 +1,85 @@
 #include <GL/glew.h>
 #include "FormatConver.h"
 #include <assert.h>
+#include <QDebug>
+
+#define CHECKERR \
+{\
+int err = 0;\
+if (GL_NO_ERROR != (err = glGetError()))\
+{\
+assert(false); \
+qDebug() << "glGetError=" <<err;\
+}\
+}
+
+inline void outputCompileShader(GLuint shader)
+{
+	GLint status = 0;
+	glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
+	if (GL_FALSE == status)
+	{
+		const int MAX_LOG_LENGTH = 512;
+		GLint len = 0;
+		glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &len);
+		if (len < MAX_LOG_LENGTH)
+		{
+			GLchar szBuf[MAX_LOG_LENGTH] = { 0 };
+			int len = MAX_LOG_LENGTH;
+			glGetShaderInfoLog(shader, MAX_LOG_LENGTH, nullptr, szBuf);
+			qDebug() << szBuf;
+		}
+		else
+		{
+			GLchar *buf = new GLchar[len + 1];
+			glGetShaderInfoLog(shader, len, nullptr, buf);
+			buf[len] = '\0';
+			qDebug() << buf;
+			delete[]buf;
+		}
+		assert(false);
+	}
+}
+inline void outputProgramLog(GLuint program)
+{
+	GLint status = 0;
+	glGetProgramiv(program, GL_LINK_STATUS, &status);
+	if (GL_FALSE == status)
+	{
+		const int MAX_LOG_LENGTH = 512;
+		GLint len = 0;
+		glGetProgramiv(program, GL_INFO_LOG_LENGTH, &len);
+		if (len < MAX_LOG_LENGTH)
+		{
+			GLchar szBuf[MAX_LOG_LENGTH] = { 0 };
+			glGetProgramInfoLog(program, MAX_LOG_LENGTH, nullptr, szBuf);
+			qDebug() << szBuf;
+		}
+		else
+		{
+			GLchar *buf = new GLchar[len + 1];
+			glGetProgramInfoLog(program, len, nullptr, buf);
+			buf[len] = '\0';
+			qDebug() << buf;
+			delete[]buf;
+		}
+		assert(false);
+	}
+}
 
 
-#define GET_STR(x) #x
 
-
-const char *vString = GET_STR(
-	attribute vec4 vertexIn;
-	attribute vec2 textureIn;
-	varying vec2 textureOut;
+const char *vString = R"(
+#version 430 core
+	in vec4 vertexIn;
+	in vec2 textureIn;
+	out vec2 textureOut;
 	void main(void)
 	{
 		gl_Position = vertexIn;
 		textureOut = textureIn;
 	}
-);
+)";
 
 //rgb2yuv
 //const char *fString = GET_STR(
@@ -31,9 +95,25 @@ const char *vString = GET_STR(
 //		gl_FragColor = vec4(yuv, 1.0);
 //	}
 //);
-const char *fString = GET_STR(
-	varying vec2 textureOut;
+const char *fString = R"(
+#version 430 core
+#if 0
+varying vec2 textureOut;
 uniform sampler2D tex;
+uniform int bCover;
+uniform float nThreshold;
+#else
+in vec2 textureOut;
+out vec4 fColor;
+uniform sampler2D tex;
+struct Param
+{
+	int bCover;
+	float nThreshold;
+};
+uniform Param param;
+#endif
+	
 void main(void)
 {
 	vec4 rgb4 = texture2D(tex, textureOut);
@@ -41,9 +121,23 @@ void main(void)
 	vec3 yuv = mat3(0.299, 0.587, 0.114,
 		-0.169, -0.331, 0.5,
 		0.5, -0.419, -0.081) * rgb + vec3(0, 128, 128);
-	gl_FragColor = vec4(rgb, 1.0);
+	if (0 == param.bCover)
+	{
+		fColor = vec4(rgb, 1.0);
+	}
+	else
+	{
+		if (yuv.x >= param.nThreshold)
+		{
+			fColor = vec4(1.0, 1.0, 1.0, 1.0);
+		}
+		else
+		{
+			fColor = vec4(0.0, 0.0, 0.0, 1.0);
+		}
+	}
 }
-);
+)";
 
 FormatConver::FormatConver()
 {
@@ -67,29 +161,9 @@ bool FormatConver::rgb2yuv(const void * buffer, int width, int height, void * ou
 	if (0 == m_rgbTexture)
 	{
 		initTexture();
+		initVertexArray();
 		initProgram();
 	}
-
-	static const GLfloat verPointer[] = 
-	{
-		-1.0f, -1.0f,
-		1.0f, -1.0f,
-		-1.0f, 1.0f,
-		1.0f, 1.0f
-	};
-	int vertexIn = glGetAttribLocation(m_program, "vertexIn");
-	glVertexAttribPointer(vertexIn, 2, GL_FLOAT, 0, 0, verPointer);
-	glEnableVertexAttribArray(vertexIn);
-
-	static const GLfloat texPointer[] = {
-		0.0f, 1.0f,
-		1.0f, 1.0f,
-		0.0f, 0.0f,
-		1.0f, 0.0f,
-	};
-	int textureIn = glGetAttribLocation(m_program, "textureIn");
-	glVertexAttribPointer(textureIn, 2, GL_FLOAT, 0, 0, texPointer);
-	glEnableVertexAttribArray(textureIn);
 
 	int tex = glGetUniformLocation(m_program, "tex");
 
@@ -102,12 +176,17 @@ bool FormatConver::rgb2yuv(const void * buffer, int width, int height, void * ou
 	glClearColor(0, 0, 0, 0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-
+	CHECKERR;
 	glActiveTexture(GL_TEXTURE0);
+	CHECKERR;
 	glBindTexture(GL_TEXTURE_2D, m_rgbTexture);
+	CHECKERR;
 	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_textureWidth, m_textureHeight, GL_RGB, GL_UNSIGNED_BYTE, buffer);
+	CHECKERR;
 	glUniform1i(tex, 0);
+	CHECKERR;
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	CHECKERR;
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -127,29 +206,10 @@ bool FormatConver::drawImage(const void * buffer, int width, int height)
 	if (0 == m_rgbTexture)
 	{
 		initTexture();
+		initVertexArray();
 		initProgram();
 	}
-	static const GLfloat verPointer[] =
-	{
-		-1.0f, -1.0f,
-		1.0f, -1.0f,
-		-1.0f, 1.0f,
-		1.0f, 1.0f
-	};
-	int vertexIn = glGetAttribLocation(m_program, "vertexIn");
-	glVertexAttribPointer(vertexIn, 2, GL_FLOAT, 0, 0, verPointer);
-	glEnableVertexAttribArray(vertexIn);
-
-	static const GLfloat texPointer[] = {
-		0.0f, 1.0f,
-		1.0f, 1.0f,
-		0.0f, 0.0f,
-		1.0f, 0.0f,
-	};
-	int textureIn = glGetAttribLocation(m_program, "textureIn");
-	glVertexAttribPointer(textureIn, 2, GL_FLOAT, 0, 0, texPointer);
-	glEnableVertexAttribArray(textureIn);
-
+	
 	int tex = glGetUniformLocation(m_program, "tex");
 
 	glUseProgram(m_program);
@@ -196,24 +256,102 @@ void FormatConver::initTexture()
 
 void FormatConver::initProgram()
 {
-	m_vShader = glCreateShader(GL_VERTEX_SHADER);
-	m_fShader = glCreateShader(GL_FRAGMENT_SHADER);
+	GLuint vShader = glCreateShader(GL_VERTEX_SHADER);
+	GLuint fShader = glCreateShader(GL_FRAGMENT_SHADER);
 
-	glShaderSource(m_vShader, 1, &vString, nullptr);
-	glShaderSource(m_fShader, 1, &fString, nullptr);
+	glShaderSource(vShader, 1, &vString, nullptr);
+	CHECKERR;
+	glShaderSource(fShader, 1, &fString, nullptr);
+	CHECKERR;
 
-	glCompileShader(m_vShader);
-	/*GLint value = 0;
-	glGetShaderiv(m_vShader, GL_COMPILE_STATUS, &value);
-	char logbuf[1024] = { 0 };
-	int len = 1024;
-	glGetShaderInfoLog(m_vShader, value, &len, logbuf);*/
-	glCompileShader(m_fShader);
+	glCompileShader(vShader);
+	outputCompileShader(vShader);
+	CHECKERR;
+	glCompileShader(fShader);
+	outputCompileShader(fShader);
+	CHECKERR;
 
 	m_program = glCreateProgram();
+	CHECKERR;
 
-	glAttachShader(m_program, m_vShader);
-	glAttachShader(m_program, m_fShader);
+	glAttachShader(m_program, vShader);
+	CHECKERR;
+	glAttachShader(m_program, fShader);
+	CHECKERR;
 
 	glLinkProgram(m_program);
+	outputProgramLog(m_program);
+	CHECKERR;
+
+	glDeleteShader(vShader);
+	CHECKERR;
+	glDeleteShader(fShader);
+	CHECKERR;
+
+
+	int vertexIn = glGetAttribLocation(m_program, "vertexIn");
+	CHECKERR;
+	glBindBuffer(GL_ARRAY_BUFFER, m_vBuffer);
+	CHECKERR;
+	glVertexAttribPointer(vertexIn, 2, GL_FLOAT, 0, 0, 0);
+	CHECKERR;
+	glEnableVertexAttribArray(vertexIn);
+	CHECKERR;
+
+	int textureIn = glGetAttribLocation(m_program, "textureIn");
+	CHECKERR;
+	glBindBuffer(GL_ARRAY_BUFFER, m_fBuffer);
+	CHECKERR;
+	glVertexAttribPointer(textureIn, 2, GL_FLOAT, 0, 0, 0);
+	CHECKERR;
+	glEnableVertexAttribArray(textureIn);
+	CHECKERR;
+
+	//需要先use program，才能设置uniform数值
+	//glUseProgram(m_program);
+	CHECKERR;
+	int coverId = glGetUniformLocation(m_program, "param.bCover");
+	CHECKERR;
+	//glProgramUniform1i比glUniform1i多个program参数,不需要提前glUseProgram
+	glProgramUniform1i(m_program, coverId, (GLint)true);
+	CHECKERR;
+
+	int thresholdId = glGetUniformLocation(m_program, "param.nThreshold");
+	CHECKERR;
+	glProgramUniform1f(m_program, thresholdId, 0.1);
+	CHECKERR;
+	//glUseProgram(0);
+	//CHECKERR;
+}
+
+void FormatConver::initVertexArray()
+{
+	const GLfloat verPointer[] =
+	{
+		-1.0f, -1.0f,
+		1.0f, -1.0f,
+		-1.0f, 1.0f,
+		1.0f, 1.0f
+	};
+	CHECKERR;
+	glGenBuffers(1, &m_vBuffer);
+	CHECKERR;
+	glBindBuffer(GL_ARRAY_BUFFER, m_vBuffer);
+	CHECKERR;
+	glBufferData(GL_ARRAY_BUFFER, sizeof(verPointer), verPointer, GL_STATIC_DRAW);
+	CHECKERR;
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	CHECKERR;
+
+	const GLfloat texPointer[] = 
+	{
+		0.0f, 1.0f,
+		1.0f, 1.0f,
+		0.0f, 0.0f,
+		1.0f, 0.0f,
+	};
+	glGenBuffers(1, &m_fBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, m_fBuffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(texPointer), texPointer, GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
