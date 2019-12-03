@@ -68,7 +68,7 @@ inline void outputProgramLog(GLuint program)
 }
 
 
-
+#if 1
 const char *vString = R"(
 #version 430 core
 	in vec4 vertexIn;
@@ -138,7 +138,72 @@ void main(void)
 	}
 }
 )";
+#endif
 
+const char *cString = R"(
+#version 430 core
+//y row x col
+layout (local_size_x=32,local_size_y=32) in;
+layout (binding=0,rgba32f) uniform image2D  rgbTex;
+layout (binding=1,rgba32f) uniform image2D yTex;
+//uniform image2D uTex;
+//uniform image2D vTex;
+//每个线程处理的行数
+/*
+uint getRowCountPerThread()
+{
+	ivec2 dims = imageSize(rgbTex);
+	uint count = (dims.x / gl_WorkGroupSize.y);
+	if (texHeight % gl_WorkGroupSize.y == 0)
+	{
+		count++;
+	}
+	return count;
+}
+*/
+//每个线程处理的列数
+uint getColCountPerThread()
+{
+	ivec2 dims = imageSize(rgbTex);
+	int texWidth = dims.x;
+	uint count = (texWidth / gl_WorkGroupSize.x);
+	if (texWidth % gl_WorkGroupSize.x == 0)
+	{
+		count++;
+	}
+	return count;
+}
+vec3 rgb2yuv(vec3 rgb)
+{
+	/*vec3 yuv = mat3(0.299,-0.169,0.5,
+		0.587,-0.331,-0.419,
+		0.114,0.5,-0.081)*rgb;
+	yuv -= vec3(0.0,0.5,0.5);
+	return yuv;*/
+	return rgb;
+}
+void main()
+{
+	ivec2 dims = imageSize(rgbTex);
+	int texWidth = dims.x;
+	int texHeight = dims.y;
+	const uvec3 groupSize = gl_WorkGroupSize;
+	const uvec3 localId = gl_LocalInvocationID;
+	const uint colCount = getColCountPerThread();
+	
+
+	for (uint row = 0; row < texHeight; row++)
+	{
+		for (uint col = 0; col < texWidth; col++)
+		{
+			ivec2 pos = ivec2(col, row);
+			vec4 texel = imageLoad(rgbTex, pos);
+			vec3 yuv = rgb2yuv(texel.rgb);
+			imageStore(yTex, pos, vec4(yuv.r,yuv.r,yuv.r,1.0));
+		}
+	}
+}
+)";
 FormatConver::FormatConver()
 {
 }
@@ -147,7 +212,96 @@ FormatConver::FormatConver()
 FormatConver::~FormatConver()
 {
 }
+bool FormatConver::rgb2yuv(const void * buffer, int width, int height, void * outbuffer, int & outbuflen)
+{
+	int cShader = glCreateShader(GL_COMPUTE_SHADER);
+	CHECKERR;
+	glShaderSource(cShader, 1, &cString, nullptr);
+	CHECKERR;
+	glCompileShader(cShader);
+	outputCompileShader(cShader);
 
+	int program = glCreateProgram();
+	CHECKERR;
+	glAttachShader(program, cShader);
+	CHECKERR;
+	glLinkProgram(program);
+	outputProgramLog(program);
+	glDeleteShader(cShader);
+	CHECKERR;
+	cShader = 0;
+
+	glUseProgram(program);
+	CHECKERR;
+
+	glActiveTexture(GL_TEXTURE0 + 1);
+	CHECKERR;
+	GLuint rgbTexture = 0;
+	glGenTextures(1, &rgbTexture);
+	CHECKERR;
+	glBindTexture(GL_TEXTURE_2D, rgbTexture);
+	CHECKERR;
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	CHECKERR;
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	//glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+	CHECKERR;
+	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, buffer);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, 0);
+	CHECKERR
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, buffer);
+	CHECKERR;
+	glBindImageTexture(0, rgbTexture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
+	CHECKERR;
+	
+	//GLint texId = glGetUniformLocation(program, "rgbTex");
+	CHECKERR;
+	//glUniform1i(texId, 0 + 1);
+	CHECKERR;
+	
+	glActiveTexture(GL_TEXTURE0 + 2);
+	CHECKERR;
+	GLuint yTexture = 0;
+	glGenTextures(1, &yTexture);
+	CHECKERR;
+	glBindTexture(GL_TEXTURE_2D, yTexture);
+	CHECKERR;
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	CHECKERR;
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	CHECKERR;
+	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, 0);
+	CHECKERR;
+	glBindImageTexture(1, yTexture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
+	/*
+	GLint yId = glGetUniformLocation(program, "yTex");
+	CHECKERR;
+	glUniform1i(yId, 0 + 2);
+	CHECKERR;
+	*/
+	
+	glDispatchCompute(1, 1, 1);
+	CHECKERR;
+	//glMemoryBarrier(GL_ALL_BARRIER_BITS);
+	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+	CHECKERR;
+
+	glEnable(GL_TEXTURE_2D);
+	glActiveTexture(GL_TEXTURE0 + 2);
+	glBindTexture(GL_TEXTURE_2D, yTexture);
+	CHECKERR;
+	glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, outbuffer);
+	CHECKERR;
+
+	glDeleteTextures(1, &rgbTexture);
+	return true;
+}
+#if 0
 bool FormatConver::rgb2yuv(const void * buffer, int width, int height, void * outbuffer, int & outbuflen)
 {
 	int len = width * height * 3;
@@ -198,6 +352,7 @@ bool FormatConver::rgb2yuv(const void * buffer, int width, int height, void * ou
 	glDisable(GL_TEXTURE_2D);
 	return true;
 }
+#endif
 
 bool FormatConver::drawImage(const void * buffer, int width, int height)
 {
