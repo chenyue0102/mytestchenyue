@@ -281,10 +281,10 @@ bool FormatConver::rgb2yuv(const void * buffer, int width, int height, void * ou
 	GLuint yTexture = OpenGLHelper::genAndBindTexture(width, height, 1, GL_WRITE_ONLY, GL_RGBA32F);
 	GLuint uTexture = OpenGLHelper::genAndBindTexture(width / 2, height / 2, 2, GL_WRITE_ONLY, GL_RGBA32F);
 	GLuint vTexture = OpenGLHelper::genAndBindTexture(width / 2, height / 2, 3, GL_WRITE_ONLY, GL_RGBA32F);
-	glDispatchCompute(32, 1, 1);
+	glDispatchCompute(32, 32, 1);
 	CHECKERR;
-	glMemoryBarrier(GL_ALL_BARRIER_BITS);
-	//glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+	//glMemoryBarrier(GL_ALL_BARRIER_BITS);
+	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 	CHECKERR;
 
 	glBindTexture(GL_TEXTURE_2D, yTexture);
@@ -305,6 +305,15 @@ bool FormatConver::rgb2yuv(const void * buffer, int width, int height, void * ou
 	CHECKERR;
 
 	glDeleteTextures(1, &rgbTexture);
+	CHECKERR;
+	glDeleteTextures(1, &yTexture);
+	CHECKERR;
+	glDeleteTextures(1, &uTexture);
+	CHECKERR;
+	glDeleteTextures(1, &vTexture);
+	CHECKERR;
+	glDeleteProgram(program);
+	CHECKERR;
 	return true;
 }
 #if 0
