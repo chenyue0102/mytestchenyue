@@ -42,6 +42,9 @@
     <ClCompile Include="FormatConver.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="OpenGLHelper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="testqtopengl.h">
@@ -63,6 +66,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FormatConver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenGLHelper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -116,6 +116,7 @@
     <ClCompile Include="FormatConver.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MyOpenGLWidget.cpp" />
+    <ClCompile Include="OpenGLHelper.cpp" />
     <ClCompile Include="testqtopengl.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -135,6 +136,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FormatConver.h" />
+    <ClInclude Include="OpenGLHelper.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">

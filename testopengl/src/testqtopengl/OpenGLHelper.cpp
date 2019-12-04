@@ -6,14 +6,15 @@
 
 namespace OpenGLHelper
 {
-GLuint genTexture(GLenum format, GLenum type, int width, int height)
+GLuint genTexture(GLenum inFormat, GLenum format, GLenum type, int width, int height)
 {
 	GLuint textures = INVALID_VALUE;
 	GLenum err = GL_NO_ERROR;
 	bool ret = false;
 	do
 	{
-		if (0 == format
+		if (0 == inFormat
+			|| 0 == format
 			|| 0 == type
 			|| 0 == width
 			|| 0 == height)
@@ -33,7 +34,7 @@ GLuint genTexture(GLenum format, GLenum type, int width, int height)
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		CHECKERRBREAK;
 
-		glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, nullptr);
+		glTexImage2D(GL_TEXTURE_2D, 0, inFormat, width, height, 0, format, type, nullptr);
 		CHECKERRBREAK;
 
 		glBindTexture(GL_TEXTURE_2D, 0);
@@ -224,5 +225,56 @@ GLuint createShader(GLenum type, const char * string)
 		shader = INVALID_VALUE;
 	}
 	return shader;
+}
+GLuint genAndBindTexture(int width, int height, GLuint bindIndex, GLenum access, GLenum shaderFormat)
+{
+	GLuint tex = INVALID_VALUE;
+	bool ret = false;
+	do
+	{
+		if (INVALID_VALUE == (tex = genTexture(GL_RGBA32F, GL_RGBA, GL_FLOAT, width, height)))
+		{
+			assert(false);
+			break;
+		}
+		glBindTexture(GL_TEXTURE_2D, tex);
+		CHECKERRBREAK;
+		glBindImageTexture(bindIndex, tex, 0, GL_FALSE, 0, access, shaderFormat);
+		CHECKERRBREAK;
+		ret = true;
+	} while (false);
+	if (!ret
+		&& INVALID_VALUE != tex)
+	{
+		glDeleteTextures(1, &tex);
+		tex = INVALID_VALUE;
+	}
+	return tex;
+}
+GLuint genAndBindTexture(int width, int height, GLuint bindIndex, GLenum access, GLenum shaderFormat, GLenum bufFormat, GLenum bufType, const void * buffer)
+{
+	GLuint tex = INVALID_VALUE;
+	bool ret = false;
+
+	do
+	{
+		if (INVALID_VALUE == (tex = genAndBindTexture(width, height, bindIndex, access, shaderFormat)))
+		{
+			assert(false);
+			break;
+		}
+		glBindTexture(GL_TEXTURE_2D, tex);
+		CHECKERRBREAK;
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, bufFormat, bufType, buffer);
+		CHECKERRBREAK;
+		ret = true;
+	} while (false);
+	if (!ret
+		&& INVALID_VALUE != tex)
+	{
+		glDeleteTextures(1, &tex);
+		tex = INVALID_VALUE;
+	}
+	return tex;
 }
 }
