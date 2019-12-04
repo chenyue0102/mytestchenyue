@@ -385,6 +385,9 @@ bool FormatConver::rgb2yuv(const void * buffer, int width, int height, void * ou
 	CHECKERR;
 	glUniform1i(tex, 0);
 	CHECKERR;
+	//可以切换不同的顶点
+	int vertexIn = 0;
+	glBindVertexBuffer(vertexIn, m_vBuffer, 0, sizeof(GLfloat) * 2);
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 	CHECKERR;
 
@@ -489,26 +492,6 @@ void FormatConver::initProgram()
 	glDeleteShader(fShader);
 	CHECKERR;
 
-	int vertexIn = 0;// glGetAttribLocation(m_program, "vertexIn");
-	CHECKERR;
-	glBindBuffer(GL_ARRAY_BUFFER, m_vBuffer);
-	CHECKERR;
-	glVertexAttribPointer(vertexIn, 2, GL_FLOAT, GL_FALSE, 0, 0);
-	CHECKERR;
-	glEnableVertexAttribArray(vertexIn);
-	CHECKERR;
-
-	//location的值
-	int textureIn = 1;// glGetAttribLocation(m_program, "textureIn");
-	CHECKERR;
-	glBindBuffer(GL_ARRAY_BUFFER, m_fBuffer);
-	CHECKERR;
-	//2为每个点维度
-	glVertexAttribPointer(textureIn, 2, GL_FLOAT, GL_FALSE, 0, 0);
-	CHECKERR;
-	glEnableVertexAttribArray(textureIn);
-	CHECKERR;
-
 	//需要先use program，才能设置uniform数值
 	//glUseProgram(m_program);
 	CHECKERR;
@@ -535,10 +518,12 @@ void FormatConver::initVertexArray()
 		-1.0f, 1.0f,
 		1.0f, 1.0f
 	};
+#if 0
 	glGenVertexArrays(1, &m_vVertex);
 	CHECKERR;
 	glBindVertexArray(m_vVertex);
 	CHECKERR;
+#endif
 	glGenBuffers(1, &m_vBuffer);
 	CHECKERR;
 	glBindBuffer(GL_ARRAY_BUFFER, m_vBuffer);
@@ -546,7 +531,34 @@ void FormatConver::initVertexArray()
 	glBufferData(GL_ARRAY_BUFFER, sizeof(verPointer), verPointer, GL_STATIC_DRAW);
 	CHECKERR;
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	int vertexIn = 0;// glGetAttribLocation(m_program, "vertexIn");
+	glVertexAttribPointer(vertexIn, 2, GL_FLOAT, GL_FALSE, 0, 0);
 	CHECKERR;
+	glEnableVertexAttribArray(vertexIn);
+	CHECKERR;
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	CHECKERR;
+
+	const GLfloat verPointer2[] =
+	{
+		1.0f, 1.0f,
+		-1.0f, 1.0f,
+		1.0f, -1.0f,
+		-1.0f, -1.0f
+	};
+#if 0
+	glGenVertexArrays(1, &m_vVertex2);
+	CHECKERR;
+	glBindVertexArray(m_vVertex2);
+	CHECKERR;
+#endif
+	glGenBuffers(1, &m_vBuffer2);
+	glBindBuffer(GL_ARRAY_BUFFER, m_vBuffer2);
+	CHECKERR;
+	glBufferData(GL_ARRAY_BUFFER, sizeof(verPointer2), verPointer2, GL_STATIC_DRAW);
+	CHECKERR;
+
 
 	const GLfloat texPointer[] = 
 	{
@@ -555,10 +567,18 @@ void FormatConver::initVertexArray()
 		0.0f, 0.0f,
 		1.0f, 0.0f,
 	};
-	glGenVertexArrays(1, &m_vTexture);
-	glBindVertexArray(m_vTexture);
 	glGenBuffers(1, &m_fBuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, m_fBuffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(texPointer), texPointer, GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	//location的值
+	int textureIn = 1;// glGetAttribLocation(m_program, "textureIn");
+	//2为每个点维度
+	glVertexAttribPointer(textureIn, 2, GL_FLOAT, GL_FALSE, 0, 0);
+	CHECKERR;
+	glEnableVertexAttribArray(textureIn);
+	CHECKERR;
+	glBindVertexBuffer(textureIn, m_fBuffer, 0, sizeof(GLfloat) * 2);
+	CHECKERR;
 }
