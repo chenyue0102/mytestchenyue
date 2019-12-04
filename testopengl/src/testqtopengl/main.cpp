@@ -54,9 +54,11 @@ int main(int argc, char *argv[])
 	int width = img.width();
 	int height = img.height();
 	f.rgb2yuv(pin, width, height, pout, len);
-	//SaveBitmap("d:/1.bmp", width, height, 24, pout, len);
+	SaveBitmap("d:/1.bmp", width, height, 24, pout, len);
+#if 0
 	FILE *ff = fopen("d:/1.yuv", "wb");
 	fwrite(pout, 1, width * height + (width * height) / 2, ff);
 	fclose(ff);
+#endif
 	return a.exec();
 }

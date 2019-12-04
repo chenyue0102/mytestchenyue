@@ -9,8 +9,8 @@
 int err = 0;\
 if (GL_NO_ERROR != (err = glGetError()))\
 {\
-assert(false); \
 qDebug() << "glGetError=" <<err;\
+assert(false); \
 }\
 }
 
@@ -72,8 +72,8 @@ inline void outputProgramLog(GLuint program)
 #if 1
 const char *vString = R"(
 #version 430 core
-	in vec4 vertexIn;
-	in vec2 textureIn;
+	layout(location=0) in vec4 vertexIn;
+	layout(location=1) in vec2 textureIn;
 	out vec2 textureOut;
 	void main(void)
 	{
@@ -140,6 +140,18 @@ void main(void)
 }
 )";
 #endif
+//test shader
+const char* tString = R"(
+#version 430 core
+layout(location=0) in vec4 position1;
+layout(location=1) in vec4 position2;
+layout(location=2,rgba32f) uniform image2D tex;
+void main()
+{
+	gl_Position=position1;
+}
+)";
+
 //rgb2yuv420
 const char *cString = R"(
 #version 430 core
@@ -217,9 +229,27 @@ FormatConver::FormatConver()
 FormatConver::~FormatConver()
 {
 }
-
+#if 0
 bool FormatConver::rgb2yuv(const void * buffer, int width, int height, void * outbuffer, int & outbuflen)
 {
+	{
+		int tShader = glCreateShader(GL_VERTEX_SHADER);
+		CHECKERR;
+		glShaderSource(tShader, 1, &tString, nullptr);
+		CHECKERR;
+		glCompileShader(tShader);
+		CHECKERR;
+		int program = glCreateProgram();
+		CHECKERR;
+		glAttachShader(program, tShader);
+		CHECKERR;
+		glLinkProgram(program);
+		outputProgramLog(program);
+		glDeleteShader(tShader);
+		CHECKERR;
+		glDeleteProgram(program);
+		CHECKERR;
+	}
 	int cShader = glCreateShader(GL_COMPUTE_SHADER);
 	CHECKERR;
 	glShaderSource(cShader, 1, &cString, nullptr);
@@ -316,7 +346,8 @@ bool FormatConver::rgb2yuv(const void * buffer, int width, int height, void * ou
 	CHECKERR;
 	return true;
 }
-#if 0
+#endif
+#if 1
 bool FormatConver::rgb2yuv(const void * buffer, int width, int height, void * outbuffer, int & outbuflen)
 {
 	int len = width * height * 3;
@@ -458,21 +489,22 @@ void FormatConver::initProgram()
 	glDeleteShader(fShader);
 	CHECKERR;
 
-
-	int vertexIn = glGetAttribLocation(m_program, "vertexIn");
+	int vertexIn = 0;// glGetAttribLocation(m_program, "vertexIn");
 	CHECKERR;
 	glBindBuffer(GL_ARRAY_BUFFER, m_vBuffer);
 	CHECKERR;
-	glVertexAttribPointer(vertexIn, 2, GL_FLOAT, 0, 0, 0);
+	glVertexAttribPointer(vertexIn, 2, GL_FLOAT, GL_FALSE, 0, 0);
 	CHECKERR;
 	glEnableVertexAttribArray(vertexIn);
 	CHECKERR;
 
-	int textureIn = glGetAttribLocation(m_program, "textureIn");
+	//location的值
+	int textureIn = 1;// glGetAttribLocation(m_program, "textureIn");
 	CHECKERR;
 	glBindBuffer(GL_ARRAY_BUFFER, m_fBuffer);
 	CHECKERR;
-	glVertexAttribPointer(textureIn, 2, GL_FLOAT, 0, 0, 0);
+	//2为每个点维度
+	glVertexAttribPointer(textureIn, 2, GL_FLOAT, GL_FALSE, 0, 0);
 	CHECKERR;
 	glEnableVertexAttribArray(textureIn);
 	CHECKERR;
@@ -503,6 +535,9 @@ void FormatConver::initVertexArray()
 		-1.0f, 1.0f,
 		1.0f, 1.0f
 	};
+	glGenVertexArrays(1, &m_vVertex);
+	CHECKERR;
+	glBindVertexArray(m_vVertex);
 	CHECKERR;
 	glGenBuffers(1, &m_vBuffer);
 	CHECKERR;
@@ -520,6 +555,8 @@ void FormatConver::initVertexArray()
 		0.0f, 0.0f,
 		1.0f, 0.0f,
 	};
+	glGenVertexArrays(1, &m_vTexture);
+	glBindVertexArray(m_vTexture);
 	glGenBuffers(1, &m_fBuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, m_fBuffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(texPointer), texPointer, GL_STATIC_DRAW);

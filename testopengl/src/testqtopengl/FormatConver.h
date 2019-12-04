@@ -22,5 +22,7 @@ private:
 	GLuint m_program = 0;
 	GLuint m_vBuffer = 0;
 	GLuint m_fBuffer = 0;
+	GLuint m_vVertex = 0;
+	GLuint m_vTexture = 0;
 };
 
