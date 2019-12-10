@@ -27,6 +27,21 @@
     <ClInclude Include="URLWrapBase.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="FileWrite.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="URLWrap.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="FileDownload.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="InterfaceUpdate.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="MyUnknownImpEx.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -36,6 +51,15 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="URLWrapBase.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="FileWrite.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="URLWrap.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="FileDownload.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

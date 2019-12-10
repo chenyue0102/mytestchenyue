@@ -106,7 +106,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -154,13 +154,21 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="FileDownload.h" />
+    <ClInclude Include="FileWrite.h" />
+    <ClInclude Include="MyUnknownImpEx.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="InterfaceUpdate.h" />
+    <ClInclude Include="URLWrap.h" />
     <ClInclude Include="URLWrapBase.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="FileDownload.cpp" />
+    <ClCompile Include="FileWrite.cpp" />
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="TestLibcurl.cpp" />
+    <ClCompile Include="URLWrap.cpp" />
     <ClCompile Include="URLWrapBase.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
