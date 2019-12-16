@@ -74,11 +74,27 @@ const char *vString = R"(
 #version 430 core
 	layout(location=0) in vec4 vertexIn;
 	layout(location=1) in vec2 textureIn;
+	layout(std430,binding=2) buffer VertexBuffer
+{
+	int vertexCount;
+}vertexBuffer;
 	out vec2 textureOut;
+
+subroutine void CalcFun();
+subroutine (CalcFun) void calcCount1()
+{
+	atomicAdd(vertexBuffer.vertexCount, 1);
+}
+subroutine (CalcFun) void calcCount2()
+{
+	atomicAdd(vertexBuffer.vertexCount, -1);
+}
+subroutine uniform CalcFun calcFun;
 	void main(void)
 	{
 		gl_Position = vertexIn;
 		textureOut = textureIn;
+		calcFun();
 	}
 )";
 
@@ -107,6 +123,10 @@ uniform float nThreshold;
 in vec2 textureOut;
 out vec4 fColor;
 uniform sampler2D tex;
+layout(std430,binding=3) buffer FragmentBuffer
+{
+	int fragmentCount;
+}fragmentBuffer;
 struct Param
 {
 	int bCover;
@@ -117,6 +137,7 @@ uniform Param param;
 	
 void main(void)
 {
+	atomicAdd(fragmentBuffer.fragmentCount, 1);
 	vec4 rgb4 = texture2D(tex, textureOut);
 	vec3 rgb = vec3(rgb4.x, rgb4.y, rgb4.z);
 	vec3 yuv = mat3(0.299, 0.587, 0.114,
@@ -157,10 +178,21 @@ const char *cString = R"(
 #version 430 core
 //y row x col
 layout (local_size_x=32,local_size_y=32) in;
+struct Param
+{
+	int bCover;
+	float nThreshold;
+};
 layout (binding=0,rgba32f) uniform image2D  rgbTex;
 layout (binding=1,rgba32f) uniform image2D yTex;
 layout (binding=2,rgba32f) uniform image2D uTex;
 layout (binding=3,rgba32f) uniform image2D vTex;
+layout (location=4) uniform Param param;
+layout(std430,binding=5) buffer ResultBuffer
+{
+	float f[];
+}resultBuffer;
+
 //每个线程处理的列数
 uint getColCountPerThread()
 {
@@ -187,6 +219,19 @@ vec3 rgb2yuv(vec3 rgb)
 #endif
 
 }
+void test(void)
+{
+	mat4x3 m=mat4x3(1.0,2.0,3.0,
+		4.0,5.0,6.0,
+		7.0,8.0,9.0,
+		10.0,11.0,12.0);
+	if (resultBuffer.f.length() == 3)
+	{
+		resultBuffer.f[0]=m[0][0];
+		resultBuffer.f[1]=m[0][1];
+		resultBuffer.f[2]=m[0][2];
+	}
+}
 void main()
 {
 	ivec2 dims = imageSize(rgbTex);
@@ -195,7 +240,7 @@ void main()
 	const uvec3 groupSize = gl_WorkGroupSize;
 	const uvec3 localId = gl_LocalInvocationID;
 	const uint colCount = getColCountPerThread();
-	
+	test();
 	for (uint row = localId.x; row < texHeight; row+=groupSize.x)
 	{
 		uint beginNum = localId.y * colCount;
@@ -311,10 +356,34 @@ bool FormatConver::rgb2yuv(const void * buffer, int width, int height, void * ou
 	GLuint yTexture = OpenGLHelper::genAndBindTexture(width, height, 1, GL_WRITE_ONLY, GL_RGBA32F);
 	GLuint uTexture = OpenGLHelper::genAndBindTexture(width / 2, height / 2, 2, GL_WRITE_ONLY, GL_RGBA32F);
 	GLuint vTexture = OpenGLHelper::genAndBindTexture(width / 2, height / 2, 3, GL_WRITE_ONLY, GL_RGBA32F);
+	
+	GLfloat f[3] = { 0.0 };
+	GLuint resultBuffer;
+	glGenBuffers(1, &resultBuffer);
+	CHECKERR;
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, resultBuffer);
+	CHECKERR;
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(f), f, GL_DYNAMIC_COPY);
+	CHECKERR;
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, resultBuffer);
+	CHECKERR;
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
 	glDispatchCompute(32, 32, 1);
 	CHECKERR;
-	//glMemoryBarrier(GL_ALL_BARRIER_BITS);
-	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+	glMemoryBarrier(GL_ALL_BARRIER_BITS);
+	//glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+	CHECKERR;
+
+	//glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(GLfloat) * 3, f, GL_DYNAMIC_COPY);
+	//CHECKERR;
+	
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, resultBuffer);
+	CHECKERR;
+	void *p = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+	CHECKERR;
+	memcpy(f, p, sizeof(f));
+	glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 	CHECKERR;
 
 	glBindTexture(GL_TEXTURE_2D, yTexture);
@@ -346,8 +415,7 @@ bool FormatConver::rgb2yuv(const void * buffer, int width, int height, void * ou
 	CHECKERR;
 	return true;
 }
-#endif
-#if 1
+#else
 bool FormatConver::rgb2yuv(const void * buffer, int width, int height, void * outbuffer, int & outbuflen)
 {
 	int len = width * height * 3;
@@ -388,7 +456,61 @@ bool FormatConver::rgb2yuv(const void * buffer, int width, int height, void * ou
 	//可以切换不同的顶点
 	int vertexIn = 0;
 	glBindVertexBuffer(vertexIn, m_vBuffer, 0, sizeof(GLfloat) * 2);
+
+	GLuint vertexCountBuffer = 0;
+	glGenBuffers(1, &vertexCountBuffer);
+	CHECKERR;
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, vertexCountBuffer);
+	CHECKERR;
+	GLint vcount = 0;
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(vcount), &vcount, GL_DYNAMIC_COPY);
+	CHECKERR;
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, vertexCountBuffer);
+	CHECKERR;
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+	CHECKERR;
+
+	GLuint fragmentCountBuffer = 0;
+	glGenBuffers(1, &fragmentCountBuffer);
+	CHECKERR;
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, fragmentCountBuffer);
+	GLint fcount = 0;
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(GLint), &fcount, GL_DYNAMIC_COPY);
+	CHECKERR;
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, fragmentCountBuffer);
+	CHECKERR;
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+	CHECKERR;
+
+	GLint subroutineIndex = glGetSubroutineUniformLocation(m_program, GL_VERTEX_SHADER, "calcFun");
+	assert(subroutineIndex != GL_INVALID_INDEX);
+	CHECKERR;
+	GLuint calc1 = glGetSubroutineIndex(m_program, GL_VERTEX_SHADER, "calcCount1");
+	assert(calc1 != GL_INVALID_INDEX);
+	CHECKERR;
+	GLuint calc2 = glGetSubroutineIndex(m_program, GL_VERTEX_SHADER, "calcCount2");
+	assert(calc2 != GL_INVALID_INDEX);
+	CHECKERR;
+	glUniformSubroutinesuiv(GL_VERTEX_SHADER, 1, &calc2);
+	CHECKERR;
+
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	CHECKERR;
+
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, vertexCountBuffer);
+	CHECKERR;
+	void *p = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+	CHECKERR;
+	memcpy(&vcount, p, sizeof(vcount));
+	glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+	CHECKERR;
+
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, fragmentCountBuffer);
+	CHECKERR;
+	void *pf = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+	CHECKERR;
+	memcpy(&fcount, p, sizeof(fcount));
+	glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 	CHECKERR;
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
