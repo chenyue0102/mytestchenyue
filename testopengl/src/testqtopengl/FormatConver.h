@@ -11,6 +11,7 @@ public:
 private:
 	void initTexture();
 	void initProgram();
+	void initShaderProgram();
 	void initVertexArray();
 private:
 	GLuint m_rgbTexture = 0;
@@ -23,5 +24,8 @@ private:
 	GLuint m_vBuffer = 0;
 	GLuint m_fBuffer = 0;
 	GLuint m_vBuffer2 = 0;
+	GLuint m_vProgram = 0;
+	GLuint m_fProgram = 0;
+	GLuint m_pipeline = 0;
 };
 

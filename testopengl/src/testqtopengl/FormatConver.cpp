@@ -89,7 +89,12 @@ subroutine (CalcFun) void calcCount2()
 {
 	atomicAdd(vertexBuffer.vertexCount, -1);
 }
+
 subroutine uniform CalcFun calcFun;
+out gl_PerVertex{
+	vec4 gl_Position;
+	float gl_PointSize;
+};
 	void main(void)
 	{
 		gl_Position = vertexIn;
@@ -137,6 +142,7 @@ uniform Param param;
 	
 void main(void)
 {
+	//fragmentBuffer.fragmentCount = 99;
 	atomicAdd(fragmentBuffer.fragmentCount, 1);
 	vec4 rgb4 = texture2D(tex, textureOut);
 	vec3 rgb = vec3(rgb4.x, rgb4.y, rgb4.z);
@@ -416,6 +422,8 @@ bool FormatConver::rgb2yuv(const void * buffer, int width, int height, void * ou
 	return true;
 }
 #else
+
+#define USE_PIPELINE
 bool FormatConver::rgb2yuv(const void * buffer, int width, int height, void * outbuffer, int & outbuflen)
 {
 	int len = width * height * 3;
@@ -431,11 +439,40 @@ bool FormatConver::rgb2yuv(const void * buffer, int width, int height, void * ou
 		initTexture();
 		initVertexArray();
 		initProgram();
+		initShaderProgram();
 	}
-
-	int tex = glGetUniformLocation(m_program, "tex");
-
+	GLuint vprogram = 0, fprogram = 0;
+#ifdef USE_PIPELINE
+	glUseProgramStages(m_pipeline, GL_VERTEX_SHADER_BIT, m_vProgram);
+	outputProgramLog(m_vProgram);
+	CHECKERR;
+	glUseProgramStages(m_pipeline, GL_FRAGMENT_SHADER_BIT, m_fProgram);
+	outputProgramLog(m_fProgram);
+	CHECKERR;
+	vprogram = m_vProgram;
+	fprogram = m_fProgram;
+	glBindProgramPipeline(m_pipeline);
+	CHECKERR;
+#else
+	fprogram = vprogram = m_program;
 	glUseProgram(m_program);
+#endif
+	int tex = glGetUniformLocation(fprogram, "tex");
+	CHECKERR;
+
+	//需要先use program，才能设置uniform数值
+	//glUseProgram(m_program);
+	CHECKERR;
+	int coverId = glGetUniformLocation(fprogram, "param.bCover");
+	CHECKERR;
+	//glProgramUniform1i比glUniform1i多个program参数,不需要提前glUseProgram
+	glProgramUniform1i(fprogram, coverId, (GLint)true);
+	CHECKERR;
+
+	int thresholdId = glGetUniformLocation(fprogram, "param.nThreshold");
+	CHECKERR;
+	glProgramUniform1f(fprogram, thresholdId, 0.1);
+	CHECKERR;
 	
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glBindFramebuffer(GL_FRAMEBUFFER, m_frameBuffer);
@@ -451,7 +488,8 @@ bool FormatConver::rgb2yuv(const void * buffer, int width, int height, void * ou
 	CHECKERR;
 	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_textureWidth, m_textureHeight, GL_RGB, GL_UNSIGNED_BYTE, buffer);
 	CHECKERR;
-	glUniform1i(tex, 0);
+	glProgramUniform1i(fprogram, tex, 0);
+	//glUniform1i(tex, 0);
 	CHECKERR;
 	//可以切换不同的顶点
 	int vertexIn = 0;
@@ -482,13 +520,13 @@ bool FormatConver::rgb2yuv(const void * buffer, int width, int height, void * ou
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 	CHECKERR;
 
-	GLint subroutineIndex = glGetSubroutineUniformLocation(m_program, GL_VERTEX_SHADER, "calcFun");
+	GLint subroutineIndex = glGetSubroutineUniformLocation(vprogram, GL_VERTEX_SHADER, "calcFun");
 	assert(subroutineIndex != GL_INVALID_INDEX);
 	CHECKERR;
-	GLuint calc1 = glGetSubroutineIndex(m_program, GL_VERTEX_SHADER, "calcCount1");
+	GLuint calc1 = glGetSubroutineIndex(vprogram, GL_VERTEX_SHADER, "calcCount1");
 	assert(calc1 != GL_INVALID_INDEX);
 	CHECKERR;
-	GLuint calc2 = glGetSubroutineIndex(m_program, GL_VERTEX_SHADER, "calcCount2");
+	GLuint calc2 = glGetSubroutineIndex(vprogram, GL_VERTEX_SHADER, "calcCount2");
 	assert(calc2 != GL_INVALID_INDEX);
 	CHECKERR;
 	glUniformSubroutinesuiv(GL_VERTEX_SHADER, 1, &calc2);
@@ -509,7 +547,7 @@ bool FormatConver::rgb2yuv(const void * buffer, int width, int height, void * ou
 	CHECKERR;
 	void *pf = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
 	CHECKERR;
-	memcpy(&fcount, p, sizeof(fcount));
+	memcpy(&fcount, pf, sizeof(fcount));
 	glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 	CHECKERR;
 
@@ -613,22 +651,40 @@ void FormatConver::initProgram()
 	CHECKERR;
 	glDeleteShader(fShader);
 	CHECKERR;
+}
 
-	//需要先use program，才能设置uniform数值
-	//glUseProgram(m_program);
+/*
+const GLuint shader = glCreateShader(type);
+if (shader) {
+	glShaderSource(shader, count, strings, NULL);
+	glCompileShader(shader);
+	const GLuint program = glCreateProgram();
+	if (program) {
+		GLint compiled = GL_FALSE;
+		glGetShaderiv(shader, GL_COMPILE_STATUS, &compiled);
+		glProgramParameteri(program, GL_PROGRAM_SEPARABLE, GL_TRUE);
+		if (compiled) {
+			glAttachShader(program, shader);
+			glLinkProgram(program);
+			glDetachShader(program, shader);
+		}
+		// append-shader-info-log-to-program-info-log
+	}
+	glDeleteShader(shader);
+	return program;
+}
+else {
+	 return 0;
+ }
+*/
+void FormatConver::initShaderProgram()
+{
+	m_vProgram = glCreateShaderProgramv(GL_VERTEX_SHADER, 1, &vString);
 	CHECKERR;
-	int coverId = glGetUniformLocation(m_program, "param.bCover");
+	m_fProgram = glCreateShaderProgramv(GL_FRAGMENT_SHADER, 1, &fString);
 	CHECKERR;
-	//glProgramUniform1i比glUniform1i多个program参数,不需要提前glUseProgram
-	glProgramUniform1i(m_program, coverId, (GLint)true);
+	glGenProgramPipelines(1, &m_pipeline);
 	CHECKERR;
-
-	int thresholdId = glGetUniformLocation(m_program, "param.nThreshold");
-	CHECKERR;
-	glProgramUniform1f(m_program, thresholdId, 0.1);
-	CHECKERR;
-	//glUseProgram(0);
-	//CHECKERR;
 }
 
 void FormatConver::initVertexArray()
