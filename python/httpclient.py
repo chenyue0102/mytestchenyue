@@ -7,6 +7,7 @@ import sys
 
 def testGET(paramText):
     con = http.client.HTTPConnection('localhost')
+    con.port = 80
     con.request('GET', paramText)
     response = con.getresponse()
     print(response.status, response.reason)
