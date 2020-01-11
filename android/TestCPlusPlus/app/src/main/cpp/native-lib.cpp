@@ -1,5 +1,14 @@
 #include <jni.h>
 #include <string>
+#include <android/log.h>
+#include <pthread.h>
+#include <errno.h>
+#include <dirent.h>
+#include <unistd.h>
+#include <sys/system_properties.h>
+
+#define LOG_DEBUG(tag,text) \
+    __android_log_write(ANDROID_LOG_DEBUG, tag, text)
 
 std::string jstring2string(JNIEnv *env, jstring s){
     std::string str;
@@ -9,6 +18,13 @@ std::string jstring2string(JNIEnv *env, jstring s){
         env->ReleaseStringUTFChars(s, pstr);
     }
     return str;
+}
+JavaVM *g_JavaVM = 0;
+extern "C" JNIEXPORT jint JNICALL
+JNI_OnLoad(JavaVM *vm, void *reserved){
+    g_JavaVM = vm;
+    __android_log_write(ANDROID_LOG_DEBUG, "JNI", "JNI_OnLoad");
+    return JNI_VERSION_1_4;
 }
 
 extern "C" JNIEXPORT jstring JNICALL
@@ -93,6 +109,149 @@ Java_com_example_testcplusplus_MainActivity_testAccessField(JNIEnv *env, jobject
     std::string s1 = jstring2string(env, str1);
     std::string s2 = jstring2string(env, str2);
 
-    jmethodID test1 = env->GetMethodID(clazz, "test1", "([I[I)I");
+    jmethodID test1 = env->GetMethodID(clazz, "test1", "([I[Ljava/lang/String;[I)I");
+    jmethodID  test2 = env->GetStaticMethodID(clazz, "test2", "([BII)Ljava/nio/ByteBuffer;");
+    jintArray intArray1 = env->NewIntArray(1);
+    int value1 = 1, value2 = 2;
+    env->SetIntArrayRegion(intArray1, 0, 1, &value1);
+    jintArray intArray2 = env->NewIntArray(1);
+    env->SetIntArrayRegion(intArray2, 0, 1, &value2);
+    jclass stringClass = env->FindClass("java/lang/String");
+    jobjectArray objArray1 = env->NewObjectArray(1, stringClass, 0);
+    jboolean exception = env->ExceptionCheck();
+    jint ret = env->CallIntMethod(thiz, test1, intArray1, objArray1, intArray2);
+    exception = env->ExceptionCheck();
+    //env->CallStaticBooleanMethod()
+    env->DeleteLocalRef(intArray1);
+    env->DeleteLocalRef(intArray2);
     return;
+}
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_example_testcplusplus_MainActivity_callVoidMethod(JNIEnv *env, jobject thiz,
+                                                           jboolean b_throw) {
+    jclass clazz = env->GetObjectClass(thiz);
+    jmethodID jmethodId = env->GetMethodID(clazz, "voidMethod", "()V");
+    env->CallVoidMethod(thiz, jmethodId);
+    jthrowable jthrowable1 = env->ExceptionOccurred();
+    if (0 != jthrowable1){
+        if (b_throw){
+            env->ExceptionClear();
+            jclass jclass1 = env->FindClass("java/io/IOException");
+            if (0 != jclass1){
+                env->ThrowNew(jclass1, "abcd");
+            }
+        }
+        else{
+            env->ExceptionClear();
+        }
+    }
+}
+jobject  g_stringClass = 0;
+jweak g_stringWeak = 0;
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_example_testcplusplus_MainActivity_testRef(JNIEnv *env, jobject thiz) {
+    jclass stringClass = env->FindClass("java/lang/String");
+    g_stringClass = env->NewGlobalRef(stringClass);
+    g_stringWeak = env->NewWeakGlobalRef(stringClass);
+    if (JNI_FALSE == env->IsSameObject(g_stringWeak, NULL)){
+        printf("ok");
+    }
+    env->DeleteLocalRef(stringClass);
+    //env->DeleteWeakGlobalRef(g_stringWeak);
+
+    //synchronized thiz
+    if (JNI_OK == env->MonitorEnter(thiz)){
+
+    }
+    if (JNI_OK == env->MonitorExit(thiz)){
+
+    }
+}extern "C"
+JNIEXPORT void JNICALL
+Java_com_example_testcplusplus_MainActivity_testfile(JNIEnv *env, jobject thiz) {
+    FILE *f = fopen("/sdcard/test.log", "w");
+    const char *writeData = "write data";
+    fwrite(writeData, 1, strlen(writeData), f);
+    fclose(f);
+}
+pthread_t g_threadId = 0;
+
+void test(){
+    char value[PROP_VALUE_MAX] = {0};
+    int r = __system_property_get("ro.product.model", value);
+    if (r > 0){
+
+    }
+    const prop_info *pi = __system_property_find("ro.product.model");
+    char name[PROP_NAME_MAX] = {0};
+    char value2[PROP_VALUE_MAX] = {0};
+    r = __system_property_read(pi, name, value2);
+
+    int i = 0;
+    while (0 != (pi = __system_property_find_nth(i++))){
+        r = __system_property_read(pi, name, value);
+        if (r > 0){
+            std::string s = name;
+            s += " ";
+            s += value;
+            LOG_DEBUG("JNI", s.c_str());
+        }
+    }
+
+    uid_t uid = getuid();
+    gid_t gid = getgid();
+    char* logname = getlogin();
+    LOG_DEBUG("JNI", logname);
+
+    pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+    if (0 != pthread_mutex_lock(&mutex)){
+        LOG_DEBUG("JNI", "pthread_mutex_lock failed");
+    }
+    if (0 != pthread_mutex_unlock(&mutex)){
+        LOG_DEBUG("JNI", "pthread_mutex_unlock failed");
+    }
+    if (0 != pthread_mutex_destroy(&mutex)){
+        LOG_DEBUG("JNI", "pthread_mutex_destroy failed");
+    }
+}
+
+void* threadProc(void *argument){
+    JNIEnv *env = 0;
+    jint ret = g_JavaVM->AttachCurrentThread(&env, 0);
+    if (ret == JNI_OK){
+        //ok
+    }
+    jobject jobject1 = (jobject)argument;
+    jclass jclass1 = env->GetObjectClass(jobject1);
+    jfieldID  jfieldId = env->GetFieldID(jclass1, "instanceField", "Ljava/lang/String;");
+    env->DeleteLocalRef(jclass1);
+    jstring jstring1 = (jstring)env->GetObjectField(jobject1, jfieldId);
+    std::string sss = jstring2string(env, jstring1);
+    char path[128] = {0};
+    getcwd(path, 128);
+    FILE *f = fopen("/data/data/com.example.testcplusplus/test.log", "w+");
+    auto s = errno;
+    fwrite(sss.c_str(), 1, sss.size(), f);
+    fclose(f);
+
+    test();
+    env->DeleteGlobalRef(jobject1);
+    g_JavaVM->DetachCurrentThread();
+    return 0;
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_example_testcplusplus_MainActivity_initThread(JNIEnv *env, jobject thiz) {
+    jobject jobject1 = env->NewGlobalRef(thiz);
+    if (0 == pthread_create(&g_threadId, 0, &threadProc, jobject1)){
+        LOG_DEBUG("JNI", "create thread success");
+    }
+}extern "C"
+JNIEXPORT void JNICALL
+Java_com_example_testcplusplus_MainActivity_destroyThread(JNIEnv *env, jobject thiz) {
+    void *ret = 0;
+    pthread_join(g_threadId, &ret);
 }

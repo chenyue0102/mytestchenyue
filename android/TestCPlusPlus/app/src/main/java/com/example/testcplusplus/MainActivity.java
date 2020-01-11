@@ -3,8 +3,11 @@ package com.example.testcplusplus;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 
 public class MainActivity extends AppCompatActivity {
@@ -39,12 +42,45 @@ public class MainActivity extends AppCompatActivity {
         bbb=null;
         b = null;
         testAccessField();
+
+        try{
+            callVoidMethod(true);
+        }catch(IOException e){
+            e.printStackTrace();
+        }
+        testRef();
+        Button btnThreadInit = (Button)findViewById(R.id.btn_thread_init);
+        btnThreadInit.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                initThread();
+            }
+        });
+        Button btnThreadDestroy = (Button)findViewById(R.id.btn_thread_destroy);
+        btnThreadDestroy.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                destroyThread();
+            }
+        });
     }
+
+    public native void initThread();
+
+    public native void destroyThread();
+
+    public native  void testRef();
 
     public String instanceField = new String("instanceField");
     public static String staticField = new String("staticField");
-    public int test1(int a[], int b[]){return 0;}
+    public int test1(int a[],String s[],  int b[]){return a[0] + b[0] ;}
+    public static ByteBuffer test2(byte b[], int offset, int length){return ByteBuffer.allocate(0);}
 
+    public void voidMethod()throws IOException{
+        throw  new IOException("test");
+    }
+
+    public native void callVoidMethod(boolean bThrow)throws IOException;
     /**
      * A native method that is implemented by the 'native-lib' native library,
      * which is packaged with this application.
