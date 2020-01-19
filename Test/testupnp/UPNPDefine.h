@@ -1,9 +1,29 @@
 #pragma once
 
-#define MEDIA_RENDERER "MediaRenderer"
-#define CONNECTION_MANAGER "ConnectionManager"
-#define AVTRANSPORT "AVTransport"
-#define RENDERING_CONTROL "RenderingControl"
+#ifdef _MSC_VER
+
+#define ISINVALID(s) (INVALID_SOCKET==(s))
+
+#else
+
+#ifndef SOCKET
+#define SOCKET int
+#endif
+#ifndef SSIZE_T
+#define SSIZE_T ssize_t
+#endif
+#ifndef INVALID_SOCKET
+#define INVALID_SOCKET (-1)
+#endif
+#ifndef ISINVALID
+#define ISINVALID(s) ((s)<0)
+#endif
+
+#endif
+
+typedef unsigned int UPNP_UI4;
+static_assert(sizeof(UPNP_UI4) == 4, "");
+typedef int UPNP_I4;
 
 enum ETarget
 {

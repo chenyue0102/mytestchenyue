@@ -2,6 +2,7 @@
 #define __UPNP_PROTOCOL_H__
 #include <string>
 #include <vector>
+#include "UPNPDefine.h"
 
 
 //版本号
@@ -95,4 +96,22 @@ struct UPNPSDDRoot
 	std::vector<UPNPSDDAction> actionList;//动作列表,xml内部条目名称action
 };
 
+///////////////////////////////////////////////////////
+//AVTransport Action
+struct UPNPPositionInfo
+{
+	UPNP_UI4 Track;						//
+	std::string TrackDuration;			//持续时间，00:50:00
+	std::string TrackURI;				//播放的url
+	std::string RelTime;				//00:10:00
+	std::string AbsTime;				//00:10:00
+	UPNP_I4 RelCount;					//
+	UPNP_I4 AbsCount;					//
+
+	UPNPPositionInfo()
+		: Track()
+		, RelCount()
+		, AbsCount()
+	{}
+};
 #endif

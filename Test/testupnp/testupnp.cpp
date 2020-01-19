@@ -17,6 +17,7 @@ extern "C"{
 #include <codecvt>
 #include "UPNPDevInfo.h"
 #include "UPNPProtocolSerialize.h"
+#include "UPNPServiceAVTransport.h"
 
 struct TestChild
 {
@@ -103,6 +104,12 @@ inline bool SerializeStruct(ISerialize &pSerialize, TestStruct & Value)
 }
 int main()
 {
+	TestChild tc;
+	std::string tcss(R"(<root><xx:major>11</xx:major><minor>22</minor></root>)");
+	SerializeHelper::UnpackValue(tcss.data(), tcss.size(), tc, SerializeExport::EnumSerializeFormatXml);
+
+
+
 	TestStruct t;
 	t.sendEvents = "no";
 	t.a = 1;
@@ -150,34 +157,84 @@ int main()
 		0
 	};
 	int error = 0;
-	struct UPNPDev *devlist = upnpDiscoverDevices(deviceList, 2000, NULL, NULL, 0, 0, 2, &error, 0);
+	struct UPNPDev *devlist = upnpDiscoverDevices(deviceList, 1000, NULL, NULL, 0, 0, 2, &error, 0);
 	//printf("==============\r\n");
 	std::stringstream ss;
 	ss << "=======================" << std::endl;
+	UPNPDevInfo *pInfo = nullptr;
 	for (UPNPDev *dev = devlist; NULL != dev; dev = dev->pNext)
 	{
-		UPNPDevInfo *pInfo = new UPNPDevInfo();
-		pInfo->setDevInfo(dev->descURL, dev->st, dev->usn, dev->scope_id);
-		char * descXML = 0;
-		int descXMLsize = 0;
-		char lanaddr[40] = { 0 };
-		ss << "descURL:" << dev->descURL << std::endl;
-		ss << "st:" << dev->st << std::endl;
-		ss << "usn:" << dev->usn << std::endl;
-		
-
-		descXML = (char*)miniwget_getaddr(dev->descURL, &descXMLsize, lanaddr, _countof(lanaddr), 0, NULL);
-		
-		UPNPDDDRoot root;
-		SerializeHelper::UnpackValue(descXML, descXMLsize, root, SerializeExport::EnumSerializeFormatXml);
-		if (0 != descXML)
+		if (nullptr == strstr(dev->descURL, "10.0.30.32"))
 		{
-			std::string s(descXML, descXMLsize);
-			ss << "xml:" << std::endl << s.c_str() << std::endl;
+			continue;
 		}
+		pInfo = new UPNPDevInfo();
+		pInfo->setDevInfo(dev->descURL, dev->st, dev->usn, dev->scope_id);
+		//char * descXML = 0;
+		//int descXMLsize = 0;
+		//char lanaddr[40] = { 0 };
+		//ss << "descURL:" << dev->descURL << std::endl;
+		//ss << "st:" << dev->st << std::endl;
+		//ss << "usn:" << dev->usn << std::endl;
+		//
+
+		//descXML = (char*)miniwget_getaddr(dev->descURL, &descXMLsize, lanaddr, _countof(lanaddr), 0, NULL);
+		//
+		//UPNPDDDRoot root;
+		//SerializeHelper::UnpackValue(descXML, descXMLsize, root, SerializeExport::EnumSerializeFormatXml);
+		//if (0 != descXML)
+		//{
+		//	std::string s(descXML, descXMLsize);
+		//	ss << "xml:" << std::endl << s.c_str() << std::endl;
+		//}
+		//
+		////printf("xml==============================\r\n%s\r\n", descXML);
+		//free(descXML);
+	}
+	if (nullptr != pInfo)
+	{
+		UPNPServiceAVTransport *pAVTransport = pInfo->getAVTransport();
+		int a = 0;
+		std::string result;
+		do
+		{
+			printf("0:exit 1:seturl 2:pause 3:stop 4:play 5:seek 6:pos \r\n");
+			scanf("%d", &a);
+			switch (a)
+			{
+			case 1: 
+			{
+				pAVTransport->SetAVTransportURI(0, "https://cdn.kaishuhezi.com/mcourse/m3u8/71e5c57d-a4b2-44a4-845e-9c92bfcabeaa/index.m3u8", "");
+				break;
+			}
+			case 2:
+			{
+				pAVTransport->Pause(0);
+				break;
+			}
+			case 3:
+			{
+				pAVTransport->Stop(0);
+				break;
+			}
+			case 4:
+			{
+				pAVTransport->Play(0, "1");
+				break;
+			}
+			case 5:
+			{
+				pAVTransport->Seek(0, "ABS_TIME", "00:01:00");
+				break;
+			}
+			case 6:
+			{
+				UPNPPositionInfo pos;
+				pAVTransport->GetPositionInfo(0, pos);
+			}
+			}
+		} while (0 != a);
 		
-		//printf("xml==============================\r\n%s\r\n", descXML);
-		free(descXML);
 	}
 	//printf("==================\r\n");
 	/*std::string s = ss.str();

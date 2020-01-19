@@ -1,8 +1,12 @@
 #pragma once
 #include <string>
+#include <map>
+#include <memory>
 #include "UPNPProtocol.h"
 #include "UPNPDefine.h"
 
+class UPNPServiceBase;
+class UPNPServiceAVTransport;
 class UPNPDevInfo
 {
 public:
@@ -10,7 +14,8 @@ public:
 	~UPNPDevInfo();
 public:
 	void setDevInfo(const char *descURL, const char *st, const char *usn, unsigned int scope_id);
-	void sendGetDeviceDescriptionDocument(const std::string url);
+	void sendGetDeviceDescriptionDocument(const std::string &url);
+	UPNPServiceAVTransport* getAVTransport();
 private:
 	void parseST(const std::string &st);
 	std::string getUUIDFromUSN(const std::string &usn);
@@ -24,5 +29,6 @@ private:
 	EType mEType;			//¿‡–Õ
 	int mVersion;			//∞Ê±æ∫≈
 	UPNPDDDRoot mUPNPDDDRoot;
+	std::shared_ptr<UPNPServiceAVTransport> mAVTransport;
 };
 
