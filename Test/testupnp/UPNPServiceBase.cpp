@@ -28,6 +28,7 @@ void UPNPServiceBase::setService(const UPNPDDDService service, const std::string
 	mUPNPDDDService = service;
 	mUPNPHttp.setHttpInfo(host, port, scope_id);
 	mUPNPHttp.setControlURLPath(mUPNPDDDService.controlURL);
+	mUPNPHttp.setRegURLPath(mUPNPDDDService.eventSubURL);
 	std::string url = "http://" + host;
 	if (80 != port)
 	{
@@ -67,7 +68,7 @@ void UPNPServiceBase::sendGetServiceDescriptionDocument(const std::string &url)
 	}
 }
 
-std::string UPNPServiceBase::packSoapXml(const std::string actionName, std::vector<SoapArgument> arguments)
+std::string UPNPServiceBase::packSoapXml(const std::string &actionName, const std::vector<SoapArgument> &arguments)
 {
 	TiXmlDocument XmlDocument;
 
@@ -103,9 +104,15 @@ std::string UPNPServiceBase::packSoapXml(const std::string actionName, std::vect
 	return ret;
 }
 
-int UPNPServiceBase::soapPostSubmit(const std::string & action, std::vector<SoapArgument> arguments, std::string & result)
+int UPNPServiceBase::soapPostSubmit(const std::string & action, const std::vector<SoapArgument> &arguments, std::string & result)
 {
 	std::string soapXml = packSoapXml(action, arguments);
 	std::string tmpAction = mUPNPDDDService.serviceType + '#' + action;
 	return mUPNPHttp.soapPostSubmit(tmpAction, soapXml, "1.1", result);
+}
+
+bool UPNPServiceBase::regCallback(const std::string &event, const std::string & callbackURL, int timeout)
+{
+	int stateCode = mUPNPHttp.regCallback(event, callbackURL, timeout);
+	return stateCode == 200;
 }

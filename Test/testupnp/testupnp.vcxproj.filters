@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="httpserver">
+      <UniqueIdentifier>{5ac22f2c-e3ed-4dbd-864c-ea9d3108de3a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -51,6 +54,15 @@
     <ClInclude Include="UPNPHttp.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="c-version\lib\middleware.h">
+      <Filter>httpserver</Filter>
+    </ClInclude>
+    <ClInclude Include="c-version\lib\server.h">
+      <Filter>httpserver</Filter>
+    </ClInclude>
+    <ClInclude Include="c-version\app.h">
+      <Filter>httpserver</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -76,6 +88,15 @@
     </ClCompile>
     <ClCompile Include="UPNPHttp.cpp">
       <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="c-version\lib\middleware.c">
+      <Filter>httpserver</Filter>
+    </ClCompile>
+    <ClCompile Include="c-version\lib\server.c">
+      <Filter>httpserver</Filter>
+    </ClCompile>
+    <ClCompile Include="c-version\app.c">
+      <Filter>httpserver</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

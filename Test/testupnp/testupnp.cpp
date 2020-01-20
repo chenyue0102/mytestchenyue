@@ -5,11 +5,15 @@
 extern "C"{
 #include "miniupnpc.h"
 #include "miniwget.h"
+#include "server.h"
 }
 #include <Winsock2.h>
 #include <regex>
 #include <string>
 #include <sstream>
+#include <thread>
+#include <atomic>
+#include <condition_variable>
 #pragma comment(lib, "miniupnpc.lib")
 #pragma comment(lib, "KSSerializeD_Static.lib")
 #include "KSSerializeHelper.h"
@@ -18,6 +22,7 @@ extern "C"{
 #include "UPNPDevInfo.h"
 #include "UPNPProtocolSerialize.h"
 #include "UPNPServiceAVTransport.h"
+
 
 struct TestChild
 {
@@ -102,6 +107,7 @@ inline bool SerializeStruct(ISerialize &pSerialize, TestStruct & Value)
 	}
 	return true;
 }
+std::atomic_bool g_exit = false;
 int main()
 {
 	TestChild tc;
@@ -157,7 +163,7 @@ int main()
 		0
 	};
 	int error = 0;
-	struct UPNPDev *devlist = upnpDiscoverDevices(deviceList, 1000, NULL, NULL, 0, 0, 2, &error, 0);
+	struct UPNPDev *devlist = upnpDiscoverDevices(deviceList, 2000, NULL, NULL, 0, 0, 2, &error, 0);
 	//printf("==============\r\n");
 	std::stringstream ss;
 	ss << "=======================" << std::endl;
@@ -193,12 +199,14 @@ int main()
 	}
 	if (nullptr != pInfo)
 	{
+		void serverThread();
+		std::thread t = std::thread(&serverThread);
 		UPNPServiceAVTransport *pAVTransport = pInfo->getAVTransport();
 		int a = 0;
 		std::string result;
 		do
 		{
-			printf("0:exit 1:seturl 2:pause 3:stop 4:play 5:seek 6:pos \r\n");
+			printf("0:exit 1:seturl 2:pause 3:stop 4:play 5:seek 6:pos 7:reg \r\n");
 			scanf("%d", &a);
 			switch (a)
 			{
@@ -232,6 +240,13 @@ int main()
 				UPNPPositionInfo pos;
 				pAVTransport->GetPositionInfo(0, pos);
 			}
+			case 7:
+			{
+				std::string event("upnp:AVTransportURI");
+				std::string callback("http://10.0.30.48:9080/1234notify");
+				pAVTransport->regCallback(event, callback, 60*10);
+				break;
+			}
 			}
 		} while (0 != a);
 		
@@ -248,3 +263,19 @@ int main()
     return 0;
 }
 
+void Dispatch(HTTPReqMessage *req, HTTPResMessage *res)
+{
+	{
+		const char *p = "HTTP/1.1 200 OK\r\n\r\n";
+		memcpy(res->_buf, p, strlen(p));
+		res->_index = strlen(p);
+	}
+}
+
+void serverThread()
+{
+	HTTPServer srv;
+	HTTPServerInit(&srv, 9080);
+	HTTPServerRunLoop(&srv, &Dispatch);
+	HTTPServerClose(&srv);
+}
