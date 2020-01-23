@@ -6,9 +6,22 @@
 #include <dirent.h>
 #include <unistd.h>
 #include <sys/system_properties.h>
+#include "Platinum.h"
 
 #define LOG_DEBUG(tag,text) \
     __android_log_write(ANDROID_LOG_DEBUG, tag, text)
+
+/*----------------------------------------------------------------------
+|   logging
++---------------------------------------------------------------------*/
+NPT_SET_LOCAL_LOGGER("platinum.android.jni")
+
+/*----------------------------------------------------------------------
+|   functions
++---------------------------------------------------------------------*/
+__attribute__((constructor)) static void onDlOpen(void)
+{
+}
 
 std::string jstring2string(JNIEnv *env, jstring s){
     std::string str;
@@ -24,6 +37,7 @@ extern "C" JNIEXPORT jint JNICALL
 JNI_OnLoad(JavaVM *vm, void *reserved){
     g_JavaVM = vm;
     __android_log_write(ANDROID_LOG_DEBUG, "JNI", "JNI_OnLoad");
+    //NPT_LogManager::GetDefault().Configure("plist:.level=FINE;.handlers=ConsoleHandler;.ConsoleHandler.outputs=2;.ConsoleHandler.colors=false;.ConsoleHandler.filter=59");
     return JNI_VERSION_1_4;
 }
 
@@ -254,4 +268,84 @@ JNIEXPORT void JNICALL
 Java_com_example_testcplusplus_MainActivity_destroyThread(JNIEnv *env, jobject thiz) {
     void *ret = 0;
     pthread_join(g_threadId, &ret);
+}
+
+jobject g_instanceRef = 0;
+jclass  g_instanceClass = 0;
+class MediaRendererDelegate : public PLT_MediaRendererDelegate
+{
+public:
+    virtual NPT_Result OnGetCurrentConnectionInfo(PLT_ActionReference& action)
+    {
+        return 0;
+    }
+
+    // AVTransport
+    virtual NPT_Result OnNext(PLT_ActionReference& action) {
+        return 0;
+    }
+    virtual NPT_Result OnPause(PLT_ActionReference& action) {
+        return 0;
+    }
+    virtual NPT_Result OnPlay(PLT_ActionReference& action) {
+        JNIEnv *env = 0;
+        jint ret = g_JavaVM->AttachCurrentThread(&env, 0);
+        if (ret == JNI_OK){
+            //ok
+            jclass jclass1 = env->GetObjectClass(g_instanceRef);
+            jmethodID jmethodId = env->GetMethodID(jclass1, "callbackFun", "(I)V");
+            env->CallVoidMethod(g_instanceRef, jmethodId, 199);
+            g_JavaVM->DetachCurrentThread();
+        }
+        return 0;
+    }
+    virtual NPT_Result OnPrevious(PLT_ActionReference& action) {
+        return 0;
+    }
+    virtual NPT_Result OnSeek(PLT_ActionReference& action) {
+        return 0;
+    }
+    virtual NPT_Result OnStop(PLT_ActionReference& action) {
+        return 0;
+    }
+    virtual NPT_Result OnSetAVTransportURI(PLT_ActionReference& action) {
+        return 0;
+    }
+    virtual NPT_Result OnSetPlayMode(PLT_ActionReference& action) {
+        return 0;
+    }
+
+    // RenderingControl
+    virtual NPT_Result OnSetVolume(PLT_ActionReference& action) {
+        return 0;
+    }
+    virtual NPT_Result OnSetVolumeDB(PLT_ActionReference& action) {
+        return 0;
+    }
+    virtual NPT_Result OnGetVolumeDBRange(PLT_ActionReference& action) {
+        return 0;
+    }
+    virtual NPT_Result OnSetMute(PLT_ActionReference& action) {
+        return 0;
+    }
+};
+
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_example_testcplusplus_MainActivity_testPlatinum(JNIEnv *env, jobject thiz) {
+    g_instanceRef = env->NewGlobalRef(thiz);
+    g_instanceClass = env->FindClass("com/example/testcplusplus/MainActivity");
+    jmethodID jmethodId = env->GetMethodID(g_instanceClass, "callbackFun", "(I)V");
+    PLT_UPnP* self = new PLT_UPnP();
+
+    MediaRendererDelegate *p = new MediaRendererDelegate();
+    PLT_MediaRenderer *mediaRenderer = new PLT_MediaRenderer("Platinum Media Renderer",
+                                                             false,
+                                                             "e6572b54-f3c7-2d91-2fb5-b757f2537e21");
+    mediaRenderer->SetDelegate(p);
+    PLT_DeviceHostReference device(mediaRenderer);
+    self->AddDevice(device);
+    self->Start();
+    //delete self;
 }

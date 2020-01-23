@@ -23,8 +23,16 @@ android {
     }
     externalNativeBuild {
         cmake {
-            path "src/main/cpp/CMakeLists.txt"
+            path "src/main/cpp/native-lib/CMakeLists.txt"
             version "3.10.2"
+        }
+    }
+    splits {
+        abi {
+            enable true
+            reset()
+            include('armeabi-v7a')
+            universalApk false
         }
     }
 }

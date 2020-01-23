@@ -22,6 +22,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        String s = this.getClass().getName();
         // Example of a call to a native method
         TextView tv = findViewById(R.id.sample_text);
         tv.setText(stringFromJNI() + MainActivity.stringFromJNI2());
@@ -63,6 +64,7 @@ public class MainActivity extends AppCompatActivity {
                 destroyThread();
             }
         });
+        testPlatinum();
     }
 
     public native void initThread();
@@ -97,4 +99,10 @@ public class MainActivity extends AppCompatActivity {
     public native void releaseDirectBuffer(ByteBuffer b);
 
     public native void testAccessField();
+
+    public native void testPlatinum();
+
+    public void callbackFun(int a){
+        Log.i("MyTest", "" + a);
+    }
 }
