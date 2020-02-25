@@ -8,7 +8,10 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
+
+import dalvik.system.BaseDexClassLoader;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -49,6 +52,16 @@ public class MainActivity extends AppCompatActivity {
         }catch(IOException e){
             e.printStackTrace();
         }
+        Class<?> t = String.class;
+        Method m[] = MyClassLoader.class.getMethods();
+        for(Method mi : m){
+            String sss = mi.getName();
+            Log.i("MyTest", sss);
+        }
+        String sttt = t.getName();
+
+        Log.i("MyTest", sttt);
+        setClassLoader(new MyClassLoader());
         testRef();
         Button btnThreadInit = (Button)findViewById(R.id.btn_thread_init);
         btnThreadInit.setOnClickListener(new View.OnClickListener() {
@@ -65,6 +78,14 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         testPlatinum();
+
+        Button btnStartServer = (Button)findViewById(R.id.btn_start_server);
+        btnStartServer.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startServer();
+            }
+        });
     }
 
     public native void initThread();
@@ -102,7 +123,10 @@ public class MainActivity extends AppCompatActivity {
 
     public native void testPlatinum();
 
+    public native void setClassLoader(MyClassLoader myClassLoader);
+
     public void callbackFun(int a){
         Log.i("MyTest", "" + a);
     }
+    public native void startServer();
 }

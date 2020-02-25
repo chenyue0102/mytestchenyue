@@ -7,6 +7,9 @@ cmake_minimum_required(VERSION 3.4.1)
 set(JNILIBS ${CMAKE_CURRENT_SOURCE_DIR}/../../jniLibs/${ANDROID_ABI})
 set(NEPTUNE ${CMAKE_CURRENT_SOURCE_DIR}/../Neptune)
 set(PLATINUM ${CMAKE_CURRENT_SOURCE_DIR}/../Platinum)
+set(TCPSERVER_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../TCPServer)
+
+#add_subdirectory(${TCPSERVER_PATH} TCPServer)
 
 include_directories(
         ${NEPTUNE}/Core
@@ -17,6 +20,7 @@ include_directories(
         ${PLATINUM}/Devices/MediaServer
         ${PLATINUM}/Extras
         ${PLATINUM}/Platinum
+        ${TCPSERVER_PATH}
 )
 # Creates and names a library, sets it as either STATIC
 # or SHARED, and provides the relative paths to its source code.
@@ -30,7 +34,13 @@ add_library( # Sets the name of the library.
              SHARED
 
              # Provides a relative path to your source file(s).
-             native-lib.cpp )
+             native-lib.cpp
+        ${TCPSERVER_PATH}/TCPServer.cpp
+        ${TCPSERVER_PATH}/ServerObject.cpp
+        ${TCPSERVER_PATH}/EPollObject.cpp
+        ${TCPSERVER_PATH}/TaskPool.cpp
+        ${TCPSERVER_PATH}/Log.cpp
+        )
 
 add_library(libaxTLS STATIC IMPORTED)
 set_target_properties(libaxTLS PROPERTIES IMPORTED_LOCATION ${JNILIBS}/libaxTLS.a)
@@ -80,6 +90,7 @@ target_link_libraries( # Specifies the target library.
         libNeptune
         libaxTLS
         libZlib
+        #TcpServer
                        # Links the target library to the log library
                        # included in the NDK.
                        ${log-lib} )

@@ -136,8 +136,10 @@ Java_com_example_testcplusplus_MainActivity_testAccessField(JNIEnv *env, jobject
     jint ret = env->CallIntMethod(thiz, test1, intArray1, objArray1, intArray2);
     exception = env->ExceptionCheck();
     //env->CallStaticBooleanMethod()
+    env->DeleteLocalRef(clazz);
     env->DeleteLocalRef(intArray1);
     env->DeleteLocalRef(intArray2);
+
     return;
 }
 extern "C"
@@ -271,7 +273,7 @@ Java_com_example_testcplusplus_MainActivity_destroyThread(JNIEnv *env, jobject t
 }
 
 jobject g_instanceRef = 0;
-jclass  g_instanceClass = 0;
+jobject g_classLoader = 0;
 class MediaRendererDelegate : public PLT_MediaRendererDelegate
 {
 public:
@@ -292,8 +294,18 @@ public:
         jint ret = g_JavaVM->AttachCurrentThread(&env, 0);
         if (ret == JNI_OK){
             //ok
+            jclass loaderClass = env->GetObjectClass(g_classLoader);
+            jmethodID jmethodId1 = env->GetMethodID(loaderClass, "loadClass", "(Ljava/lang/String;)Ljava/lang/Class;");
+            jstring className = env->NewStringUTF("com/example/testcplusplus/MainActivity");
+            jobject tmpObj = env->CallObjectMethod(g_classLoader, jmethodId1, className);
+            //jclass jclass2 = tmpObj;
+            //env->DeleteLocalRef(className);
+#if 0
             jclass jclass1 = env->GetObjectClass(g_instanceRef);
             jmethodID jmethodId = env->GetMethodID(jclass1, "callbackFun", "(I)V");
+#else
+            jmethodID jmethodId = env->GetMethodID((jclass)tmpObj, "callbackFun", "(I)V");
+#endif
             env->CallVoidMethod(g_instanceRef, jmethodId, 199);
             g_JavaVM->DetachCurrentThread();
         }
@@ -335,8 +347,8 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_com_example_testcplusplus_MainActivity_testPlatinum(JNIEnv *env, jobject thiz) {
     g_instanceRef = env->NewGlobalRef(thiz);
-    g_instanceClass = env->FindClass("com/example/testcplusplus/MainActivity");
-    jmethodID jmethodId = env->GetMethodID(g_instanceClass, "callbackFun", "(I)V");
+    //g_instanceClass = env->FindClass("com/example/testcplusplus/MainActivity");
+    //jmethodID jmethodId = env->GetMethodID(g_instanceClass, "callbackFun", "(I)V");
     PLT_UPnP* self = new PLT_UPnP();
 
     MediaRendererDelegate *p = new MediaRendererDelegate();
@@ -348,4 +360,13 @@ Java_com_example_testcplusplus_MainActivity_testPlatinum(JNIEnv *env, jobject th
     self->AddDevice(device);
     self->Start();
     //delete self;
+}extern "C"
+JNIEXPORT void JNICALL
+Java_com_example_testcplusplus_MainActivity_setClassLoader(JNIEnv *env, jobject thiz,
+                                                           jobject my_class_loader) {
+    g_classLoader = env->NewGlobalRef(my_class_loader);
+}extern "C"
+JNIEXPORT void JNICALL
+Java_com_example_testcplusplus_MainActivity_startServer(JNIEnv *env, jobject thiz) {
+
 }
