@@ -5,9 +5,10 @@
 extern "C"{
 #include "miniupnpc.h"
 #include "miniwget.h"
-#include "server.h"
+//#include "server.h"
 }
 #include <Winsock2.h>
+#include <ws2tcpip.h>   
 #include <regex>
 #include <string>
 #include <sstream>
@@ -22,6 +23,10 @@ extern "C"{
 #include "UPNPDevInfo.h"
 #include "UPNPProtocolSerialize.h"
 #include "UPNPServiceAVTransport.h"
+#include "UPNPServiceConnectionManager.h"
+#include "UPNPServiceRenderingControl.h"
+#include "UPNPServiceKaiShu.h"
+#include "tinyxml.h"
 
 
 struct TestChild
@@ -108,8 +113,102 @@ inline bool SerializeStruct(ISerialize &pSerialize, TestStruct & Value)
 	return true;
 }
 std::atomic_bool g_exit = false;
+#include <atlenc.h>
+
+char* g_str = R"(<e:propertyset
+    xmlns:e="urn:schemas-upnp-org:event-1-0">
+    <e:property>
+        <LastChange>&lt;Event xmlns = &quot;urn:schemas-upnp-org:metadata-1-0/AVT/&quot;&gt;&lt;InstanceID val=&quot;0&quot;&gt;&lt;NumberOfTracks  val=&quot;1&quot;/&gt;&lt;CurrentTrack  val=&quot;1&quot;/&gt;&lt;CurrentMediaDuration  val=&quot;00:04:01&quot;/&gt;&lt;CurrentTrackDuration  val=&quot;00:04:01&quot;/&gt;&lt;/InstanceID&gt;&lt;/Event&gt;</LastChange>
+    </e:property>
+</e:propertyset>)";
+
+void startssdsever(ULONG ip1, ULONG ip2)
+{
+	SOCKET s = socket(AF_INET, SOCK_DGRAM, 0);
+
+	do
+	{
+		if (s < 0) 
+		{
+			assert(false);
+			break;
+		}
+		int option = 1;
+		if (setsockopt(s,
+			SOL_SOCKET,
+			SO_REUSEADDR,
+			(const char*)&option,
+			sizeof(option)) < 0)
+		{
+			assert(false);
+			break;
+		}
+		sockaddr_in addr;
+		addr.sin_family = AF_INET;
+		addr.sin_port = htons(1900);
+		/*if (ipaddress.empty())
+			addr.sin_addr.s_addr = htonl(INADDR_ANY);
+		else
+			addr.sin_addr.s_addr = inet_addr(ipaddress.c_str());*/
+		addr.sin_addr.s_addr = ip1;
+		if (bind(s, (sockaddr*)&addr, sizeof(addr)) < 0)
+		{
+			assert(false);
+			break;
+		}
+		ip_mreq imr = { 0 };
+		imr.imr_multiaddr.s_addr = inet_addr("239.255.255.250");
+		//imr.imr_interface.s_addr = htonl(INADDR_ANY);
+		imr.imr_interface.s_addr = ip2;
+		if (setsockopt(s, IPPROTO_IP, IP_ADD_MEMBERSHIP, (const char*)&imr, sizeof(imr)) < 0)
+		{
+			assert(false);
+			break;
+		}
+		char* buffer = new char[2048];
+		sockaddr_in recvAddr;
+		int recvAddrLen = sizeof(recvAddr);
+		while (true)
+		{
+			int recvLen = recvfrom(s, buffer, 2048, 0, (sockaddr*)&recvAddr, &recvAddrLen);
+			if (recvLen < 0)
+			{
+				break;
+			}
+			buffer[recvLen] = '\0';
+			if (strstr(buffer, "discover") != nullptr) 
+			{
+				std::stringstream ss;
+				ss <<"begin " <<  buffer << "threadid:" <<std::this_thread::get_id() << " ip "<< ip1 << ip2 << " end " <<std::endl;
+				OutputDebugStringA(ss.str().c_str());
+			}
+			if (strstr(buffer, "192.168.3.2") != nullptr)
+			{
+				OutputDebugStringA(buffer);
+			}
+			//printf("%s\r\n", buffer);
+			//OutputDebugStringA(buffer);
+		}
+	} while (false);
+}
 int main()
 {
+	TiXmlDocument XmlDocument;
+	XmlDocument.Parse(g_str, nullptr, TIXML_ENCODING_UTF8);
+	TiXmlNode *pNode = XmlDocument.FirstChild();
+	TiXmlNode* pNode2 = pNode->FirstChild();
+	TiXmlNode* pNode3 = pNode2->FirstChild();
+	std::string text = pNode3->FirstChild()->Value();
+
+	char c[100];
+	std::snprintf(c, 100, "abc");
+	unsigned char ggb2312[] = { 0xc4, 0xe3, 0xba, 0xc3, 0x00 };
+	char* gb2312 = (char*)ggb2312;
+	typedef std::codecvt_byname< wchar_t, char, std::mbstate_t > cvt_byname;
+	std::wstring_convert <std::codecvt_byname <wchar_t, char, std::mbstate_t >> char_wchar_cvt(new cvt_byname("Chinese_China.936"));
+	std::wstring strW = char_wchar_cvt.from_bytes(gb2312);
+	std::string str = char_wchar_cvt.to_bytes(strW);
+
 	TestChild tc;
 	std::string tcss(R"(<root><xx:major>11</xx:major><minor>22</minor></root>)");
 	SerializeHelper::UnpackValue(tcss.data(), tcss.size(), tc, SerializeExport::EnumSerializeFormatXml);
@@ -150,7 +249,9 @@ int main()
 	}
 	WSADATA wsaData;
 	int nResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
-
+	std::thread tttt(&startssdsever, htonl(INADDR_ANY), htonl(INADDR_ANY));
+	std::thread tttt2(&startssdsever, inet_addr("192.168.3.2"), inet_addr("192.168.3.2"));
+	std::this_thread::sleep_for(std::chrono::milliseconds(500));
 	const char * const deviceList[] = {
 		//"urn:schemas-upnp-org:device:MediaRenderer:1",		//媒体播放器
 		//"urn:schemas-upnp-org:service:ConnectionManager:1",		//负责建立和管理与接收端的网络连接
@@ -170,7 +271,9 @@ int main()
 	UPNPDevInfo *pInfo = nullptr;
 	for (UPNPDev *dev = devlist; NULL != dev; dev = dev->pNext)
 	{
-		if (nullptr == strstr(dev->descURL, "10.0.30.32"))
+		//if (nullptr == strstr(dev->descURL, "10.0.30.32"))
+		if (nullptr == strstr(dev->descURL, "192.168.3.7"))
+		//if (nullptr == strstr(dev->descURL, "192.168.3.2"))
 		{
 			continue;
 		}
@@ -197,16 +300,20 @@ int main()
 		////printf("xml==============================\r\n%s\r\n", descXML);
 		//free(descXML);
 	}
+	//getchar();
 	if (nullptr != pInfo)
 	{
 		void serverThread();
-		std::thread t = std::thread(&serverThread);
+		//std::thread t = std::thread(&serverThread);
 		UPNPServiceAVTransport *pAVTransport = pInfo->getAVTransport();
+		UPNPServiceConnectionManager* pConnectionManager = pInfo->getConnectionManager();
+		UPNPServiceRenderingControl *pRenderingControl = pInfo->getRenderingControl();
+		UPNPServiceKaiShu* pUPNPServiceKaiShu = pInfo->getKaiShu();
 		int a = 0;
 		std::string result;
 		do
 		{
-			printf("0:exit 1:seturl 2:pause 3:stop 4:play 5:seek 6:pos 7:reg \r\n");
+			printf("0:exit 1:seturl 2:pause 3:stop 4:play 5:seek 6:pos 7:reg 8:getprotocolinfo 9:GetVolumeDBRange\r\n");
 			scanf("%d", &a);
 			switch (a)
 			{
@@ -239,12 +346,31 @@ int main()
 			{
 				UPNPPositionInfo pos;
 				pAVTransport->GetPositionInfo(0, pos);
+				break;
 			}
 			case 7:
 			{
 				std::string event("upnp:AVTransportURI");
 				std::string callback("http://10.0.30.48:9080/1234notify");
 				pAVTransport->regCallback(event, callback, 60*10);
+				break;
+			}
+			case 8: 
+			{
+				std::string Source, Sink;
+				pConnectionManager->GetProtocolInfo(Source, Sink);
+				break;
+
+			}
+			case 9:
+			{
+				int minVolume = 0, maxVolume = 0;
+				pRenderingControl->GetVolumeDBRange(minVolume, maxVolume);
+				break;
+			}
+			case 10:
+			{
+				pUPNPServiceKaiShu->X_kaishustory_Login("1234", "5678");
 				break;
 			}
 			}
@@ -263,19 +389,19 @@ int main()
     return 0;
 }
 
-void Dispatch(HTTPReqMessage *req, HTTPResMessage *res)
-{
-	{
-		const char *p = "HTTP/1.1 200 OK\r\n\r\n";
-		memcpy(res->_buf, p, strlen(p));
-		res->_index = strlen(p);
-	}
-}
-
-void serverThread()
-{
-	HTTPServer srv;
-	HTTPServerInit(&srv, 9080);
-	HTTPServerRunLoop(&srv, &Dispatch);
-	HTTPServerClose(&srv);
-}
+//void Dispatch(HTTPReqMessage *req, HTTPResMessage *res)
+//{
+//	{
+//		const char *p = "HTTP/1.1 200 OK\r\n\r\n";
+//		memcpy(res->_buf, p, strlen(p));
+//		res->_index = strlen(p);
+//	}
+//}
+//
+//void serverThread()
+//{
+//	HTTPServer srv;
+//	HTTPServerInit(&srv, 9080);
+//	HTTPServerRunLoop(&srv, &Dispatch);
+//	HTTPServerClose(&srv);
+//}

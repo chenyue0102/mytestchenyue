@@ -40,4 +40,5 @@ enum EType
 	ETypeConnectionManager,	//负责建立和管理与接收端的网络连接
 	ETypeAVTransport,		//实现暂停，快进等功能
 	ETypeRenderingControl,	//调整效果，如对比度，颜色,声音等
+	ETypeKaiShu,
 };

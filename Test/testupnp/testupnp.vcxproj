@@ -87,15 +87,15 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;MINIUPNP_STATICLIB;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_WINSOCK_DEPRECATED_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;MINIUPNP_STATICLIB;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>./c-version\lib;../../;D:\teacher\src\include\KSSerialize;../include\KSSerialize;../opensource\miniupnp\miniupnpc;C:\Users\EDZ\Desktop\miniupnp\miniupnpc;D:\teacher\src\KSSerialize\tinyxml</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./c-version\lib;../../;D:\teacher\src\include\KSSerialize;../include\KSSerialize;../../../opensource\miniupnp\miniupnpc;C:\Users\EDZ\Desktop\miniupnp\miniupnpc;D:\teacher\src\KSSerialize\tinyxml;./tinyxml</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>Ws2_32.lib;IPHlpApi.Lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>D:\teacher\src\lib;../opensource\miniupnp\miniupnpc\msvc\Debug;../lib;C:\Users\EDZ\Desktop\miniupnp\miniupnpc\msvc\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>Ws2_32.lib;IPHlpApi.Lib;</AdditionalDependencies>
+      <AdditionalLibraryDirectories>D:\teacher\src\lib;../../../opensource\miniupnp\miniupnpc\msvc\Debug;../lib;C:\Users\EDZ\Desktop\miniupnp\miniupnpc\msvc\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -123,14 +123,15 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>./c-version\lib;../../;D:\teacher\src\include\KSSerialize;../include\KSSerialize;../opensource\miniupnp\miniupnpc;C:\Users\EDZ\Desktop\miniupnp\miniupnpc;D:\teacher\src\KSSerialize\tinyxml</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./c-version\lib;../../;D:\teacher\src\include\KSSerialize;../include\KSSerialize;../../../opensource\miniupnp\miniupnpc;C:\Users\EDZ\Desktop\miniupnp\miniupnpc;D:\teacher\src\KSSerialize\tinyxml;./tinyxml</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>D:\teacher\src\lib;../opensource\miniupnp\miniupnpc\msvc\Debug;../lib;C:\Users\EDZ\Desktop\miniupnp\miniupnpc\msvc\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>D:\teacher\src\lib;../../../opensource\miniupnp\miniupnpc\msvc\Debug;../lib;C:\Users\EDZ\Desktop\miniupnp\miniupnpc\msvc\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>Ws2_32.lib;IPHlpApi.Lib;</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -156,10 +157,9 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="c-version\app.h" />
-    <ClInclude Include="c-version\lib\middleware.h" />
-    <ClInclude Include="c-version\lib\server.h" />
     <ClInclude Include="Common.h" />
+    <ClInclude Include="tinyxml\tinystr.h" />
+    <ClInclude Include="tinyxml\tinyxml.h" />
     <ClInclude Include="UPNPHttp.h" />
     <ClInclude Include="UPNPServiceAVTransport.h" />
     <ClInclude Include="UPNPServiceBase.h" />
@@ -169,20 +169,27 @@
     <ClInclude Include="UPNPDevInfo.h" />
     <ClInclude Include="UPNPProtocol.h" />
     <ClInclude Include="UPNPProtocolSerialize.h" />
+    <ClInclude Include="UPNPServiceConnectionManager.h" />
+    <ClInclude Include="UPNPServiceKaiShu.h" />
     <ClInclude Include="UPNPServiceMediaRenderer.h" />
+    <ClInclude Include="UPNPServiceRenderingControl.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="c-version\app.c" />
-    <ClCompile Include="c-version\lib\middleware.c" />
-    <ClCompile Include="c-version\lib\server.c" />
     <ClCompile Include="Common.cpp" />
+    <ClCompile Include="tinyxml\tinystr.cpp" />
+    <ClCompile Include="tinyxml\tinyxml.cpp" />
+    <ClCompile Include="tinyxml\tinyxmlerror.cpp" />
+    <ClCompile Include="tinyxml\tinyxmlparser.cpp" />
     <ClCompile Include="UPNPHttp.cpp" />
     <ClCompile Include="UPNPServiceAVTransport.cpp" />
     <ClCompile Include="UPNPServiceBase.cpp" />
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="testupnp.cpp" />
     <ClCompile Include="UPNPDevInfo.cpp" />
+    <ClCompile Include="UPNPServiceConnectionManager.cpp" />
+    <ClCompile Include="UPNPServiceKaiShu.cpp" />
     <ClCompile Include="UPNPServiceMediaRenderer.cpp" />
+    <ClCompile Include="UPNPServiceRenderingControl.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

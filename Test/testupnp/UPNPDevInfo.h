@@ -7,6 +7,9 @@
 
 class UPNPServiceBase;
 class UPNPServiceAVTransport;
+class UPNPServiceConnectionManager;
+class UPNPServiceRenderingControl;
+class UPNPServiceKaiShu;
 class UPNPDevInfo
 {
 public:
@@ -16,6 +19,9 @@ public:
 	void setDevInfo(const char *descURL, const char *st, const char *usn, unsigned int scope_id);
 	void sendGetDeviceDescriptionDocument(const std::string &url);
 	UPNPServiceAVTransport* getAVTransport();
+	UPNPServiceConnectionManager* getConnectionManager();
+	UPNPServiceRenderingControl* getRenderingControl();
+	UPNPServiceKaiShu* getKaiShu();
 private:
 	void parseST(const std::string &st);
 	std::string getUUIDFromUSN(const std::string &usn);
@@ -30,5 +36,8 @@ private:
 	int mVersion;			//°æ±¾ºÅ
 	UPNPDDDRoot mUPNPDDDRoot;
 	std::shared_ptr<UPNPServiceAVTransport> mAVTransport;
+	std::shared_ptr<UPNPServiceConnectionManager> mUPNPServiceConnectionManager;
+	std::shared_ptr<UPNPServiceRenderingControl> mUPNPServiceRenderingControl;
+	std::shared_ptr<UPNPServiceKaiShu> mUPNPServiceKaiShu;
 };
 
