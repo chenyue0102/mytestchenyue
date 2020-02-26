@@ -25,6 +25,8 @@
 #include <vector>
 #include <map>
 #include <algorithm>
+#include <codecvt>
+#include <locale>
 #include "TestLinux.h"
 
 template < typename T, size_t N >
@@ -1224,14 +1226,19 @@ extern void test_sigaction();
 
 void test_unname_sem()
 {
-	sem_init
+	//sem_init
 }
-void test_sem()
+static void test_sem()
 {
 	test_unname_sem();
 }
 int main()
 {
+	unsigned char gb2312[] = { 0xc4, 0xe3, 0xba, 0xc3, 0x00 };
+	typedef std::codecvt_byname< wchar_t, char, std::mbstate_t > cvt_byname;
+	std::wstring_convert <std::codecvt_byname <wchar_t, char, std::mbstate_t >> char_wchar_cvt(new cvt_byname("Chinese_China.936"));
+	std::wstring strW = char_wchar_cvt.from_bytes((char*)gb2312);
+	std::string str = char_wchar_cvt.to_bytes(strW);
 	//test_unix_stream();
 	//test_inet_stream();
 	//test_udp();

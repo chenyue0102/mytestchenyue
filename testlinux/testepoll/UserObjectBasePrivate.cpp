@@ -3,7 +3,7 @@
 #include <memory>
 #include <string.h>
 #include "Log.h"
-#include "../include/ProtocolBase.h"
+#include "ProtocolBase.h"
 #include "UserObjectBase.h"
 #include "ServerObject.h"
 #include "SmartPtr.h"

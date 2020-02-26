@@ -5,7 +5,7 @@
 #include <list>
 #include <string>
 #include <unistd.h>
-#include "../include/ProtocolBase.h"
+#include "ProtocolBase.h"
 #include "Log.h"
 #include "SmartPtr.h"
 #include "Single.h"

@@ -3,7 +3,7 @@
 #include <map>
 #include <functional>
 #include <mutex>
-#include <pthread.h>
+#include <thread>
 
 enum EventType
 {
@@ -17,23 +17,24 @@ public:
 	EPollObject();
 	~EPollObject();
 public:
+	void setEpollSize(int size);
 	bool init();
-	bool destory();
+	bool destroy();
 	bool updateFun(int fd, EventType eventType, std::function<void()> fun);
 	bool removeFun(int fd, EventType eventType);
 	bool removeFun(int fd);
 private:
 	bool innerEpollUpdate(int fd, int epoll_op);
 private:
-	static void* innerStaticWaitThread(void *arg);
-	void innerWaitThread();
-	//static void* innerCheckThread(void *arg);
+	void innerWaitThread(int epollSize);
 private:
 	typedef std::map<EventType, std::function<void()>> EVENT_FUN_ARRAY;
 	int m_epollfd;
+	int m_pipe[2];				//关闭的时候,给这个pipe写入数据通知推出
 	std::mutex m_mutex;
-	pthread_t m_waitThreadId;
-	pthread_t m_checkThreadId;
+	int m_epollSize;
+	volatile bool m_bExit;
+	std::thread m_waitThread;
 	//key fd
 	std::map<int, EVENT_FUN_ARRAY> m_fdEventFun;
 };

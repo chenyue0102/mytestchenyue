@@ -23,30 +23,19 @@ bool CTaskPool::Open(unsigned int nPoolSize)
 
 	do 
 	{
+		Close();
+		std::lock_guard<std::mutex> lk(m_mutex);
 		m_bExit = false;
 		if (0 == nPoolSize)
 		{
 			nPoolSize = std::thread::hardware_concurrency() * 2 + 1;
 		}
-		
-		bool bError = false;
-		std::lock_guard<std::mutex> lk(m_mutex);
 		for (unsigned int nIndex = 0; nIndex < nPoolSize; nIndex++)
 		{
-			std::unique_ptr<ThreadInfo> pThreadInfo(new ThreadInfo());// = std::make_unique<ThreadInfo>();
-			if (!pThreadInfo)
-			{
-				bError = true;
-				assert(false);
-				break;
-			}
-			pThreadInfo->s = ThreadStatusNone;
+			std::unique_ptr<ThreadInfo> pThreadInfo(new ThreadInfo);
 			pThreadInfo->t = std::thread(&CTaskPool::TaskThread, this, std::ref(*pThreadInfo));
+			pThreadInfo->index = nIndex;
 			m_threadInfos.push_back(std::move(pThreadInfo));
-		}
-		if (bError)
-		{
-			break;
 		}
 
 		bRes = true;
@@ -66,16 +55,15 @@ bool CTaskPool::Close()
 		m_bExit = true;
 		m_cv.notify_all();
 	}
-	for (auto &pThreadInfo : m_threadInfos)
+	for (auto &curThreadInfo : m_threadInfos)
 	{
-		if (pThreadInfo
-			&& pThreadInfo->t.joinable())
+		if (curThreadInfo->t.joinable())
 		{
-			if (std::this_thread::get_id() == pThreadInfo->t.get_id())
+			if (std::this_thread::get_id() == curThreadInfo->t.get_id())
 			{
 				assert(false);
 			}
-			pThreadInfo->t.join();
+			curThreadInfo->t.join();
 		}
 	}
 	m_threadInfos.clear();
@@ -104,15 +92,28 @@ bool CTaskPool::InnerAddOrderTask(const TASK_JOB & job, bool groupIdValid, TASK_
 	do
 	{
 		std::unique_ptr<TaskInfo> pTaskInfo(new TaskInfo());// = std::make_unique<TaskInfo>();
-		if (!pTaskInfo)
-		{
-			assert(false);
-			break;
-		}
 		pTaskInfo->job = job;
 		pTaskInfo->groupIdValid = groupIdValid;
 		pTaskInfo->groupId = groupId;
-		m_taskInfos.push_back(std::move(pTaskInfo));
+		if (groupIdValid)
+		{
+			//如果该分组已经分配给某个线程,则放到该线程的任务队列中,否则放入公共任务中
+			auto iter = m_curGroupIds.find(groupId);
+			if (iter != m_curGroupIds.end())
+			{
+				auto& curThreadInfo = m_threadInfos[iter->second];
+				std::lock_guard<std::mutex> lk(curThreadInfo->mtx);
+				curThreadInfo->taskInfos.push_back(std::move(pTaskInfo));
+			}
+			else
+			{
+				m_taskInfos.push_back(std::move(pTaskInfo));
+			}
+		}
+		else
+		{
+			m_taskInfos.push_back(std::move(pTaskInfo));
+		}
 		m_cv.notify_one();
 
 		bRes = true;
@@ -121,66 +122,76 @@ bool CTaskPool::InnerAddOrderTask(const TASK_JOB & job, bool groupIdValid, TASK_
 	return bRes;
 }
 
-std::unique_ptr<CTaskPool::TaskInfo> CTaskPool::InnerGetTaskInfo()
+std::unique_ptr<CTaskPool::TaskInfo> CTaskPool::InnerGetTaskInfo(ThreadInfo& curThreadInfo)
 {
 	std::unique_ptr<TaskInfo> pTaskInfo;
-	auto iter = m_taskInfos.begin();
-	while (iter != m_taskInfos.end())
 	{
-		if (!(*iter))
+		//先查找自己线程的任务
+		std::lock_guard<std::mutex> lk(curThreadInfo.mtx);
+		if (!curThreadInfo.taskInfos.empty())
 		{
-			iter = m_taskInfos.erase(iter);
-			assert(false);
-			continue;
+			pTaskInfo = std::move(curThreadInfo.taskInfos.front());
+			curThreadInfo.taskInfos.pop_front();
 		}
-		std::unique_ptr<TaskInfo> &pFindTaskInfo = *iter;
-		if (pFindTaskInfo->groupIdValid
-			&& m_curGroupIds.find(pFindTaskInfo->groupId) != m_curGroupIds.end())
+		else
 		{
-			++iter;
-			continue;
+			//自己线程的任务完了,清空下groupid
+			if (curThreadInfo.groupIdValid)
+			{
+				curThreadInfo.groupIdValid = false;
+				m_curGroupIds.erase(curThreadInfo.groupId);
+				curThreadInfo.groupId = 0;
+			}
 		}
-		pTaskInfo = std::move(pFindTaskInfo);
-		m_taskInfos.erase(iter);
-		break;
+		
+	}
+	if (!pTaskInfo)
+	{
+		if (!m_taskInfos.empty())
+		{
+			pTaskInfo = std::move(m_taskInfos.front());
+			m_taskInfos.pop_front();
+			//这个任务需要按照groupid顺序处理
+			if (pTaskInfo->groupIdValid)
+			{
+				m_curGroupIds.insert(std::make_pair(pTaskInfo->groupId, curThreadInfo.index));
+				std::lock_guard<std::mutex> lk(curThreadInfo.mtx);
+				curThreadInfo.groupIdValid = true;
+				curThreadInfo.groupId = pTaskInfo->groupId;
+
+				//将剩余的此group的任务也加到当前线程队列中
+				auto iter = m_taskInfos.begin();
+				while (iter != m_taskInfos.end()) 
+				{
+					if ((*iter)->groupIdValid && (*iter)->groupId == pTaskInfo->groupId)
+					{
+						curThreadInfo.taskInfos.push_back(std::move(*iter));
+						iter = m_taskInfos.erase(iter);
+					}
+					else
+					{
+						++iter;
+					}
+				}
+			}
+		}
 	}
 	return pTaskInfo;
 }
 
+bool CTaskPool::innerCheckCurThreadTask(ThreadInfo& curThreadInfo)
+{
+	std::lock_guard<std::mutex> lk(curThreadInfo.mtx);
+	return !curThreadInfo.taskInfos.empty();
+}
+
 bool CTaskPool::innerCheckTask()
 {
-	bool bRet = false;
-	auto iter = m_taskInfos.begin();
-	while (iter != m_taskInfos.end())
-	{
-		if (!(*iter))
-		{
-			iter = m_taskInfos.erase(iter);
-			assert(false);
-			continue;
-		}
-		std::unique_ptr<TaskInfo> &pFindTaskInfo = *iter;
-		if (pFindTaskInfo->groupIdValid
-			&& m_curGroupIds.find(pFindTaskInfo->groupId) != m_curGroupIds.end())
-		{
-			++iter;
-			continue;
-		}
-		bRet = true;
-		break;
-	}
-	return bRet;
+	return !m_taskInfos.empty();
 }
 
 void CTaskPool::TaskThread(ThreadInfo &threadInfo)
 {
-	auto &threadStatus = threadInfo.s;
-	
-
-	{
-		std::lock_guard<std::mutex> lk(m_mutex);
-		threadStatus = ThreadStatusFree;
-	}
 	while (true)
 	{
 		std::unique_lock<std::mutex> lk(m_mutex);
@@ -188,6 +199,7 @@ void CTaskPool::TaskThread(ThreadInfo &threadInfo)
 			[&]()->bool
 		{
 			if (m_bExit
+				|| innerCheckCurThreadTask(threadInfo)
 				|| innerCheckTask())
 			{
 				return true;
@@ -199,21 +211,13 @@ void CTaskPool::TaskThread(ThreadInfo &threadInfo)
 		});
 		if (m_bExit)
 		{
-			threadStatus = ThreadStatusNone;
 			break;
 		}
 	
-		std::unique_ptr<TaskInfo> pTaskInfo = InnerGetTaskInfo();
+		std::unique_ptr<TaskInfo> pTaskInfo = InnerGetTaskInfo(threadInfo);
 	DoTask:
-		threadStatus = ThreadStatusBusy;
-		if (pTaskInfo
-			&& pTaskInfo->groupIdValid)
-		{
-			m_curGroupIds.insert(pTaskInfo->groupId);
-		}
 
 		lk.unlock();
-
 		if (pTaskInfo)
 		{
 			try
@@ -224,31 +228,24 @@ void CTaskPool::TaskThread(ThreadInfo &threadInfo)
 			{
 				assert(false);
 			}
-			if (pTaskInfo->groupIdValid)
-			{
-				std::lock_guard<std::mutex> lkguard(m_mutex);
-				m_curGroupIds.erase(pTaskInfo->groupId);
-			}
 			pTaskInfo.reset();
 		}
+		lk.lock();
 		
 		//再次检测下任务
-		lk.lock();
 		if (m_bExit)
 		{
-			threadStatus = ThreadStatusNone;
 			break;
 		}
 		else
 		{
-			pTaskInfo = InnerGetTaskInfo();
+			pTaskInfo = InnerGetTaskInfo(threadInfo);
 			if (pTaskInfo)
 			{
 				goto DoTask;
 			}
 			else
 			{
-				threadStatus = ThreadStatusFree;
 				continue;
 			}
 		}

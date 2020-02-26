@@ -9,17 +9,15 @@
 #include "Single.h"
 #include "EPollObject.h"
 #include "TaskPool.h"
+#include "typedef.h"
 
-#define MY_PORT 5617
-#define MY_UDPPORT 5618
 #define BACKLOG 8
 #define MAX_SENDLEN 512
 ServerObject::ServerObject()
-	: m_fdListen(-1)
-	, m_fdUdp(-1)
+	: m_fdListen(INVALID_HANDLE_VALUE)
 	, m_mutex()
+	, m_port(0)
 	, m_pUserObjectManager(nullptr)
-	, m_pUDPUserObjectManager(nullptr)
 {
 }
 
@@ -28,19 +26,26 @@ ServerObject::~ServerObject()
 {
 }
 
-bool ServerObject::init(IUserObjectManager *pUserObjectManager)
+void ServerObject::setPort(unsigned short port)
 {
 	std::lock_guard<std::mutex> lk(m_mutex);
+	m_port = port;
+}
+
+void ServerObject::setCallback(IUserObjectManager* pUserObjectManager)
+{
+	std::lock_guard<std::mutex> lk(m_mutex);
+	m_pUserObjectManager = pUserObjectManager;
+}
+
+bool ServerObject::init()
+{
 	bool bRes = false;
 
 	do
 	{
-		if (nullptr == (m_pUserObjectManager = pUserObjectManager))
-		{
-			LOG(LOG_ERR, "ServerObject::init pUserObjectManager failed\n");
-			assert(false);
-			break;
-		}
+		destory();
+		std::lock_guard<std::mutex> lk(m_mutex);
 		if ((m_fdListen = socket(AF_INET, SOCK_STREAM, 0)) < 0)
 		{
 			LOG(LOG_ERR, "ServerObject::init socket errno=%d\n", errno);
@@ -64,7 +69,7 @@ bool ServerObject::init(IUserObjectManager *pUserObjectManager)
 
 		sockaddr_in addr = { 0 };
 		addr.sin_family = AF_INET;
-		addr.sin_port = htons(MY_PORT);
+		addr.sin_port = htons(m_port);
 		addr.sin_addr.s_addr = htonl(INADDR_ANY);
 		if (bind(m_fdListen, (const sockaddr*)&addr, sizeof(addr)) < 0)
 		{
@@ -78,7 +83,7 @@ bool ServerObject::init(IUserObjectManager *pUserObjectManager)
 			assert(false);
 			break;
 		}
-		EPollObject &epollObject = Single<EPollObject>::Instance();
+		EPollObject &epollObject = getEPollObject();
 
 		auto acceptFun = [this]()
 		{
@@ -104,38 +109,36 @@ bool ServerObject::init(IUserObjectManager *pUserObjectManager)
 
 		bRes = true;
 	} while (false);
-	return bRes;
-}
 
-bool ServerObject::init_udp(IUDPUserObjectManager * pUserObjectManager)
-{
-	std::lock_guard<std::mutex> lk(m_mutex);
-	bool bRet = false;
-
-	do
+	if (!bRes)
 	{
-		if ((m_pUDPUserObjectManager = pUserObjectManager) == nullptr)
-		{
-			LOG(LOG_ERR, "ServerObject::init_udp pUserObjectManager == nullptr\n");
-			assert(false);
-			break;
-		}
-		if ((m_fdUdp = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
-		{
-			LOG(LOG_ERR, "ServerObject::init socket errno=%d\n", errno);
-			assert(false);
-			break;
-		}
-	} while (false);
-	return bRet;
+		destory();
+	}
+	return bRes;
 }
 
 bool ServerObject::destory()
 {
 	std::lock_guard<std::mutex> lk(m_mutex);
+	bool ret = false;
 
-
-	return false;
+	do 
+	{
+		EPollObject& epollObject = getEPollObject();
+		for (auto& acceptPair : m_acceptSocketArray)
+		{
+			epollObject.removeFun(acceptPair.first);
+		}
+		m_acceptSocketArray.clear();
+		if (m_fdListen >= 0)
+		{
+			epollObject.removeFun(m_fdListen);
+			close(m_fdListen);
+			m_fdListen = INVALID_HANDLE_VALUE;
+		}
+		
+	} while (false);
+	return ret;
 }
 
 bool ServerObject::send(int fd, const char * pBuffer, unsigned int nLen)
@@ -232,7 +235,7 @@ bool ServerObject::closeSocket(int fd, bool bFocus)
 			}
 			else
 			{
-				sockInfo.bClosing = true;//µ»¥˝À˘”– ˝æ›∞¸∂º∑¢ÀÕ∫Û‘Ÿπÿ±’
+				sockInfo.bClosing = true;//Á≠âÂæÖÊâÄÊúâÊï∞ÊçÆÂåÖÈÉΩÂèëÈÄÅÂêéÂÜçÂÖ≥Èó≠
 			}
 		}
 		bRet = true;
@@ -240,61 +243,58 @@ bool ServerObject::closeSocket(int fd, bool bFocus)
 	return bRet;
 }
 
-void ServerObject::eventLoop()
-{
-	while (true)
-	{
-		sleep(1);
-	}
-}
-
 void ServerObject::onAsyncAccept()const
 {
-	auto asyncFun = [this]()
+	ServerObject *pThis = const_cast<ServerObject*>(this);
+	auto asyncFun = [pThis]()
 	{
-		callInnerAccept();
+		pThis->callInnerAccept();
 	};
-	CTaskPool &taskPool = Single<CTaskPool>::Instance();
+	CTaskPool &taskPool = getTaskPool();
 	taskPool.AddOrderTask(asyncFun, getTaskGroupId());
 }
 
 void ServerObject::onAsyncAcceptError() const
 {
-	auto asyncFun = [this]()
+	ServerObject *pThis = const_cast<ServerObject*>(this);
+	auto asyncFun = [pThis]()
 	{
-		callInnerAcceptError();
+		pThis->callInnerAcceptError();
 	};
-	CTaskPool &taskPool = Single<CTaskPool>::Instance();
+	CTaskPool &taskPool = getTaskPool();
 	taskPool.AddOrderTask(asyncFun, getTaskGroupId());
 }
 
 void ServerObject::onAsyncRead(int fd)const
 {
-	auto asyncFun = [this, fd]()
+	ServerObject *pThis = const_cast<ServerObject*>(this);
+	auto asyncFun = [pThis, fd]()
 	{
-		callInnerRead(fd);
+		pThis->callInnerRead(fd);
 	};
-	CTaskPool &taskPool = Single<CTaskPool>::Instance();
+	CTaskPool &taskPool = getTaskPool();
 	taskPool.AddOrderTask(asyncFun, getTaskGroupId());
 }
 
 void ServerObject::onAsyncSend(int fd)const
 {
-	auto asyncFun = [this, fd]()
+	ServerObject *pThis = const_cast<ServerObject*>(this);
+	auto asyncFun = [pThis, fd]()
 	{
-		callInnerSend(fd);
+		pThis->callInnerSend(fd);
 	};
-	CTaskPool &taskPool = Single<CTaskPool>::Instance();
+	CTaskPool &taskPool = getTaskPool();
 	taskPool.AddOrderTask(asyncFun, getTaskGroupId());
 }
 
 void ServerObject::onAsyncError(int fd)const
 {
-	auto asyncFun = [this, fd]()
+	ServerObject *pThis = const_cast<ServerObject*>(this);
+	auto asyncFun = [pThis, fd]()
 	{
-		callInnerCleanSocket(fd);
+		pThis->callInnerCleanSocket(fd);
 	};
-	CTaskPool &taskPool = Single<CTaskPool>::Instance();
+	CTaskPool &taskPool = getTaskPool();
 	taskPool.AddOrderTask(asyncFun, getTaskGroupId());
 }
 
@@ -337,10 +337,9 @@ void ServerObject::callInnerSend(int fd)
 ssize_t ServerObject::innerDoSend(int fd, const char * pBuffer, ssize_t nLen)
 {
 	ssize_t ret = 0, offset = 0;
-	bool bRet = true;
 	do
 	{
-		//MSG_NOSIGNAL±Íº«£¨∑¢ÀÕ ß∞‹£¨≤ª∑¢ÀÕ–≈∫≈SIGPIPE 
+		//MSG_NOSIGNALÊ†áËÆ∞ÔºåÂèëÈÄÅÂ§±Ë¥•Ôºå‰∏çÂèëÈÄÅ‰ø°Âè∑SIGPIPE 
 		ret = ::send(fd, pBuffer + offset, std::min(nLen - offset, static_cast<ssize_t>(MAX_SENDLEN)), MSG_NOSIGNAL);
 		if (ret > 0)
 		{
@@ -372,7 +371,7 @@ bool ServerObject::innerCleanSocket(int fd)
 	{
 		LOG(LOG_ERR, "ServerObject::onRead 0 == m_acceptSocketArray.erase(fd) failed\n");
 	}
-	EPollObject &epollObject = Single<EPollObject>::Instance();
+	EPollObject &epollObject = getEPollObject();
 	if (!epollObject.removeFun(fd))
 	{
 		LOG(LOG_ERR, "ServerObject::onRead !epollObject.removeFun(fd) failed\n");
@@ -421,7 +420,7 @@ bool ServerObject::innerAccept()
 			break;
 		}
 
-		EPollObject &epollObject = Single<EPollObject>::Instance();
+		EPollObject &epollObject = getEPollObject();
 
 		auto readFun = [this, acpSock]()
 		{
@@ -586,4 +585,14 @@ bool ServerObject::innerSendCachingData(int fd)
 std::size_t ServerObject::getTaskGroupId() const
 {
 	return reinterpret_cast<std::size_t>(this);
+}
+
+EPollObject& ServerObject::getEPollObject() const
+{
+	return Single<EPollObject>::Instance();
+}
+
+CTaskPool& ServerObject::getTaskPool() const
+{
+	return Single<CTaskPool>::Instance();
 }
