@@ -67,6 +67,18 @@ uint16_t ftol(uint16_t i)
     return ((i & 0xff00) >> 8) |
         ((i & 0x00ff) << 8);
 }
+
+uint32_t flv24to32(uint8_t(&num)[3])
+{
+    uint32_t size = 0;
+    size += num[0];
+    size <<= 8;
+    size += num[1];
+    size <<= 8;
+    size += num[2];
+    return size;
+}
+
 #pragma warning(disable : 4200)
 struct FileTypeBox
 {
@@ -373,7 +385,7 @@ void parsedref(FILE* f, int realDataSize, int tabCount)
     printTab(tabCount);
     box.itemCount = ftol(box.itemCount);
     printf("itemCount=%u \n", box.itemCount);
-    for (int i = 0; i < box.itemCount; i++)
+    for (unsigned int i = 0; i < box.itemCount; i++)
     {
         HeaderCommon header = {0};
         myfread(f, &header, sizeof(header));
@@ -426,7 +438,7 @@ void parsestsd(FILE* f, int realDataSize, int tabCount)
     SampleDescriptionBox box = {0};
     myfread(f, &box, sizeof(box));
     box.itemCount = ftol(box.itemCount);
-    for (int i = 0; i < box.itemCount; i++)
+    for (unsigned int i = 0; i < box.itemCount; i++)
     {
         HeaderCommon header = { 0 };
         myfread(f, &header, sizeof(header));
@@ -480,7 +492,7 @@ void parseFormat(FILE *f, int realDataSize, int tabCount)
         uint64_t realBoxSize = largeSize != 0 ? largeSize : boxSize;
         uint64_t realHeaderSize = largeSize != 0 ? 16 : 8;
         uint64_t realDataSize = realBoxSize - realHeaderSize;
-        curReadCount += realBoxSize;
+        curReadCount += (int)realBoxSize;
         printf("boxType=%s boxSize=%lld \n", boxType, realBoxSize);
         long long nextOffset = _ftelli64(f) + realDataSize;
         extern std::map<std::string, PARSEFUN> g_parseFun;
@@ -502,7 +514,7 @@ void parseFormat(FILE *f, int realDataSize, int tabCount)
     
 }
 
-int main()
+void parsemp4()
 {
     g_parseFun.insert(std::make_pair(std::string(), &parseFormat));
     g_parseFun.insert(std::make_pair(std::string("ftyp"), &parseftyp));
@@ -520,12 +532,7 @@ int main()
     g_parseFun.insert(std::make_pair(std::string("dref"), &parsedref));
     g_parseFun.insert(std::make_pair(std::string("stbl"), &parsestbl));
     g_parseFun.insert(std::make_pair(std::string("edts"), &parseedts));
-    
-    
-    char c[4] = { 'a', 'b', 'c', 'd' };
-    printf("%.*s\n", 4, c);
-    uint64_t i64 = 0x0123456789abcdefLL;
-    i64 = ftol(i64);
+
     const char* fileName = "E:\\video.mp4";
     FILE* f = fopen(fileName, "rb");
     fseek(f, 0, SEEK_END);
@@ -534,12 +541,404 @@ int main()
     try {
         parseFormat(f, size, 0);
     }
-    catch (int e)
+    catch (int)
     {
 
     }
-    
+
     fclose(f);
+}
+#define	__LITTLE_ENDIAN	1234
+#define	__BIG_ENDIAN	4321
+
+#define __BYTE_ORDER __LITTLE_ENDIAN
+
+#pragma pack(1)
+struct FLV_FILE_HEADER
+{
+    int8_t signature[3];//'F' 'L' 'V'
+    uint8_t version;    //0x01
+    //从低到高每bit为:是否显示视频标签,固定为0,是否显示音频标签,其次为0
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+    uint8_t videoFlag : 1;
+    uint8_t flagReserved : 1;
+    uint8_t audioFlag : 1;
+    uint8_t flagReserved2 : 5;
+#else
+    uint8_t flagReserved2 : 5;
+    uint8_t audioFlag : 1;
+    uint8_t flagReserved : 1;
+    uint8_t videoFlag : 1;
+#endif
+    uint32_t dataOffset;    //这个头的字节数
+};
+
+struct FLV_TAG
+{
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+    uint8_t tagType : 5;    //0x08 音频TAG 0x09 视频TAG 0x12脚本数据
+    uint8_t filter : 1;     //主要用文件内容加密处理,0不预处理,1预处理
+    uint8_t reserved : 2;
+#else
+    uint32_t reserved : 2;
+    uint32_t filter : 1;     //主要用文件内容加密处理,0不预处理,1预处理
+    uint32_t tagType : 5;    //0x08 音频TAG 0x09 视频TAG 0x12脚本数据
+    uint32_t dataSize : 24; //TAG的DATA部分大小
+#endif
+    uint8_t dataSize[3]; //TAG的DATA部分大小,24bit数值
+    uint8_t timeStamp[3];//毫秒为单位展示时间,24bit数值
+    uint8_t timeStampExtended;//针对时间戳的补充时间戳
+    uint8_t streamID[3];//0
+    //data
+};
+
+struct FLV_TAG_SCRIPT_HEADER
+{
+    uint8_t type;//0:number 1:boolean 2:string 3:object 5:null 6:undefined 7:reference 8:ecma array 9:object end marker 10:strict array 11:data 12:long string
+    //data
+};
+
+struct FLV_TAG_AUDIO_HEADER
+{
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+    uint8_t soundType : 1;  //0:Mono sound 1:Stereo Sound AAC是1
+    uint8_t soundSize : 1;  //0:8位采样 1:16位采样
+    uint8_t soundRate : 2;  //FLV_SOUND_RATE
+    uint8_t soundFormat : 4;//FLV_SOUND_FORMAT
+#else
+    uint8_t soundFormat : 4;//FLV_SOUND_FORMAT
+    uint8_t soundRate : 2;  //FLV_SOUND_RATE
+    uint8_t soundSize : 1;
+    uint8_t soundType : 1;
+#endif
+    uint8_t aacPacketType;//当音频是AAC类型时,占用这个字节,0:AACsequence header 1:aac raw数据
+    //data
+};
+
+struct FLV_TAG_VIDEO_HEADER
+{
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+    uint8_t codecID : 4;        //编码标识FLV_CODEC
+    uint8_t frameType : 4;      //帧类型FLV_VIDEO_FRAME
+    uint8_t packetType;         //H.264的包类型
+    uint8_t compositonTime[3];  //编码使用B帧的时候,DTS和PTS不相等,CTS用于表示PTS和DTS之间的差值
+#else
+    uint8_t frameType : 4;
+    uint8_t codecID : 4;
+    uint8_t packetType;
+    uint8_t compositonTime[3];
+#endif
+};
+#pragma pack()
+#define INIT_FLV_TYPE(id) \
+    {id, #id}
+
+#define FLV_SOUND_FORMAT_PCM 0      //线行PCM,大小端取决于平台
+#define FLV_SOUND_FORMAT_ADPCM 1    //ADPCM音频格式
+#define FLV_SOUND_FORMAT_MP3 2      //MP3
+#define FLV_SOUND_FORMAT_PCM_LE 3    //PCM,小端
+#define FLV_SOUND_FORMAT_NELLYMOSER16 4 //nellymoser 16hz mono
+#define FLV_SOUND_FORMAT_NELLYMOSER8 5 //nellymoser 8hz mono
+#define FLV_SOUND_FORMAT_NELLYMOSER 6   //nellymoser
+#define FLV_SOUND_FORMAT_G711_ALAW 7    //G.711 A-law
+#define FLV_SOUND_FORMAT_G711_MULAW 8   //G.711 mu-law
+#define FLV_SOUND_FORMAT_RESERVED 9     //保留
+#define FLV_SOUND_FORMAT_AAC 10         //AAC
+#define FLV_SOUND_FORMAT_SPEEX 11       //Speex
+#define FLV_SOUND_FORMAT_MP38 14        //mp3 8kHz
+#define FLV_SOUND_FORMAT_DEVICE 15      //设备支持的声音
+
+#define FLV_SOUND_RATE_55   0   //5.5kHz
+#define FLV_SOUND_RATE_11   1   //11kHz
+#define FLV_SOUND_RATE_22   2   //22kHz
+#define FLV_SOUND_RATE_44   3   //44kHz
+
+
+#define FLV_CODEC_SORENSON 2    //Sornson H.263,用的很少
+#define FLV_CODEC_SCREEN_VIDEO 3//Screen Video,用的很少
+#define FLV_CODEC_VP6   4   //On2 VP6,偶尔用
+#define FLV_CODEC_VP6_ALPHA 5 //带Alpha通道On2 VP6,偶尔用
+#define FLV_CODEC_SCREEN_VIDEO2 6 //Screen Video2,用的很少
+#define FLV_CODEC_H264 7 //H.264
+
+#define FLV_VIDEO_FRAME_H264_I 1 //关键帧,H.264使用,可以seek的帧
+#define FLV_VIDEO_FRAME_H264_PB 2//P or B 帧,H.264
+#define FLV_VIDEO_FRAME_H263 3//H.263
+#define FLV_VIDEO_FRAME_GEN_KEY 4//生成关键帧,服务器端使用
+#define FLV_VIDEO_FRAME_INFO    5 //视频信息/命令帧
+
+#define FLV_VIDEO_PACKET_SEQUENCE_HEADER 0 //H.264 Sequence Header
+#define FLV_VIDEO_PACKET_NALU 1 //NALU
+#define FLV_VIDEO_PACKET_SEQUENCE_END 2 //H.264 Sequence的end
+
+void parsetagvideo(FILE* f, int realDataSize, int tabCount)
+{
+    FLV_TAG_VIDEO_HEADER header = { 0 };
+    printTab(tabCount);
+    if (fread(&header, 1, sizeof(header), f) < sizeof(header))
+    {
+        assert(false);
+        throw - 1;
+    }
+    std::string frame;
+    std::pair<int, std::string> frames[] = {
+        INIT_FLV_TYPE(FLV_VIDEO_FRAME_H264_I),
+        INIT_FLV_TYPE(FLV_VIDEO_FRAME_H264_PB),
+        INIT_FLV_TYPE(FLV_VIDEO_FRAME_H263),
+        INIT_FLV_TYPE(FLV_VIDEO_FRAME_GEN_KEY),
+        INIT_FLV_TYPE(FLV_VIDEO_FRAME_INFO),
+    };
+    for (auto& pair : frames)
+    {
+        if (pair.first == header.frameType)
+        {
+            frame = pair.second;
+            break;
+        }
+    }
+    std::string codec;
+    std::pair<int, std::string> codecs[] = {
+        INIT_FLV_TYPE(FLV_CODEC_SORENSON),
+        INIT_FLV_TYPE(FLV_CODEC_SCREEN_VIDEO),
+        INIT_FLV_TYPE(FLV_CODEC_VP6),
+        INIT_FLV_TYPE(FLV_CODEC_VP6_ALPHA),
+        INIT_FLV_TYPE(FLV_CODEC_SCREEN_VIDEO2),
+        INIT_FLV_TYPE(FLV_CODEC_H264),
+    };
+    for (auto& pair : codecs)
+    {
+        if (pair.first == header.codecID)
+        {
+            codec = pair.second;
+            break;
+        }
+    }
+    std::string packetType;
+    std::pair<int, std::string> packetTypes[] = {
+        INIT_FLV_TYPE(FLV_VIDEO_PACKET_SEQUENCE_HEADER),
+        INIT_FLV_TYPE(FLV_VIDEO_PACKET_NALU),
+        INIT_FLV_TYPE(FLV_VIDEO_PACKET_SEQUENCE_END),
+    };
+    for (auto& pair : packetTypes)
+    {
+        if (pair.first == header.packetType)
+        {
+            packetType = pair.second;
+            break;
+        }
+    }
+    uint32_t CTS = flv24to32(header.compositonTime);
+    printf("frame=%s codec=%s packettype=%s CTS=%u\n", frame.c_str(), codec.c_str(), packetType.c_str(), CTS);
+}
+
+void parsetagaudio(FILE* f, int realDataSize, int tabCount)
+{
+    FLV_TAG_AUDIO_HEADER header = { 0 };
+    if (fread(&header, 1, sizeof(header), f) < sizeof(header))
+    {
+        assert(false);
+        throw - 1;
+    }
+    printTab(tabCount);
+    std::pair<int, std::string> soundFormats[] = {
+        INIT_FLV_TYPE(FLV_SOUND_FORMAT_PCM),
+        INIT_FLV_TYPE(FLV_SOUND_FORMAT_ADPCM),
+        INIT_FLV_TYPE(FLV_SOUND_FORMAT_MP3),
+        INIT_FLV_TYPE(FLV_SOUND_FORMAT_PCM_LE),
+        INIT_FLV_TYPE(FLV_SOUND_FORMAT_NELLYMOSER16),
+        INIT_FLV_TYPE(FLV_SOUND_FORMAT_NELLYMOSER8),
+        INIT_FLV_TYPE(FLV_SOUND_FORMAT_NELLYMOSER),
+        INIT_FLV_TYPE(FLV_SOUND_FORMAT_G711_ALAW),
+        INIT_FLV_TYPE(FLV_SOUND_FORMAT_G711_MULAW),
+        INIT_FLV_TYPE(FLV_SOUND_FORMAT_RESERVED),
+        INIT_FLV_TYPE(FLV_SOUND_FORMAT_AAC),
+        INIT_FLV_TYPE(FLV_SOUND_FORMAT_SPEEX),
+        INIT_FLV_TYPE(FLV_SOUND_FORMAT_MP38),
+        INIT_FLV_TYPE(FLV_SOUND_FORMAT_DEVICE),
+    };
+    std::pair<int, std::string> soundRates[] = {
+        INIT_FLV_TYPE(FLV_SOUND_RATE_55),
+        INIT_FLV_TYPE(FLV_SOUND_RATE_11),
+        INIT_FLV_TYPE(FLV_SOUND_RATE_22),
+        INIT_FLV_TYPE(FLV_SOUND_RATE_44),
+    };
+
+    std::string format;
+    for (auto& pair : soundFormats)
+    {
+        if (pair.first == header.soundFormat)
+        {
+            format = pair.second;
+            break;
+        }
+    }
+    std::string rate;
+    for (auto& pair : soundRates)
+    {
+        if (pair.first == header.soundRate)
+        {
+            rate = pair.second;
+            break;
+        }
+    }
+    printTab(tabCount);
+    std::string size = header.soundSize == 0 ? "8bit" : "16bit";
+    std::string type = header.soundType == 0 ? "mono" : "stereo";
+    std::string actType = header.aacPacketType == 0 ? "aac sequence" : "aac raw";
+    printf("format=%s rate=%s size=%s type=%s aactype=%s\n", format.c_str(), rate.c_str(), size.c_str(), type.c_str(), actType.c_str());
+}
+
+#define FLV_TAG_AUDIO 0x08
+#define FLV_TAG_VIDEO 0x09
+#define FLV_TAG_SCRIPT_DATA 0x12
+
+#define FLV_SCRIPT_NUMBER 0
+#define FLV_SCRIPT_BOOLEAN 1
+#define FLV_SCRIPT_STRING 2
+#define FLV_SCRIPT_OBJECT 3
+#define FLV_SCRIPT_NULL 5
+#define FLV_SCRIPT_UNDEFINED 6
+#define FLV_SCRIPT_REFERENCE 7
+#define FLV_SCRIPT_ECMA_ARRAY 8
+#define FLV_SCRIPT_OBJECT_END_MARKER 9
+#define FLV_SCRIPT_STRICT_ARRAY 10
+#define FLV_SCRIPT_DATE 11
+#define FLV_SCRIPT_LONG_STRING 12
+
+
+void parsetagscripdata(FILE* f, int realDataSize, int tabCount)
+{
+    FLV_TAG_SCRIPT_HEADER header = { 0 };
+    if (fread(&header, 1, sizeof(header), f) < sizeof(header))
+    {
+        assert(false);
+        throw -1;
+    }
+    printTab(tabCount);
+    std::pair<uint8_t, std::string> scriptTypes[] = {
+        INIT_FLV_TYPE(FLV_SCRIPT_NUMBER),
+        INIT_FLV_TYPE(FLV_SCRIPT_BOOLEAN),
+        INIT_FLV_TYPE(FLV_SCRIPT_STRING),
+        INIT_FLV_TYPE(FLV_SCRIPT_OBJECT),
+        INIT_FLV_TYPE(FLV_SCRIPT_NULL),
+        INIT_FLV_TYPE(FLV_SCRIPT_UNDEFINED),
+        INIT_FLV_TYPE(FLV_SCRIPT_REFERENCE),
+        INIT_FLV_TYPE(FLV_SCRIPT_ECMA_ARRAY),
+        INIT_FLV_TYPE(FLV_SCRIPT_OBJECT_END_MARKER),
+        INIT_FLV_TYPE(FLV_SCRIPT_STRICT_ARRAY),
+        INIT_FLV_TYPE(FLV_SCRIPT_DATE),
+        INIT_FLV_TYPE(FLV_SCRIPT_LONG_STRING),
+    };
+    std::string type;
+    for (auto& pair : scriptTypes)
+    {
+        if (pair.first == header.type)
+        {
+            type = pair.second;
+            break;
+        }
+    }
+    printf("scripttype=%s\n", type.c_str());
+}
+
+void parsetags(FILE* f, int realDataSize, int tabCount)
+{
+    uint32_t previewTagSize = 0;
+    FLV_TAG tag = { 0 };
+    while (true)
+    {
+        if (fread(&previewTagSize, 1, sizeof(previewTagSize), f) < sizeof(previewTagSize))
+        {
+            if (0 != feof(f))
+            {
+                break;
+            }
+            else
+            {
+                assert(false);
+                throw - 1;
+            }
+        }
+        realDataSize -= sizeof(previewTagSize);
+        previewTagSize = ftol(previewTagSize);
+        realDataSize -= previewTagSize;
+        if (realDataSize <= 0)
+        {
+            break;
+        }
+        if (fread(&tag, 1, sizeof(tag), f) < sizeof(tag))
+        {
+            assert(false);
+            throw - 1;
+        }
+        uint32_t dataSize = flv24to32(tag.dataSize);
+        uint32_t timeStamp = flv24to32(tag.timeStamp);
+        long long nextOffset = _ftelli64(f) + dataSize;
+        switch (tag.tagType)
+        {
+        case FLV_TAG_AUDIO:
+        {
+            parsetagaudio(f, dataSize, tabCount + 1);
+            break;
+        }
+        case FLV_TAG_VIDEO:
+        {
+            parsetagvideo(f, dataSize, tabCount + 1);
+            break;
+        }
+        case FLV_TAG_SCRIPT_DATA:
+        {
+            parsetagscripdata(f, dataSize, tabCount + 1);
+            break;
+        }
+        }
+        if (0 != _fseeki64(f, nextOffset, SEEK_SET))
+        {
+            assert(false);
+            throw - 1;
+        }
+    }
+}
+
+void parseflvformat(FILE* f, int realDataSize, int tabCount)
+{
+    FLV_FILE_HEADER fileHeader = { 0 };
+    if (fread(&fileHeader, 1, sizeof(fileHeader), f) < sizeof(fileHeader))
+    {
+        assert(false);
+        throw - 1;
+    }
+    fileHeader.dataOffset = ftol(fileHeader.dataOffset);
+
+    if (0 != fseek(f, fileHeader.dataOffset, SEEK_SET))
+    {
+        throw - 1;
+    }
+    parsetags(f, realDataSize - fileHeader.dataOffset, tabCount);
+}
+
+void parseflv()
+{
+    const char* fileName = "E:\\test.flv";
+    FILE* f = fopen(fileName, "rb");
+    fseek(f, 0, SEEK_END);
+    long size = ftell(f);
+    fseek(f, 0, SEEK_SET);
+    try {
+        parseflvformat(f, size, 0);
+    }
+    catch (int)
+    {
+
+    }
+
+    fclose(f);
+}
+
+int main()
+{
+    //parsemp4();
+    parseflv();
     std::cout << "Hello World!\n";
 }
 
