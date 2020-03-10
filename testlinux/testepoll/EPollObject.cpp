@@ -1,13 +1,22 @@
 #include "EPollObject.h"
 #include <assert.h>
 #include <sys/epoll.h>
+#include <unistd.h>	//pipe
 #include "Log.h"
+#include "typedef.h"
 
+
+#define PIPE_READ_INDEX 0
+#define PIPE_WRITE_INDEX 1
+#define EPOLL_WAIT_MS -1
+#define EPOLL_WAIT_EVENT_MAX_COUNT 32
 EPollObject::EPollObject()
-	: m_epollfd(-1)
+	: m_epollfd(INVALID_HANDLE_VALUE)
+	, m_pipe({ INVALID_HANDLE_VALUE, INVALID_HANDLE_VALUE })
 	, m_mutex()
-	, m_waitThreadId(0)
-	, m_checkThreadId(0)
+	, m_epollSize(1024)
+	, m_bExit(false)
+	, m_waitThread()
 	, m_fdEventFun()
 {
 }
@@ -17,38 +26,95 @@ EPollObject::~EPollObject()
 {
 }
 
+void EPollObject::setEpollSize(int size)
+{
+	m_epollSize = size;
+}
+
 bool EPollObject::init()
 {
 	bool bRes = false;
 
 	do
 	{
-		if ((m_epollfd = epoll_create(1024)) < 0)
-		{
-			LOG(LOG_ERR, "EPollObject::init epoll_create errno=%d\n", errno);
+		destroy();
+		std::lock_guard<std::mutex> lk(m_mutex);
+		m_bExit = false;
+		if (pipe(m_pipe) < 0){
+			LOG(LOG_ERR, "EPollObject::init init pipe errno=%d", errno);
 			assert(false);
 			break;
 		}
-		if (0 != pthread_create(&m_waitThreadId, nullptr, &EPollObject::innerStaticWaitThread, this))
+		if ((m_epollfd = epoll_create(m_epollSize)) < 0)
 		{
-			LOG(LOG_ERR, "EPollObject::init pthread_create errno=%d\n", errno);
+			LOG(LOG_ERR, "EPollObject::init epoll_create errno=%d", errno);
 			assert(false);
 			break;
 		}
+		m_waitThread = std::thread(&EPollObject::innerWaitThread, this, m_epollSize);
 
 		bRes = true;
 	} while (false);
 
 	if (!bRes)
 	{
-		destory();
+		destroy();
 	}
 	return bRes;
 }
 
-bool EPollObject::destory()
+bool EPollObject::destroy()
 {
-	return false;
+	bool ret = false;
+
+	do{
+		{
+			std::lock_guard<std::mutex> lk(m_mutex);
+			m_bExit = true;
+		}
+		//ç®¡é“ä¸­,å†™å…¥1å­—èŠ‚,é€šçŸ¥epoll_waité€€å‡º
+		if (m_pipe[PIPE_WRITE_INDEX] >= 0)
+		{
+			if (write(m_pipe[PIPE_WRITE_INDEX], "0", 1) < 0)
+			{
+				LOG(LOG_ERR, "EPollObject::destroy write pipe errno=%d", errno);
+				assert(false);
+			}
+		}
+		if (m_waitThread.joinable())
+		{
+			m_waitThread.join();
+			std::thread().swap(m_waitThread);
+		}
+		std::lock_guard<std::mutex> lk(m_mutex);
+		if (m_pipe[PIPE_READ_INDEX] >= 0)
+		{
+			if (close(m_pipe[PIPE_READ_INDEX]) < 0)
+			{
+				LOG(LOG_ERR, "EPollObject::destroy close pipe errno=%d", errno);
+				assert(false);
+			}
+			if (close(m_pipe[PIPE_WRITE_INDEX]) < 0)
+			{
+				LOG(LOG_ERR, "EPollObject::destroy close pipe errno=%d", errno);
+				assert(false);
+			}
+			m_pipe[PIPE_READ_INDEX] = m_pipe[PIPE_WRITE_INDEX] = INVALID_HANDLE_VALUE;
+		}
+		if (m_epollfd >= 0)
+		{
+			if (close(m_epollfd) < 0)
+			{
+				LOG(LOG_ERR, "EPollObject::destroy close epoll errno=%d", errno);
+				assert(false);
+			}
+			m_epollfd = INVALID_HANDLE_VALUE;
+		}
+		m_fdEventFun.clear();
+		ret = true;
+	}while(false);
+
+	return ret;
 }
 
 bool EPollObject::updateFun(int fd, EventType eventType, std::function<void()> fun)
@@ -87,7 +153,7 @@ bool EPollObject::removeFun(int fd, EventType eventType)
 			m_fdEventFun.erase(iter);
 			if (epoll_ctl(m_epollfd, EPOLL_CTL_DEL, fd, 0) < 0)
 			{
-				LOG(LOG_ERR, "EPollObject::removeFun epoll_ctl errno=%d\n", errno);
+				LOG(LOG_ERR, "EPollObject::removeFun epoll_ctl errno=%d", errno);
 				assert(false);
 				break;
 			}
@@ -124,7 +190,7 @@ bool EPollObject::removeFun(int fd)
 		m_fdEventFun.erase(iter);
 		if (epoll_ctl(m_epollfd, EPOLL_CTL_DEL, fd, 0) < 0)
 		{
-			LOG(LOG_ERR, "EPollObject::removeFun epoll_ctl errno=%d\n", errno);
+			LOG(LOG_ERR, "EPollObject::removeFun epoll_ctl errno=%d", errno);
 			assert(false);
 			break;
 		}
@@ -161,36 +227,27 @@ bool EPollObject::innerEpollUpdate(int fd, int epoll_op)
 	return (epoll_ctl(m_epollfd, epoll_op, fd, &ev) == 0);
 }
 
-void * EPollObject::innerStaticWaitThread(void * arg)
+void EPollObject::innerWaitThread(int epollSize)
 {
-	EPollObject *pObject = reinterpret_cast<EPollObject*>(arg);
-	if (nullptr != pObject)
-	{
-		pObject->innerWaitThread();
-	}
-	else
-	{
-		LOG(LOG_ERR, "EPollObject::innerWaitThread nullptr != pObject");
-	}
-	return nullptr;
-}
-
-void EPollObject::innerWaitThread()
-{
-	const int MaxEvents = 32;
-	const int Timeout = 10000;
+	const int MaxEvents = std::min(EPOLL_WAIT_EVENT_MAX_COUNT, epollSize);
 	epoll_event events[MaxEvents];
 	bool bContinue = true;
 	int ret = -1;
 
 	while (bContinue)
 	{
-		ret = epoll_wait(m_epollfd, events, MaxEvents, Timeout);
+		ret = epoll_wait(m_epollfd, events, MaxEvents, EPOLL_WAIT_MS);
+		std::unique_lock<std::mutex> lk(m_mutex);
+		if (m_bExit)
+		{
+			bContinue = false;
+			break;
+		}
 		if (ret < 0)
 		{
 			if (EINTR != errno)
 			{
-				LOG(LOG_ERR, "EPollObject::innerWaitThread epoll_wait errno=%d\n", errno);
+				LOG(LOG_ERR, "EPollObject::innerWaitThread epoll_wait errno=%d", errno);
 			}
 			continue;
 		}
@@ -199,25 +256,33 @@ void EPollObject::innerWaitThread()
 			LOG(LOG_DEBUG, "EPollObject::innerWaitThread epoll_wait timeout");
 			continue;
 		}
-		std::lock_guard<std::mutex> lk(m_mutex);
 		for (int i = 0; i < ret; i++)
 		{
 			int fd = events[i].data.fd;
-			//m_fdEventFunÄÚÈÝ£¬ÔÚÑ­»·ÖÐ£¬ÓÐ¿ÉÄÜ±»ÐÞ¸Ä£¬ËæÊ±Ê¹ÓÃ£¬ËæÊ±²éÕÒ
+			if (fd == m_pipe[PIPE_READ_INDEX])
+			{
+				bContinue = false;
+				break;
+			}
+			//m_fdEventFunå†…å®¹ï¼Œåœ¨å¾ªçŽ¯ä¸­ï¼Œæœ‰å¯èƒ½è¢«ä¿®æ”¹ï¼Œéšæ—¶ä½¿ç”¨ï¼Œéšæ—¶æŸ¥æ‰¾
 			int flags = events[i].events;
 			if ((flags & EPOLLIN)
 				&& m_fdEventFun.find(fd) != m_fdEventFun.end()
 				&& m_fdEventFun[fd].find(ET_READ) != m_fdEventFun[fd].end())
 			{
 				std::function<void()> f = m_fdEventFun[fd][ET_READ];
+				lk.unlock();
 				f();
+				lk.lock();
 			}
 			if ((flags & EPOLLOUT)
 				&& m_fdEventFun.find(fd) != m_fdEventFun.end()
 				&& m_fdEventFun[fd].find(ET_WRITE) != m_fdEventFun[fd].end())
 			{
 				std::function<void()> f = m_fdEventFun[fd][ET_WRITE];
+				lk.unlock();
 				f();
+				lk.lock();
 			}
 			bool bError = (!(events[i].events & EPOLLIN)) && ((flags & EPOLLHUP) || (flags & EPOLLRDHUP) || (flags & EPOLLERR));
 			if (bError
@@ -228,13 +293,11 @@ void EPollObject::innerWaitThread()
 				bool bEopllRDHup = flags & EPOLLRDHUP;
 				bool bEopollErr = flags & EPOLLERR;
 				std::function<void()> f = m_fdEventFun[fd][ET_ERROR];
+				lk.unlock();
 				f();
+				lk.lock();
 			}
 		}
 	}
 }
 
-//void * EPollObject::innerCheckThread(void * arg)
-//{
-//	return nullptr;
-//}

@@ -7,6 +7,9 @@ extern "C" {
 }
 #include "UPNPProtocolSerialize.h"
 #include "UPNPServiceAVTransport.h"
+#include "UPNPServiceConnectionManager.h"
+#include "UPNPServiceRenderingControl.h"
+#include "UPNPServiceKaiShu.h"
 
 
 UPNPDevInfo::UPNPDevInfo()
@@ -88,6 +91,8 @@ void UPNPDevInfo::sendGetDeviceDescriptionDocument(const std::string &url)
 
 					break;
 				case ETypeConnectionManager:
+					mUPNPServiceConnectionManager = std::make_shared<UPNPServiceConnectionManager>();
+					mUPNPServiceConnectionManager->setService(service, hostname, port, scope_id);
 					break;
 				case ETypeAVTransport:
 				{
@@ -98,7 +103,17 @@ void UPNPDevInfo::sendGetDeviceDescriptionDocument(const std::string &url)
 					break;
 				}
 				case ETypeRenderingControl:
+				{
+					mUPNPServiceRenderingControl = std::make_shared<UPNPServiceRenderingControl>();
+					mUPNPServiceRenderingControl->setService(service, hostname, port, scope_id);
 					break;
+				}
+				case ETypeKaiShu:
+				{
+					mUPNPServiceKaiShu = std::make_shared<UPNPServiceKaiShu>();
+					mUPNPServiceKaiShu->setService(service, hostname, port, scope_id);
+					break;
+				}
 				default:
 					break;
 				}
@@ -116,6 +131,21 @@ void UPNPDevInfo::sendGetDeviceDescriptionDocument(const std::string &url)
 UPNPServiceAVTransport * UPNPDevInfo::getAVTransport()
 {
 	return mAVTransport.get();
+}
+
+UPNPServiceConnectionManager* UPNPDevInfo::getConnectionManager()
+{
+	return mUPNPServiceConnectionManager.get();
+}
+
+UPNPServiceRenderingControl* UPNPDevInfo::getRenderingControl()
+{
+	return mUPNPServiceRenderingControl.get();
+}
+
+UPNPServiceKaiShu* UPNPDevInfo::getKaiShu()
+{
+	return mUPNPServiceKaiShu.get();;
 }
 
 void UPNPDevInfo::parseST(const std::string &st)
@@ -185,6 +215,7 @@ EType UPNPDevInfo::getType(const std::string & type)
 		{ ETypeConnectionManager,"ConnectionManager" },
 		{ ETypeAVTransport,"AVTransport" },
 		{ ETypeRenderingControl,"RenderingControl" },
+		{ ETypeKaiShu,"KaiShuStory" },
 	};
 	EType ret = ETypeUnkwn;
 	for (auto &pair : idNames)

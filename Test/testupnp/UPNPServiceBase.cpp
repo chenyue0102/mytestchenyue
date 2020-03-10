@@ -23,7 +23,7 @@ EType UPNPServiceBase::getType()
 	return mEType;
 }
 
-void UPNPServiceBase::setService(const UPNPDDDService service, const std::string & host, unsigned short port, unsigned int scope_id)
+void UPNPServiceBase::setService(const UPNPDDDService &service, const std::string & host, unsigned short port, unsigned int scope_id)
 {
 	mUPNPDDDService = service;
 	mUPNPHttp.setHttpInfo(host, port, scope_id);

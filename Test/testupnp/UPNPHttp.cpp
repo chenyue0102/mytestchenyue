@@ -80,7 +80,7 @@ int UPNPHttp::soapPostSubmit(const std::string & action, const std::string & bod
 		std::shared_ptr<void> pResult(getHTTPResponse(socket, &size, &stateCode), &free);
 		if (!pResult)
 		{
-			assert(false);
+			//assert(false);
 			break;
 		}
 		const char *p = reinterpret_cast<const char*>(pResult.get());

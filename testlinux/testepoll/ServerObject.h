@@ -8,7 +8,8 @@
 struct UserObject;
 struct sockaddr_in;
 
-
+class EPollObject;
+class CTaskPool;
 class ServerObject
 {
 	struct SOCKET_INFO
@@ -27,13 +28,13 @@ public:
 	ServerObject();
 	~ServerObject();
 public:
-	bool init(IUserObjectManager *pUserObjectManager);
-	bool init_udp(IUDPUserObjectManager *pUserObjectManager);
+	void setPort(unsigned short port);
+	void setCallback(IUserObjectManager* pUserObjectManager);
+	bool init();
 	bool destory();
 	bool send(int fd, const char *pBuffer, unsigned int nLen);
 	bool closeSocket(int fd, bool bFocus);
-	void eventLoop();
-private://²»¼ÓËø£¬²»·ÃÎÊ³ÉÔ±±äÁ¿
+private://ä¸åŠ é”ï¼Œä¸è®¿é—®æˆå‘˜å˜é‡
 	void onAsyncAccept()const;
 	void onAsyncAcceptError()const;
 	void onAsyncRead(int fd)const;
@@ -49,16 +50,17 @@ private:
 	bool innerCleanSocket(int fd);
 	bool innerAccept();
 	bool innerRead(int fd);
-	//·¢ËÍ»º³åÊı¾İ
+	//å‘é€ç¼“å†²æ•°æ®
 	bool innerSendCachingData(int fd);
 	std::size_t getTaskGroupId()const;
+	EPollObject& getEPollObject()const;
+	CTaskPool& getTaskPool()const;
 private:
 	int m_fdListen;
-	int m_fdUdp;
 	std::mutex m_mutex;
+	unsigned short m_port;
 	std::map<int, SOCKET_INFO> m_acceptSocketArray;
 	IUserObjectManager *m_pUserObjectManager;
-	IUDPUserObjectManager *m_pUDPUserObjectManager;
 };
 
 #endif

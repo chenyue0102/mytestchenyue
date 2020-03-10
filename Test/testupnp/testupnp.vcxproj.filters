@@ -13,8 +13,8 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="httpserver">
-      <UniqueIdentifier>{5ac22f2c-e3ed-4dbd-864c-ea9d3108de3a}</UniqueIdentifier>
+    <Filter Include="tinyxml">
+      <UniqueIdentifier>{913f3153-79c2-469d-9d45-e526307ac6e5}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -54,14 +54,20 @@
     <ClInclude Include="UPNPHttp.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="c-version\lib\middleware.h">
-      <Filter>httpserver</Filter>
+    <ClInclude Include="tinyxml\tinystr.h">
+      <Filter>tinyxml</Filter>
     </ClInclude>
-    <ClInclude Include="c-version\lib\server.h">
-      <Filter>httpserver</Filter>
+    <ClInclude Include="tinyxml\tinyxml.h">
+      <Filter>tinyxml</Filter>
     </ClInclude>
-    <ClInclude Include="c-version\app.h">
-      <Filter>httpserver</Filter>
+    <ClInclude Include="UPNPServiceConnectionManager.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="UPNPServiceRenderingControl.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="UPNPServiceKaiShu.h">
+      <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -89,14 +95,26 @@
     <ClCompile Include="UPNPHttp.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="c-version\lib\middleware.c">
-      <Filter>httpserver</Filter>
+    <ClCompile Include="tinyxml\tinystr.cpp">
+      <Filter>tinyxml</Filter>
     </ClCompile>
-    <ClCompile Include="c-version\lib\server.c">
-      <Filter>httpserver</Filter>
+    <ClCompile Include="tinyxml\tinyxml.cpp">
+      <Filter>tinyxml</Filter>
     </ClCompile>
-    <ClCompile Include="c-version\app.c">
-      <Filter>httpserver</Filter>
+    <ClCompile Include="tinyxml\tinyxmlerror.cpp">
+      <Filter>tinyxml</Filter>
+    </ClCompile>
+    <ClCompile Include="tinyxml\tinyxmlparser.cpp">
+      <Filter>tinyxml</Filter>
+    </ClCompile>
+    <ClCompile Include="UPNPServiceConnectionManager.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="UPNPServiceRenderingControl.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="UPNPServiceKaiShu.cpp">
+      <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
