@@ -87,7 +87,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;MINIUPNP_STATICLIB;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_WINSOCK_DEPRECATED_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;MINIUPNP_STATICLIB;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>./c-version\lib;../../;D:\teacher\src\include\KSSerialize;../include\KSSerialize;../opensource\miniupnp\miniupnpc;C:\Users\EDZ\Desktop\miniupnp\miniupnpc;D:\teacher\src\KSSerialize\tinyxml</AdditionalIncludeDirectories>
     </ClCompile>

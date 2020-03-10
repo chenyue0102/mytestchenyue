@@ -8,6 +8,7 @@ extern "C"{
 #include "server.h"
 }
 #include <Winsock2.h>
+#include <ws2tcpip.h>  
 #include <regex>
 #include <string>
 #include <sstream>
@@ -108,6 +109,87 @@ inline bool SerializeStruct(ISerialize &pSerialize, TestStruct & Value)
 	return true;
 }
 std::atomic_bool g_exit = false;
+
+SOCKET createMultiBroadcast(ULONG ip, int port)
+{
+	SOCKET s = INVALID_SOCKET;
+	do
+	{
+		if (INVALID_SOCKET == (s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)))
+		{
+			assert(false);
+			break;
+		}
+		//重用地址
+		BOOL opt = TRUE;
+		if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (char*)&opt, sizeof(opt)) < 0)
+		{
+			assert(false);
+			break;
+		}
+		//设置ttl为2
+		int ttl = 20;
+		if (setsockopt(s, IPPROTO_IP, IP_MULTICAST_TTL, (char*)&ttl, sizeof(ttl)) < 0) 
+		{
+			assert(false);
+			break;
+		}
+		//不接受自己发送的信息
+		unsigned char loopchar = 0;
+		if (setsockopt(s, IPPROTO_IP, IP_MULTICAST_LOOP, (char*)&loopchar, sizeof(loopchar)) < 0)
+		{
+			assert(false);
+			break;
+		}
+		//设置允许广播
+		int bcast = 1;
+		if (setsockopt(s, SOL_SOCKET, SO_BROADCAST, (char*)&bcast, sizeof(bcast)) < 0)
+		{
+			assert(false);
+			break;
+		}
+		sockaddr_in addr = { 0 };
+		addr.sin_port = htons(port);
+		addr.sin_addr.s_addr = inet_addr("10.0.19.244");
+		addr.sin_family = AF_INET;
+
+		if (bind(s, (sockaddr*)&addr, sizeof(addr)) < 0) 
+		{
+			assert(false);
+			break;
+		}
+		ip_mreq multiCast;
+		multiCast.imr_multiaddr.s_addr = inet_addr("224.0.0.13");//inet_addr("239.255.255.250");//组播地址
+		multiCast.imr_interface.s_addr = inet_addr("10.0.19.244");		//本机地址
+		if (setsockopt(s, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char*)&multiCast, sizeof(multiCast)) < 0)
+		{
+			assert(false);
+			break;
+		}
+	} while (false);
+	return s;
+}
+
+void recv(SOCKET s)
+{
+	while (true)
+	{
+		char buf[1024 + 1] = { 0 };
+		sockaddr_in addr = { 0 };
+		int addrLen = sizeof(addr);
+		int recvLen = recvfrom(s, buf, 1024, 0, (sockaddr*)&addr, &addrLen);
+		if (recvLen > 0)
+		{
+			buf[recvLen] = '\0';
+			printf("%s", buf);
+		}
+		if (sendto(s, "abcd1234", 8, 0, (sockaddr*)&addr, sizeof(addr)) < 0)
+		{
+			assert(false);
+			break;
+		}
+	}
+}
 int main()
 {
 	TestChild tc;
@@ -150,7 +232,9 @@ int main()
 	}
 	WSADATA wsaData;
 	int nResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
-
+	SOCKET s = createMultiBroadcast(INADDR_ANY, 8899);
+	recv(s);
+	getchar();
 	const char * const deviceList[] = {
 		//"urn:schemas-upnp-org:device:MediaRenderer:1",		//媒体播放器
 		//"urn:schemas-upnp-org:service:ConnectionManager:1",		//负责建立和管理与接收端的网络连接
@@ -163,14 +247,15 @@ int main()
 		0
 	};
 	int error = 0;
-	struct UPNPDev *devlist = upnpDiscoverDevices(deviceList, 2000, NULL, NULL, 0, 0, 2, &error, 0);
+	struct UPNPDev *devlist = upnpDiscoverDevices(deviceList, 2000, NULL, NULL, 0, 0, 20, &error, 0);
 	//printf("==============\r\n");
 	std::stringstream ss;
 	ss << "=======================" << std::endl;
 	UPNPDevInfo *pInfo = nullptr;
 	for (UPNPDev *dev = devlist; NULL != dev; dev = dev->pNext)
 	{
-		if (nullptr == strstr(dev->descURL, "10.0.30.32"))
+		//if (nullptr == strstr(dev->descURL, "10.0.30.32"))
+		if (nullptr == strstr(dev->descURL, "10.0.19.244"))
 		{
 			continue;
 		}
@@ -206,7 +291,7 @@ int main()
 		std::string result;
 		do
 		{
-			printf("0:exit 1:seturl 2:pause 3:stop 4:play 5:seek 6:pos 7:reg \r\n");
+			printf("0:exit 1:seturl 2:pause 3:stop 4:play 5:seek 6:pos 7:reg 8:get \r\n");
 			scanf("%d", &a);
 			switch (a)
 			{
@@ -245,6 +330,12 @@ int main()
 				std::string event("upnp:AVTransportURI");
 				std::string callback("http://10.0.30.48:9080/1234notify");
 				pAVTransport->regCallback(event, callback, 60*10);
+				break;
+			}
+			case 8:
+			{
+				UPNPPositionInfo pos;
+				pAVTransport->GetPositionInfo(0, pos);
 				break;
 			}
 			}

@@ -37,12 +37,13 @@ void UPNPHttp::setHttpInfo(const std::string & host, unsigned short port, unsign
 
 void UPNPHttp::setControlURLPath(const std::string &path)
 {
-	mControlURL = "http://" + mHost;
+	/*mControlURL = "http://" + mHost;
 	if (80 != mPort)
 	{
 		mControlURL += ":" + std::to_string(mPort);
 	}
-	mControlURL += '/' + path;
+	mControlURL += '/' + path;*/
+	mControlURL = path;
 }
 
 void UPNPHttp::setRegURLPath(const std::string & path)
