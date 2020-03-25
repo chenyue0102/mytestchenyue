@@ -1,4 +1,4 @@
-// testupnp.cpp : ¶¨Òå¿ØÖÆÌ¨Ó¦ÓÃ³ÌĞòµÄÈë¿Úµã¡£
+// testupnp.cpp : å®šä¹‰æ§åˆ¶å°åº”ç”¨ç¨‹åºçš„å…¥å£ç‚¹ã€‚
 //
 
 #include "stdafx.h"
@@ -99,7 +99,7 @@ inline bool SerializeStruct(ISerialize &pSerialize, TestStruct & Value)
 			SERIALIZE(argumentList);
 		}
 		{
-			//·ÅÖÃµ½ÊôĞÔÖĞ
+			//æ”¾ç½®åˆ°å±æ€§ä¸­
 			KSSerialize::CSwitchXmlValuePosition switchValuePosition(pSerialize, EnumXmlValuePositionAttribute);
 			SERIALIZE(sendEvents);
 		}
@@ -249,14 +249,14 @@ int main()
 	}
 	WSADATA wsaData;
 	int nResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
-	std::thread tttt(&startssdsever, htonl(INADDR_ANY), htonl(INADDR_ANY));
-	std::thread tttt2(&startssdsever, inet_addr("192.168.3.2"), inet_addr("192.168.3.2"));
-	std::this_thread::sleep_for(std::chrono::milliseconds(500));
+	//std::thread tttt(&startssdsever, htonl(INADDR_ANY), htonl(INADDR_ANY));
+	//std::thread tttt2(&startssdsever, inet_addr("192.168.3.2"), inet_addr("192.168.3.2"));
+	//std::this_thread::sleep_for(std::chrono::milliseconds(500));
 	const char * const deviceList[] = {
-		//"urn:schemas-upnp-org:device:MediaRenderer:1",		//Ã½Ìå²¥·ÅÆ÷
-		//"urn:schemas-upnp-org:service:ConnectionManager:1",		//¸ºÔğ½¨Á¢ºÍ¹ÜÀíÓë½ÓÊÕ¶ËµÄÍøÂçÁ¬½Ó
-		//"urn:schemas-upnp-org:service:AVTransport:1",			//ÊµÏÖÔİÍ££¬¿ì½øµÈ¹¦ÄÜ
-		//"urn:schemas-upnp-org:service:RenderingControl:1",		//µ÷ÕûĞ§¹û£¬Èç¶Ô±È¶È£¬ÑÕÉ«,ÉùÒôµÈ
+		//"urn:schemas-upnp-org:device:MediaRenderer:1",		//åª’ä½“æ’­æ”¾å™¨
+		//"urn:schemas-upnp-org:service:ConnectionManager:1",		//è´Ÿè´£å»ºç«‹å’Œç®¡ç†ä¸æ¥æ”¶ç«¯çš„ç½‘ç»œè¿æ¥
+		//"urn:schemas-upnp-org:service:AVTransport:1",			//å®ç°æš‚åœï¼Œå¿«è¿›ç­‰åŠŸèƒ½
+		//"urn:schemas-upnp-org:service:RenderingControl:1",		//è°ƒæ•´æ•ˆæœï¼Œå¦‚å¯¹æ¯”åº¦ï¼Œé¢œè‰²,å£°éŸ³ç­‰
 		//"urn:schemas-upnp-org:service:WANIPConnection:1",
 		//"urn:schemas-upnp-org:service:WANPPPConnection:1",
 		"upnp:rootdevice",										//root device
@@ -371,6 +371,10 @@ int main()
 			case 10:
 			{
 				pUPNPServiceKaiShu->X_kaishustory_Login("1234", "5678");
+				break;
+			}
+			case 11: {
+				pRenderingControl->SetVolume(0, "Master", 0.5);
 				break;
 			}
 			}
