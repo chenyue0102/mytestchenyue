@@ -48,7 +48,7 @@ void cleanSocket()
 
 }
 #endif
-SOCKET createMultiBroadcast(ULONG multiIp, ULONG localIp, int port)
+SOCKET createMultiBroadcast(uint32_t multiIp, uint32_t localIp, int port)
 {
     SOCKET s = INVALID_SOCKET;
     do
@@ -59,7 +59,7 @@ SOCKET createMultiBroadcast(ULONG multiIp, ULONG localIp, int port)
             break;
         }
         //重用地址
-        BOOL opt = TRUE;
+        int opt = 1;
         if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (char*)&opt, sizeof(opt)) < 0)
         {
             assert(false);
@@ -108,16 +108,16 @@ SOCKET createMultiBroadcast(ULONG multiIp, ULONG localIp, int port)
 }
 
 #define SERVER_IP "239.255.255.250"
-#define SERVER_PORT 9898
+#define SERVER_PORT 1900
 void serverthread()
 {
-    SOCKET s = createMultiBroadcast(inet_addr(SERVER_IP), INADDR_ANY, SERVER_PORT);
+    SOCKET s = createMultiBroadcast(inet_addr(SERVER_IP), inet_addr("192.168.3.2"), SERVER_PORT);
     while (true)
     {
 		const int bufferLen = 1024;
 		char buffer[bufferLen + 1];
         sockaddr_in clientAddr;
-        int addrLen = sizeof(clientAddr);
+        socklen_t addrLen = sizeof(clientAddr);
         int recvLen = recvfrom(s, buffer, bufferLen, 0, (sockaddr*)&clientAddr, &addrLen);
         buffer[recvLen] = '\0';
         char ip[16] = { 0 };
@@ -166,7 +166,7 @@ int main()
             const int bufferLen = 1024;
             char buffer[bufferLen + 1];
             sockaddr_in addr;
-            int addrLen = sizeof(addr);
+            socklen_t addrLen = sizeof(addr);
             int recvLen = recvfrom(s, buffer, bufferLen, 0, (sockaddr*)&addr, &addrLen);
             buffer[recvLen] = '\0';
             char ip[16] = {0};
