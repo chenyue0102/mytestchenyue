@@ -8,5 +8,6 @@ public:
 	~UPNPServiceRenderingControl();
 public:
 	bool GetVolumeDBRange(int minVolume, int maxVolume);
+	bool SetVolume(long InstanceID, std::string Channel, float DesiredVolume);
 };
 

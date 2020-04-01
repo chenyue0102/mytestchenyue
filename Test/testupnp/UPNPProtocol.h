@@ -5,7 +5,7 @@
 #include "UPNPDefine.h"
 
 
-//°æ±¾ºÅ
+//ç‰ˆæœ¬å·
 struct UPNPDDDSpecVersion
 {
 	int major;
@@ -17,83 +17,83 @@ struct UPNPDDDSpecVersion
 	{}
 };
 
-//Éè±¸ĞÅÏ¢
+//è®¾å¤‡ä¿¡æ¯
 struct UPNPDDDService
 {
-	std::string serviceType;			//·şÎñÀàĞÍ,urn:schemas-upnp-org:service:AVTransport:1
-	std::string serviceId;				//·şÎñ±êÊ¶·û,·şÎñÊµÀıµÄÎ¨Ò»±êÊ¶,ÔÚÕâÒ»Éè±¸ÃèÊöÖĞ±£³ÖÎ¨Ò»ĞÔ
-	std::string SCPDURL;				//Service Control Protocol Description on URL,»ñÈ¡·şÎñÃèÊöÎÄµµµÄurl
-	std::string controlURL;				//Ïò·şÎñ·¢ËÍ¿ØÖÆÏûÏ¢µÄURL
-	std::string eventSubURL;			//¶©ÔÄ·şÎñÊÂ¼şµÄURL
+	std::string serviceType;			//æœåŠ¡ç±»å‹,urn:schemas-upnp-org:service:AVTransport:1
+	std::string serviceId;				//æœåŠ¡æ ‡è¯†ç¬¦,æœåŠ¡å®ä¾‹çš„å”¯ä¸€æ ‡è¯†,åœ¨è¿™ä¸€è®¾å¤‡æè¿°ä¸­ä¿æŒå”¯ä¸€æ€§
+	std::string SCPDURL;				//Service Control Protocol Description on URL,è·å–æœåŠ¡æè¿°æ–‡æ¡£çš„url
+	std::string controlURL;				//å‘æœåŠ¡å‘é€æ§åˆ¶æ¶ˆæ¯çš„URL
+	std::string eventSubURL;			//è®¢é˜…æœåŠ¡äº‹ä»¶çš„URL
 };
 
-//deviceÃèÊö
+//deviceæè¿°
 struct UPNPDDDDevice
 {
 	std::string deviceType;				//urn:schemas-upnp-org:device:MediaRenderer:1
-	std::string presentationURL;		//Éè±¸Õ¹Ê¾µÄURL,·Ç±ØĞë
-	std::string friendlyName;			//¸øÓÃ»§Õ¹Ê¾µÄÃèÊöÎÄ×Ö
-	std::string manufacturer;			//ÖÆÔìÉÌÃû³Æ
-	std::string manufacturerURL;		//ÖÆÔìÉÌURL
-	std::string modelDescription;		//¸øÓÃ»§ÔÄ¶ÁµÄÏêÏ¸ÃèÊö,×î¶à128×Ö·û,·Ç±ØĞë
-	std::string modelName;				//ĞÍºÅ
-	std::string modelURL;				//ĞÍºÅĞÅÏ¢URL,·Ç±ØĞë
-	std::string UDN;					//Î¨Ò»Éè±¸Ãû,Éè±¸UUID,¸ñÊ½:uuid:F7CA5454-3F48-4390-8009-283ee448c1ab
-	std::vector<UPNPDDDService> serviceList;//·şÎñĞÅÏ¢,xmlÖĞ×Ó½ÚµãÃû³ÆÎªservice
+	std::string presentationURL;		//è®¾å¤‡å±•ç¤ºçš„URL,éå¿…é¡»
+	std::string friendlyName;			//ç»™ç”¨æˆ·å±•ç¤ºçš„æè¿°æ–‡å­—
+	std::string manufacturer;			//åˆ¶é€ å•†åç§°
+	std::string manufacturerURL;		//åˆ¶é€ å•†URL
+	std::string modelDescription;		//ç»™ç”¨æˆ·é˜…è¯»çš„è¯¦ç»†æè¿°,æœ€å¤š128å­—ç¬¦,éå¿…é¡»
+	std::string modelName;				//å‹å·
+	std::string modelURL;				//å‹å·ä¿¡æ¯URL,éå¿…é¡»
+	std::string UDN;					//å”¯ä¸€è®¾å¤‡å,è®¾å¤‡UUID,æ ¼å¼:uuid:F7CA5454-3F48-4390-8009-283ee448c1ab
+	std::vector<UPNPDDDService> serviceList;//æœåŠ¡ä¿¡æ¯,xmlä¸­å­èŠ‚ç‚¹åç§°ä¸ºservice
 };
 
 //UPNP Device Description Document
-//Éè±¸ÃèÊöÎÄµµ
+//è®¾å¤‡æè¿°æ–‡æ¡£
 struct UPNPDDDRoot
 {
 	UPNPDDDSpecVersion specVersion;		//version
-	UPNPDDDDevice device;				//Éè±¸ĞÅÏ¢
-	std::string URLBase;				//½á¹¹ÌåÖĞurlĞèÒªÆ´½ÓµÄÍ·²¿,1.0°æ±¾´æÔÚ,1.0ÒÔÉÏ°æ±¾²»´æÔÚ,
+	UPNPDDDDevice device;				//è®¾å¤‡ä¿¡æ¯
+	std::string URLBase;				//ç»“æ„ä½“ä¸­urléœ€è¦æ‹¼æ¥çš„å¤´éƒ¨,1.0ç‰ˆæœ¬å­˜åœ¨,1.0ä»¥ä¸Šç‰ˆæœ¬ä¸å­˜åœ¨,
 
 	UPNPDDDRoot()
 	{}
 };
 ///////////////////////////////////////////////////
-//·şÎñ¶¯×÷²ÎÊı
+//æœåŠ¡åŠ¨ä½œå‚æ•°
 struct UPNPSDDArgument
 {
-	std::string name;					//²ÎÊıÃû³Æ,×î¶à32×Ö·û,²»Ó¦°üº¬-
-	std::string direction;				//inÊäÈë,outÊä³ö,inÔÚÇ°,outÔÚºó
-	std::string relatedStateVariable;	//±¾²ÎÊıºÍºó±ßµÄÄ³¸ö×´Ì¬¹ØÁª
+	std::string name;					//å‚æ•°åç§°,æœ€å¤š32å­—ç¬¦,ä¸åº”åŒ…å«-
+	std::string direction;				//inè¾“å…¥,outè¾“å‡º,inåœ¨å‰,outåœ¨å
+	std::string relatedStateVariable;	//æœ¬å‚æ•°å’Œåè¾¹çš„æŸä¸ªçŠ¶æ€å…³è”
 };
 
-//·şÎñ¶¯×÷
+//æœåŠ¡åŠ¨ä½œ
 struct UPNPSDDAction
 {
-	std::string name;					//¶¯×÷Ãû³Æ,×î¶à32×Ö·û,²»Ó¦°üº¬-
-	std::vector<UPNPSDDArgument> argumentList;//²ÎÊıÁĞ±í,xmlÄÚ²¿ÌõÄ¿Ãû×ÖÎªargument
+	std::string name;					//åŠ¨ä½œåç§°,æœ€å¤š32å­—ç¬¦,ä¸åº”åŒ…å«-
+	std::vector<UPNPSDDArgument> argumentList;//å‚æ•°åˆ—è¡¨,xmlå†…éƒ¨æ¡ç›®åå­—ä¸ºargument
 };
 
-//ºÏ·¨Öµ·¶Î§
+//åˆæ³•å€¼èŒƒå›´
 struct UPNPSDDAllowedValueRange
 {
-	std::string minimum;				//×îĞ¡Öµ
-	std::string maximum;				//×î´óÖµ
-	std::string step;					//²½½ø
+	std::string minimum;				//æœ€å°å€¼
+	std::string maximum;				//æœ€å¤§å€¼
+	std::string step;					//æ­¥è¿›
 };
 
-//·şÎñ×´Ì¬
+//æœåŠ¡çŠ¶æ€
 struct UPNPSDDServiceState
 {
-	std::string sendEvents;				//×´Ì¬±äÁ¿Öµ·¢Éú±ä»¯,ÊÇ·ñÉú³ÉÊÂ¼şÏûÏ¢,´æ´¢ÔÚxmlÊôĞÔÖĞ,no yes
-	std::string name;					//×´Ì¬Ãû³Æ,×î¶à32×Ö·û,²»ÄÜ°üº¬-,³§ÉÌ¶¨ÒåÒÑX_¿ªÍ·,±ê×¼¶¨ÒåµÄ²»ÒÔX_,A_¿ªÍ·
-	std::string dataType;				//²ÎÊıÀàĞÍ,string,i4,ui4,µÈ
-	std::vector<std::string> allowedValueList;//ÔÊĞíµÄ²ÎÊıÖµ,ÍÆ¼öÊ¹ÓÃ,xml×Ö¶ÎÃû×ÖÎªallowedValue
-	std::string defaultValue;			//ÆÚÍûµÄ³õÖµ,ÍÆ¼öÊ¹ÓÃ
-	UPNPSDDAllowedValueRange allowedValueRange;//²ÎÊı·¶Î§,ÍÆ¼öÊ¹ÓÃ
+	std::string sendEvents;				//çŠ¶æ€å˜é‡å€¼å‘ç”Ÿå˜åŒ–,æ˜¯å¦ç”Ÿæˆäº‹ä»¶æ¶ˆæ¯,å­˜å‚¨åœ¨xmlå±æ€§ä¸­,no yes
+	std::string name;					//çŠ¶æ€åç§°,æœ€å¤š32å­—ç¬¦,ä¸èƒ½åŒ…å«-,å‚å•†å®šä¹‰å·²X_å¼€å¤´,æ ‡å‡†å®šä¹‰çš„ä¸ä»¥X_,A_å¼€å¤´
+	std::string dataType;				//å‚æ•°ç±»å‹,string,i4,ui4,ç­‰
+	std::vector<std::string> allowedValueList;//å…è®¸çš„å‚æ•°å€¼,æ¨èä½¿ç”¨,xmlå­—æ®µåå­—ä¸ºallowedValue
+	std::string defaultValue;			//æœŸæœ›çš„åˆå€¼,æ¨èä½¿ç”¨
+	UPNPSDDAllowedValueRange allowedValueRange;//å‚æ•°èŒƒå›´,æ¨èä½¿ç”¨
 };
-//·şÎñ,
+//æœåŠ¡,
 //Service Description Document
 //root name scpd
 struct UPNPSDDRoot
 {
 	UPNPDDDSpecVersion specVersion;		//version
-	std::vector<UPNPSDDAction> actionList;//¶¯×÷ÁĞ±í,xmlÄÚ²¿ÌõÄ¿Ãû³Æaction
+	std::vector<UPNPSDDAction> actionList;//åŠ¨ä½œåˆ—è¡¨,xmlå†…éƒ¨æ¡ç›®åç§°action
 };
 
 ///////////////////////////////////////////////////////
@@ -101,8 +101,8 @@ struct UPNPSDDRoot
 struct UPNPPositionInfo
 {
 	UPNP_UI4 Track;						//
-	std::string TrackDuration;			//³ÖĞøÊ±¼ä£¬00:50:00
-	std::string TrackURI;				//²¥·ÅµÄurl
+	std::string TrackDuration;			//æŒç»­æ—¶é—´ï¼Œ00:50:00
+	std::string TrackURI;				//æ’­æ”¾çš„url
 	std::string RelTime;				//00:10:00
 	std::string AbsTime;				//00:10:00
 	UPNP_I4 RelCount;					//
