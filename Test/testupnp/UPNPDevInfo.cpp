@@ -51,7 +51,7 @@ void UPNPDevInfo::sendGetDeviceDescriptionDocument(const std::string &url)
 			assert(false);
 			break;
 		}
-		//»ñÈ¡Í¨ĞÅ¿ØÖÆµÄurlµØÖ·,Èç¹ûURLBaseÎª¿Õ£¬ÔòÊ¹ÓÃ»ñÈ¡Éè±¸ÃèÊöÎÄµµµÄurl
+		//è·å–é€šä¿¡æ§åˆ¶çš„urlåœ°å€,å¦‚æœURLBaseä¸ºç©ºï¼Œåˆ™ä½¿ç”¨è·å–è®¾å¤‡æè¿°æ–‡æ¡£çš„url
 		std::string strUrl;
 		if (mUPNPDDDRoot.URLBase.empty())
 		{
@@ -61,7 +61,7 @@ void UPNPDevInfo::sendGetDeviceDescriptionDocument(const std::string &url)
 		{
 			strUrl = mUPNPDDDRoot.URLBase;
 		}
-		const int MAXHOSTNAMELEN = 64;//¶¨ÒåÔÚminiwget.cÖĞ
+		const int MAXHOSTNAMELEN = 64;//å®šä¹‰åœ¨miniwget.cä¸­
 		char hostname[MAXHOSTNAMELEN + 1] = { 0 };
 		unsigned short port = 0;
 		char *path = nullptr;
@@ -150,10 +150,10 @@ UPNPServiceKaiShu* UPNPDevInfo::getKaiShu()
 
 void UPNPDevInfo::parseST(const std::string &st)
 {
-	//upnp:rootdevice ¸ùÉè±¸
-	//uuid:device - UUID ±íÊ¾±¾Éè±¸µÄuuid±íÊ¾Î»device - uuid
-	//urn : schema - upnp - org : device : device - Type : version ±íÊ¾±¾Éè±¸ÀàĞÍÎªdevice - typeÉè±¸£¬°æ±¾ÊÇversion
-	//urn : schema - upnp - org : service : service - Type : version ±íÊ¾·şÎñÀàĞÍÎªservice - typeµÄÉè±¸£¬°æ±¾ÊÇversion
+	//upnp:rootdevice æ ¹è®¾å¤‡
+	//uuid:device - UUID è¡¨ç¤ºæœ¬è®¾å¤‡çš„uuidè¡¨ç¤ºä½device - uuid
+	//urn : schema - upnp - org : device : device - Type : version è¡¨ç¤ºæœ¬è®¾å¤‡ç±»å‹ä¸ºdevice - typeè®¾å¤‡ï¼Œç‰ˆæœ¬æ˜¯version
+	//urn : schema - upnp - org : service : service - Type : version è¡¨ç¤ºæœåŠ¡ç±»å‹ä¸ºservice - typeçš„è®¾å¤‡ï¼Œç‰ˆæœ¬æ˜¯version
 	const char *strRootDevice = "upnp:rootdevice";
 	const char *strUUID = "uuid:";
 	if (0 == _stricmp(st.c_str(), strRootDevice))
@@ -171,7 +171,7 @@ void UPNPDevInfo::parseST(const std::string &st)
 		std::smatch matchResult;
 		if (std::regex_match(st, matchResult, expr) && matchResult.size() == 5)
 		{
-			//µÚÒ»¸öÎªÆ¥ÅäµÄÈ«Ïî
+			//ç¬¬ä¸€ä¸ªä¸ºåŒ¹é…çš„å…¨é¡¹
 			std::string deviceOrServer = matchResult[2];
 			if (0 == _stricmp(deviceOrServer.c_str(), "device"))
 			{
