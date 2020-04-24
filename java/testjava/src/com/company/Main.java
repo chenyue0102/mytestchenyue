@@ -1,15 +1,15 @@
 package com.company;
 
-import java.io.IOError;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.lang.annotation.Annotation;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
-import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.math.BigDecimal;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -17,11 +17,8 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.IntStream;
 
 public class Main {
 
@@ -46,7 +43,47 @@ public class Main {
 		testMethodHandle();
 		testTemplate();
 		testException();
+		testAnnotation();
     }
+
+    public static void testAnnotation(){
+		Annotation[]annotations = TestAnnotation.class.getAnnotations();
+		for (Annotation annotation:	annotations) {
+			if (annotation instanceof ClassAnnotation){
+				ClassAnnotation classAnnotation = (ClassAnnotation)annotation;
+				System.out.println("classAnnotation " + classAnnotation.value());
+			}else if (annotation instanceof FunctionalInterface){
+				System.out.println("FunctionalInterface");
+			}else{
+				System.out.println("unknown annotation");
+			}
+		}
+		try{
+			Method method = TestAnnotation.class.getMethod("getAnnotationResult", String.class);
+			Annotation[]annotations2 = method.getAnnotations();
+			for (Annotation annotation2 : annotations2){
+				if (annotation2 instanceof MethodAnnotation){
+					MethodAnnotation methodAnnotation = (MethodAnnotation)annotation2;
+					System.out.println("methodAnnotation" + methodAnnotation.value());
+				}else{
+					System.out.println("unknown annotation");
+				}
+			}
+			Parameter[]parameters = method.getParameters();
+			for (Parameter parameter : parameters){
+				for (Annotation annotation3 : parameter.getAnnotations()){
+					if (annotation3 instanceof ParameterAnnotation){
+						ParameterAnnotation parameterAnnotation = (ParameterAnnotation)annotation3;
+						System.out.println("ParameterAnnotation " + parameterAnnotation.value());
+					}else{
+						System.out.println("unknown annotation");
+					}
+				}
+			}
+		}catch (NoSuchMethodException | SecurityException e){
+			e.printStackTrace();
+		}
+	}
 
     public static void testException(){
 		Socket socket = new Socket();
