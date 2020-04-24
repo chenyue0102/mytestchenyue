@@ -1,0 +1,30 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+		{
+			"type": "shell",
+			"label": "C/C++: gcc-7 build active file",
+			"command": "/usr/bin/gcc",
+			"args": [
+				"-I/usr/include/libnl3",
+				"-g",
+				"${file}",
+				"-o",
+				"${fileDirname}/${fileBasenameNoExtension}",
+				"-L/lib/x86_64-linux-gnu",
+				"-lnl-3",
+				"-lnl-genl-3"
+			],
+			"options": {
+				"cwd": "/usr/bin"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			}
+		}
+	]
+}
