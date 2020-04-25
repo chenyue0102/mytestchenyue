@@ -8,8 +8,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.ref.WeakReference;
-import java.lang.reflect.Method;
-import java.lang.reflect.Parameter;
+import java.lang.reflect.*;
 import java.math.BigDecimal;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -17,6 +16,10 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -44,7 +47,57 @@ public class Main {
 		testTemplate();
 		testException();
 		testAnnotation();
+		testProxy();
     }
+
+    public interface ITestProxy{
+    	String getName();
+		void setName(String name);
+    }
+
+    public static class TestProxy implements ITestProxy{
+		@Override
+		public String getName() {
+			return name;
+		}
+
+		@Override
+		public void setName(String name) {
+			this.name = name;
+		}
+		String name;
+	}
+
+	public static class MyInvocationHandler implements InvocationHandler{
+		@Override
+		public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+			if (method.getName() == "getName"){
+				String name = testProxy.getName();
+				name += " append";
+				return name;
+			}else if (method.getName() == "setName"){
+				String name = (String)args[0];
+				name = "hello " + name;
+				testProxy.setName(name);
+				return null;
+			}else{
+				return null;
+			}
+		}
+		TestProxy testProxy = new TestProxy();
+	}
+
+	public static void testProxy(){
+		InvocationHandler invocationHandler = new MyInvocationHandler();
+		try{
+			ITestProxy testProxy = (ITestProxy)Proxy.newProxyInstance(ITestProxy.class.getClassLoader(), new Class[]{ITestProxy.class}, invocationHandler);
+			testProxy.setName("test name");
+			String name = testProxy.getName();
+			System.out.println("proxy " + name);
+		}catch (SecurityException | IllegalArgumentException e){
+			e.printStackTrace();
+		}
+	}
 
     public static void testAnnotation(){
 		Annotation[]annotations = TestAnnotation.class.getAnnotations();
