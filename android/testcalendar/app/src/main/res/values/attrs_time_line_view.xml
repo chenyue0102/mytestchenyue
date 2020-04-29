@@ -1,0 +1,23 @@
+<resources>
+    <declare-styleable name="TimeLineView">
+        <attr name="exampleString" format="string" />
+        <attr name="exampleDimension" format="dimension" />
+        <attr name="exampleColor" format="color" />
+        <attr name="exampleDrawable" format="color|reference" />
+        
+        <attr name="itemHeight" format="dimension"/>
+        <attr name="itemTextColor" format="color"/>
+        <attr name="itemTextSize" format="dimension"/>
+        <attr name="itemLineColor" format="color"/>
+        <attr name="itemLinePaddingLeft" format="dimension"/>
+
+        <attr name="scheduleBackgroundColor" format="color"/>
+        <attr name="schedulePaddingLeft" format="dimension"/>
+        <attr name="scheduleTextPaddingLeft" format="dimension"/>
+        <attr name="scheduleTextPaddingTop" format="dimension"/>
+        <attr name="scheduleTextPaddingRight" format="dimension"/>
+        <attr name="scheduleTextPaddingBottom" format="dimension"/>
+        <attr name="scheduleTextColor" format="color"/>
+        <attr name="scheduleTextSize" format="dimension"/>
+    </declare-styleable>
+</resources>
