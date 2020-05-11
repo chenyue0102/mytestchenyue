@@ -16,12 +16,12 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
+import javax.swing.*;
 
 public class Main {
 
@@ -48,7 +48,37 @@ public class Main {
 		testException();
 		testAnnotation();
 		testProxy();
+		testGson();
     }
+
+    public static class TestGson{
+    	public int id;
+    	public String name;
+	}
+
+    public static void testGson(){
+		TestGson testGson = new TestGson();
+		testGson.id = 100;
+		testGson.name = "hello,Gson";
+		Gson gson = new Gson();
+		String jsonText = gson.toJson(testGson, TestGson.class);
+		System.out.println(jsonText);
+
+		TestGson testGson2 = gson.fromJson(jsonText, TestGson.class);
+		if (testGson.id == testGson2.id && Objects.equals(testGson.name, testGson2.name)){
+			System.out.println("json equal");
+		}else{
+			System.out.println("json not equal");
+		}
+
+		ArrayList<TestGson> arrayList = new ArrayList<>();
+		arrayList.add(testGson);
+		arrayList.add(testGson2);
+		String arrayJson = gson.toJson(arrayList, new TypeToken<ArrayList<TestGson>>(){}.getType());
+		System.out.println(arrayJson);
+		ArrayList<TestGson> arrayList2 = gson.fromJson(arrayJson, new TypeToken<ArrayList<TestGson>>(){}.getType());
+		System.out.println("arrayJson Length:" + arrayList2.size());
+	}
 
     public interface ITestProxy{
     	String getName();
