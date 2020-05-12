@@ -1,0 +1,12 @@
+targets:
+  $default:
+    builders:
+      json_serializable:
+        enabled: true
+      testBuilder:
+        enabled: true
+        import: 'package:flutterapp/TestMeta.dart'
+        builder_factories: ['testBuilder']
+        build_extensions: {'.dart': ['.g.dart']}
+        auto_apply: root_package
+        build_to: source
