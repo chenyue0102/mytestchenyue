@@ -94,20 +94,18 @@ class _MyHomePageState extends State<MyHomePage> {
     HttpClientResponse response = await request.close();
     String responseBody = await response.transform(new Utf8Decoder()).join();
     print(responseBody);
+    Map<String, dynamic> json = jsonDecode(responseBody);
+    AutoProtocol autoProtocol = AutoProtocol.fromJson(json);
+    print(autoProtocol.slideshow);
   }
 
   void onTestJson(){
     TestProtocol protocol = new TestProtocol('abc', 100);
     Map<String, dynamic> json = protocol.toJson();
 
-    AutoProtocol autoProtocol = new AutoProtocol("def", 456);
-    Map<String, dynamic> json2 = autoProtocol.toJson();
-
     String s = json.toString();
     TestProtocol p2 = TestProtocol.fromJson(json);
-    showToast(s + p2.name + p2.id.toString() + json2.toString());
-
-
+    showToast(s + p2.name + p2.id.toString());
   }
 
   @override
