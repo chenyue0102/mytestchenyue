@@ -29,6 +29,16 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="start_server"/>
+        </LinearLayout >
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="rawsocket"
+                android:id="@+id/btn_raw_socket"/>
         </LinearLayout>
         <TextView
             android:id="@+id/sample_text"

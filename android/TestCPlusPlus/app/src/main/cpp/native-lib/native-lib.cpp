@@ -6,6 +6,11 @@
 #include <dirent.h>
 #include <unistd.h>
 #include <sys/system_properties.h>
+#include <sys/socket.h>
+#include <endian.h>
+#include <linux/in.h>
+#include <netinet/ip.h>
+#include <netinet/udp.h>
 #include "Platinum.h"
 
 #define LOG_DEBUG(tag,text) \
@@ -369,4 +374,20 @@ Java_com_example_testcplusplus_MainActivity_setClassLoader(JNIEnv *env, jobject 
 JNIEXPORT void JNICALL
 Java_com_example_testcplusplus_MainActivity_startServer(JNIEnv *env, jobject thiz) {
 
+}extern "C"
+JNIEXPORT void JNICALL
+Java_com_example_testcplusplus_MainActivity_testRawSocket(JNIEnv *env, jobject thiz) {
+    int sock = -1;
+    do{
+        if ((sock = socket(AF_INET, SOCK_RAW, IPPROTO_UDP)) == -1){
+            assert(false);
+            break;
+        }
+        std::string strSendData;
+        strSendData.resize(sizeof(iphdr) + sizeof(udphdr), '\0');
+    }while(false);
+    if (-1 != sock){
+        close(sock);
+        sock = -1;
+    }
 }

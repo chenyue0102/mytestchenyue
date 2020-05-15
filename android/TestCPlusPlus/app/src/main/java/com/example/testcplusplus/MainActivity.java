@@ -71,21 +71,13 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         Button btnThreadDestroy = (Button)findViewById(R.id.btn_thread_destroy);
-        btnThreadDestroy.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                destroyThread();
-            }
-        });
+        btnThreadDestroy.setOnClickListener(v12 -> destroyThread());
         testPlatinum();
 
         Button btnStartServer = (Button)findViewById(R.id.btn_start_server);
-        btnStartServer.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startServer();
-            }
-        });
+        btnStartServer.setOnClickListener(v1 -> startServer());
+
+        findViewById(R.id.btn_raw_socket).setOnClickListener(view->testRawSocket());
     }
 
     public native void initThread();
@@ -129,4 +121,6 @@ public class MainActivity extends AppCompatActivity {
         Log.i("MyTest", "" + a);
     }
     public native void startServer();
+
+    public native void testRawSocket();
 }

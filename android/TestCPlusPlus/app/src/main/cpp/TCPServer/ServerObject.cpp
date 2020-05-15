@@ -108,29 +108,6 @@ bool ServerObject::init(IUserObjectManager *pUserObjectManager)
 	return bRes;
 }
 
-bool ServerObject::init_udp(IUDPUserObjectManager * pUserObjectManager)
-{
-	std::lock_guard<std::mutex> lk(m_mutex);
-	bool bRet = false;
-
-	do
-	{
-		if ((m_pUDPUserObjectManager = pUserObjectManager) == nullptr)
-		{
-			LOG(LOG_ERR, "ServerObject::init_udp pUserObjectManager == nullptr\n");
-			assert(false);
-			break;
-		}
-		if ((m_fdUdp = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
-		{
-			LOG(LOG_ERR, "ServerObject::init socket errno=%d\n", errno);
-			assert(false);
-			break;
-		}
-	} while (false);
-	return bRet;
-}
-
 bool ServerObject::destory()
 {
 	std::lock_guard<std::mutex> lk(m_mutex);
