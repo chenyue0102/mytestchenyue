@@ -15,4 +15,5 @@ class TestGenerator extends GeneratorForAnnotation<TestMeta>{
   }
 }
 
-Builder testBuilder(BuilderOptions options) => LibraryBuilder(TestGenerator());
+Builder testBuilder(BuilderOptions options) => LibraryBuilder(TestGenerator(),
+    generatedExtension:'.meta.dart');

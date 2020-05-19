@@ -6,6 +6,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 
 import 'AutoProtocol.dart';
 import 'Protocol.dart';
+import 'package:flutterapp/TestMeta.dart';
 
 void main() => runApp(MyApp());
 
