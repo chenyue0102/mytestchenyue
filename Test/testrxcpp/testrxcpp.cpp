@@ -3,6 +3,9 @@
 
 #include <iostream>
 #include <rxcpp/rx.hpp>
+#include <condition_variable>
+#include <mutex>
+#include <thread>
 
 using namespace rxcpp;
 using namespace rxcpp::sources;
@@ -85,9 +88,107 @@ void test8()
     std::cout << "main thread:end" << std::endl;
     getchar();
 }
+std::mutex console_mutex;
+void CTDetails(int val = 0) {
+    console_mutex.lock();
+    std::cout << "Current Thread id => "
+        << std::this_thread::get_id()
+        << val
+        << std::endl;
+    console_mutex.unlock();
+}
+void test9()
+{
+    std::cout << "main thread:" << std::this_thread::get_id() << std::endl;
+    serialize_one_worker coordination = rxcpp::serialize_new_thread();
+    rxsc::worker worker = coordination.create_coordinator().get_worker();
+    auto values = rxcpp::observable<>::interval(std::chrono::milliseconds(50)).
+        take(5).
+        replay(coordination);
+    worker.schedule([&](const rxcpp::schedulers::schedulable & schedulable) 
+        {
+            values.subscribe([](long v) {CTDetails(v); }, []() {CTDetails(); });
+        });
+    worker.schedule(coordination.now() + std::chrono::microseconds(125), [&](const rxcpp::schedulers::schedulable& schedulable)
+        {
+            values.subscribe([](long v) {CTDetails(v); }, []() {CTDetails(); });
+        });
+    worker.schedule([&](const rxcpp::schedulers::schedulable&) {values.connect(); });
+    getchar();
+}
+
+std::mutex g_mtx;
+std::condition_variable g_cv;
+std::vector<std::function<void()>> g_funs;
+void doProcess()
+{
+    std::cout << "doProcess threadid:" << std::this_thread::get_id() << std::endl;
+    while (true)
+    {
+        std::unique_lock<std::mutex> lk(g_mtx);
+        g_cv.wait(lk, [&]() {return !g_funs.empty(); });
+        std::vector<std::function<void()>> funs = std::move(g_funs);
+        lk.unlock();
+        for (auto& fun : funs)
+        {
+            fun();
+        }
+    }
+}
+
+void insertfun(std::function<void()> fun)
+{
+    std::lock_guard<std::mutex> lk(g_mtx);
+    g_funs.push_back(fun);
+    g_cv.notify_one();
+}
+
+void testxx(std::function<void()> fun)
+{
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    fun();
+}
+
+void test10()
+{
+    std::cout << "main thread:" << std::this_thread::get_id() << std::endl;
+    std::thread t(&doProcess);
+    rxcpp::schedulers::run_loop rlp;
+    auto mainthread = rxcpp::observe_on_run_loop(rlp);
+    auto workthread = rxcpp::synchronize_new_thread();
+    auto ob = rxcpp::observable<>::create<std::string>([](rxcpp::subscriber<std::string> s)
+        {
+            std::cout << "subscriber" << std::this_thread::get_id() << std::endl;
+            insertfun([=]() {
+                s.on_next("abc123");
+                s.on_completed();
+                });
+        });
+    rxcpp::composite_subscription scr;
+    auto sub = rxcpp::make_subscriber<std::string>(scr, [](const std::string& text)
+        {
+            std::cout << "threadid:" << std::this_thread::get_id() << " text:" << text << std::endl;
+        }, []() {
+            std::cout << "threadid:" << std::this_thread::get_id() << " complete" << std::endl;
+        });
+    ob.subscribe_on(workthread).observe_on(mainthread).subscribe(sub);
+    ob.subscribe_on(workthread).observe_on(mainthread).subscribe([](const std::string& text) {
+            std::cout << "threadid2:" << std::this_thread::get_id() << " text:" << text << std::endl;
+        }, []() {
+            std::cout << "threadid2:" << std::this_thread::get_id() << " complete" << std::endl;
+        });
+
+    while (scr.is_subscribed() || !rlp.empty()) {
+        while (!rlp.empty() && rlp.peek().when < rlp.now()) {
+            rlp.dispatch();
+        }
+    }
+    t.join();
+}
 int main()
 {
-    test8();
+    test10();
     return 0;
 }
 
+;
