@@ -1,4 +1,4 @@
-// testopengl.cpp : ¶¨Òå¿ØÖÆÌ¨Ó¦ÓÃ³ÌĞòµÄÈë¿Úµã¡£
+// testopengl.cpp : å®šä¹‰æ§åˆ¶å°åº”ç”¨ç¨‹åºçš„å…¥å£ç‚¹ã€‚
 //
 #define _USE_MATH_DEFINES
 #include "stdafx.h"
@@ -8,6 +8,14 @@
 #include <GL/glew.h>
 #include "GL/glut.h"
 #include <GL/freeglut_ext.h>
+
+void CHECKERR() {
+	int err = 0; 
+	if (GL_NO_ERROR != (err = glGetError()))
+	{
+		printf("glGetError=%d\n", err);
+	}
+}
 
 void drawPoints()
 {
@@ -23,7 +31,7 @@ void drawPoints()
 
 void drawLines()
 {
-	glBegin(GL_LINE_STRIP);//×îºóÒ»¸öµãÓëµÚÒ»¸öµã²»Á¬½Ó
+	glBegin(GL_LINE_STRIP);//æœ€åä¸€ä¸ªç‚¹ä¸ç¬¬ä¸€ä¸ªç‚¹ä¸è¿æ¥
 	{
 		glVertex2d(0, 0);
 		glVertex2d(1, 1);
@@ -50,7 +58,7 @@ void drawLines()
 		PointC[2] = { 0.5, cy },
 		PointD[2] = { -0.5, cy },
 		PointE[2] = { -bx, by };
-	glBegin(GL_LINE_LOOP);//×îºóÒ»¸öµãÓëµÚÒ»¸öµãÁ¬½Ó
+	glBegin(GL_LINE_LOOP);//æœ€åä¸€ä¸ªç‚¹ä¸ç¬¬ä¸€ä¸ªç‚¹è¿æ¥
 	glVertex2fv(PointA);
 	glVertex2fv(PointC);
 	glVertex2fv(PointE);
@@ -60,9 +68,9 @@ void drawLines()
 
 	glBegin(GL_LINES);
 	glVertex2f(-1.0f, 0.0f);
-	glVertex2f(1.0f, 0.0f);         // ÒÔÉÏÁ½¸öµã¿ÉÒÔ»­xÖá
+	glVertex2f(1.0f, 0.0f);         // ä»¥ä¸Šä¸¤ä¸ªç‚¹å¯ä»¥ç”»xè½´
 	glVertex2f(0.0f, -1.0f);
-	glVertex2f(0.0f, 1.0f);         // ÒÔÉÏÁ½¸öµã¿ÉÒÔ»­yÖá
+	glVertex2f(0.0f, 1.0f);         // ä»¥ä¸Šä¸¤ä¸ªç‚¹å¯ä»¥ç”»yè½´
 	glEnd();
 	glBegin(GL_LINE_STRIP);
 	const GLfloat factor = 0.1f;
@@ -75,13 +83,13 @@ void drawLines()
 
 void drawPolygon()
 {
-	glPolygonMode(GL_FRONT, GL_FILL);//ÕıÃæÎªÌî³ä
-	glPolygonMode(GL_BACK, GL_LINE);//·´ÃæÎª±ßÔµ»æÖÆ
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);//Ë«ÃæÎª¶¥µã»æÖÆ
-	//Ò»°ëÄæÊ±ÕëË³ĞòÎªÕıÃæ
-	glFrontFace(GL_CCW);//ÉèÖÃÄæÊ±ÕëÎªÕıÃæ£¬Counter Clock Wise
-	//glFrontFace(GL_CW);//ÉèÖÃË³Ê±ÕëÎªÕıÃæ
-	//ÄæÊ±Õë»æÖÆÒ»¸öÕı·½ĞÎ
+	glPolygonMode(GL_FRONT, GL_FILL);//æ­£é¢ä¸ºå¡«å……
+	glPolygonMode(GL_BACK, GL_LINE);//åé¢ä¸ºè¾¹ç¼˜ç»˜åˆ¶
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);//åŒé¢ä¸ºé¡¶ç‚¹ç»˜åˆ¶
+	//ä¸€åŠé€†æ—¶é’ˆé¡ºåºä¸ºæ­£é¢
+	glFrontFace(GL_CCW);//è®¾ç½®é€†æ—¶é’ˆä¸ºæ­£é¢ï¼ŒCounter Clock Wise
+	//glFrontFace(GL_CW);//è®¾ç½®é¡ºæ—¶é’ˆä¸ºæ­£é¢
+	//é€†æ—¶é’ˆç»˜åˆ¶ä¸€ä¸ªæ­£æ–¹å½¢
 	glBegin(GL_POLYGON);
 	glVertex2f(-0.5f, -0.5f);
 	glVertex2f(0.0f, -0.5f);
@@ -89,7 +97,7 @@ void drawPolygon()
 	glVertex2f(-0.5f, 0.0f);
 	glEnd();
 
-	//Ë³Ö®Õó»æÖÆÒ»¸öÕı·½ĞÎ
+	//é¡ºä¹‹é˜µç»˜åˆ¶ä¸€ä¸ªæ­£æ–¹å½¢
 	glBegin(GL_POLYGON);
 	glVertex2f(0.0f, 0.0f);
 	glVertex2f(0.0f, 0.5f);
@@ -115,7 +123,7 @@ void drawBackline()
 	int maxLineCount = 20;
 	glColor3f(1.0f, 1.0f, 1.0f);
 	glBegin(GL_LINES);
-	//»æÖÆxyÆ½Ãæ
+	//ç»˜åˆ¶xyå¹³é¢
 	for (int i = 0; i < maxLineCount; i++)
 	{
 		int yStep = maxFar / maxLineCount * 2;
@@ -150,28 +158,28 @@ void drawBackline()
 
 void drawSun()
 {
-	//ÆôÓÃÉî¶È²âÊÔ£¬ºó»æÖÆµÄ£¬ÔÚºóÃæµÄÎïÌå²»»áÕÚµ²Ç°ÃæµÄÎïÌå
+	//å¯ç”¨æ·±åº¦æµ‹è¯•ï¼Œåç»˜åˆ¶çš„ï¼Œåœ¨åé¢çš„ç‰©ä½“ä¸ä¼šé®æŒ¡å‰é¢çš„ç‰©ä½“
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	//ÆôÓÃÍ¶Ó°¾ØÕó
+	//å¯ç”¨æŠ•å½±çŸ©é˜µ
 	glMatrixMode(GL_PROJECTION);
-	//µ±Ç°¾ØÕóÉèÖÃÎªµ¥Î»¾ØÕó
+	//å½“å‰çŸ©é˜µè®¾ç½®ä¸ºå•ä½çŸ©é˜µ
 	glLoadIdentity();
-	//ÉèÖÃ¿ÉÊÓ¿Õ¼ä,ÊÓ½ÇÎª75¶È£¬¸ß¿í±ÈÎª1.0¡£×î½ü¿ÉÊÓ¾àÀëÎª1.×îÔ¶¿ÉÊÓ¾àÀëÎª400000000
+	//è®¾ç½®å¯è§†ç©ºé—´,è§†è§’ä¸º75åº¦ï¼Œé«˜å®½æ¯”ä¸º1.0ã€‚æœ€è¿‘å¯è§†è·ç¦»ä¸º1.æœ€è¿œå¯è§†è·ç¦»ä¸º400000000
 	gluPerspective(75, 1, 1, maxFar);
-	//ÉèÖÃµ±Ç°²Ù×÷µÄ¾ØÕóÎª¡°Ä£ĞÍÊÓÍ¼¾ØÕó¡±
+	//è®¾ç½®å½“å‰æ“ä½œçš„çŸ©é˜µä¸ºâ€œæ¨¡å‹è§†å›¾çŸ©é˜µâ€
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	int div = 1;
-	//¸Ä±ä¹Û²ìµãµÄÎ»ÖÃ,Ç°Èı¸ö²ÎÊı±íÊ¾ÁË¹Û²ìµãµÄÎ»ÖÃ£¬ÖĞ¼äÈı¸ö²ÎÊı±íÊ¾ÁË¹Û²ìÄ¿±êµÄÎ»ÖÃ£¬×îºóÈı¸ö²ÎÊı´ú±í´Ó(0,0,0)µ½ (x,y,z)µÄÖ±Ïß£¬Ëü±íÊ¾ÁË¹Û²ìÕßÈÏÎªµÄ¡°ÉÏ¡±·½Ïò
+	//æ”¹å˜è§‚å¯Ÿç‚¹çš„ä½ç½®,å‰ä¸‰ä¸ªå‚æ•°è¡¨ç¤ºäº†è§‚å¯Ÿç‚¹çš„ä½ç½®ï¼Œä¸­é—´ä¸‰ä¸ªå‚æ•°è¡¨ç¤ºäº†è§‚å¯Ÿç›®æ ‡çš„ä½ç½®ï¼Œæœ€åä¸‰ä¸ªå‚æ•°ä»£è¡¨ä»(0,0,0)åˆ° (x,y,z)çš„ç›´çº¿ï¼Œå®ƒè¡¨ç¤ºäº†è§‚å¯Ÿè€…è®¤ä¸ºçš„â€œä¸Šâ€æ–¹å‘
 	//gluLookAt(200000000 / div / 10, -200000000/ div, 200000000/ div, 0, 0, 0, 0, 0, 1);
 	gluLookAt(0.0, 5.0, -10.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 
 	drawBackline();
 
-	//»æÖÆÌ«Ñô
-	// ¶¨ÒåÌ«Ñô¹âÔ´£¬ËüÊÇÒ»ÖÖ°×É«µÄ¹âÔ´
+	//ç»˜åˆ¶å¤ªé˜³
+	// å®šä¹‰å¤ªé˜³å…‰æºï¼Œå®ƒæ˜¯ä¸€ç§ç™½è‰²çš„å…‰æº
 	{
 		GLfloat sun_light_position[] = { 0.0f, 0.0f, 0.0f, 1.0f };
 		GLfloat sun_light_ambient[] = { 0.0f, 0.0f, 0.0f, 1.0f };
@@ -187,7 +195,7 @@ void drawSun()
 		glEnable(GL_LIGHTING);
 		glEnable(GL_DEPTH_TEST);
 	}
-	// ¶¨ÒåÌ«ÑôµÄ²ÄÖÊ²¢»æÖÆÌ«Ñô
+	// å®šä¹‰å¤ªé˜³çš„æè´¨å¹¶ç»˜åˆ¶å¤ªé˜³
 	{
 		GLfloat sun_mat_ambient[] = { 0.0f, 0.0f, 0.0f, 1.0f };
 		GLfloat sun_mat_diffuse[] = { 0.0f, 0.0f, 0.0f, 1.0f };
@@ -205,11 +213,11 @@ void drawSun()
 	}
 
 	//glColor3f(1.0f, 0.0f, 0.0f);
-	//µÚÒ»¸ö²ÎÊı±íÊ¾ÇòÌåµÄ°ë¾¶£¬ºóÁ½¸ö²ÎÊı´ú±íÁË¡°Ãæ¡±µÄÊıÄ¿
+	//ç¬¬ä¸€ä¸ªå‚æ•°è¡¨ç¤ºçƒä½“çš„åŠå¾„ï¼Œåä¸¤ä¸ªå‚æ•°ä»£è¡¨äº†â€œé¢â€çš„æ•°ç›®
 	//glutWireTeapot(69600000);
 	//glutSolidSphere(69600000, 20, 20);
 	
-	// ¶¨ÒåµØÇòµÄ²ÄÖÊ²¢»æÖÆµØÇò
+	// å®šä¹‰åœ°çƒçš„æè´¨å¹¶ç»˜åˆ¶åœ°çƒ
 	{
 		GLfloat earth_mat_ambient[] = { 0.0f, 0.0f, 0.5f, 1.0f };
 		GLfloat earth_mat_diffuse[] = { 0.0f, 0.0f, 0.5f, 1.0f };
@@ -228,7 +236,7 @@ void drawSun()
 		glutSolidSphere(2.0, 40, 32);
 	}
 
-	// »æÖÆÀ¶É«µÄ¡°µØÇò¡±
+	// ç»˜åˆ¶è“è‰²çš„â€œåœ°çƒâ€
 	//glColor3f(0.0f, 0.0f, 1.0f);
 	//glRotatef(day / 30.0 * 360.0, 0.0f, 0.0f, -1.0f);
 	//glRotatef(day , 0.0f, 0.0f, -1.0f);
@@ -237,7 +245,7 @@ void drawSun()
 	//glutSolidSphere(15945000, 20, 20);
 	//glutWireTeapot(15945000);
 
-	// »æÖÆ»ÆÉ«µÄ¡°ÔÂÁÁ¡±
+	// ç»˜åˆ¶é»„è‰²çš„â€œæœˆäº®â€
 	//glColor3f(1.0f, 1.0f, 0.0f);
 	//glRotatef(day / 30.0*360.0 - day / 360.0*360.0, 0.0f, 0.0f, -1.0f);
 	//glTranslatef(38000000, 0.0f, 0.0f);
@@ -281,7 +289,7 @@ void selectFont(int size, int charset, const wchar_t* face) {
 GLuint charToTexture(const wchar_t ch)
 {
 	HDC hdc = wglGetCurrentDC();
-	selectFont(FONT_SIZE, DEFAULT_CHARSET, L"Î¢ÈíÑÅºÚ");
+	selectFont(FONT_SIZE, DEFAULT_CHARSET, L"å¾®è½¯é›…é»‘");
 	int w = 0, x = 0, y = 0;
 	GetCharWidth32W(hdc, ch, ch, &w);
 	typedef void (APIENTRY*PFNGLWINDOWPOS2IPROC)(GLint x, GLint y);
@@ -317,8 +325,8 @@ void drawText(float x, float y)
 	{
 		lists = glGenLists(10);
 		wglUseFontBitmapsW(wglGetCurrentDC(), L'0', 10, lists);
-		wglUseFontBitmapsW(wglGetCurrentDC(), L'Äã', 1, lists + 1);
-		wglUseFontBitmapsW(wglGetCurrentDC(), L'ºÃ', 1, lists + 2);
+		wglUseFontBitmapsW(wglGetCurrentDC(), L'ä½ ', 1, lists + 1);
+		wglUseFontBitmapsW(wglGetCurrentDC(), L'å¥½', 1, lists + 2);
 	}
 	glColor3f(0.0f, 0.0f, 1.0f);
 	glRasterPos2f(x, y);
@@ -326,17 +334,17 @@ void drawText(float x, float y)
 	{
 		glCallList(lists + i);
 	}
-	//charToTexture(L'Äã');
+	//charToTexture(L'ä½ ');
 	glFlush();
 	//glDeleteLists(lists, 10);
 }
 
 void drawTextTexture()
 {
-	// Çå³ıÆÁÄ»
+	// æ¸…é™¤å±å¹•
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	// ÉèÖÃÊÓ½Ç
+	// è®¾ç½®è§†è§’
 	/*glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	gluPerspective(75, 1, 1, 21);
@@ -344,7 +352,7 @@ void drawTextTexture()
 	glLoadIdentity();
 	gluLookAt(1, 5, 5, 0, 0, 0, 0, 0, 1);*/
 
-	static GLuint tex = charToTexture(L'Äã');
+	static GLuint tex = charToTexture(L'ä½ ');
 	
 	glEnable(GL_TEXTURE_2D);
 
@@ -373,7 +381,7 @@ char *g_dataBuffer = 0;
 void initTexture()
 {
 	g_dataBuffer = new char[TEXTURE_WIDTH * TEXTURE_HEIGHT * 3];
-	//´´½¨ÎÆÀí
+	//åˆ›å»ºçº¹ç†
 	glGenTextures(1, &g_texture);
 	glBindTexture(GL_TEXTURE_2D, g_texture);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -381,13 +389,13 @@ void initTexture()
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, TEXTURE_WIDTH, TEXTURE_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
 	glBindTexture(GL_TEXTURE_2D, 0);
 
-	//´´½¨Éî¶È»º³å
+	//åˆ›å»ºæ·±åº¦ç¼“å†²
 	glGenRenderbuffers(1, &g_depthBuffer);
 	glBindRenderbuffer(GL_RENDERBUFFER, g_depthBuffer);
 	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, TEXTURE_WIDTH, TEXTURE_HEIGHT);
 	glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
-	//´´½¨FBO¶ÔÏó
+	//åˆ›å»ºFBOå¯¹è±¡
 	glGenFramebuffers(1, &g_frameBuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, g_frameBuffer);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, g_texture, 0);
@@ -400,7 +408,7 @@ void initTexture()
 
 void renderToTexture()
 {
-	//È¡Ïû°ó¶¨
+	//å–æ¶ˆç»‘å®š
 	glBindTexture(GL_TEXTURE_2D, 0);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, g_frameBuffer);
@@ -487,17 +495,21 @@ void drawFrameBufferObject()
 	glFlush();
 }
 
+void drawImage() {
+
+}
+
 void myDisplay()
 {
 	//glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	//glClear(GL_COLOR_BUFFER_BIT);
-	//µã¿í
+	//ç‚¹å®½
 	//glPointSize(5.0f);
-	//Ïß¿í
+	//çº¿å®½
 	//glLineWidth(1.0f);
-	//ÆôÓÃĞéÏß
+	//å¯ç”¨è™šçº¿
 	//glEnable(GL_LINE_STIPPLE);
-	//»­ĞéÏßµÄÏñËØ¼ä¸ôºÍĞéÏßµãµÄ¼ä¸ô
+	//ç”»è™šçº¿çš„åƒç´ é—´éš”å’Œè™šçº¿ç‚¹çš„é—´éš”
 	//glLineStipple(1, 0b0101010101011111);
 	//glColor3f(0.0f, 1.0f, 1.0f);
 	//glRectf(-0.5f, -0.5f, 0.5f, 0.5f);
@@ -511,7 +523,8 @@ void myDisplay()
 	//drawText(-1.0f, 0.0f);
 	//drawTextTexture();
 
-	drawFrameBufferObject();
+	//drawFrameBufferObject();
+	drawImage();
 }
 
 void myIdle()
@@ -530,21 +543,188 @@ void myIdle()
 	}
 }
 
+inline void outputCompileShader(GLuint shader)
+{
+	GLint status = 0;
+	glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
+	if (GL_FALSE == status)
+	{
+		const int MAX_LOG_LENGTH = 512;
+		GLint len = 0;
+		glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &len);
+		if (len < MAX_LOG_LENGTH)
+		{
+			GLchar szBuf[MAX_LOG_LENGTH] = { 0 };
+			int len = MAX_LOG_LENGTH;
+			glGetShaderInfoLog(shader, MAX_LOG_LENGTH, nullptr, szBuf);
+			printf("%s\n", szBuf);
+		}
+		else
+		{
+			GLchar *buf = new GLchar[len + 1];
+			glGetShaderInfoLog(shader, len, nullptr, buf);
+			buf[len] = '\0';
+			printf("%s\n", buf);
+			delete[]buf;
+		}
+		assert(false);
+	}
+}
+inline void outputProgramLog(GLuint program)
+{
+	GLint status = 0;
+	glGetProgramiv(program, GL_LINK_STATUS, &status);
+	if (GL_FALSE == status)
+	{
+		const int MAX_LOG_LENGTH = 512;
+		GLint len = 0;
+		glGetProgramiv(program, GL_INFO_LOG_LENGTH, &len);
+		if (len < MAX_LOG_LENGTH)
+		{
+			GLchar szBuf[MAX_LOG_LENGTH] = { 0 };
+			glGetProgramInfoLog(program, MAX_LOG_LENGTH, nullptr, szBuf);
+			printf("%s\n", szBuf);
+		}
+		else
+		{
+			GLchar *buf = new GLchar[len + 1];
+			glGetProgramInfoLog(program, len, nullptr, buf);
+			buf[len] = '\0';
+			printf("%s\n", buf);
+			delete[]buf;
+		}
+		assert(false);
+	}
+}
+
+const char* vString = R"(
+#version 430 core
+#pragma debug(on)
+#pragma optimize(on)
+layout(location=0) in vec4 vPosition;
+out vec2 textureOut;
+void main()
+{
+	gl_Position = vPosition;
+	textureOut = vec2(vPosition.x, vPosition.y);
+}
+)";
+
+
+const char *fString = R"(
+#version 430 core
+#pragma debug(on)
+varying vec2 textureOut;
+out vec4 fColor;
+layout(location=1) uniform float rPercent;
+
+void getPercent(inout float f)
+{
+	f = 0.1;
+}
+void main()
+{
+	float f = textureOut.y + 1.0;
+	f = f / 2.0;
+	float tmpF = rPercent;
+	getPercent(tmpF);
+	fColor = vec4(1.0 * tmpF, 0.0, 0.0, 1.0);//rgba
+}
+)";
+
+GLuint g_vIndex = 0;
+GLuint g_bIndex = 0;
+GLuint g_program = 0;
+
+void init() 
+{
+	glGenVertexArrays(1, &g_vIndex);//åˆ†é…1ä¸ªé¡¶ç‚¹æ•°ç»„å¯¹è±¡
+	glBindVertexArray(g_vIndex);//æ¿€æ´»ç¬¬ä¸€ä¸ªé¡¶ç‚¹æ•°ç»„å¯¹è±¡
+	GLfloat vPoints[][2] = {
+		{-0.9, -0.9},
+		{0.9, -0.9},
+		{-0.9, 0.9},
+		{0.9, 0.9},
+	};
+	glGenBuffers(1, &g_bIndex);//ç”Ÿæˆ1ä¸ªbufferå¯¹è±¡
+	glBindBuffer(GL_ARRAY_BUFFER, g_bIndex);//æ¿€æ´»bufferå¯¹è±¡
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vPoints), vPoints, GL_STATIC_DRAW);//å°†vPointsè®¾ç½®åˆ°bufferå¯¹è±¡ä¸­
+
+	GLuint vertexIn = 0;//glGetAttribLocation(m_program, "vPosition");
+	GLint perVertexPointCount = 2;//ä¸€ä¸ªé¡¶ç‚¹çš„åæ ‡æ•°é‡ï¼Œå¦‚ï¼šxyz,åˆ™æ˜¯3
+	GLsizei stride = 0;//è¿ç»­é¡¶ç‚¹ä¹‹é—´çš„åç§»é‡
+	GLboolean normalized = GL_FALSE;
+	glVertexAttribPointer(vertexIn, perVertexPointCount, GL_FLOAT, normalized, stride, 0);//æŒ‡å®šé¡¶ç‚¹å±æ€§çš„æ•°æ®æ ¼å¼å’Œä½ç½®
+	glEnableVertexAttribArray(vertexIn);//å¯ç”¨é¡¶ç‚¹
+
+	
+
+	GLuint vShader = glCreateShader(GL_VERTEX_SHADER);
+	GLuint fShader = glCreateShader(GL_FRAGMENT_SHADER);
+	glShaderSource(vShader, 1, &vString, nullptr);
+	glShaderSource(fShader, 1, &fString, nullptr);
+
+	glCompileShader(vShader);
+	outputCompileShader(vShader);
+	glCompileShader(fShader);
+	outputCompileShader(fShader);
+	CHECKERR();
+
+	g_program = glCreateProgram();
+
+	glAttachShader(g_program, vShader);
+	CHECKERR();
+	glAttachShader(g_program, fShader);
+	CHECKERR();
+
+	glLinkProgram(g_program);
+	outputProgramLog(g_program);
+
+	glDeleteShader(vShader);
+	glDeleteShader(fShader);
+
+	glUseProgram(g_program);
+
+	glClearColor(1.0, 1.0, 1.0, 1.0);
+}
+
+void testdraw() 
+{
+	glClear(GL_COLOR_BUFFER_BIT);
+	GLint rPercentIndex = glGetUniformLocation(g_program, "rPercent");
+	CHECKERR();
+	GLfloat f = (rand() % 100) / 100.0;
+	glUniform1f(rPercentIndex, f);
+
+	glBindVertexArray(g_vIndex);
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	glFlush();//å°†å‘½ä»¤æäº¤ç»™OpenGLæœåŠ¡å™¨
+	//glFinish();//ç­‰å¾…OpenGLå®Œæˆ
+
+}
+
 int main(int argc, char *argv[])
 {
 	glutInit(&argc, argv);
-	glutInitDisplayMode(GLUT_RGB | GLUT_SINGLE);
+	//glutInitDisplayMode(GLUT_RGB | GLUT_SINGLE);
+	glutInitDisplayMode(GLUT_RGBA);
 	glutInitWindowPosition(100, 100);
 	glutInitWindowSize(400, 400);
-	glutCreateWindow("OpenGL ³ÌĞò");
+	glutInitContextVersion(4, 3);
+	glutInitContextProfile(GLUT_CORE_PROFILE);
+	glutCreateWindow("OpenGL ç¨‹åº");
 	auto v = glGetString(GL_VERSION);
 	GLint max;
 	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &max);
 	printf("OpenGL Version=%s texturemaxsize=%d", v, max);
-	//³õÊ¼»¯ glew wglMakeCurrent
+	
+	//åˆå§‹åŒ– glew wglMakeCurrent
 	GLenum status = glewInit();
 	assert(GLEW_OK == status);
-	glutDisplayFunc(&myDisplay);
+
+	init();
+
+	glutDisplayFunc(&testdraw);
 	//glutIdleFunc(&myIdle);
 	glutMainLoop();
     return 0;
