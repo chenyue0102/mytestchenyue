@@ -1,4 +1,4 @@
-// testopengl.cpp : 定义控制台应用程序的入口点。
+﻿// testopengl.cpp : 定义控制台应用程序的入口点。
 //
 #define _USE_MATH_DEFINES
 #include "stdafx.h"
@@ -547,7 +547,7 @@ inline void outputCompileShader(GLuint shader)
 {
 	GLint status = 0;
 	glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
-	if (GL_FALSE == status)
+	if (GL_FALSE == status || true)
 	{
 		const int MAX_LOG_LENGTH = 512;
 		GLint len = 0;
@@ -567,7 +567,7 @@ inline void outputCompileShader(GLuint shader)
 			printf("%s\n", buf);
 			delete[]buf;
 		}
-		assert(false);
+		assert(GL_FALSE != status);
 	}
 }
 inline void outputProgramLog(GLuint program)
@@ -601,12 +601,37 @@ const char* vString = R"(
 #version 430 core
 #pragma debug(on)
 #pragma optimize(on)
-layout(location=0) in vec4 vPosition;
-out vec2 textureOut;
+#define USE_PIPELINE
+
+layout(location=0) uniform vec3 myColor;
+layout(location=1) in vec4 vPosition;
+layout(location=2) in vec3 vColor;
+layout(std140, column_major) uniform MyTest
+{
+bool isReverse;
+bool isGradual;
+};
+out Param{
+vec3 fmyColor;
+vec3 fcolor;
+float fisReverse;
+float fisGradual;
+};
+//pipeline形式,内置的gl_PerVertex必须重新声明
+#ifdef USE_PIPELINE
+out gl_PerVertex{
+	vec4 gl_Position;
+	float gl_PointSize;
+};
+#endif
+
 void main()
 {
 	gl_Position = vPosition;
-	textureOut = vec2(vPosition.x, vPosition.y);
+	fmyColor = myColor;
+	fcolor = vColor;
+	fisReverse = isReverse ? 1.0 : 0.0;
+	fisGradual = isGradual ? 1.0 : 0.0;
 }
 )";
 
@@ -614,51 +639,127 @@ void main()
 const char *fString = R"(
 #version 430 core
 #pragma debug(on)
-varying vec2 textureOut;
+in Param{
+vec3 fmyColor;
+vec3 fcolor;
+float fisReverse;
+float fisGradual;
+};
 out vec4 fColor;
-layout(location=1) uniform float rPercent;
+
 
 void getPercent(inout float f)
 {
-	f = 0.1;
+	f = 0.8;
 }
 void main()
 {
-	float f = textureOut.y + 1.0;
-	f = f / 2.0;
-	float tmpF = rPercent;
-	getPercent(tmpF);
-	fColor = vec4(1.0 * tmpF, 0.0, 0.0, 1.0);//rgba
+	vec3 clr = fisReverse > 0.0 ? fmyColor.bgr : fmyColor.rgb;
+	if (fisGradual > 0.0)
+	{
+		clr = fcolor;
+	}
+	fColor = vec4(fcolor, 1.0);//rgba
 }
 )";
-
+#define BUFFER_OFFSET(offset) ((void*)(offset))
 GLuint g_vIndex = 0;
 GLuint g_bIndex = 0;
 GLuint g_program = 0;
+GLuint g_pipeline = 0;
+GLuint g_vprogram = 0, g_fprogram = 0;
 
-void init() 
+//#define USE_UCHAR_COLOR
+
+void initBufferArray() 
 {
-	glGenVertexArrays(1, &g_vIndex);//分配1个顶点数组对象
-	glBindVertexArray(g_vIndex);//激活第一个顶点数组对象
+	//初始化顶点数组
 	GLfloat vPoints[][2] = {
 		{-0.9, -0.9},
 		{0.9, -0.9},
-		{-0.9, 0.9},
-		{0.9, 0.9},
+		{0.0, 0.9}
 	};
+#ifdef USE_UCHAR_COLOR
+	//使用unsigned char 类型值
+	GLbyte colors[][3] = {
+		{255, 0, 0},
+		{0, 255, 0},
+		{0, 0, 255},
+	};
+#else
+	GLfloat colors[][3] = {
+		{1.0, 0.0, 0.0},
+		{0.0, 1.0, 0.0},
+		{0.0, 0.0, 1.0},
+	};
+#endif
 	glGenBuffers(1, &g_bIndex);//生成1个buffer对象
 	glBindBuffer(GL_ARRAY_BUFFER, g_bIndex);//激活buffer对象
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vPoints), vPoints, GL_STATIC_DRAW);//将vPoints设置到buffer对象中
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vPoints) + sizeof(colors), nullptr, GL_STATIC_DRAW);//分配空间
 
-	GLuint vertexIn = 0;//glGetAttribLocation(m_program, "vPosition");
+	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vPoints), vPoints);//设置顶点坐标缓存
+	
+#if 0
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(vPoints), sizeof(colors), colors);//设置顶点颜色缓存
+#endif
+#if 1
+	//也可以使用map形式设置
+	GLboolean isOk = GL_FALSE;
+	if (false) {
+		void* mapBuf = glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
+		memcpy((char*)mapBuf + sizeof(vPoints), colors, sizeof(colors));
+		isOk = glUnmapBuffer(GL_ARRAY_BUFFER);
+	}
+	else {
+		//map range,GL_MAP_FLUSH_EXPLICIT_BIT:应用程序主动通知刷新区域
+		void* mapBuf = glMapBufferRange(GL_ARRAY_BUFFER, sizeof(vPoints), sizeof(colors), GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_FLUSH_EXPLICIT_BIT);
+		memcpy(mapBuf, colors, sizeof(colors));
+		glFlushMappedBufferRange(GL_ARRAY_BUFFER, 0, sizeof(colors));
+		isOk = glUnmapBuffer(GL_ARRAY_BUFFER);
+	}
+#endif
+	struct TMP {
+		GLfloat vPoints[3][2];
+	};
+	GLfloat checkPoints[3 * 2 + 3 * 3] = { 0.0 };
+	glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vPoints) + sizeof(colors), checkPoints);//获取缓冲数据
+
+	if (false) {
+		//丢弃缓存数据
+		glInvalidateBufferData(g_bIndex);
+	}
+}
+
+
+void initVertex() 
+{
+	glGenVertexArrays(1, &g_vIndex);//分配1个顶点数组对象
+	glBindVertexArray(g_vIndex);//激活第一个顶点数组对象
+	glBindBuffer(GL_ARRAY_BUFFER, g_bIndex);//使用g_bIndex
+	GLuint vertexIn = 1;//顶点着色器中vPosition的位置index, 可以通过glGetAttribLocation(m_program, "vPosition");获取
 	GLint perVertexPointCount = 2;//一个顶点的坐标数量，如：xyz,则是3
 	GLsizei stride = 0;//连续顶点之间的偏移量
 	GLboolean normalized = GL_FALSE;
-	glVertexAttribPointer(vertexIn, perVertexPointCount, GL_FLOAT, normalized, stride, 0);//指定顶点属性的数据格式和位置
+	int offset = 0;// sizeof(GLfloat) * 2;//从第二个顶点坐标开始
+	glVertexAttribPointer(vertexIn, perVertexPointCount, GL_FLOAT, normalized, stride, BUFFER_OFFSET(offset));//指定顶点属性的数据格式和位置
 	glEnableVertexAttribArray(vertexIn);//启用顶点
 
-	
+	GLuint tVertexIn = 2;
+	glVertexAttribPointer(tVertexIn, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(GLfloat) * 6));//指定颜色顶点的偏移
+	glEnableVertexAttribArray(tVertexIn);//启用顶点
+}
+#define USE_PIPELINE
 
+#ifdef USE_PIPELINE
+void initProgram()
+{
+	g_vprogram = glCreateShaderProgramv(GL_VERTEX_SHADER, 1, &vString);
+	g_fprogram = glCreateShaderProgramv(GL_FRAGMENT_SHADER, 1, &fString);
+	glGenProgramPipelines(1, &g_pipeline);
+}
+#else
+void initProgram()
+{
 	GLuint vShader = glCreateShader(GL_VERTEX_SHADER);
 	GLuint fShader = glCreateShader(GL_FRAGMENT_SHADER);
 	glShaderSource(vShader, 1, &vString, nullptr);
@@ -684,20 +785,124 @@ void init()
 	glDeleteShader(fShader);
 
 	glUseProgram(g_program);
+}
+#endif
 
+size_t TypeSize(GLenum type)
+{
+	size_t size;
+#define CASE(Enum, Count, Type) \
+case Enum:size = Count * sizeof(Type);break;
+	switch (type) {
+		CASE(GL_FLOAT,				1, GLfloat);
+		CASE(GL_FLOAT_VEC2,			2, GLfloat);
+		CASE(GL_FLOAT_VEC3,			3, GLfloat);
+		CASE(GL_FLOAT_VEC4,			4, GLfloat);
+		CASE(GL_INT,				1, GLint);
+		CASE(GL_INT_VEC2,			2, GLint);
+		CASE(GL_INT_VEC3,			3, GLint);
+		CASE(GL_INT_VEC4,			4, GLint);
+		CASE(GL_UNSIGNED_INT,		1, GLuint);
+		CASE(GL_UNSIGNED_INT_VEC2,	2, GLuint);
+		CASE(GL_UNSIGNED_INT_VEC3,	3, GLuint);
+		CASE(GL_UNSIGNED_INT_VEC4,	4, GLuint);
+		CASE(GL_BOOL, 				1, GLboolean);
+		CASE(GL_BOOL_VEC2,			2, GLboolean);
+		CASE(GL_BOOL_VEC3,			3, GLboolean);
+		CASE(GL_BOOL_VEC4,			4, GLboolean);
+		CASE(GL_FLOAT_MAT2, 		4, GLfloat);
+		CASE(GL_FLOAT_MAT2x3,		6, GLfloat);
+		CASE(GL_FLOAT_MAT2x4,		8, GLfloat);
+		CASE(GL_FLOAT_MAT3,			9, GLfloat);
+		CASE(GL_FLOAT_MAT3x2,		6, GLfloat);
+		CASE(GL_FLOAT_MAT3x4,		12, GLfloat);
+		CASE(GL_FLOAT_MAT4,			16, GLfloat);
+		CASE(GL_FLOAT_MAT4x2,		8, GLfloat);
+		CASE(GL_FLOAT_MAT4x3,		12, GLfloat);
+#undef CASE
+	default:
+		printf("unknown type:%d\n", type);
+		break;
+	}
+
+	return size;
+}
+
+void initUniform(GLuint program)
+{
+	GLint myLocation = glGetUniformLocation(program, "myColor");//获取myColor的位置
+	//glProgramUniform3f(program, myLocation, 0.3, 0.6, 1.0);
+	glUniform3f(myLocation, 0.3, 0.6, 1.0);//设置myColor值
+
+	//获取uniform 块索引
+	GLuint blockIndex = glGetUniformBlockIndex(program, "MyTest");
+
+	//获取uniform块大小
+	GLint uboSize = 0;
+	glGetActiveUniformBlockiv(program, blockIndex, GL_UNIFORM_BLOCK_DATA_SIZE, &uboSize);
+	//分配缓冲区
+	GLvoid* buffer = malloc(uboSize);
+	memset(buffer, 0, uboSize);
+
+	const int NUM = 2;
+	const char* ppNames[NUM] = { "isReverse", "isGradual" };
+	GLuint itemIndexs[NUM] = { GL_INVALID_INDEX, GL_INVALID_INDEX };
+	GLint size[NUM];
+	GLint offset[NUM];
+	GLint type[NUM];
+	//获取每个item的index
+	glGetUniformIndices(program, 2, ppNames, itemIndexs);
+	//获取item的大小
+	glGetActiveUniformsiv(program, NUM, itemIndexs, GL_UNIFORM_SIZE, size);
+	//获取item的缓冲区偏移
+	glGetActiveUniformsiv(program, NUM, itemIndexs, GL_UNIFORM_OFFSET, offset);
+	//获取item类型
+	glGetActiveUniformsiv(program, NUM, itemIndexs, GL_UNIFORM_TYPE, type);
+	GLboolean values[NUM] = { GL_TRUE, GL_TRUE };
+	for (int i = 0; i < NUM; i++)
+	{
+		memcpy((char*)buffer + offset[i], &values[i], size[i] * TypeSize(type[i]));
+	}
+
+	//生成一个UNIFORM buffer
+	GLuint ubo = -1;
+	glGenBuffers(1, &ubo);
+	glBindBuffer(GL_UNIFORM_BUFFER, ubo);
+	glBufferData(GL_UNIFORM_BUFFER, uboSize, buffer, GL_STATIC_DRAW);
+	//用uniform buffer来为uniform设值
+	glBindBufferBase(GL_UNIFORM_BUFFER, blockIndex, ubo);
+	free(buffer);
+
+}
+
+void init() 
+{
+	initBufferArray();
+	initVertex();
+	initProgram();
+#ifdef USE_PIPELINE
+	initUniform(g_vprogram);
+	glUseProgramStages(g_pipeline, GL_VERTEX_SHADER_BIT, g_vprogram);
+	glUseProgramStages(g_pipeline, GL_FRAGMENT_SHADER_BIT, g_fprogram);
+	glBindProgramPipeline(g_pipeline);
+#else
+	initUniform(g_program);
+#endif
+	
+	//设置清除颜色
 	glClearColor(1.0, 1.0, 1.0, 1.0);
 }
 
 void testdraw() 
 {
 	glClear(GL_COLOR_BUFFER_BIT);
-	GLint rPercentIndex = glGetUniformLocation(g_program, "rPercent");
-	CHECKERR();
-	GLfloat f = (rand() % 100) / 100.0;
-	glUniform1f(rPercentIndex, f);
+	//glPointSize(5.0);//只对点生效
+	//glLineWidth(15.0);//只对线生效
 
 	glBindVertexArray(g_vIndex);
-	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 3);
+	//glDrawArrays(GL_LINE_LOOP, 0, 4);
 	glFlush();//将命令提交给OpenGL服务器
 	//glFinish();//等待OpenGL完成
 
