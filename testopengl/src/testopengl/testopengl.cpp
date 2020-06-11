@@ -8,6 +8,7 @@
 #include <GL/glew.h>
 #include "GL/glut.h"
 #include <GL/freeglut_ext.h>
+#include "vmath.h"
 
 void CHECKERR() {
 	int err = 0; 
@@ -597,71 +598,7 @@ inline void outputProgramLog(GLuint program)
 	}
 }
 
-const char* vString = R"(
-#version 430 core
-#pragma debug(on)
-#pragma optimize(on)
-#define USE_PIPELINE
-
-layout(location=0) uniform vec3 myColor;
-layout(location=1) in vec4 vPosition;
-layout(location=2) in vec3 vColor;
-layout(std140, column_major) uniform MyTest
-{
-bool isReverse;
-bool isGradual;
-};
-out Param{
-vec3 fmyColor;
-vec3 fcolor;
-float fisReverse;
-float fisGradual;
-};
-//pipeline形式,内置的gl_PerVertex必须重新声明
-#ifdef USE_PIPELINE
-out gl_PerVertex{
-	vec4 gl_Position;
-	float gl_PointSize;
-};
-#endif
-
-void main()
-{
-	gl_Position = vPosition;
-	fmyColor = myColor;
-	fcolor = vColor;
-	fisReverse = isReverse ? 1.0 : 0.0;
-	fisGradual = isGradual ? 1.0 : 0.0;
-}
-)";
-
-
-const char *fString = R"(
-#version 430 core
-#pragma debug(on)
-in Param{
-vec3 fmyColor;
-vec3 fcolor;
-float fisReverse;
-float fisGradual;
-};
-out vec4 fColor;
-
-
-void getPercent(inout float f)
-{
-	f = 0.8;
-}
-void main()
-{
-	vec3 clr = fisReverse > 0.0 ? fmyColor.bgr : fmyColor.rgb;
-	if (fisGradual > 0.0)
-	{
-		clr = fcolor;
-	}
-	fColor = vec4(fcolor, 1.0);//rgba
-}
-)";
+#include "glsl.h"
 #define BUFFER_OFFSET(offset) ((void*)(offset))
 GLuint g_vIndex = 0;
 GLuint g_bIndex = 0;
@@ -674,23 +611,25 @@ GLuint g_vprogram = 0, g_fprogram = 0;
 void initBufferArray() 
 {
 	//初始化顶点数组
-	GLfloat vPoints[][2] = {
-		{-0.9, -0.9},
-		{0.9, -0.9},
-		{0.0, 0.9}
+	GLfloat vPoints[][4] = {
+		-1.0f, -1.0f,  0.0f, 1.0f,
+		1.0f, -1.0f,  0.0f, 1.0f,
+		-1.0f,  1.0f,  0.0f, 1.0f,
+		1.0f, 1.0f,  0.0f, 1.0f,
 	};
 #ifdef USE_UCHAR_COLOR
 	//使用unsigned char 类型值
-	GLbyte colors[][3] = {
-		{255, 0, 0},
-		{0, 255, 0},
-		{0, 0, 255},
+	GLbyte colors[][4] = {
+		{255, 0, 0， 255},
+		{0, 255, 0， 255},
+		{0, 0, 255， 255},
 	};
 #else
-	GLfloat colors[][3] = {
-		{1.0, 0.0, 0.0},
-		{0.0, 1.0, 0.0},
-		{0.0, 0.0, 1.0},
+	GLfloat colors[][4] = {
+		0.0f, 1.0f, 1.0f, 1.0f,
+		1.0f, 1.0f, 0.0f, 1.0f,
+		1.0f, 0.0f, 1.0f, 1.0f,
+		0.0f, 0.0f, 1.0f, 1.0f
 	};
 #endif
 	glGenBuffers(1, &g_bIndex);//生成1个buffer对象
@@ -718,11 +657,8 @@ void initBufferArray()
 		isOk = glUnmapBuffer(GL_ARRAY_BUFFER);
 	}
 #endif
-	struct TMP {
-		GLfloat vPoints[3][2];
-	};
-	GLfloat checkPoints[3 * 2 + 3 * 3] = { 0.0 };
-	glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vPoints) + sizeof(colors), checkPoints);//获取缓冲数据
+	//GLfloat checkPoints[3 * 4 + 3 * 4] = { 0.0 };
+	//glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vPoints) + sizeof(colors), checkPoints);//获取缓冲数据
 
 	if (false) {
 		//丢弃缓存数据
@@ -737,7 +673,7 @@ void initVertex()
 	glBindVertexArray(g_vIndex);//激活第一个顶点数组对象
 	glBindBuffer(GL_ARRAY_BUFFER, g_bIndex);//使用g_bIndex
 	GLuint vertexIn = 1;//顶点着色器中vPosition的位置index, 可以通过glGetAttribLocation(m_program, "vPosition");获取
-	GLint perVertexPointCount = 2;//一个顶点的坐标数量，如：xyz,则是3
+	GLint perVertexPointCount = 4;//一个顶点的坐标数量，如：xyz,则是3
 	GLsizei stride = 0;//连续顶点之间的偏移量
 	GLboolean normalized = GL_FALSE;
 	int offset = 0;// sizeof(GLfloat) * 2;//从第二个顶点坐标开始
@@ -745,7 +681,7 @@ void initVertex()
 	glEnableVertexAttribArray(vertexIn);//启用顶点
 
 	GLuint tVertexIn = 2;
-	glVertexAttribPointer(tVertexIn, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(GLfloat) * 6));//指定颜色顶点的偏移
+	glVertexAttribPointer(tVertexIn, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(GLfloat) * 4 * 4));//指定颜色顶点的偏移
 	glEnableVertexAttribArray(tVertexIn);//启用顶点
 }
 #define USE_PIPELINE
@@ -790,7 +726,7 @@ void initProgram()
 
 size_t TypeSize(GLenum type)
 {
-	size_t size;
+	size_t size = 0;
 #define CASE(Enum, Count, Type) \
 case Enum:size = Count * sizeof(Type);break;
 	switch (type) {
@@ -830,9 +766,26 @@ case Enum:size = Count * sizeof(Type);break;
 
 void initUniform(GLuint program)
 {
-	GLint myLocation = glGetUniformLocation(program, "myColor");//获取myColor的位置
+	GLint myMatrix = glGetUniformLocation(program, "myMatrix");//获取translationMatrix的位置
+	CHECKERR();
 	//glProgramUniform3f(program, myLocation, 0.3, 0.6, 1.0);
-	glUniform3f(myLocation, 0.3, 0.6, 1.0);//设置myColor值
+#if 1
+	vmath::mat4 matrix = vmath::translate(0.5f, 0.0f, 0.0f);
+#else
+	GLfloat matrix[16] = {
+		1.0, 0.0, 0.0, 0.0,
+		0.0, 1.0, 0.0, 0.0, 
+		0.0, 0.0, 1.0, 0.0, 
+		0.5, 0.0, 0.0, 1.0,
+	};
+#endif
+	glProgramUniformMatrix4fv(program, myMatrix, 1, GL_FALSE, matrix);//使用glUniformMatrix4fv，必须先glUseProgram(program)
+	CHECKERR();
+	GLfloat aspect = 1.0;//height / width;
+
+	vmath::mat4 projection_matrix(vmath::frustum(-1.0f, 1.0f, -aspect, aspect, 1.0f, 500.0f));
+	GLint render_projection_matrix_loc = glGetUniformLocation(program, "projection_matrix");
+	glUniformMatrix4fv(render_projection_matrix_loc, 1, GL_FALSE, projection_matrix);
 
 	//获取uniform 块索引
 	GLuint blockIndex = glGetUniformBlockIndex(program, "MyTest");
@@ -873,7 +826,10 @@ void initUniform(GLuint program)
 	glBindBufferBase(GL_UNIFORM_BUFFER, blockIndex, ubo);
 	free(buffer);
 
+	glUseProgram(0);
 }
+
+//GLuint g_texture = 0;
 
 void init() 
 {
@@ -889,19 +845,50 @@ void init()
 	initUniform(g_program);
 #endif
 	
+	//glEnable(GL_SAMPLE_SHADING);
+	//glMinSampleShading(1.0);
+
+	//启用剪切
+	if (false) {
+		glEnable(GL_SCISSOR_TEST);
+		glScissor(100, 100, 200, 200);
+	}
+
+	//启用反走样
+	if (false)
+	{
+		glEnable(GL_POLYGON_SMOOTH);//启用多边形平滑
+		glEnable(GL_BLEND);	//启用混合
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);//
+		glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
+	}
+	//charToTexture(L"Hello, world");
+	
 	//设置清除颜色
 	glClearColor(1.0, 1.0, 1.0, 1.0);
 }
 
 void testdraw() 
 {
-	glClear(GL_COLOR_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glEnable(GL_CULL_FACE);
+	glDisable(GL_DEPTH_TEST);
+
 	//glPointSize(5.0);//只对点生效
 	//glLineWidth(15.0);//只对线生效
 
 	glBindVertexArray(g_vIndex);
 
-	glDrawArrays(GL_TRIANGLE_STRIP, 0, 3);
+	bool useDrawArrays = true;
+	if (useDrawArrays) {
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, 3);
+	}
+	else {
+		const GLubyte indices[] = { 0, 1, 2, 4};//元素索引
+		glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_BYTE, indices);
+	}
+	
 	//glDrawArrays(GL_LINE_LOOP, 0, 4);
 	glFlush();//将命令提交给OpenGL服务器
 	//glFinish();//等待OpenGL完成
