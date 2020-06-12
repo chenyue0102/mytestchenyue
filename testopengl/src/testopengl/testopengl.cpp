@@ -528,21 +528,22 @@ void myDisplay()
 	drawImage();
 }
 
-void myIdle()
-{
-	static DWORD t = 0;
-	DWORD tCur = GetTickCount();
-	if (tCur - t > 30)
-	{
-		t = tCur;
-		++day;
-		if (day >= 360)
-			day = 0;
-		//myDisplay();
-		float x = float(day) / 360 * 2 - 1.0f;
-		drawText(x, 0.0f);
-	}
-}
+//void myIdle()
+//{
+//	static DWORD t = 0;
+//	DWORD tCur = GetTickCount();
+//	if (tCur - t > 300)
+//	{
+//		t = tCur;
+//		++day;
+//		if (day >= 360)
+//			day = 0;
+//		//myDisplay();
+//		float x = float(day) / 360 * 2 - 1.0f;
+//		drawText(x, 0.0f);
+//	}
+//}
+
 
 inline void outputCompileShader(GLuint shader)
 {
@@ -601,65 +602,84 @@ inline void outputProgramLog(GLuint program)
 #include "glsl.h"
 #define BUFFER_OFFSET(offset) ((void*)(offset))
 GLuint g_vIndex = 0;
-GLuint g_bIndex = 0;
+GLuint g_bIndex = 0, g_ebIndex = 0;
 GLuint g_program = 0;
 GLuint g_pipeline = 0;
 GLuint g_vprogram = 0, g_fprogram = 0;
 
 //#define USE_UCHAR_COLOR
 
+//初始化顶点数组
+GLfloat g_vPoints[][4] = {
+	-1.0f, -1.0f, -1.0f, 1.0f,
+	-1.0f, -1.0f, 1.0f, 1.0f,
+	-1.0f, 1.0f, -1.0f, 1.0f,
+	-1.0f, 1.0f, 1.0f, 1.0f,
+	1.0f, -1.0f, -1.0f, 1.0f,
+	1.0f, -1.0f, 1.0f, 1.0f,
+	1.0f, 1.0f, -1.0f, 1.0f,
+	1.0f, 1.0f, 1.0f, 1.0f,
+};
+#ifdef USE_UCHAR_COLOR
+//使用unsigned char 类型值
+GLbyte g_colors[][4] = {
+	{ 255, 0, 0， 255 },
+	{ 0, 255, 0， 255 },
+	{ 0, 0, 255， 255 },
+};
+#else
+GLfloat g_colors[][4] = {
+	1.0f, 0.0f, 0.0f, 1.0f,
+	0.0f, 1.0f, 0.0f, 1.0f,
+	0.0f, 0.0f, 1.0f, 1.0f,
+	1.0f, 1.0f, 0.0f, 1.0f,
+	1.0f, 0.0f, 1.0f, 1.0f,
+	0.0f, 1.0f, 1.0f, 1.0f,
+	0.5f, 0.0f, 0.0f, 1.0f,
+	0.0f, 0.5f, 0.0f, 1.0f,
+};
+
+GLushort g_indices[] = { 
+	0, 1, 2, 3, 6, 7, 4, 5,
+	0xFFFF,
+	2, 6, 0, 4,1, 5, 3, 7};//元素索引
 void initBufferArray() 
 {
-	//初始化顶点数组
-	GLfloat vPoints[][4] = {
-		-1.0f, -1.0f,  0.0f, 1.0f,
-		1.0f, -1.0f,  0.0f, 1.0f,
-		-1.0f,  1.0f,  0.0f, 1.0f,
-		1.0f, 1.0f,  0.0f, 1.0f,
-	};
-#ifdef USE_UCHAR_COLOR
-	//使用unsigned char 类型值
-	GLbyte colors[][4] = {
-		{255, 0, 0， 255},
-		{0, 255, 0， 255},
-		{0, 0, 255， 255},
-	};
-#else
-	GLfloat colors[][4] = {
-		0.0f, 1.0f, 1.0f, 1.0f,
-		1.0f, 1.0f, 0.0f, 1.0f,
-		1.0f, 0.0f, 1.0f, 1.0f,
-		0.0f, 0.0f, 1.0f, 1.0f
-	};
 #endif
 	glGenBuffers(1, &g_bIndex);//生成1个buffer对象
 	glBindBuffer(GL_ARRAY_BUFFER, g_bIndex);//激活buffer对象
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vPoints) + sizeof(colors), nullptr, GL_STATIC_DRAW);//分配空间
+	glBufferData(GL_ARRAY_BUFFER, sizeof(g_vPoints) + sizeof(g_colors), nullptr, GL_STATIC_DRAW);//分配空间
 
-	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vPoints), vPoints);//设置顶点坐标缓存
+	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(g_vPoints), g_vPoints);//设置顶点坐标缓存
 	
 #if 0
-	glBufferSubData(GL_ARRAY_BUFFER, sizeof(vPoints), sizeof(colors), colors);//设置顶点颜色缓存
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(g_vPoints), sizeof(g_colors), g_colors);//设置顶点颜色缓存
 #endif
 #if 1
 	//也可以使用map形式设置
 	GLboolean isOk = GL_FALSE;
 	if (false) {
 		void* mapBuf = glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
-		memcpy((char*)mapBuf + sizeof(vPoints), colors, sizeof(colors));
+		memcpy((char*)mapBuf + sizeof(g_vPoints), g_colors, sizeof(g_colors));
 		isOk = glUnmapBuffer(GL_ARRAY_BUFFER);
 	}
 	else {
 		//map range,GL_MAP_FLUSH_EXPLICIT_BIT:应用程序主动通知刷新区域
-		void* mapBuf = glMapBufferRange(GL_ARRAY_BUFFER, sizeof(vPoints), sizeof(colors), GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_FLUSH_EXPLICIT_BIT);
-		memcpy(mapBuf, colors, sizeof(colors));
-		glFlushMappedBufferRange(GL_ARRAY_BUFFER, 0, sizeof(colors));
+		void* mapBuf = glMapBufferRange(GL_ARRAY_BUFFER, sizeof(g_vPoints), sizeof(g_colors), GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_FLUSH_EXPLICIT_BIT);
+		memcpy(mapBuf, g_colors, sizeof(g_colors));
+		glFlushMappedBufferRange(GL_ARRAY_BUFFER, 0, sizeof(g_colors));
 		isOk = glUnmapBuffer(GL_ARRAY_BUFFER);
 	}
 #endif
 	//GLfloat checkPoints[3 * 4 + 3 * 4] = { 0.0 };
 	//glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vPoints) + sizeof(colors), checkPoints);//获取缓冲数据
 
+	
+	GLuint buf = GL_INVALID_INDEX;
+	glGenBuffers(1, &g_ebIndex);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_ebIndex);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(g_indices), g_indices, GL_STATIC_DRAW);
+	//glDeleteBuffers(1, &buf);
 	if (false) {
 		//丢弃缓存数据
 		glInvalidateBufferData(g_bIndex);
@@ -681,7 +701,7 @@ void initVertex()
 	glEnableVertexAttribArray(vertexIn);//启用顶点
 
 	GLuint tVertexIn = 2;
-	glVertexAttribPointer(tVertexIn, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(GLfloat) * 4 * 4));//指定颜色顶点的偏移
+	glVertexAttribPointer(tVertexIn, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(g_vPoints)));//指定颜色顶点的偏移
 	glEnableVertexAttribArray(tVertexIn);//启用顶点
 }
 #define USE_PIPELINE
@@ -770,7 +790,27 @@ void initUniform(GLuint program)
 	CHECKERR();
 	//glProgramUniform3f(program, myLocation, 0.3, 0.6, 1.0);
 #if 1
-	vmath::mat4 matrix = vmath::translate(0.5f, 0.0f, 0.0f);
+	static int i = 500;
+	i += 30;
+	float t = float(i & 0x1FFF) / float(0x1FFF);
+	static float q = 0.0f;
+	static const vmath::vec3 X(1.0f, 0.0f, 0.0f);
+	static const vmath::vec3 Y(0.0f, 1.0f, 0.0f);
+	static const vmath::vec3 Z(0.0f, 0.0f, 1.0f);
+
+	vmath::mat4 translateMatrix = vmath::translate(1.0f, 0.0f, 0.0f);//移动
+	vmath::mat4 scaleMatrix = vmath::scale(0.4f, 0.8f, 1.0f);
+	vmath::mat4 rotateMatrix = vmath::rotate(0.0f, 0.0f, 90.0f);//旋转
+	vmath::mat4 standardMatrix = vmath::mat4(
+		vmath::vec4(1.0f, 0.0f, 0.0f, 0.0f),
+		vmath::vec4(0.0f, 1.0f, 0.0f, 0.0f),
+		vmath::vec4(0.0f, 0.0f, 1.0f, 0.0f),
+		vmath::vec4(0.0f, 0.0f, 0.0f, 1.0f));
+	//translateMatrix * rotateMatrix，先旋转，后平移
+	float aspect = 1.0f; //height/width
+	vmath::mat4 model_matrix(vmath::translate(0.0f, 0.0f, -5.0f) * vmath::rotate(t * 360.0f, Y) * vmath::rotate(t * 720.0f, Z));
+	vmath::mat4 projection_matrix(vmath::frustum(-1.0f, 1.0f, -aspect, aspect, 1.0f, 500.0f));
+	vmath::mat4 matrix = projection_matrix * model_matrix;
 #else
 	GLfloat matrix[16] = {
 		1.0, 0.0, 0.0, 0.0,
@@ -781,12 +821,7 @@ void initUniform(GLuint program)
 #endif
 	glProgramUniformMatrix4fv(program, myMatrix, 1, GL_FALSE, matrix);//使用glUniformMatrix4fv，必须先glUseProgram(program)
 	CHECKERR();
-	GLfloat aspect = 1.0;//height / width;
-
-	vmath::mat4 projection_matrix(vmath::frustum(-1.0f, 1.0f, -aspect, aspect, 1.0f, 500.0f));
-	GLint render_projection_matrix_loc = glGetUniformLocation(program, "projection_matrix");
-	glUniformMatrix4fv(render_projection_matrix_loc, 1, GL_FALSE, projection_matrix);
-
+	
 	//获取uniform 块索引
 	GLuint blockIndex = glGetUniformBlockIndex(program, "MyTest");
 
@@ -836,14 +871,6 @@ void init()
 	initBufferArray();
 	initVertex();
 	initProgram();
-#ifdef USE_PIPELINE
-	initUniform(g_vprogram);
-	glUseProgramStages(g_pipeline, GL_VERTEX_SHADER_BIT, g_vprogram);
-	glUseProgramStages(g_pipeline, GL_FRAGMENT_SHADER_BIT, g_fprogram);
-	glBindProgramPipeline(g_pipeline);
-#else
-	initUniform(g_program);
-#endif
 	
 	//glEnable(GL_SAMPLE_SHADING);
 	//glMinSampleShading(1.0);
@@ -868,31 +895,110 @@ void init()
 	glClearColor(1.0, 1.0, 1.0, 1.0);
 }
 
+typedef struct DrawArraysIndirectCommand {
+	GLuint count;
+	GLuint primCount;
+	GLuint first;
+	GLuint baseInstance;
+};
+
 void testdraw() 
 {
+#ifdef USE_PIPELINE
+	initUniform(g_vprogram);
+	glUseProgramStages(g_pipeline, GL_VERTEX_SHADER_BIT, g_vprogram);
+	glUseProgramStages(g_pipeline, GL_FRAGMENT_SHADER_BIT, g_fprogram);
+	glBindProgramPipeline(g_pipeline);
+#else
+	initUniform(g_program);
+#endif
+
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glEnable(GL_CULL_FACE);
 	glDisable(GL_DEPTH_TEST);
 
-	//glPointSize(5.0);//只对点生效
-	//glLineWidth(15.0);//只对线生效
+	glPointSize(15.0);//只对点生效
+	glLineWidth(15.0);//只对线生效
 
 	glBindVertexArray(g_vIndex);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_ebIndex);
 
-	bool useDrawArrays = true;
-	if (useDrawArrays) {
+	glEnable(GL_PRIMITIVE_RESTART);
+	glPrimitiveRestartIndex(0xFFFF);
+
+	int drawType = 1;
+	switch (drawType) {
+	case 0:
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 3);
+	break;
+	case 1: {
+		//如果有变量bind到GL_ELEMENT_ARRAY_BUFFER，则indices是offset bytes 缓冲区
+		//否则是pointer to indices
+#if 0
+		if (0) {
+			glDrawElements(GL_LINES, 4, GL_UNSIGNED_SHORT, BUFFER_OFFSET(sizeof(GLushort) * 1));
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		}
+		else {
+			glDrawElements(GL_LINES, 4, GL_UNSIGNED_SHORT, g_indices);
+		}
+#endif
+		glDrawElements(GL_TRIANGLE_STRIP, 17, GL_UNSIGNED_SHORT, 0);
 	}
-	else {
-		const GLubyte indices[] = { 0, 1, 2, 4};//元素索引
-		glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_BYTE, indices);
+	break;
+	case 2: {
+		GLint basevertex = 1;
+		//与glDrawElements类似，元素index为indices[i + basevertex];
+		glDrawElementsBaseVertex(GL_LINES, 4, GL_UNSIGNED_SHORT, BUFFER_OFFSET(0), basevertex);
 	}
+	break;
+	case 3: {
+		//glDrawRangeElements(GL_LINES, 3, 4, 2, GL_UNSIGNED_SHORT, BUFFER_OFFSET(0));
+	}break;
+	case 4: {
+		//绘制primcount次，GLSL中gl_InstanceID会依次递增
+		GLsizei primcount = 4;
+		glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 3, primcount);
+	}break;
+	case 5: {
+		DrawArraysIndirectCommand cmd;
+		cmd.count = 4;
+		cmd.first = 1;
+		cmd.primCount = 4;
+		cmd.baseInstance = 0;
+		GLuint buf;
+		glGenBuffers(1, &buf);
+		glBindBuffer(GL_DRAW_INDIRECT_BUFFER, buf);
+		glBufferData(GL_DRAW_INDIRECT_BUFFER, sizeof(cmd), &cmd, GL_STATIC_DRAW);
+		glDrawArraysIndirect(GL_LINES, BUFFER_OFFSET(0));
+		glDeleteBuffers(1, &buf);
+	}break;
+	case 6: {
+		GLint firsts[] = { 0, 2 };
+		GLint counts[] = { 3, 3 };
+		GLsizei drawcount = _countof(firsts);
+		glMultiDrawArrays(GL_LINE_STRIP, firsts, counts, drawcount);
+	}break;
+	default:
+		break;
+	}
+	
 	
 	//glDrawArrays(GL_LINE_LOOP, 0, 4);
 	glFlush();//将命令提交给OpenGL服务器
 	//glFinish();//等待OpenGL完成
 
+}
+
+void myIdle() {
+	static DWORD t = 0;
+	DWORD tCur = GetTickCount();
+	if (tCur - t > 30)
+	{
+		t = tCur;
+		testdraw();
+	}
 }
 
 int main(int argc, char *argv[])
@@ -917,7 +1023,7 @@ int main(int argc, char *argv[])
 	init();
 
 	glutDisplayFunc(&testdraw);
-	//glutIdleFunc(&myIdle);
+	glutIdleFunc(&myIdle);
 	glutMainLoop();
     return 0;
 }

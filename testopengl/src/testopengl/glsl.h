@@ -33,7 +33,9 @@ void main()
 	//	0.0, 1.0, 0.0, 0.0, 
 	//	0.0, 0.0, 1.0, 0.0, 
 	//	0.0, 0.0, 0.0, 1.0);
-	gl_Position = myMatrix * vPosition;
+	vec4 tmpPositon = myMatrix * vPosition;
+	tmpPositon.x += gl_InstanceID * 0.2;
+	gl_Position = tmpPositon;
 	fcolor = vColor;
 	fisReverse = isReverse ? 1.0 : 0.0;
 	fisGradual = isGradual ? 1.0 : 0.0;
