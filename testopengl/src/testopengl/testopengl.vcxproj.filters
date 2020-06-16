@@ -24,12 +24,30 @@
     <ClInclude Include="targetver.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="glsl.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="TestTexture.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="TestStencil.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenGLHelper.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Test.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="testopengl.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="OpenGLHelper.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
