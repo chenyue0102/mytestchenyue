@@ -123,22 +123,14 @@ void main(){
 	}
 
 	void testdraw() {
-		glClearColor(0, 0, 0, 1);
-		glClearStencil(0);
-		glStencilMask(0xFF);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+		glClear(GL_STENCIL_BUFFER_BIT);
 		CHECKERR();
 
-		glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-		glEnable(GL_STENCIL_TEST);
-		glStencilFunc(GL_ALWAYS, 1, 0Xff);
-		glStencilMask(0xff);
-		glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-		glDepthMask(GL_FALSE);
+		glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);//禁止绘制到帧缓存中，这样就只绘制到模板缓存中中
+		glStencilFunc(GL_ALWAYS, 1, 0Xff);					//绘制时，将全部内容均绘制到模板缓存中，GLSL中，片元着色器会丢弃不符合的片段
+		glStencilMask(0xff);								//允许修改模板缓存所有bit
+		glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);			//
 		CHECKERR();
-
-
-		
 
 		glUseProgram(g_vprogramX);
 		CHECKERR();
@@ -155,10 +147,5 @@ void main(){
 
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 		CHECKERR();
-
-		//glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-		//glDepthMask(GL_TRUE);
-		//glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-		//glStencilFunc(GL_EQUAL, 1, 0xFF);
 	}
 };

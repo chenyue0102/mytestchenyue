@@ -546,7 +546,6 @@ void testdraw() {
 	glClearStencil(0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 	glEnable(GL_STENCIL_TEST);
-	glDisable(GL_DEPTH_TEST);
 	static bool isfirst = true;
 	if (isfirst) {
 		//isfirst = false;
@@ -555,16 +554,13 @@ void testdraw() {
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 	glStencilFunc(GL_EQUAL, 1, 0xFF);
 	glStencilMask(0x00);
-	//glDisable(GL_DEPTH_TEST);
 	Test::testdraw();
 
 	glStencilMask(0xff);
 	glStencilFunc(GL_ALWAYS, 0, 0xff);
 
-	//glDrawArrays(GL_LINE_LOOP, 0, 4);
 	glFlush();//将命令提交给OpenGL服务器
-			  //glFinish();//等待OpenGL完成
-
+	//glFinish();//等待OpenGL完成
 	glDisable(GL_STENCIL_TEST);
 }
 
