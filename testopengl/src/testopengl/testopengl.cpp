@@ -540,8 +540,9 @@ void myDisplay()
 #include "TestTexture.h"
 #include "TestStencil.h"
 #include "Test.h"
+#include "TestFrameBuffer.h"
 
-void testdraw() {
+void testdraw2() {
 	glClearColor(0, 0, 0, 1);
 	glClearStencil(0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
@@ -562,6 +563,10 @@ void testdraw() {
 	glFlush();//将命令提交给OpenGL服务器
 	//glFinish();//等待OpenGL完成
 	glDisable(GL_STENCIL_TEST);
+}
+
+void testdraw() {
+	TestFrameBuffer::testdraw();
 }
 
 void myIdle() {
@@ -598,6 +603,7 @@ int main(int argc, char *argv[])
 	TestTexture::init();
 	TestStencil::init();
 	Test::init();
+	TestFrameBuffer::init();
 
 	glutDisplayFunc(&testdraw);
 	glutIdleFunc(&myIdle);

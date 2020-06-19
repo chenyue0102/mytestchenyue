@@ -156,6 +156,7 @@
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="Test.h" />
+    <ClInclude Include="TestFrameBuffer.h" />
     <ClInclude Include="TestStencil.h" />
     <ClInclude Include="TestTexture.h" />
   </ItemGroup>
