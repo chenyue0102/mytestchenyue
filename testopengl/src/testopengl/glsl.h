@@ -51,7 +51,7 @@ vec4 fcolor;
 float fisReverse;
 float fisGradual;
 };
-out vec4 fColor;
+layout(location=0) out vec4 fColor;
 
 
 void getPercent(inout float f)

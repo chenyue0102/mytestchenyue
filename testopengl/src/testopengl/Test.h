@@ -354,7 +354,7 @@ case Enum:size = Count * sizeof(Type);break;
 #endif
 			glDrawElements(GL_TRIANGLE_STRIP, 17, GL_UNSIGNED_SHORT, 0);
 		}
-				break;
+		break;
 		case 2: {
 			GLint basevertex = 1;
 			//与glDrawElements类似，元素index为indices[i + basevertex];

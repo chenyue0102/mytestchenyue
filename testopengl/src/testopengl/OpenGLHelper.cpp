@@ -2,6 +2,11 @@
 #include <assert.h>
 #include <stdio.h>
 
+#define CHECK_BREAK \
+	if (GL_NO_ERROR != (ret = glGetError())) { \
+		assert(false); \
+		break; \
+	}
 
 namespace OpenGLHelper {
 void test() {
@@ -71,22 +76,14 @@ GLenum attachShader(GLuint program, GLenum type, const char *source, GLint len) 
 	{
 		if (0 == (shader = glCreateShader(type))) {
 			ret = glGetError();
+			assert(false);
 			break;
 		}
 		GLint lens[] = { len };
-		glShaderSource(shader, 1, &source, (len > 0 ? lens : nullptr));
-		if (GL_NO_ERROR != (ret = glGetError())) {
-			break;
-		}
+		glShaderSource(shader, 1, &source, (len > 0 ? lens : nullptr)); CHECK_BREAK;
 		glCompileShader(shader);
-		outputCompileShader(shader);
-		if (GL_NO_ERROR != (ret = glGetError())) {
-			break;
-		}
-		glAttachShader(program, shader);
-		if (GL_NO_ERROR != (ret = glGetError())) {
-			break;
-		}
+		outputCompileShader(shader); CHECK_BREAK;
+		glAttachShader(program, shader); CHECK_BREAK;
 	} while (false);
 
 	if (0 != shader) {
@@ -95,4 +92,44 @@ GLenum attachShader(GLuint program, GLenum type, const char *source, GLint len) 
 	}
 	return ret;
 }
+
+GLenum createTexture2D(GLint internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, GLint filterParam, GLuint &tex) {
+	GLenum ret = GL_NO_ERROR;
+	bool needClean = false;
+	do
+	{
+		glGenTextures(1, &tex); CHECK_BREAK;
+		needClean = true;
+		glBindTexture(GL_TEXTURE_2D, tex); CHECK_BREAK;
+		glTexImage2D(GL_TEXTURE_2D, 0, internalformat, width, height, 0, format, type, 0); CHECK_BREAK;
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filterParam); CHECK_BREAK;
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filterParam); CHECK_BREAK;
+	} while (false);
+
+	if (GL_NO_ERROR != ret && needClean) {
+		glDeleteTextures(1, &tex);
+	}
+	return ret;
+}
+GLenum createArrayBuffer(const void* vertexPointsBuffer, GLsizei vlen, const void* colorPointsBuffer, GLsizei clen, GLuint &buf)
+{
+	GLenum ret = GL_NO_ERROR;
+	bool needClean = false;
+
+	do
+	{
+		glGenBuffers(1, &buf); CHECK_BREAK;
+		needClean = true;
+		glBindBuffer(GL_ARRAY_BUFFER, buf); CHECK_BREAK;
+		glBufferData(GL_ARRAY_BUFFER, vlen + clen, nullptr, GL_STATIC_DRAW); CHECK_BREAK;
+		glBufferSubData(GL_ARRAY_BUFFER, 0, vlen, vertexPointsBuffer); CHECK_BREAK;
+		glBufferSubData(GL_ARRAY_BUFFER, vlen, clen, colorPointsBuffer); CHECK_BREAK;
+	} while (false);
+
+	if (GL_NO_ERROR != ret && needClean) {
+		glDeleteBuffers(1, &buf);
+	}
+	return ret;
+}
+
 };

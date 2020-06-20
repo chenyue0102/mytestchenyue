@@ -366,129 +366,133 @@ void drawTextTexture()
 	glFlush();
 }
 
-static GLuint g_texture = 0;
-static GLuint g_depthBuffer = 0;
-static GLuint g_frameBuffer = 0;
-const int TEXTURE_WIDTH = 1024;
-const int TEXTURE_HEIGHT = 768;
-char *g_dataBuffer = 0;
+namespace TestOpenGL {
+	static GLuint g_texture = 0;
+	static GLuint g_depthBuffer = 0;
+	static GLuint g_frameBuffer = 0;
+	const int TEXTURE_WIDTH = 1024;
+	const int TEXTURE_HEIGHT = 768;
+	char* g_dataBuffer = 0;
 
-void initTexture()
-{
-	g_dataBuffer = new char[TEXTURE_WIDTH * TEXTURE_HEIGHT * 3];
-	//创建纹理
-	glGenTextures(1, &g_texture);
-	glBindTexture(GL_TEXTURE_2D, g_texture);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, TEXTURE_WIDTH, TEXTURE_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-	glBindTexture(GL_TEXTURE_2D, 0);
-
-	//创建深度缓冲
-	glGenRenderbuffers(1, &g_depthBuffer);
-	glBindRenderbuffer(GL_RENDERBUFFER, g_depthBuffer);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, TEXTURE_WIDTH, TEXTURE_HEIGHT);
-	glBindRenderbuffer(GL_RENDERBUFFER, 0);
-
-	//创建FBO对象
-	glGenFramebuffers(1, &g_frameBuffer);
-	glBindFramebuffer(GL_FRAMEBUFFER, g_frameBuffer);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, g_texture, 0);
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, g_depthBuffer);
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-	assert(GL_FRAMEBUFFER_COMPLETE == status);
-}
-
-void renderToTexture()
-{
-	//取消绑定
-	glBindTexture(GL_TEXTURE_2D, 0);
-
-	glBindFramebuffer(GL_FRAMEBUFFER, g_frameBuffer);
-	glViewport(0, 0, TEXTURE_WIDTH, TEXTURE_HEIGHT);
-
-	//render
-	glClearColor(0, 0, 0, 0);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	drawLines();
-
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-}
-
-
-bool SaveBitmap(const char *pFileName, int width, int height, int biBitCount, const void *pBuf, int nBufLen)
-{
-	if (nullptr == pFileName
-		|| 0 == width
-		|| 0 == height
-		|| !(biBitCount == 24 || biBitCount == 32 || biBitCount == 16)
-		|| nullptr == pBuf
-		|| nBufLen < ((width * height * biBitCount) / 8)
-		)
+	void initTexture()
 	{
-		return false;
+		g_dataBuffer = new char[TEXTURE_WIDTH * TEXTURE_HEIGHT * 3];
+		//创建纹理
+		glGenTextures(1, &g_texture);
+		glBindTexture(GL_TEXTURE_2D, g_texture);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, TEXTURE_WIDTH, TEXTURE_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+		glBindTexture(GL_TEXTURE_2D, 0);
+
+		//创建深度缓冲
+		glGenRenderbuffers(1, &g_depthBuffer);
+		glBindRenderbuffer(GL_RENDERBUFFER, g_depthBuffer);
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, TEXTURE_WIDTH, TEXTURE_HEIGHT);
+		glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+		//创建FBO对象
+		glGenFramebuffers(1, &g_frameBuffer);
+		glBindFramebuffer(GL_FRAMEBUFFER, g_frameBuffer);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, g_texture, 0);
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, g_depthBuffer);
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+		GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+		assert(GL_FRAMEBUFFER_COMPLETE == status);
 	}
-	else
-	{
-		BITMAPFILEHEADER bfh = { 0 };
-		bfh.bfType = 'MB';
-		bfh.bfSize = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER) + nBufLen;
-		bfh.bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
-		FILE *fp = fopen(pFileName, "wb");
-		fwrite(&bfh, 1, sizeof(bfh), fp);
-		BITMAPINFOHEADER bih = { 0 };
-		bih.biSize = sizeof(bih);
-		bih.biWidth = width;
-		bih.biHeight = height;
-		bih.biPlanes = 1;
-		bih.biBitCount = biBitCount;
-		fwrite(&bih, 1, sizeof(bih), fp);
-		fwrite(pBuf, 1, nBufLen, fp);
-		fclose(fp);
-		return true;
-	}
-}
-void drawFrameBufferObject()
-{
-	if (0 == g_texture)
-	{
-		initTexture();
-	}
-	renderToTexture();
 
+	void renderToTexture()
 	{
+		//取消绑定
+		glBindTexture(GL_TEXTURE_2D, 0);
+
+		glBindFramebuffer(GL_FRAMEBUFFER, g_frameBuffer);
+		glViewport(0, 0, TEXTURE_WIDTH, TEXTURE_HEIGHT);
+
+		//render
+		glClearColor(0, 0, 0, 0);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		drawLines();
+
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	}
+
+
+	bool SaveBitmap(const char* pFileName, int width, int height, int biBitCount, const void* pBuf, int nBufLen)
+	{
+		if (nullptr == pFileName
+			|| 0 == width
+			|| 0 == height
+			|| !(biBitCount == 24 || biBitCount == 32 || biBitCount == 16)
+			|| nullptr == pBuf
+			|| nBufLen < ((width * height * biBitCount) / 8)
+			)
+		{
+			return false;
+		}
+		else
+		{
+			BITMAPFILEHEADER bfh = { 0 };
+			bfh.bfType = 'MB';
+			bfh.bfSize = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER) + nBufLen;
+			bfh.bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
+			FILE* fp = fopen(pFileName, "wb");
+			fwrite(&bfh, 1, sizeof(bfh), fp);
+			BITMAPINFOHEADER bih = { 0 };
+			bih.biSize = sizeof(bih);
+			bih.biWidth = width;
+			bih.biHeight = height;
+			bih.biPlanes = 1;
+			bih.biBitCount = biBitCount;
+			fwrite(&bih, 1, sizeof(bih), fp);
+			fwrite(pBuf, 1, nBufLen, fp);
+			fclose(fp);
+			return true;
+		}
+	}
+	void drawFrameBufferObject()
+	{
+		if (0 == g_texture)
+		{
+			initTexture();
+		}
+		renderToTexture();
+
+		{
+			glEnable(GL_TEXTURE_2D);
+			glBindTexture(GL_TEXTURE_2D, g_texture);
+			glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, g_dataBuffer);
+			glDisable(GL_TEXTURE_2D);
+			SaveBitmap("d:/1.bmp", TEXTURE_WIDTH, TEXTURE_HEIGHT, 24, g_dataBuffer, TEXTURE_WIDTH * TEXTURE_HEIGHT * 3);
+		}
+
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
 		glEnable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, g_texture);
-		glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, g_dataBuffer);
-		glDisable(GL_TEXTURE_2D);
-		SaveBitmap("d:/1.bmp", TEXTURE_WIDTH, TEXTURE_HEIGHT, 24, g_dataBuffer, TEXTURE_WIDTH * TEXTURE_HEIGHT * 3);
+		glViewport(0, 0, 400, 400);
+
+		glClearColor(0, 0, 0, 0);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		GLfloat color[] = { 1.0f, 1.0f, 0.0f, 1.0f };
+		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+		glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
+
+		glBegin(GL_QUADS);
+		int size = 1;
+		glTexCoord2f(0.0f, 0.0f); glVertex2f(-1.0f, -1.0f);
+		glTexCoord2f(0.0f, size); glVertex2f(-1.0f, 1.0f);
+		glTexCoord2f(size, size); glVertex2f(1.0f, 1.0f);
+		glTexCoord2f(size, 0.0f); glVertex2f(1.0f, -1.0f);
+		glEnd();
+		glFlush();
 	}
-	
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, g_texture);
-	glViewport(0, 0, 400, 400);
-
-	glClearColor(0, 0, 0, 0);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	GLfloat color[] = { 1.0f, 1.0f, 0.0f, 1.0f };
-	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-	glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
-
-	glBegin(GL_QUADS);
-	int size = 1;
-	glTexCoord2f(0.0f, 0.0f); glVertex2f(-1.0f, -1.0f);
-	glTexCoord2f(0.0f, size); glVertex2f(-1.0f, 1.0f);
-	glTexCoord2f(size, size); glVertex2f(1.0f, 1.0f);
-	glTexCoord2f(size, 0.0f); glVertex2f(1.0f, -1.0f);
-	glEnd();
-	glFlush();
 }
+
+
 
 void drawImage() {
 
