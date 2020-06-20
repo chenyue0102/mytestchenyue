@@ -19,6 +19,8 @@ namespace TestFrameBuffer {
 
 		glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, g_renderbuffer);
 		CHECKERR();
+
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 	}
 
 	static void testdraw() {

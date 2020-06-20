@@ -330,6 +330,7 @@ case Enum:size = Count * sizeof(Type);break;
 
 		glBindVertexArray(g_vIndex);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_ebIndex);
+		glBindBuffer(GL_ARRAY_BUFFER, g_bIndex);
 
 		glEnable(GL_PRIMITIVE_RESTART);
 		glPrimitiveRestartIndex(0xFFFF);
@@ -390,6 +391,7 @@ case Enum:size = Count * sizeof(Type);break;
 		default:
 			break;
 		}
+		glFlush();
 	}
 
 	void myIdle() {

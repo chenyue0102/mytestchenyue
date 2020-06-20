@@ -593,11 +593,6 @@ int main(int argc, char *argv[])
 	GLenum status = glewInit();
 	assert(GLEW_OK == status);
 
-	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_LESS);
-	glEnable(GL_STENCIL_TEST);
-	glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
-	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 	CHECKERR();
 
 	TestTexture::init();

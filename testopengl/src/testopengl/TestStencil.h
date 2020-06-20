@@ -123,6 +123,13 @@ void main(){
 	}
 
 	void testdraw() {
+
+		glEnable(GL_DEPTH_TEST);
+		glDepthFunc(GL_LESS);
+		glEnable(GL_STENCIL_TEST);
+		glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+		glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+
 		glClear(GL_STENCIL_BUFFER_BIT);
 		CHECKERR();
 

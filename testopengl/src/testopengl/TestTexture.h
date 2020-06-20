@@ -67,8 +67,8 @@ void main(){
 	static GLuint g_texture = 0;
 	static GLuint g_vertexindex = 0;
 	static GLuint g_buffer = 0;
-	GLuint g_vprogramX = 0, g_fprogramX = 0;
-	GLuint g_pipelineX = 0;
+	static GLuint g_vprogramX = 0, g_fprogramX = 0;
+	static GLuint g_pipelineX = 0;
 
 	static void init() {
 		glGenTextures(1, &g_texture);
