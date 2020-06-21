@@ -66,7 +66,7 @@ void main(){
 
 	static GLuint g_texture = 0;
 	static GLuint g_vertexindex = 0;
-	static GLuint g_buffer = 0;
+	static GLuint g_buffer = 0, g_pixelbuffer = 0;
 	static GLuint g_vprogramX = 0, g_fprogramX = 0;
 	static GLuint g_pipelineX = 0;
 
@@ -76,13 +76,18 @@ void main(){
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
+		GLsizei levels = 1;//mip的数量
 		GLsizei level = 0;//mip等级
-		GLint internalformat = GL_RED;//材质内部编码
-		GLint border = 0;//must0
+		GLint internalformat = GL_R8;//材质内部编码
+		GLint border = 0;//must be 0
 		GLenum format = GL_RED;//tex_checkerboard_data编码
 		GLenum type = GL_UNSIGNED_BYTE;//tex_checkerboard_data类型
-		//glTexStorage2D(GL_TEXTURE_2D, level, internalformat, 8, 8);
-		glTexImage2D(GL_TEXTURE_2D, level, internalformat, 8, 8, border, format, type, nullptr);
+		if (false) {
+			glTexStorage2D(GL_TEXTURE_2D, levels, GL_RGBA8, 8, 8);//不可改变存储
+		}
+		else {
+			glTexImage2D(GL_TEXTURE_2D, level, internalformat, 8, 8, border, format, type, nullptr);//可以改变存储
+		}
 		CHECKERR();
 
 		
@@ -117,6 +122,12 @@ void main(){
 		outputProgramLog(g_vprogramX);
 		CHECKERR();
 #endif
+
+		//创建pixel unpack 缓存
+		glGenBuffers(1, &g_pixelbuffer);
+		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, g_pixelbuffer);
+		glBufferData(GL_PIXEL_UNPACK_BUFFER, sizeof(tex_checkerboard_data), tex_checkerboard_data, GL_STATIC_DRAW);
+		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 	}
 
 	static void testdraw() {
@@ -132,9 +143,17 @@ void main(){
 		glBindVertexArray(g_vertexindex);
 		CHECKERR();
 
-		glActiveTexture(GL_TEXTURE0);
+		glActiveTexture(GL_TEXTURE0);//激活纹理单元
 		glBindTexture(GL_TEXTURE_2D, g_texture);
-		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 8, 8, GL_RED, GL_UNSIGNED_BYTE, tex_checkerboard_data);
+		if (false) {
+			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 8, 8, GL_RED, GL_UNSIGNED_BYTE, tex_checkerboard_data);
+		}
+		else {
+			//使用pixel unpack缓存
+			glBindBuffer(GL_PIXEL_UNPACK_BUFFER, g_pixelbuffer);
+			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 8, 8, GL_RED, GL_UNSIGNED_BYTE, BUFFER_OFFSET(0));
+		}
+		
 		GLuint texLocation = glGetUniformLocation(g_vprogramX, "tex");
 		glUniform1i(texLocation, 0);
 		CHECKERR();

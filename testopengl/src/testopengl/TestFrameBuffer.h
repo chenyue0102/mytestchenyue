@@ -95,6 +95,7 @@ void main()
 		glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, g_texture, 0);
 		GLenum buffers[] = { GL_COLOR_ATTACHMENT0 };
 		glDrawBuffers(1, buffers);
+		//glDrawBuffer(GL_FRONT_AND_BACK);//同时写入前缓存与后缓存
 		CHECKERR();
 		assert(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
 
@@ -116,20 +117,7 @@ void main()
 		}
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		//glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 		CHECKERR();
-#if 0
-		glDrawBuffer(GL_FRONT_AND_BACK);
-		CHECKERR();
-
-		glViewport(0, 0, 400, 400);
-		glClearColor(0.5f, 0.0f, 0.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
-		TestTexture::testdraw();
-		glFlush();
-		CHECKERR();
-		return;
-#endif
 
 		glUseProgram(g_program);
 		glViewport(0, 0, 400, 400);
@@ -176,10 +164,31 @@ void main()
 		CHECKERR();
 
 		glFlush();
+
+		//从帧缓冲区中拷贝数据
+		static bool isfirst = true;
+		if (isfirst) {
+			isfirst = false;
+			GLuint tex = 0;
+			glGenTextures(1, &tex); CHECKERR();
+			glBindTexture(GL_TEXTURE_2D, tex); CHECKERR();
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, 400, 400, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr); CHECKERR();
+			//glReadBuffer(GL_BACK); CHECKERR();
+			glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, 0, 0, 400, 400, 0); CHECKERR();
+			std::string tmpBuf;
+			tmpBuf.resize(400 * 400 * 3);
+			glGetTexImage(GL_TEXTURE_2D, 0, GL_BGR, GL_UNSIGNED_BYTE, &tmpBuf[0]); CHECKERR();
+			SaveBitmap("d:/1.bmp", 400, 400, 24, &tmpBuf[0], tmpBuf.size());
+
+			std::string tmpBuf2;
+			tmpBuf2.resize(400 * 400 * 3);
+			glReadPixels(0, 0, 400, 400, GL_BGR, GL_UNSIGNED_BYTE, &tmpBuf2[0]);
+			SaveBitmap("d:/2.bmp", 400, 400, 24, &tmpBuf2[0], tmpBuf2.size());
+		}
 	}
 
 	static void testdraw() {
-		drawtotexture();
+		drawtorenderbuffer();
 	}
 
 	bool SaveBitmap(const char* pFileName, int width, int height, int biBitCount, const void* pBuf, int nBufLen)

@@ -570,7 +570,7 @@ void testdraw2() {
 }
 
 void testdraw() {
-	TestFrameBuffer::testdraw();
+	TestTexture::testdraw();
 }
 
 void myIdle() {
