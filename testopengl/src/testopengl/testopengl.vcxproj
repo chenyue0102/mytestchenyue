@@ -95,7 +95,7 @@
       <SubSystem>NotSet</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>../../lib;../../lib/Release/Win32</AdditionalLibraryDirectories>
-      <AdditionalDependencies>glew32.lib;glew32s.lib;freeglut_staticd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>jpegD.lib;glew32.lib;glew32s.lib;freeglut_staticd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
