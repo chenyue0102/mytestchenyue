@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include <GL/glew.h>
 #include "Test.h"
 #include "OpenGLHelper.h"
@@ -90,12 +90,12 @@ void main()
 	}
 
 	static void drawtotexture() {
-		//GL_DRAW_FRAMEBUFFER »æÖÆ»º´æ,GL_READ_FRAMEBUFFER¶ÁÈ¡»º´æ GL_FRAMEBUFFER ¿É¶Á¿ÉĞ´
+		//GL_DRAW_FRAMEBUFFER ç»˜åˆ¶ç¼“å­˜,GL_READ_FRAMEBUFFERè¯»å–ç¼“å­˜ GL_FRAMEBUFFER å¯è¯»å¯å†™
 		glBindFramebuffer(GL_FRAMEBUFFER, g_framebuffer);
 		glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, g_texture, 0);
 		GLenum buffers[] = { GL_COLOR_ATTACHMENT0 };
 		glDrawBuffers(1, buffers);
-		//glDrawBuffer(GL_FRONT_AND_BACK);//Í¬Ê±Ğ´ÈëÇ°»º´æÓëºó»º´æ
+		//glDrawBuffer(GL_FRONT_AND_BACK);//åŒæ—¶å†™å…¥å‰ç¼“å­˜ä¸åç¼“å­˜
 		CHECKERR();
 		assert(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
 
@@ -165,7 +165,7 @@ void main()
 
 		glFlush();
 
-		//´ÓÖ¡»º³åÇøÖĞ¿½±´Êı¾İ
+		//ä»å¸§ç¼“å†²åŒºä¸­æ‹·è´æ•°æ®
 		static bool isfirst = true;
 		if (isfirst) {
 			isfirst = false;
@@ -191,7 +191,7 @@ void main()
 		drawtorenderbuffer();
 	}
 
-	bool SaveBitmap(const char* pFileName, int width, int height, int biBitCount, const void* pBuf, int nBufLen)
+	static bool SaveBitmap(const char* pFileName, int width, int height, int biBitCount, const void* pBuf, int nBufLen)
 	{
 		if (nullptr == pFileName
 			|| 0 == width
@@ -217,6 +217,7 @@ void main()
 			bih.biHeight = height;
 			bih.biPlanes = 1;
 			bih.biBitCount = biBitCount;
+			bih.biCompression = BI_RGB;
 			fwrite(&bih, 1, sizeof(bih), fp);
 			fwrite(pBuf, 1, nBufLen, fp);
 			fclose(fp);

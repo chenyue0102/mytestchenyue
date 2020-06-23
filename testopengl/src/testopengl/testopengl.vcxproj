@@ -157,8 +157,10 @@
     <ClInclude Include="targetver.h" />
     <ClInclude Include="Test.h" />
     <ClInclude Include="TestFrameBuffer.h" />
+    <ClInclude Include="TestJpeg.h" />
     <ClInclude Include="TestStencil.h" />
     <ClInclude Include="TestTexture.h" />
+    <ClInclude Include="vmath.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="OpenGLHelper.cpp" />

@@ -545,6 +545,7 @@ void myDisplay()
 #include "TestStencil.h"
 #include "Test.h"
 #include "TestFrameBuffer.h"
+#include "TestJpeg.h"
 
 void testdraw2() {
 	glClearColor(0, 0, 0, 1);
@@ -603,6 +604,8 @@ int main(int argc, char *argv[])
 	TestStencil::init();
 	Test::init();
 	TestFrameBuffer::init();
+
+	TestJpeg::testload();
 
 	glutDisplayFunc(&testdraw);
 	glutIdleFunc(&myIdle);
