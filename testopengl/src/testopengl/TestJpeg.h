@@ -7,17 +7,70 @@
 
 namespace TestJpeg {
 
-	static void my_error_exit(j_common_ptr info) {
+	struct my_error_mgr {
+		struct jpeg_error_mgr pub;	/* "public" fields */
 
+		jmp_buf setjmp_buffer;	/* for return to caller */
+	};
+	typedef struct my_error_mgr * my_error_ptr;
+	METHODDEF(void)
+		my_error_exit(j_common_ptr cinfo)
+	{
+		/* cinfo->err really points to a my_error_mgr struct, so coerce pointer */
+		my_error_ptr myerr = (my_error_ptr)cinfo->err;
+
+		/* Always display the message. */
+		/* We could postpone this until after returning, if we chose. */
+		(*cinfo->err->output_message) (cinfo);
+
+		/* Return control to the setjmp point */
+		longjmp(myerr->setjmp_buffer, 1);
 	}
 
-	static GLenum loadJpg2Texture(const char *filePath, GLuint tex) {
+	static GLenum loadJpg2Texture(const char *filePath, GLuint &tex) {
 		GLenum ret = GL_NO_ERROR;
+		jpeg_decompress_struct cinfo;
+		my_error_mgr jerr;
+		bool cleanJpeg = false;
+		FILE *f = NULL;
+		std::string buffer;
+
+		do
+		{
+			if (NULL == (f = fopen(filePath, "rb"))) {
+				assert(false);
+				break;
+			}
+			cinfo.err = jpeg_std_error(&jerr.pub);
+			jerr.pub.error_exit = &my_error_exit;
+			if (0 != setjmp(jerr.setjmp_buffer)) {
+				break;
+			}
+			jpeg_create_decompress(&cinfo);
+			cleanJpeg = true;
+
+			jpeg_stdio_src(&cinfo, f);
+			jpeg_read_header(&cinfo, TRUE);
+			jpeg_start_decompress(&cinfo);
+			int row_stride = cinfo.output_width * cinfo.output_components;//per row buffer
+			buffer.resize(row_stride);
+			unsigned char *buffer = (unsigned char *)buffer.data();
+
+		} while (false);
+
+		if (NULL != f) {
+			fclose(f);
+			f = NULL;
+		}
+		if (cleanJpeg) {
+			jpeg_destroy_decompress(&cinfo);
+		}
+		return ret;
 	}
 
 	static void testload() {
 		jpeg_decompress_struct cinfo;
-		jpeg_error_mgr jerr;
+		my_error_mgr jerr;
 		FILE *f = NULL;
 		bool cleanJpeg = false;
 		std::string data;
@@ -27,7 +80,11 @@ namespace TestJpeg {
 				assert(false);
 				break;
 			}
-			cinfo.err = jpeg_std_error(&jerr);
+			cinfo.err = jpeg_std_error(&jerr.pub);
+			jerr.pub.error_exit = &my_error_exit;
+			if (0 != setjmp(jerr.setjmp_buffer)) {
+				break;
+			}
 			jpeg_create_decompress(&cinfo);
 			cleanJpeg = true;
 			jpeg_stdio_src(&cinfo, f);
