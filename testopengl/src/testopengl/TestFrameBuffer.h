@@ -5,7 +5,6 @@
 #include "TestTexture.h"
 
 namespace TestFrameBuffer {
-	bool SaveBitmap(const char* pFileName, int width, int height, int biBitCount, const void* pBuf, int nBufLen);
 	static GLuint g_framebuffer = 0;
 	static GLuint g_renderbuffer = 0;
 
@@ -44,14 +43,6 @@ void main()
 )";
 
 	static void init() {
-		glGenRenderbuffers(1, &g_renderbuffer);
-		glBindRenderbuffer(GL_RENDERBUFFER, g_renderbuffer);
-		glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA, 400, 400);
-		CHECKERR();
-
-		glGenFramebuffers(1, &g_framebuffer);
-		CHECKERR();
-
 		GLenum ret = GL_NO_ERROR;
 		ret = OpenGLHelper::createTexture2D(GL_RGB8, 400, 400, GL_RGB, GL_UNSIGNED_BYTE, GL_LINEAR, g_texture); assert(ret == GL_NO_ERROR);
 		g_program = glCreateProgram(); assert(0 != g_program);
@@ -59,6 +50,14 @@ void main()
 		ret = OpenGLHelper::attachShader(g_program, GL_FRAGMENT_SHADER, fStringxx, 0); assert(ret == GL_NO_ERROR);
 		glLinkProgram(g_program); 
 		outputProgramLog(g_program);
+		CHECKERR();
+
+		glGenRenderbuffers(1, &g_renderbuffer);
+		glBindRenderbuffer(GL_RENDERBUFFER, g_renderbuffer);
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA, 400, 400);
+		CHECKERR();
+
+		glGenFramebuffers(1, &g_framebuffer);
 		CHECKERR();
 
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
@@ -189,39 +188,5 @@ void main()
 
 	static void testdraw() {
 		drawtorenderbuffer();
-	}
-
-	static bool SaveBitmap(const char* pFileName, int width, int height, int biBitCount, const void* pBuf, int nBufLen)
-	{
-		if (nullptr == pFileName
-			|| 0 == width
-			|| 0 == height
-			|| !(biBitCount == 24 || biBitCount == 32 || biBitCount == 16)
-			|| nullptr == pBuf
-			|| nBufLen < ((width * height * biBitCount) / 8)
-			)
-		{
-			return false;
-		}
-		else
-		{
-			BITMAPFILEHEADER bfh = { 0 };
-			bfh.bfType = 'MB';
-			bfh.bfSize = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER) + nBufLen;
-			bfh.bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
-			FILE* fp = fopen(pFileName, "wb");
-			fwrite(&bfh, 1, sizeof(bfh), fp);
-			BITMAPINFOHEADER bih = { 0 };
-			bih.biSize = sizeof(bih);
-			bih.biWidth = width;
-			bih.biHeight = height;
-			bih.biPlanes = 1;
-			bih.biBitCount = biBitCount;
-			bih.biCompression = BI_RGB;
-			fwrite(&bih, 1, sizeof(bih), fp);
-			fwrite(pBuf, 1, nBufLen, fp);
-			fclose(fp);
-			return true;
-		}
 	}
 };

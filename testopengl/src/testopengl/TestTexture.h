@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <thread>
 #include "OpenGLHelper.h"
 
@@ -59,16 +59,26 @@ in Param{
 };
 out vec4 fColor;
 void main(){
-	fColor = vec4(texture2D(tex, fPosition.xy).rrr, 1.0f);
+	fColor = vec4(texture2D(tex, fPosition.xy).rgb, 1.0f);
 }
 )";
 
-
+	static GLsizei g_texture_width = 8;
+	static GLsizei g_texture_height = 8;
 	static GLuint g_texture = 0;
 	static GLuint g_vertexindex = 0;
 	static GLuint g_buffer = 0, g_pixelbuffer = 0;
 	static GLuint g_vprogramX = 0, g_fprogramX = 0;
 	static GLuint g_pipelineX = 0;
+
+	static void setTexture(GLuint tex) {
+		g_texture = tex;
+	}
+
+	static void setWidthHeight(GLsizei width, GLsizei height) {
+		g_texture_width = width;
+		g_texture_height = height;
+	}
 
 	static void init() {
 		glGenTextures(1, &g_texture);
@@ -83,10 +93,10 @@ void main(){
 		GLenum format = GL_RED;//tex_checkerboard_data编码
 		GLenum type = GL_UNSIGNED_BYTE;//tex_checkerboard_data类型
 		if (false) {
-			glTexStorage2D(GL_TEXTURE_2D, levels, GL_RGBA8, 8, 8);//不可改变存储
+			glTexStorage2D(GL_TEXTURE_2D, levels, GL_RGBA8, g_texture_width, g_texture_height);//不可改变存储
 		}
 		else {
-			glTexImage2D(GL_TEXTURE_2D, level, internalformat, 8, 8, border, format, type, nullptr);//可以改变存储
+			glTexImage2D(GL_TEXTURE_2D, level, internalformat, g_texture_width, g_texture_height, border, format, type, nullptr);//可以改变存储
 		}
 		CHECKERR();
 
@@ -128,6 +138,21 @@ void main(){
 		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, g_pixelbuffer);
 		glBufferData(GL_PIXEL_UNPACK_BUFFER, sizeof(tex_checkerboard_data), tex_checkerboard_data, GL_STATIC_DRAW);
 		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+
+		if (false) {
+			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, g_texture_width, g_texture_height, GL_RED, GL_UNSIGNED_BYTE, tex_checkerboard_data);
+		}
+		else {
+			//使用pixel unpack缓存
+			glBindBuffer(GL_PIXEL_UNPACK_BUFFER, g_pixelbuffer);
+			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, g_texture_width, g_texture_height, GL_RED, GL_UNSIGNED_BYTE, BUFFER_OFFSET(0));
+			glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+			glDeleteBuffers(1, &g_pixelbuffer);
+		}
+
+		glBindVertexArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 
 	static void testdraw() {
@@ -145,15 +170,6 @@ void main(){
 
 		glActiveTexture(GL_TEXTURE0);//激活纹理单元
 		glBindTexture(GL_TEXTURE_2D, g_texture);
-		if (false) {
-			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 8, 8, GL_RED, GL_UNSIGNED_BYTE, tex_checkerboard_data);
-		}
-		else {
-			//使用pixel unpack缓存
-			glBindBuffer(GL_PIXEL_UNPACK_BUFFER, g_pixelbuffer);
-			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 8, 8, GL_RED, GL_UNSIGNED_BYTE, BUFFER_OFFSET(0));
-		}
-		
 		GLuint texLocation = glGetUniformLocation(g_vprogramX, "tex");
 		glUniform1i(texLocation, 0);
 		CHECKERR();

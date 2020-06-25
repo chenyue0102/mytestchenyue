@@ -1,6 +1,5 @@
 ﻿// testopengl.cpp : 定义控制台应用程序的入口点。
 //
-#define _USE_MATH_DEFINES
 #include "stdafx.h"
 #include <math.h>
 #include <time.h>
@@ -30,7 +29,7 @@ void drawLines()
 	{
 		glVertex2d(0, 0);
 		glVertex2d(1, 1);
-		glVertex2f(-0.9, 0.8);
+		glVertex2f(-0.9f, 0.8f);
 	}
 	glEnd();
 
@@ -39,14 +38,14 @@ void drawLines()
 	for (int i = 0; i < n; i++)
 	{
 		const float R = 0.5f;
-		glVertex2f(R*cos(2 * M_PI / n*i), R*sin(2 * M_PI / n*i));
+		glVertex2f((GLfloat)(R*cos(2 * M_PI / n*i)), (GLfloat)(R*sin(2 * M_PI / n*i)));
 	}
 	glEnd();
 
-	GLfloat a = 1 / (2 - 2 * cos(72 * M_PI / 180));
-	GLfloat bx = a * cos(18 * M_PI / 180);
-	GLfloat by = a * sin(18 * M_PI / 180);
-	GLfloat cy = -a * cos(18 * M_PI / 180);
+	GLfloat a = (GLfloat)(1 / (2 - 2 * cos(72 * M_PI / 180)));
+	GLfloat bx = (GLfloat)(a * cos(18 * M_PI / 180));
+	GLfloat by = (GLfloat)(a * sin(18 * M_PI / 180));
+	GLfloat cy = (GLfloat)(-a * cos(18 * M_PI / 180));
 	GLfloat
 		PointA[2] = { 0, a },
 		PointB[2] = { bx, by },
@@ -71,7 +70,7 @@ void drawLines()
 	const GLfloat factor = 0.1f;
 	for (auto x = -1.0f / factor; x<1.0f / factor; x += 0.01f)
 	{
-		glVertex2f(x*factor, sin(x)*factor);
+		glVertex2f((GLfloat)(x*factor), (GLfloat)(sin(x)*factor));
 	}
 	glEnd();
 }
@@ -122,31 +121,31 @@ void drawBackline()
 	for (int i = 0; i < maxLineCount; i++)
 	{
 		int yStep = maxFar / maxLineCount * 2;
-		glVertex3f(-maxFar, -maxFar + yStep * i, 0.0f);
-		glVertex3f(maxFar, -maxFar + yStep * i, 0.0f);
+		glVertex3f((GLfloat)(-maxFar), (GLfloat)(-maxFar + yStep * i), 0.0f);
+		glVertex3f((GLfloat)(maxFar), (GLfloat)(-maxFar + yStep * i), 0.0f);
 
-		glVertex3f(-maxFar + yStep * i, -maxFar, 0.0f);
-		glVertex3f(-maxFar + yStep * i, maxFar, 0.0f);
+		glVertex3f((GLfloat)(-maxFar + yStep * i), (GLfloat)(-maxFar), 0.0f);
+		glVertex3f((GLfloat)(-maxFar + yStep * i), (GLfloat)(maxFar), 0.0f);
 	}
 	glEnd();
 
 	glLineWidth(4);
-	glColor3f(1.0f, 0, 0);
+	glColor3f(1.0f, 0.0f, 0.0f);
 	glBegin(GL_LINES);
-	glVertex3f(0, 0, 0);
-	glVertex3f(maxFar / 2, 0, 0);
+	glVertex3f(0.0f, 0.0f, 0.0f);
+	glVertex3f((GLfloat)(maxFar / 2), 0.0f, 0.0f);
 	glEnd();
 
-	glColor3f(0, 1, 0);
+	glColor3f(0.0f, 1.0f, 0.0f);
 	glBegin(GL_LINES);
 	glVertex3f(0, 0, 0);
-	glVertex3f(0, maxFar / 2, 0);
+	glVertex3f(0.0f, (GLfloat)(maxFar / 2), 0.0f);
 	glEnd();
 
-	glColor3f(0, 0, 1);
+	glColor3f(0.0f, 0.0f, 1.0f);
 	glBegin(GL_LINES);
-	glVertex3f(0, 0, 0);
-	glVertex3f(0, 0, maxFar / 2);
+	glVertex3f(0.0f, 0.0f, 0.0f);
+	glVertex3f(0.0f, 0.0f, (GLfloat)(maxFar / 2));
 	glEnd();
 	glLineWidth(1);
 }
@@ -357,7 +356,7 @@ void drawTextTexture()
 	glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
 
 	glBegin(GL_QUADS);
-	int size = 1;
+	GLfloat size = 1.0f;
 	glTexCoord2f(0.0f, 0.0f); glVertex2f(-1.0f, -1.0f);
 	glTexCoord2f(0.0f, size); glVertex2f(-1.0f, 1.0f);
 	glTexCoord2f(size, size); glVertex2f(1.0f, 1.0f);
@@ -482,7 +481,7 @@ namespace TestOpenGL {
 		glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
 
 		glBegin(GL_QUADS);
-		int size = 1;
+		GLfloat size = 1.0f;
 		glTexCoord2f(0.0f, 0.0f); glVertex2f(-1.0f, -1.0f);
 		glTexCoord2f(0.0f, size); glVertex2f(-1.0f, 1.0f);
 		glTexCoord2f(size, size); glVertex2f(1.0f, 1.0f);
@@ -592,7 +591,7 @@ int main(int argc, char *argv[])
 	auto v = glGetString(GL_VERSION);
 	GLint max;
 	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &max);
-	printf("OpenGL Version=%s texturemaxsize=%d", v, max);
+	printf("OpenGL Version=%s texturemaxsize=%d\n", v, max);
 	
 	//初始化 glew wglMakeCurrent
 	GLenum status = glewInit();
@@ -604,8 +603,14 @@ int main(int argc, char *argv[])
 	TestStencil::init();
 	Test::init();
 	TestFrameBuffer::init();
-
-	TestJpeg::testload();
+	GLuint tex=0;
+	GLsizei width = 0, height = 0;
+	TestJpeg::loadJpg2Texture("d:/1.jpg", GL_RGB8, tex, width, height);
+	TestTexture::setWidthHeight(width, height);
+	glBindTexture(GL_TEXTURE_2D, tex);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	TestTexture::setTexture(tex);
 
 	glutDisplayFunc(&testdraw);
 	glutIdleFunc(&myIdle);

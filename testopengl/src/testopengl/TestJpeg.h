@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <stdio.h>
 #include <assert.h>
 #include <string>
@@ -27,13 +27,14 @@ namespace TestJpeg {
 		longjmp(myerr->setjmp_buffer, 1);
 	}
 
-	static GLenum loadJpg2Texture(const char *filePath, GLuint &tex) {
-		GLenum ret = GL_NO_ERROR;
+	static bool loadJpg2Texture(const char *filePath, GLenum internalformat, GLuint &tex, GLsizei &width, GLsizei &height) {
+		bool success = false;
 		jpeg_decompress_struct cinfo;
 		my_error_mgr jerr;
-		bool cleanJpeg = false;
+		bool cleanJpeg = false, cleanTex = false, cleanUnpackBuffer = false;;
 		FILE *f = NULL;
-		std::string buffer;
+		GLenum ret = GL_NO_ERROR;
+		GLuint unpackBuffer = 0;
 
 		do
 		{
@@ -52,10 +53,43 @@ namespace TestJpeg {
 			jpeg_stdio_src(&cinfo, f);
 			jpeg_read_header(&cinfo, TRUE);
 			jpeg_start_decompress(&cinfo);
-			int row_stride = cinfo.output_width * cinfo.output_components;//per row buffer
-			buffer.resize(row_stride);
-			unsigned char *buffer = (unsigned char *)buffer.data();
 
+			int row_stride = cinfo.output_width * cinfo.output_components;//per row buffer
+			width = cinfo.output_width;
+			height = cinfo.output_height;
+			if (JCS_RGB == cinfo.out_color_space) {
+				glGenBuffers(1, &unpackBuffer); CHECK_BREAK;
+				cleanUnpackBuffer = true;
+				glBindBuffer(GL_PIXEL_UNPACK_BUFFER, unpackBuffer); CHECK_BREAK;
+				glBufferData(GL_PIXEL_UNPACK_BUFFER, row_stride * cinfo.output_height, nullptr, GL_STATIC_DRAW); CHECK_BREAK;
+				unsigned char *mapBuffer = (unsigned char*)glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY); CHECK_BREAK;
+				if (nullptr == mapBuffer) {
+					break;
+				}
+				while (cinfo.output_scanline < cinfo.output_height){
+					unsigned char* buffer = mapBuffer + row_stride * (cinfo.output_height - cinfo.output_scanline - 1);
+					//opengl起始为左下角
+					jpeg_read_scanlines(&cinfo, &buffer, 1);
+				}
+				GLboolean isOk = glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+				if (isOk != GL_TRUE) {
+					break;
+				}
+				
+				glGenTextures(1, &tex); CHECK_BREAK;
+				cleanTex = true;
+				glBindTexture(GL_TEXTURE_2D, tex); CHECK_BREAK;
+				glTexImage2D(GL_TEXTURE_2D, 0, internalformat, cinfo.output_width, cinfo.output_height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr); CHECK_BREAK;
+				glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, cinfo.output_width, cinfo.output_height, GL_RGB, GL_UNSIGNED_BYTE, BUFFER_OFFSET(0));
+
+				glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+				glBindTexture(GL_TEXTURE_2D, 0);
+			}
+			jpeg_finish_decompress(&cinfo);
+			if (ret != GL_NO_ERROR) {
+				break;
+			}
+			success = true;
 		} while (false);
 
 		if (NULL != f) {
@@ -65,7 +99,13 @@ namespace TestJpeg {
 		if (cleanJpeg) {
 			jpeg_destroy_decompress(&cinfo);
 		}
-		return ret;
+		if (ret != GL_NO_ERROR && cleanTex) {
+			glDeleteTextures(1, &tex);
+		}
+		if (cleanUnpackBuffer) {
+			glDeleteBuffers(1, &unpackBuffer);
+		}
+		return success;
 	}
 
 	static void testload() {
@@ -128,7 +168,7 @@ namespace TestJpeg {
 					break;
 				}
 			}
-			TestFrameBuffer::SaveBitmap("d:/1.bmp", cinfo.output_width, cinfo.output_height, cinfo.output_components * 8, data.data(), data.size());
+			OpenGLHelper::SaveBitmap("d:/1.bmp", cinfo.output_width, cinfo.output_height, cinfo.output_components * 8, data.data(), data.size());
 			jpeg_finish_decompress(&cinfo);
 		} while (false);
 		

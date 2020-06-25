@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "glsl.h"
 #include <GL/glew.h>
 #include <memory>
@@ -93,6 +93,9 @@ namespace Test {
 			//丢弃缓存数据
 			glInvalidateBufferData(g_bIndex);
 		}
+
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
 
 
@@ -112,6 +115,8 @@ namespace Test {
 		GLuint tVertexIn = 2;
 		glVertexAttribPointer(tVertexIn, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(g_vPoints)));//指定颜色顶点的偏移
 		glEnableVertexAttribArray(tVertexIn);//启用顶点
+
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
 #define USE_PIPELINE
 
@@ -301,10 +306,10 @@ case Enum:size = Count * sizeof(Type);break;
 		//charToTexture(L"Hello, world");
 
 		//设置清除颜色
-		glClearColor(1.0, 1.0, 1.0, 1.0);
+		//glClearColor(1.0, 1.0, 1.0, 1.0);
 	}
 
-	typedef struct DrawArraysIndirectCommand {
+	struct DrawArraysIndirectCommand {
 		GLuint count;
 		GLuint primCount;
 		GLuint first;
