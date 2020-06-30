@@ -156,9 +156,11 @@
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="Test.h" />
+    <ClInclude Include="TestComputer.h" />
     <ClInclude Include="TestFrameBuffer.h" />
     <ClInclude Include="TestJpeg.h" />
     <ClInclude Include="TestSkyBox.h" />
+    <ClInclude Include="TestLight.h" />
     <ClInclude Include="TestStencil.h" />
     <ClInclude Include="TestTexture.h" />
     <ClInclude Include="vmath.h" />

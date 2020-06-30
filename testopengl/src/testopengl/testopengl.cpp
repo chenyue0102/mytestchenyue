@@ -546,6 +546,7 @@ void myDisplay()
 #include "TestFrameBuffer.h"
 #include "TestJpeg.h"
 #include "TestSkyBox.h"
+#include "TestComputer.h"
 
 void testdraw2() {
 	glClearColor(0, 0, 0, 1);
@@ -612,11 +613,12 @@ int main(int argc, char *argv[])
 
 	CHECKERR();
 
-	///TestTexture::init();
-	//TestStencil::init();
-	//Test::init();
-	//TestFrameBuffer::init();
+	TestComputer::test();
 	TestSkyBox::init();
+	TestTexture::init();
+	TestStencil::init();
+	Test::init();
+	TestFrameBuffer::init();
 #if 0
 	GLuint tex=0;
 	GLsizei width = 0, height = 0;
@@ -630,6 +632,7 @@ int main(int argc, char *argv[])
 	glBindTexture(GL_TEXTURE_2D, 0);
 	TestTexture::setTexture(tex);
 #endif
+
 	glutDisplayFunc(&testdraw);
 	glutIdleFunc(&myIdle);
 	glutKeyboardFunc(&keyboard);

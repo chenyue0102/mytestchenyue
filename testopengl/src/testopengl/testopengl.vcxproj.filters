@@ -49,6 +49,10 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="TestSkyBox.h">
+    <ClInclude Include="TestLight.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="TestComputer.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
