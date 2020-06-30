@@ -7,15 +7,16 @@ namespace TestComputer {
 	static const char *g_cString = R"(
 #version 430 core
 layout(local_size_x = 1, local_size_y = 1) in;
-layout(binding=0,rgba32f) readonly uniform image2D image_in;
-layout(binding=1,rgba32f) writeonly uniform image2D image_out;
+layout(binding=0,rgba8ui) readonly uniform uimage2D image_in;
+layout(binding=1,rgba8ui) writeonly uniform uimage2D image_out;
 void main(){
 	ivec2 dims = imageSize(image_in);
 	for (uint row = 0; row < dims.y; row++){
 		for (uint column = 0; column < dims.x; column++){
 			ivec2 pos = ivec2(column, row);
-			vec4 data = imageLoad(image_in, pos);
-			imageStore(image_out, pos, data.bgra);
+			uvec4 data = imageLoad(image_in, pos);
+			data.g = 0xfe;
+			imageStore(image_out, pos, data);
 		}
 	}
 }
@@ -45,9 +46,9 @@ void main(){
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		CHECKERR();
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, img_data);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8UI, width, height, 0, GL_RGB_INTEGER, GL_UNSIGNED_BYTE, img_data);
 		CHECKERR();
-		glBindImageTexture(0, tex_in, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);
+		glBindImageTexture(0, tex_in, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA8UI);
 		CHECKERR();
 
 		glBindTexture(GL_TEXTURE_2D, tex_out);
@@ -56,9 +57,9 @@ void main(){
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		CHECKERR();
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8UI, width, height, 0, GL_RGB_INTEGER, GL_UNSIGNED_BYTE, 0);
 		CHECKERR();
-		glBindImageTexture(1, tex_out, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+		glBindImageTexture(1, tex_out, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8UI);
 		CHECKERR();
 
 		CHECKERR();
@@ -88,7 +89,7 @@ void main(){
 		glBindTexture(GL_TEXTURE_2D, tex_out);
 		CHECKERR();
 		unsigned char img_data2[width * height * 3] = { 0 };
-		glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, img_data2);
+		glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB_INTEGER, GL_UNSIGNED_BYTE, img_data2);
 		CHECKERR();
 
 		glBindTexture(GL_TEXTURE_2D, 0);
