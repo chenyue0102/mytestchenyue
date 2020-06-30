@@ -183,4 +183,28 @@ void main(){
 		testdraw();
 		std::this_thread::sleep_for(std::chrono::microseconds(1));
 	}
+
+	static const char *g_vStringTextureBuffer = R"(
+#version 430 core
+uniform usamplerBuffer buf;
+in int tex_coord;
+layout (location = 0) out vec4 color;
+void main(){
+	color = texelFetch(buf, tex_coord);
+}
+)";
+
+	static GLuint g_texturebuffer = 0;
+	static GLuint g_texturetexturebuffer = 0;
+	static void inittexturebuffer() {
+		glGenBuffers(1, &g_texturebuffer);
+		glBindBuffer(GL_TEXTURE_BUFFER, g_texturebuffer);
+		glBufferData(GL_TEXTURE_BUFFER, sizeof(tex_checkerboard_data), tex_checkerboard_data, GL_STATIC_DRAW);
+		CHECKERR();
+
+		glGenTextures(1, &g_texturetexturebuffer);
+		glBindTexture(GL_TEXTURE_BUFFER, g_texturetexturebuffer);
+		glTexBuffer(GL_TEXTURE_BUFFER, GL_R8UI, g_texturebuffer);
+		CHECKERR();
+	}
 }

@@ -545,6 +545,7 @@ void myDisplay()
 #include "Test.h"
 #include "TestFrameBuffer.h"
 #include "TestJpeg.h"
+#include "TestComputer.h"
 
 void testdraw2() {
 	glClearColor(0, 0, 0, 1);
@@ -599,10 +600,12 @@ int main(int argc, char *argv[])
 
 	CHECKERR();
 
+	TestComputer::test();
 	TestTexture::init();
 	TestStencil::init();
 	Test::init();
 	TestFrameBuffer::init();
+#if 0
 	GLuint tex=0;
 	GLsizei width = 0, height = 0;
 	TestJpeg::loadJpg2Texture("d:/1.jpg", GL_RGB8, tex, width, height);
@@ -611,6 +614,7 @@ int main(int argc, char *argv[])
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	TestTexture::setTexture(tex);
+#endif
 
 	glutDisplayFunc(&testdraw);
 	glutIdleFunc(&myIdle);
