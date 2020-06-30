@@ -545,6 +545,7 @@ void myDisplay()
 #include "Test.h"
 #include "TestFrameBuffer.h"
 #include "TestJpeg.h"
+#include "TestSkyBox.h"
 
 void testdraw2() {
 	glClearColor(0, 0, 0, 1);
@@ -570,12 +571,24 @@ void testdraw2() {
 }
 
 void testdraw() {
-	TestTexture::testdraw();
+	TestSkyBox::testdraw();
 }
 
 void myIdle() {
 	testdraw();
 	std::this_thread::sleep_for(std::chrono::microseconds(1));
+}
+
+void mykeyboard(int key, int x, int y) {
+	TestSkyBox::onkeyboard(key, x, y);
+}
+
+void keyboard(unsigned char key, int x, int y) {
+	mykeyboard(key, x, y);
+}
+
+void specialkey(int key, int x, int y) {
+	mykeyboard(key, x, y);
 }
 
 int main(int argc, char *argv[])
@@ -599,21 +612,28 @@ int main(int argc, char *argv[])
 
 	CHECKERR();
 
-	TestTexture::init();
-	TestStencil::init();
-	Test::init();
-	TestFrameBuffer::init();
+	///TestTexture::init();
+	//TestStencil::init();
+	//Test::init();
+	//TestFrameBuffer::init();
+	TestSkyBox::init();
+#if 0
 	GLuint tex=0;
 	GLsizei width = 0, height = 0;
 	TestJpeg::loadJpg2Texture("d:/1.jpg", GL_RGB8, tex, width, height);
-	TestTexture::setWidthHeight(width, height);
+	//TestTexture::setWidthHeight(width, height);
 	glBindTexture(GL_TEXTURE_2D, tex);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	const GLint bgra[] = { GL_RED, GL_GREEN, GL_BLUE, GL_ALPHA};
+	glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, bgra);
+	glBindTexture(GL_TEXTURE_2D, 0);
 	TestTexture::setTexture(tex);
-
+#endif
 	glutDisplayFunc(&testdraw);
 	glutIdleFunc(&myIdle);
+	glutKeyboardFunc(&keyboard);
+	glutSpecialFunc(&specialkey);
 	glutMainLoop();
     return 0;
 }

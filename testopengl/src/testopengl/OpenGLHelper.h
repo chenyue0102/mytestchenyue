@@ -1,11 +1,12 @@
 #pragma once
 #include <GL/glew.h>
 #include <stdio.h>
+#include <assert.h>
 
 inline void CHECKERR() {
 	int err = 0;
-	if (GL_NO_ERROR != (err = glGetError()))
-	{
+	if (GL_NO_ERROR != (err = glGetError())){
+		assert(false);
 		printf("glGetError=%d\n", err);
 	}
 }

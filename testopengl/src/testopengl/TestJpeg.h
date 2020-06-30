@@ -27,6 +27,146 @@ namespace TestJpeg {
 		longjmp(myerr->setjmp_buffer, 1);
 	}
 
+	static bool getJpgInfo(const char* filePath, int* width, int* height, int* channelCount) {
+		jpeg_decompress_struct cinfo;
+		my_error_mgr jerr;
+		bool cleanJpeg = false;
+		FILE* f = NULL;
+		bool success = false;
+
+		do
+		{
+			if (NULL == (f = fopen(filePath, "rb"))) {
+				assert(false);
+				break;
+			}
+			cinfo.err = jpeg_std_error(&jerr.pub);
+			jerr.pub.error_exit = &my_error_exit;
+			if (0 != setjmp(jerr.setjmp_buffer)) {
+				break;
+			}
+			jpeg_create_decompress(&cinfo);
+			cleanJpeg = true;
+
+			jpeg_stdio_src(&cinfo, f);
+			jpeg_read_header(&cinfo, TRUE);
+			if (NULL != width) {
+				*width = cinfo.image_width;
+			}
+			if (NULL != height) {
+				*height = cinfo.image_height;
+			}
+			if (NULL != channelCount) {
+				*channelCount = cinfo.num_components;
+			}
+			success = true;
+		} while (false);
+
+		if (NULL != f) {
+			fclose(f);
+			f = NULL;
+		}
+		if (cleanJpeg) {
+			jpeg_destroy_decompress(&cinfo);
+		}
+		return success;
+	}
+
+	static bool loadJpgImage(const char* filePath, void* buffer, int bufferLen, int* width, int* height, int* channelCount) {
+		jpeg_decompress_struct cinfo;
+		my_error_mgr jerr;
+		bool cleanJpeg = false;
+		FILE* f = NULL;
+		bool success = false;
+
+		do
+		{
+			if (NULL == (f = fopen(filePath, "rb"))) {
+				assert(false);
+				break;
+			}
+			cinfo.err = jpeg_std_error(&jerr.pub);
+			jerr.pub.error_exit = &my_error_exit;
+			if (0 != setjmp(jerr.setjmp_buffer)) {
+				break;
+			}
+			jpeg_create_decompress(&cinfo);
+			cleanJpeg = true;
+
+			jpeg_stdio_src(&cinfo, f);
+			jpeg_read_header(&cinfo, TRUE);
+			jpeg_start_decompress(&cinfo);
+
+			int row_stride = cinfo.output_width * cinfo.output_components;//per row buffer
+			if (NULL != width) {
+				*width = cinfo.output_width;
+			}
+			if (NULL != height) {
+				*height = cinfo.output_height;
+			}
+			if (NULL != channelCount) {
+				*channelCount = cinfo.output_components;
+			}
+			if (bufferLen < static_cast<int>(row_stride * cinfo.output_height)) {
+				break;
+			}
+			if (nullptr == buffer) {
+				break;
+			}
+			if (JCS_RGB == cinfo.out_color_space) {
+				while (cinfo.output_scanline < cinfo.output_height) {
+					unsigned char* tmpBuffer = (unsigned char*)buffer + row_stride * cinfo.output_scanline;
+					//opengl起始为左下角,jpg从右上角开始
+					jpeg_read_scanlines(&cinfo, &tmpBuffer, 1);
+				}
+			}
+			jpeg_finish_decompress(&cinfo);
+			success = true;
+		} while (false);
+
+		if (NULL != f) {
+			fclose(f);
+			f = NULL;
+		}
+		if (cleanJpeg) {
+			jpeg_destroy_decompress(&cinfo);
+		}
+		return success;
+	}
+
+	static void* loadJpgImage(const char* filePath, int* width, int* height, int* channelCount) {
+		void* mapBuffer = NULL;
+		bool success = false;
+		int tmpWidth = 0, tmpHeight = 0, tmpChannelCount = 0;
+
+		do
+		{
+			if (!getJpgInfo(filePath, &tmpWidth, &tmpHeight, &tmpChannelCount)) {
+				assert(false);
+				break;
+			}
+			int len = tmpWidth * tmpHeight * tmpChannelCount;
+			if (NULL == (mapBuffer = malloc(len))) {
+				assert(false);
+				break;
+			}
+			if (!loadJpgImage(filePath, mapBuffer, len, width, height, channelCount)) {
+				assert(false);
+				break;
+			}
+			success = true;
+		} while (false);
+		if (!success && NULL != mapBuffer) {
+			free(mapBuffer);
+			mapBuffer = NULL;
+		}
+		return mapBuffer;
+	}
+
+	static void freeImage(void* buffer) {
+		free(buffer);
+	}
+
 	static bool loadJpg2Texture(const char *filePath, GLenum internalformat, GLuint &tex, GLsizei &width, GLsizei &height) {
 		bool success = false;
 		jpeg_decompress_struct cinfo;
@@ -68,7 +208,7 @@ namespace TestJpeg {
 				}
 				while (cinfo.output_scanline < cinfo.output_height){
 					unsigned char* buffer = mapBuffer + row_stride * (cinfo.output_height - cinfo.output_scanline - 1);
-					//opengl起始为左下角
+					//opengl起始为左下角,jpg从右上角开始
 					jpeg_read_scanlines(&cinfo, &buffer, 1);
 				}
 				GLboolean isOk = glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
