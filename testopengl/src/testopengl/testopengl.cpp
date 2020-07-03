@@ -613,7 +613,18 @@ int main(int argc, char *argv[])
 
 	CHECKERR();
 
-	TestComputer::test();
+	TestComputer::init();
+	int width = 0, height = 0, channel = 0;
+	void *rgb = TestJpeg::loadJpgImage("testimg.jpg", &width, &height, &channel);
+	std::string data;
+	data.resize(width * height + width * height / 2);
+	void *yuv = (void*)data.data();
+	TestComputer::rgb2yuv(width, height, rgb, width * height * channel, yuv, data.length());
+	FILE *f = fopen("d:/my.yuv", "wb");
+	fwrite(data.data(), 1, data.length(), f);
+	fclose(f);
+	TestJpeg::freeImage(rgb);
+
 	TestSkyBox::init();
 	TestTexture::init();
 	TestStencil::init();
