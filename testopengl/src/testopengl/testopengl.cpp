@@ -572,7 +572,7 @@ void testdraw2() {
 }
 
 void testdraw() {
-	TestSkyBox::testdraw();
+	TestTexture::testdraw();
 }
 
 void myIdle() {
@@ -615,15 +615,18 @@ int main(int argc, char *argv[])
 
 	TestComputer::init();
 	int width = 0, height = 0, channel = 0;
-	void *rgb = TestJpeg::loadJpgImage("testimg.jpg", &width, &height, &channel);
+	std::string jpgBuffer(228 * 148 * 3, '\0');
+	bool success = TestJpeg::loadJpgImage("testimg.jpg", &jpgBuffer[0], jpgBuffer.length(), &width, &height, &channel);
+	void* rgb = &jpgBuffer[0];
+	//OpenGLHelper::SaveBitmap("d:/1.bmp", width, height, channel * 8, rgb, jpgBuffer.length());
 	std::string data;
-	data.resize(width * height + width * height / 2);
-	void *yuv = (void*)data.data();
-	TestComputer::rgb2yuv(width, height, rgb, width * height * channel, yuv, data.length());
+	data.resize(width * height + width * height / 2, 0xcc);
+	void *yuv = &data[0];
+	int datalen = data.length();
+	TestComputer::rgb2yuv(width, height, rgb, width * height * channel, yuv, datalen);
 	FILE *f = fopen("d:/my.yuv", "wb");
 	fwrite(data.data(), 1, data.length(), f);
 	fclose(f);
-	TestJpeg::freeImage(rgb);
 
 	TestSkyBox::init();
 	TestTexture::init();
@@ -631,17 +634,19 @@ int main(int argc, char *argv[])
 	Test::init();
 	TestFrameBuffer::init();
 #if 0
-	GLuint tex=0;
-	GLsizei width = 0, height = 0;
-	TestJpeg::loadJpg2Texture("d:/1.jpg", GL_RGB8, tex, width, height);
-	//TestTexture::setWidthHeight(width, height);
-	glBindTexture(GL_TEXTURE_2D, tex);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	const GLint bgra[] = { GL_RED, GL_GREEN, GL_BLUE, GL_ALPHA};
-	glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, bgra);
-	glBindTexture(GL_TEXTURE_2D, 0);
-	TestTexture::setTexture(tex);
+	{
+		GLuint tex = 0;
+		GLsizei width = 0, height = 0;
+		TestJpeg::loadJpg2Texture("d:/1.jpg", GL_RGB8, tex, width, height);
+		//TestTexture::setWidthHeight(width, height);
+		glBindTexture(GL_TEXTURE_2D, tex);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		const GLint bgra[] = { GL_RED, GL_GREEN, GL_BLUE, GL_ALPHA };
+		glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, bgra);
+		glBindTexture(GL_TEXTURE_2D, 0);
+		TestTexture::setTexture(tex);
+	}
 #endif
 
 	glutDisplayFunc(&testdraw);

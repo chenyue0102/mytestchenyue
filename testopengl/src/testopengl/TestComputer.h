@@ -16,7 +16,6 @@ void main(){
 		for (uint column = 0; column < dims.x; column++){
 			ivec2 pos = ivec2(column, row);
 			uvec4 data = imageLoad(image_in, pos);
-			data.g = 0xfe;
 			imageStore(image_out, pos, data);
 		}
 	}
@@ -107,24 +106,12 @@ layout(binding=1,r8ui) writeonly uniform uimage2D image_y;
 layout(binding=2,r8ui) writeonly uniform uimage2D image_u;
 layout(binding=3,r8ui) writeonly uniform uimage2D image_v;
 
-vec3 rgb2yuv(const in vec3 rgb){
-	vec3 yuv = mat3(0.299,-0.169,0.5,
-		0.587,-0.331,-0.419,
-		0.114,0.5,-0.081)*rgb + vec3(0.0,0.5,0.5);
-	return yuv;
-}
-
-uint rgb2y(const in uint r, const in uint g, const in uint b){
-	return uint(0.299f * r + 0.587f * g + 0.114f * b);
-}
-
 void rgb2yuv(const in uint r, const in uint g, const in uint b, out uint y, out uint u, out uint v)
 {
-	y = uint(0.299f * r + 0.587f * g + 0.114f * b) ;
-	u = uint(-0.169f * r - 0.331f * g + 0.5f * b + 128);
-	v = uint(0.5f * r - 0.419f * g - 0.081f * b + 128);
+	y = uint(0.299f * r + 0.587f * g + 0.114f * b) & 0xff;
+	u = uint(-0.169f * r - 0.331f * g + 0.5f * b + 128) & 0xff;
+	v = uint(0.5f * r - 0.419f * g - 0.081f * b + 128) & 0xff;
 }
-
 
 void rgb2y(const in uint r, const in uint g, const in uint b, out uint y)
 {
@@ -141,18 +128,6 @@ uint getColCountPerThread(uint width, uint threadCount)
 	return count;
 }
 
-int getyindex(const in ivec2 dims, const in ivec2 pos){
-	return pos.y * dims.x + pos.x;
-}
-
-int getuindex(const in ivec2 dims, const in ivec2 pos){
-	return dims.y * dims.x + (pos.y * dims.y / 4) + pos.x / 2;
-}
-
-int getvindex(const in ivec2 dims, const in ivec2 pos){
-	return dims.y * dims.x + (dims.y * dims.x / 4) + (pos.y * dims.y / 4) + pos.x / 2;
-}
-
 void main(){
 	ivec2 dims = imageSize(image_rgb);
 	int texWidth = dims.x;
@@ -163,7 +138,6 @@ void main(){
 	//一行执行完后，再执行+groupSize.y后的一行
 	for (uint row = groupIndex.y; row < texHeight; row += groupSize.y){
 		bool bEvenRow = (row & 0x00000001) == 0;
-		//
 		for (uint column = groupIndex.x * columnCountPerThread, columnCount = 0; column < texWidth && columnCount < columnCountPerThread; column++, columnCount++){
 			ivec2 pos = ivec2(column, row);
 			uvec4 rgb = imageLoad(image_rgb, pos);
@@ -177,7 +151,7 @@ void main(){
 			}else{
 				uint y=0;
 				rgb2y(rgb.r, rgb.g, rgb.b, y);
-				imageStore(image_y, pos, uvec4(y));
+				imageStore(image_y, pos, uvec4(y,0,0,0));
 			}
 		}
 	}
@@ -188,14 +162,24 @@ void main(){
 		g_rgb2yuvprogram = glCreateProgram();
 		OpenGLHelper::attachShader(g_rgb2yuvprogram, GL_COMPUTE_SHADER, g_rgb2yuv, 0);
 		glLinkProgram(g_rgb2yuvprogram);
+		OpenGLHelper::outputProgramLog(g_rgb2yuvprogram);
 		CHECKERR();
 	}
+
+	void setTexParameteri(GLenum target, GLint paramFilter, GLint paramWrap) {
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, paramFilter);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, paramFilter);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, paramWrap);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, paramWrap);
+	}
+
 	static void rgb2yuv(int width, int height, const void *rgbBuffer, int rgblen, void *yuvBuffer, int yuvlen) {
 		glUseProgram(g_rgb2yuvprogram);
 
 		GLuint rgbTex;
 		glGenTextures(1, &rgbTex);
 		glBindTexture(GL_TEXTURE_2D, rgbTex);
+		setTexParameteri(GL_TEXTURE_2D, GL_LINEAR, GL_CLAMP_TO_EDGE);//必须设置filter,
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8UI, width, height, 0, GL_RGB_INTEGER, GL_UNSIGNED_BYTE, rgbBuffer);
 		CHECKERR();
 		glBindImageTexture(0, rgbTex, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA8UI);
@@ -205,6 +189,7 @@ void main(){
 		glGenTextures(3, yuvTex);
 		for (int i = 0; i < 3; i++){
 			glBindTexture(GL_TEXTURE_2D, yuvTex[i]);
+			setTexParameteri(GL_TEXTURE_2D, GL_LINEAR, GL_CLAMP_TO_EDGE);
 			CHECKERR();
 			if (i == 0) {
 				glTexImage2D(GL_TEXTURE_2D, 0, GL_R8UI, width, height, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, 0);
@@ -218,7 +203,7 @@ void main(){
 			CHECKERR();
 		}
 
-		glDispatchCompute(10, 6, 1);
+		glDispatchCompute(1, 1, 1);
 		CHECKERR();
 
 		glMemoryBarrier(GL_ALL_BARRIER_BITS);
@@ -235,10 +220,10 @@ void main(){
 		CHECKERR();
 		glBindTexture(GL_TEXTURE_2D, yuvTex[2]);
 		glGetTexImage(GL_TEXTURE_2D, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, (char*)yuvBuffer + offset);
+		CHECKERR();
 
 		glBindTexture(GL_TEXTURE_2D, 0);
 		glDeleteTextures(1, &rgbTex);
-		glBindTexture(GL_TEXTURE_1D, 0);
 		glDeleteTextures(3, yuvTex);
 		glUseProgram(0);
 	}
