@@ -615,19 +615,25 @@ int main(int argc, char *argv[])
 
 	TestComputer::init();
 	int width = 0, height = 0, channel = 0;
-	std::string jpgBuffer(228 * 148 * 3, '\0');
-	bool success = TestJpeg::loadJpgImage("testimg.jpg", &jpgBuffer[0], jpgBuffer.length(), &width, &height, &channel);
-	void* rgb = &jpgBuffer[0];
+	void* rgb = TestJpeg::loadJpgImage("testimg.jpg", &width, &height, &channel);
+	TestComputer::initrgb2yuvtexture(width, height);
 	//OpenGLHelper::SaveBitmap("d:/1.bmp", width, height, channel * 8, rgb, jpgBuffer.length());
 	std::string data;
-	data.resize(width * height + width * height / 2, 0xcc);
-	
+	data.resize(width * height + width * height / 2);
 	void *yuv = &data[0];
 	int datalen = data.length();
-	TestComputer::rgb2yuv(width, height, rgb, width * height * channel, yuv, datalen);
+	std::chrono::high_resolution_clock::time_point timePoint = std::chrono::high_resolution_clock::now();
+	for (int i = 0; i < 0; i++) {
+		TestComputer::rgb2yuv(width, height, rgb, width * height * channel, yuv, datalen);
+	}
+	auto diff = std::chrono::high_resolution_clock::now() - timePoint;
+	std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds>(diff);
+	printf("100time:%lld\n", ms.count());
+	//getchar(); return 0;
 	FILE *f = fopen("d:/my.yuv", "wb");
 	fwrite(data.data(), 1, data.length(), f);
 	fclose(f);
+	TestJpeg::freeImage(rgb);
 
 	TestSkyBox::init();
 	TestTexture::init();

@@ -181,23 +181,67 @@ void main(){
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, paramWrap);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, paramWrap);
 	}
+	typedef unsigned char uchar8;
+	static void rgb2yuv(uchar8 r, uchar8 g, uchar8 b, uchar8 *y, uchar8 *u, uchar8 *v)
+	{
+		*y = (unsigned int)(0.299f * r + 0.587f * g + 0.114f * b) & 0xff;
+		*u = (unsigned int)(-0.169f * r - 0.331f * g + 0.5f * b + 128) & 0xff;
+		*v = (unsigned int)(0.5f * r - 0.419f * g - 0.081f * b + 128) & 0xff;
+	}
+	static void rgb2y(uchar8 r, uchar8 g, uchar8 b, uchar8 *y)
+	{
+		*y = (unsigned int)(0.299f * r + 0.587f * g + 0.114f * b) & 0xff;
+	}
+	static int getYPos(int width, int height, int column, int row) {
+		return row * width + column;
+	}
+	static int getUVPos(int width, int height, int column, int row) {
+		return row / 2 * width / 2 + column / 2;
+	}
+	//rgbBuffer对齐值为1
+	static void rgb2yuv_cpu(int width, int height, const void *rgbBuffer, int rgblen, void *tmpyuvBuffer, int yuvlen) {
+		uchar8 *yBuffer = (uchar8*)tmpyuvBuffer;
+		uchar8 *uBuffer = yBuffer + width * height;
+		uchar8 *vBuffer = uBuffer + width * height / 4;
+		for (int row = 0; row < height; row++) {
+			bool bEvenRow = (row & 0x00000001) == 0;
+			const char *pOneRow = (const char*)rgbBuffer + row * (width * 3);
+			for (int column = 0; column < width; column++) {
+				bool bEvenColumn = (column & 0x00000001) == 0;
+				uchar8 r = pOneRow[column * 3 + 0];
+				uchar8 g = pOneRow[column * 3 + 1];
+				uchar8 b = pOneRow[column * 3 + 2];
+				if (bEvenRow && bEvenColumn) {
+					uchar8 y, u, v;
+					rgb2yuv(r, g, b, &y, &u, &v);
+					yBuffer[getYPos(width, height, column, row)] = y;
+					uBuffer[getUVPos(width, height, column, row)] = u;
+					vBuffer[getUVPos(width, height, column, row)] = v;
+				}
+				else {
+					uchar8 y;
+					rgb2y(r, g, b, &y);
+					yBuffer[getYPos(width, height, column, row)] = y;
+				}
 
-	static void rgb2yuv(int width, int height, const void *rgbBuffer, int rgblen, void *yuvBuffer, int yuvlen) {
-		glUseProgram(g_rgb2yuvprogram);
+			}
+		}
+	}
 
-		GLuint rgbTex;
-		glGenTextures(1, &rgbTex);
-		glBindTexture(GL_TEXTURE_2D, rgbTex);
+	static GLuint g_rgb2yuv_rgbtexture;
+	static GLuint g_rgb2yuv_yuvtextures[3];
+	static GLuint g_rgb2yuv_yubbuffer;
+
+	static void initrgb2yuvtexture(int width, int height) {
+		glGenTextures(1, &g_rgb2yuv_rgbtexture);
+		glBindTexture(GL_TEXTURE_2D, g_rgb2yuv_rgbtexture);
 		setTexParameteri(GL_TEXTURE_2D, GL_LINEAR, GL_CLAMP_TO_EDGE);//必须设置filter,
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8UI, width, height, 0, GL_RGB_INTEGER, GL_UNSIGNED_BYTE, rgbBuffer);
-		CHECKERR();
-		glBindImageTexture(0, rgbTex, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA8UI);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8UI, width, height, 0, GL_RGB_INTEGER, GL_UNSIGNED_BYTE, 0);
 		CHECKERR();
 
-		GLuint yuvTex[3];
-		glGenTextures(3, yuvTex);
-		for (int i = 0; i < 3; i++){
-			glBindTexture(GL_TEXTURE_2D, yuvTex[i]);
+		glGenTextures(3, g_rgb2yuv_yuvtextures);
+		for (int i = 0; i < 3; i++) {
+			glBindTexture(GL_TEXTURE_2D, g_rgb2yuv_yuvtextures[i]);
 			setTexParameteri(GL_TEXTURE_2D, GL_LINEAR, GL_CLAMP_TO_EDGE);
 			CHECKERR();
 			if (i == 0) {
@@ -206,38 +250,80 @@ void main(){
 			else {
 				glTexImage2D(GL_TEXTURE_2D, 0, GL_R8UI, width / 2, height / 2, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, 0);
 			}
-			
+
 			CHECKERR();
-			glBindImageTexture(i + 1, yuvTex[i], 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R8UI);
+		}
+		glBindTexture(GL_TEXTURE_2D, 0);
+
+		glGenBuffers(1, &g_rgb2yuv_yubbuffer);
+		glBindBuffer(GL_PIXEL_PACK_BUFFER, g_rgb2yuv_yubbuffer);
+		glBufferData(GL_PIXEL_PACK_BUFFER, width * height + width * height / 2, nullptr, GL_STREAM_READ);
+		glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
+		CHECKERR();
+	}
+
+	static void rgb2yuv(int width, int height, const void *rgbBuffer, int rgblen, void *yuvBuffer, int yuvlen) {
+		glUseProgram(g_rgb2yuvprogram);
+
+		glBindTexture(GL_TEXTURE_2D, g_rgb2yuv_rgbtexture);
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGB_INTEGER, GL_UNSIGNED_BYTE, rgbBuffer);
+		glBindImageTexture(0, g_rgb2yuv_rgbtexture, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA8UI);
+		CHECKERR();
+
+		for (int i = 0; i < 3; i++){
+			glBindTexture(GL_TEXTURE_2D, g_rgb2yuv_yuvtextures[i]);
+			glBindImageTexture(i + 1, g_rgb2yuv_yuvtextures[i], 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R8UI);
 			CHECKERR();
 		}
 
-		glDispatchCompute(1, 1, 1);
+		glDispatchCompute(200, 100, 1);
 		CHECKERR();
 
 		glMemoryBarrier(GL_ALL_BARRIER_BITS);
 		CHECKERR();
 
-		int offset = 0;
-		GLint texWidth = 0, texHeight = 0;
-		glGetTextureLevelParameteriv(yuvTex[0], 0, GL_TEXTURE_WIDTH, &texWidth);
-		glGetTextureImage(yuvTex[0], 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, width * height, (char*)yuvBuffer + offset);
-		offset += width * height;
-		CHECKERR();
-		glPixelStorei(GL_PACK_ALIGNMENT, 1);//opengl 默认要求texWidth被4整除，这里改变下对齐值
-		glGetTextureLevelParameteriv(yuvTex[1], 0, GL_TEXTURE_WIDTH, &texWidth);
-		glGetTextureLevelParameteriv(yuvTex[1], 0, GL_TEXTURE_HEIGHT, &texHeight);
-		glGetTextureImage(yuvTex[1], 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, texWidth * texHeight, (char*)yuvBuffer + offset);
-		offset += width * height / 4;
-		CHECKERR();
-		glGetTextureImage(yuvTex[2], 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, width * height / 4, (char*)yuvBuffer + offset);
-		offset += width * height / 4;
-		CHECKERR();
-		glPixelStorei(GL_PACK_ALIGNMENT, 4);
+		if (0) {
+			int offset = 0;
+			GLint texWidth = 0, texHeight = 0;
+			glGetTextureLevelParameteriv(g_rgb2yuv_yuvtextures[0], 0, GL_TEXTURE_WIDTH, &texWidth);
+			glGetTextureImage(g_rgb2yuv_yuvtextures[0], 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, width * height, (char*)yuvBuffer + offset);
+			offset += width * height;
+			CHECKERR();
+			glGetTextureLevelParameteriv(g_rgb2yuv_yuvtextures[1], 0, GL_TEXTURE_WIDTH, &texWidth);
+			glGetTextureLevelParameteriv(g_rgb2yuv_yuvtextures[1], 0, GL_TEXTURE_HEIGHT, &texHeight);
+			glPixelStorei(GL_PACK_ALIGNMENT, 1);//opengl 默认要求内存存储的宽度被4整除，这里改变下对齐值
+			glGetTextureImage(g_rgb2yuv_yuvtextures[1], 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, texWidth * texHeight, (char*)yuvBuffer + offset);
+			offset += width * height / 4;
+			CHECKERR();
+			glGetTextureImage(g_rgb2yuv_yuvtextures[2], 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, width * height / 4, (char*)yuvBuffer + offset);
+			offset += width * height / 4;
+			CHECKERR();
+			glPixelStorei(GL_PACK_ALIGNMENT, 4);
+		}
+		else {
+			glPixelStorei(GL_PACK_ALIGNMENT, 1);//opengl 默认要求内存存储的宽度被4整除，这里改变下对齐值
+			int offset = 0;
+			CHECKERR();
+			glBindBuffer(GL_PIXEL_PACK_BUFFER, g_rgb2yuv_yubbuffer);
+			CHECKERR();
+			glGetTextureImage(g_rgb2yuv_yuvtextures[0], 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, width * height, BUFFER_OFFSET(offset));
+			CHECKERR();
+			offset += width * height;
+			glGetTextureImage(g_rgb2yuv_yuvtextures[1], 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, width * height / 4, BUFFER_OFFSET(offset));
+			offset += width * height / 4;
+			glGetTextureImage(g_rgb2yuv_yuvtextures[2], 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, width * height / 4, BUFFER_OFFSET(offset));
+			CHECKERR();
+			void *buf = glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_ONLY);
+			CHECKERR();
+			memcpy(yuvBuffer, buf, width * height + width * height / 2);
+			glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
+			CHECKERR();
+			glPixelStorei(GL_PACK_ALIGNMENT, 4);
+			CHECKERR();
+		}
+		
 
 		glBindTexture(GL_TEXTURE_2D, 0);
-		glDeleteTextures(1, &rgbTex);
-		glDeleteTextures(3, yuvTex);
 		glUseProgram(0);
 	}
 }
