@@ -434,21 +434,21 @@ void main(){
 #else
 		glUseProgram(g_rgb2yuvprogram2);
 
-		glBindTexture(GL_TEXTURE_BUFFER, g_rgb2yuv_rgbtexture);
+		//glBindTexture(GL_TEXTURE_BUFFER, g_rgb2yuv_rgbtexture);
 		CHECKERR();
 		glBindBuffer(GL_TEXTURE_BUFFER, g_rgb2yuv_rgbbuffer);
 		CHECKERR();
 		glBufferData(GL_TEXTURE_BUFFER, width * height * 3, rgbBuffer, GL_DYNAMIC_DRAW);
 		CHECKERR();
-		glTexBuffer(GL_TEXTURE_BUFFER, GL_R8UI, g_rgb2yuv_rgbbuffer);
+		//glTexBuffer(GL_TEXTURE_BUFFER, GL_R8UI, g_rgb2yuv_rgbbuffer);
 		CHECKERR();
 		glBindImageTexture(0, g_rgb2yuv_rgbtexture, 0, GL_FALSE, 0, GL_READ_ONLY, GL_R8UI);
 		CHECKERR();
 
-		glBindTexture(GL_TEXTURE_BUFFER, g_rgb2yuv_yuvtexture);
-		glBindBuffer(GL_TEXTURE_BUFFER, g_rgb2yuv_yuvbuffer);
-		glBufferData(GL_TEXTURE_BUFFER, width * height + width * height / 2, nullptr, GL_DYNAMIC_READ);
-		glTexBuffer(GL_TEXTURE_BUFFER, GL_R8UI, g_rgb2yuv_yuvbuffer);
+		//glBindTexture(GL_TEXTURE_BUFFER, g_rgb2yuv_yuvtexture);
+		//glBindBuffer(GL_TEXTURE_BUFFER, g_rgb2yuv_yuvbuffer);
+		//glBufferData(GL_TEXTURE_BUFFER, width * height + width * height / 2, nullptr, GL_DYNAMIC_READ);
+		//glTexBuffer(GL_TEXTURE_BUFFER, GL_R8UI, g_rgb2yuv_yuvbuffer);
 		glBindImageTexture(1, g_rgb2yuv_yuvtexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R8UI);
 		CHECKERR();
 
