@@ -199,8 +199,8 @@ uint getColCountPerThread(uint width, uint threadCount)
 }
 
 void main(){
-	int texWidth = dims.x;
-	int texHeight = dims.y;
+	const int texWidth = dims.x;
+	const int texHeight = dims.y;
 	const uvec3 groupSize = gl_NumWorkGroups;
 	const uvec3 groupIndex = gl_WorkGroupID;
 	const uint columnCountPerThread = getColCountPerThread(texWidth, groupSize.x);
@@ -455,7 +455,7 @@ void main(){
 		glProgramUniform2i(g_rgb2yuvprogram2, 2, width, height);
 		CHECKERR();
 
-		glDispatchCompute(200, 100, 1);
+		glDispatchCompute(1, 1024, 1);
 		CHECKERR();
 
 		glMemoryBarrier(GL_ALL_BARRIER_BITS);

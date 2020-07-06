@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <string>
 #include <GL/glew.h>
 #include "TestJpeg.h"
@@ -97,7 +97,7 @@ void main(){
 		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
-		glTexStorage2D(GL_TEXTURE_CUBE_MAP, 10, GL_RGB8, width, height);//����洢�ռ�
+		glTexStorage2D(GL_TEXTURE_CUBE_MAP, 10, GL_RGB8, width, height);//分配存储空间
 		CHECKERR();
 		
 		int len = width * height * channelCount;
@@ -162,12 +162,14 @@ void main(){
 		GLint matrixLocation = glGetUniformLocation(g_program, "matrix");
 		vmath::vec3 eye = vmath::vec3(0.f, 0.f, 0.0f);
 		vmath::vec3 center = vmath::vec3(0.f, 0.f, -1.f);
-		vmath::vec3 up = vmath::vec3(1.f, 0.f, 0.f);
-		vmath::mat4 viewMatrix = vmath::lookat(eye, center, up);
-		//vmath::mat4 modelMatrix = vmath::rotate(g_xoffset, g_yoffset, 180.f);
-		float fovy = 1.0f;
+		vmath::vec3 up = vmath::vec3(0.f, 1.f, 0.f);
+		vmath::mat4 viewMatrix = vmath::lookat(eye, center, up);//设置相机位置，朝向，与相机上部的方向
+		viewMatrix = vmath::rotate(0.f, g_yoffset, 0.f) * viewMatrix;
+		float fovy = 90.f;
 		float aspect = 1.0f / 1.0f;//width/height
-		vmath::mat4 projectionMatrix = vmath::perspective(45.0f, 1.0f, 0.1f, 100.0f);// vmath::perspective(fovy, aspect, 0.1f, 100.f);
+		float n = 0.1f, f = 10.f;
+		//设置相机照射的范围，长宽比率，近点与远点值
+		vmath::mat4 projectionMatrix = vmath::perspective(fovy, aspect, n, f);// vmath::perspective(fovy, aspect, 0.1f, 100.f);
 		vmath::mat4 matrix = projectionMatrix * viewMatrix;
 		//matrix = vmath::scale(1.0f);
 		glProgramUniformMatrix4fv(g_program, matrixLocation, 1, GL_FALSE, matrix);

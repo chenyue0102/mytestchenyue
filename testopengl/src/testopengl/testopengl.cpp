@@ -572,7 +572,7 @@ void testdraw2() {
 }
 
 void testdraw() {
-	TestTexture::testdraw();
+	TestSkyBox::testdraw();
 }
 
 void myIdle() {
@@ -614,6 +614,7 @@ int main(int argc, char *argv[])
 	CHECKERR();
 
 	TestComputer::init();
+#if 0
 	int width = 0, height = 0, channel = 0;
 	void* rgb = TestJpeg::loadJpgImage("testimg.jpg", &width, &height, &channel);
 	TestComputer::initrgb2yuvtexture(width, height);
@@ -623,18 +624,18 @@ int main(int argc, char *argv[])
 	void *yuv = &data[0];
 	int datalen = data.length();
 	std::chrono::high_resolution_clock::time_point timePoint = std::chrono::high_resolution_clock::now();
-	for (int i = 0; i < 0; i++) {
+	for (int i = 0; i < 1; i++) {
 		TestComputer::rgb2yuv(width, height, rgb, width * height * channel, yuv, datalen);
 	}
 	auto diff = std::chrono::high_resolution_clock::now() - timePoint;
 	std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds>(diff);
 	printf("100time:%lld\n", ms.count());
-	//getchar(); return 0;
+	getchar(); return 0;
 	FILE *f = fopen("d:/my.yuv", "wb");
 	fwrite(data.data(), 1, data.length(), f);
 	fclose(f);
 	TestJpeg::freeImage(rgb);
-
+#endif
 	TestSkyBox::init();
 	TestTexture::init();
 	TestStencil::init();
