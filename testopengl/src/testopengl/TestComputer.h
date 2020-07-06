@@ -100,7 +100,7 @@ void main(){
 
 	static const char *g_rgb2yuv = R"(
 #version 430 core
-layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+layout(local_size_x = 1, local_size_y = 1) in;
 layout(binding=0,rgba8ui) readonly uniform uimage2D image_rgb;
 layout(binding=1,r8ui) writeonly uniform uimage2D image_y;
 layout(binding=2,r8ui) writeonly uniform uimage2D image_u;
@@ -146,8 +146,9 @@ void main(){
 				uint y=0, u=0, v=0;
 				rgb2yuv(rgb.r, rgb.g, rgb.b, y, u, v);
 				imageStore(image_y, pos, uvec4(y));
-				imageStore(image_u, pos / 2, uvec4(u));
-				imageStore(image_v, pos / 2, uvec4(v));
+				ivec2 uvPos = pos / 2;
+				imageStore(image_u, uvPos, uvec4(u));
+				imageStore(image_v, uvPos, uvec4(v));
 			}else{
 				uint y=0;
 				rgb2y(rgb.r, rgb.g, rgb.b, y);
@@ -157,7 +158,15 @@ void main(){
 	}
 }
 )";
+
+	const char *g_yuv2rgbString = R"(
+#verson 430 core
+layout(local_size_x = 1, local_size_y = 1) in;
+void main(){
+}
+)";
 	static GLuint g_rgb2yuvprogram = 0;
+	static GLuint g_yuv2rgbprogram = 0;
 	static void init() {
 		g_rgb2yuvprogram = glCreateProgram();
 		OpenGLHelper::attachShader(g_rgb2yuvprogram, GL_COMPUTE_SHADER, g_rgb2yuv, 0);
@@ -210,17 +219,21 @@ void main(){
 		CHECKERR();
 
 		int offset = 0;
-		glBindTexture(GL_TEXTURE_2D, yuvTex[0]);
-		glGetTexImage(GL_TEXTURE_2D, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, (char*)yuvBuffer + offset);
+		GLint texWidth = 0, texHeight = 0;
+		glGetTextureLevelParameteriv(yuvTex[0], 0, GL_TEXTURE_WIDTH, &texWidth);
+		glGetTextureImage(yuvTex[0], 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, width * height, (char*)yuvBuffer + offset);
 		offset += width * height;
 		CHECKERR();
-		glBindTexture(GL_TEXTURE_2D, yuvTex[1]);
-		glGetTexImage(GL_TEXTURE_2D, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, (char*)yuvBuffer + offset);
+		glPixelStorei(GL_PACK_ALIGNMENT, 1);//opengl 默认要求texWidth被4整除，这里改变下对齐值
+		glGetTextureLevelParameteriv(yuvTex[1], 0, GL_TEXTURE_WIDTH, &texWidth);
+		glGetTextureLevelParameteriv(yuvTex[1], 0, GL_TEXTURE_HEIGHT, &texHeight);
+		glGetTextureImage(yuvTex[1], 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, texWidth * texHeight, (char*)yuvBuffer + offset);
 		offset += width * height / 4;
 		CHECKERR();
-		glBindTexture(GL_TEXTURE_2D, yuvTex[2]);
-		glGetTexImage(GL_TEXTURE_2D, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, (char*)yuvBuffer + offset);
+		glGetTextureImage(yuvTex[2], 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, width * height / 4, (char*)yuvBuffer + offset);
+		offset += width * height / 4;
 		CHECKERR();
+		glPixelStorei(GL_PACK_ALIGNMENT, 4);
 
 		glBindTexture(GL_TEXTURE_2D, 0);
 		glDeleteTextures(1, &rgbTex);

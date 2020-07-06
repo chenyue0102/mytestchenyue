@@ -621,6 +621,7 @@ int main(int argc, char *argv[])
 	//OpenGLHelper::SaveBitmap("d:/1.bmp", width, height, channel * 8, rgb, jpgBuffer.length());
 	std::string data;
 	data.resize(width * height + width * height / 2, 0xcc);
+	
 	void *yuv = &data[0];
 	int datalen = data.length();
 	TestComputer::rgb2yuv(width, height, rgb, width * height * channel, yuv, datalen);
