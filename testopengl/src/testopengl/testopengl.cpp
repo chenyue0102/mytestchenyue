@@ -547,6 +547,7 @@ void myDisplay()
 #include "TestJpeg.h"
 #include "TestSkyBox.h"
 #include "TestComputer.h"
+#include "TestSphere.h"
 
 void testdraw2() {
 	glClearColor(0, 0, 0, 1);
@@ -572,7 +573,7 @@ void testdraw2() {
 }
 
 void testdraw() {
-	TestSkyBox::testdraw();
+	TestSphere::testdraw();
 }
 
 void myIdle() {
@@ -581,7 +582,7 @@ void myIdle() {
 }
 
 void mykeyboard(int key, int x, int y) {
-	TestSkyBox::onkeyboard(key, x, y);
+	TestSphere::onkeyboard(key, x, y);
 }
 
 void keyboard(unsigned char key, int x, int y) {
@@ -636,6 +637,7 @@ int main(int argc, char *argv[])
 	fclose(f);
 	TestJpeg::freeImage(rgb);
 #endif
+	TestSphere::init();
 	TestSkyBox::init();
 	TestTexture::init();
 	TestStencil::init();

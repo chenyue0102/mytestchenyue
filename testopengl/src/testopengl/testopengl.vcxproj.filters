@@ -19,6 +19,7 @@
     <ClInclude Include="TestStencil.h" />
     <ClInclude Include="TestTexture.h" />
     <ClInclude Include="vmath.h" />
+    <ClInclude Include="TestSphere.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />

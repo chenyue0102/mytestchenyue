@@ -161,7 +161,7 @@ void main(){
 
 		GLint matrixLocation = glGetUniformLocation(g_program, "matrix");
 		vmath::vec3 eye = vmath::vec3(0.f, 0.f, 0.0f);
-		vmath::vec3 center = vmath::vec3(0.f, 0.f, -1.f);
+		vmath::vec3 center = vmath::vec3(0.f, 0.f, 1.f);
 		vmath::vec3 up = vmath::vec3(0.f, 1.f, 0.f);
 		vmath::mat4 viewMatrix = vmath::lookat(eye, center, up);//设置相机位置，朝向，与相机上部的方向
 		viewMatrix = vmath::rotate(0.f, g_yoffset, 0.f) * viewMatrix;

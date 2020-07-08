@@ -164,6 +164,7 @@
     <ClInclude Include="TestJpeg.h" />
     <ClInclude Include="TestSkyBox.h" />
     <ClInclude Include="TestLight.h" />
+    <ClInclude Include="TestSphere.h" />
     <ClInclude Include="TestStencil.h" />
     <ClInclude Include="TestTexture.h" />
     <ClInclude Include="vmath.h" />
