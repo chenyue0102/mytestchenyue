@@ -28,8 +28,8 @@ in vec2 texCoord;
 in vec3 lineColor;
 out vec4 fColor;
 void main(){
-	//fColor = vec4(texture2D(tex, texCoord).rgb, 1.0f);
-	fColor = vec4(lineColor.rgb, 1.0f);
+	fColor = vec4(texture2D(tex, texCoord).rgb, 1.0f);
+	//fColor = vec4(lineColor.rgb, 1.0f);
 }
 )";
 	void buildVertices(int stackCount, int sectorCount, std::vector<float> &vertices, std::vector<float> &texCoords, std::vector<GLint> &indices);
@@ -44,6 +44,7 @@ void main(){
 	static GLuint g_tex;
 	static GLfloat g_xoffset = 0.f;
 	static GLfloat g_yoffset = 0.f;
+	static GLfloat g_zoffset = 0.f;
 	static void init() {
 		g_program = glCreateProgram();
 		OpenGLHelper::attachShader(g_program, GL_VERTEX_SHADER, g_vString, 0);
@@ -52,7 +53,7 @@ void main(){
 		OpenGLHelper::outputProgramLog(g_program);
 		CHECKERR();
 
-		buildVertices(20, 20, g_vertexs, g_texcoords, g_indices);
+		buildVertices(50, 50, g_vertexs, g_texcoords, g_indices);
 
 		auto iterVertex = g_vertexs.begin(), iterTex = g_texcoords.begin();
 		while (iterVertex != g_vertexs.end() && iterTex != g_texcoords.end()) {
@@ -90,6 +91,10 @@ void main(){
 		int width, height;
 		bool success = TestJpeg::loadJpg2Texture("earth.jpg", GL_RGB, g_tex, width, height);
 		assert(success);
+		glBindTexture(GL_TEXTURE_2D, g_tex);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 
 	static void buildVertices(int stackCount, int sectorCount, std::vector<GLfloat> &vertices, std::vector<GLfloat> &texCoords, std::vector<GLint> &indices) {
@@ -152,7 +157,8 @@ void main(){
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, g_tex);
-		glUniform1i(3, 0);
+		GLuint texLocation = glGetUniformLocation(g_program, "tex");
+		glUniform1i(texLocation, 0);
 
 		vmath::mat4 standardMatrix = vmath::mat4(
 			vmath::vec4(1.0f, 0.0f, 0.0f, 0.0f),
@@ -160,9 +166,9 @@ void main(){
 			vmath::vec4(0.0f, 0.0f, 1.0f, 0.0f),
 			vmath::vec4(0.0f, 0.0f, 0.0f, 1.0f));
 
-		vmath::vec3 eye = vmath::vec3(0.f, 0.f, -1.0f);
+		vmath::vec3 eye = vmath::vec3(0.f, -1.f, 0.0f);
 		vmath::vec3 center = vmath::vec3(0.f, 0.f, 0.f);
-		vmath::vec3 up = vmath::vec3(0.f, 1.f, 0.f);
+		vmath::vec3 up = vmath::vec3(0.f, 0.f, -1.f);
 		vmath::mat4 viewMatrix = vmath::lookat(eye, center, up);//设置相机位置，朝向，与相机上部的方向
 		float fovy = 90.f;
 		float aspect = 1.0f / 1.0f;//width/height
@@ -170,15 +176,16 @@ void main(){
 		//设置相机照射的范围，长宽比率，近点与远点值
 		vmath::mat4 projectionMatrix = vmath::perspective(fovy, aspect, n, f);// vmath::perspective(fovy, aspect, 0.1f, 100.f);
 
-		vmath::mat4 matrix = projectionMatrix * viewMatrix * vmath::rotate(0.f, g_yoffset, 0.f);
+		vmath::mat4 matrix = projectionMatrix * viewMatrix * vmath::rotate(0.f, 0.f, g_zoffset);
+		//matrix = standardMatrix;
 		glProgramUniformMatrix4fv(g_program, 2, 1, GL_FALSE, matrix);
 		CHECKERR();
 
 		//glDrawElements(GL_TRIANGLE_STRIP, g_indices.size(), GL_UNSIGNED_INT, 0);
 		glProgramUniform3f(g_program, 4, 1.0f, 0.0f, 1.0f);
 		glDrawElements(GL_TRIANGLES, g_indices.size(), GL_UNSIGNED_INT, 0);
-		glProgramUniform3f(g_program, 4, 0.0f, 1.0f, 1.0f);
-		glDrawElements(GL_LINE_STRIP, g_indices.size(), GL_UNSIGNED_INT, 0);
+		//glProgramUniform3f(g_program, 4, 0.0f, 1.0f, 1.0f);
+		//glDrawElements(GL_LINE_STRIP, g_indices.size(), GL_UNSIGNED_INT, 0);
 		glFlush();
 		CHECKERR();
 
@@ -192,10 +199,10 @@ void main(){
 
 	void onkeyboard(int key, int x, int y) {
 		if (key == GLUT_KEY_RIGHT) {
-			g_yoffset += 10.0f;
+			g_zoffset += 10.0f;
 		}
 		else if (key == GLUT_KEY_LEFT) {
-			g_yoffset -= 10.0f;
+			g_zoffset -= 10.0f;
 		}
 		else if (key == GLUT_KEY_UP) {
 			g_xoffset += 10.f;
