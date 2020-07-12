@@ -106,7 +106,7 @@ void main(){
 			GLenum target = GL_TEXTURE_CUBE_MAP_POSITIVE_X + face;
 			std::string filePath = "./skybox/";
 			filePath += jpgNames[face];
-			if (!TestJpeg::loadJpgImage(filePath.c_str(), buffer, len, NULL, NULL, NULL)) {
+			if (!TestJpeg::loadJpgImage(filePath.c_str(), false, buffer, len, NULL, NULL, NULL)) {
 				assert(false);
 			}
 			glTexSubImage2D(target, 0, 0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, buffer);

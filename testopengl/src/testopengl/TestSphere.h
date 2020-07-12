@@ -53,7 +53,7 @@ void main(){
 		OpenGLHelper::outputProgramLog(g_program);
 		CHECKERR();
 
-		buildVertices(50, 50, g_vertexs, g_texcoords, g_indices);
+		buildVertices(250, 250, g_vertexs, g_texcoords, g_indices);
 
 		auto iterVertex = g_vertexs.begin(), iterTex = g_texcoords.begin();
 		while (iterVertex != g_vertexs.end() && iterTex != g_texcoords.end()) {
@@ -89,7 +89,7 @@ void main(){
 		glBindVertexArray(0);
 
 		int width, height;
-		bool success = TestJpeg::loadJpg2Texture("earth.jpg", GL_RGB, g_tex, width, height);
+		bool success = TestJpeg::loadJpg2Texture("earth.jpg", true, GL_RGB, &g_tex, &width, &height);
 		assert(success);
 		glBindTexture(GL_TEXTURE_2D, g_tex);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -168,7 +168,7 @@ void main(){
 
 		vmath::vec3 eye = vmath::vec3(0.f, -1.f, 0.0f);
 		vmath::vec3 center = vmath::vec3(0.f, 0.f, 0.f);
-		vmath::vec3 up = vmath::vec3(0.f, 0.f, -1.f);
+		vmath::vec3 up = vmath::vec3(0.f, 0.f, 1.f);
 		vmath::mat4 viewMatrix = vmath::lookat(eye, center, up);//设置相机位置，朝向，与相机上部的方向
 		float fovy = 90.f;
 		float aspect = 1.0f / 1.0f;//width/height

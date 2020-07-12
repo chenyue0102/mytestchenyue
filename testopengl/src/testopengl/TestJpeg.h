@@ -72,7 +72,7 @@ namespace TestJpeg {
 		return success;
 	}
 
-	static bool loadJpgImage(const char* filePath, void* buffer, int bufferLen, int* width, int* height, int* channelCount) {
+	static bool loadJpgImage(const char* filePath, bool startBottom, void* buffer, int bufferLen, int* width, int* height, int* channelCount) {
 		jpeg_decompress_struct cinfo;
 		my_error_mgr jerr;
 		bool cleanJpeg = false;
@@ -115,7 +115,13 @@ namespace TestJpeg {
 			}
 			if (JCS_RGB == cinfo.out_color_space) {
 				while (cinfo.output_scanline < cinfo.output_height) {
-					unsigned char* tmpBuffer = (unsigned char*)buffer + row_stride * cinfo.output_scanline;
+					unsigned char* tmpBuffer = NULL;
+					if (startBottom) {
+						tmpBuffer = (unsigned char*)buffer + row_stride * cinfo.output_scanline;
+					}
+					else {
+						tmpBuffer = (unsigned char*)buffer + row_stride * (cinfo.output_height - cinfo.output_scanline - 1);
+					}
 					//opengl起始为左下角,jpg从右上角开始
 					jpeg_read_scanlines(&cinfo, &tmpBuffer, 1);
 				}
@@ -134,7 +140,7 @@ namespace TestJpeg {
 		return success;
 	}
 
-	static void* loadJpgImage(const char* filePath, int* width, int* height, int* channelCount) {
+	static void* loadJpgImage(const char* filePath, bool startBottom, int* width, int* height, int* channelCount) {
 		void* mapBuffer = NULL;
 		bool success = false;
 		int tmpWidth = 0, tmpHeight = 0, tmpChannelCount = 0;
@@ -150,7 +156,7 @@ namespace TestJpeg {
 				assert(false);
 				break;
 			}
-			if (!loadJpgImage(filePath, mapBuffer, len, width, height, channelCount)) {
+			if (!loadJpgImage(filePath, startBottom, mapBuffer, len, width, height, channelCount)) {
 				assert(false);
 				break;
 			}
@@ -167,7 +173,8 @@ namespace TestJpeg {
 		free(buffer);
 	}
 
-	static bool loadJpg2Texture(const char *filePath, GLenum internalformat, GLuint &tex, GLsizei &width, GLsizei &height) {
+	//startBottom结果图片从左下角开始,否则从左上角开始
+	static bool loadJpg2Texture(const char *filePath, bool startBottom, GLenum internalformat, GLuint *tex, GLsizei *width, GLsizei *height) {
 		bool success = false;
 		jpeg_decompress_struct cinfo;
 		my_error_mgr jerr;
@@ -178,6 +185,10 @@ namespace TestJpeg {
 
 		do
 		{
+			if (NULL == tex) {
+				assert(false);
+				break;
+			}
 			if (NULL == (f = fopen(filePath, "rb"))) {
 				assert(false);
 				break;
@@ -195,8 +206,12 @@ namespace TestJpeg {
 			jpeg_start_decompress(&cinfo);
 
 			int row_stride = cinfo.output_width * cinfo.output_components;//per row buffer
-			width = cinfo.output_width;
-			height = cinfo.output_height;
+			if (NULL != width) {
+				*width = cinfo.output_width;
+			}
+			if (NULL != height) {
+				*height = cinfo.output_height;
+			}
 			if (JCS_RGB == cinfo.out_color_space) {
 				glGenBuffers(1, &unpackBuffer); CHECK_BREAK;
 				cleanUnpackBuffer = true;
@@ -207,7 +222,13 @@ namespace TestJpeg {
 					break;
 				}
 				while (cinfo.output_scanline < cinfo.output_height){
-					unsigned char* buffer = mapBuffer + row_stride * (cinfo.output_height - cinfo.output_scanline - 1);
+					unsigned char* buffer = NULL;
+					if (startBottom) {
+						buffer = mapBuffer + row_stride * cinfo.output_scanline;
+					}
+					else {
+						buffer = mapBuffer + row_stride * (cinfo.output_height - cinfo.output_scanline - 1);
+					}
 					//opengl起始为左下角,jpg从右上角开始
 					jpeg_read_scanlines(&cinfo, &buffer, 1);
 				}
@@ -216,9 +237,9 @@ namespace TestJpeg {
 					break;
 				}
 				
-				glGenTextures(1, &tex); CHECK_BREAK;
+				glGenTextures(1, tex); CHECK_BREAK;
 				cleanTex = true;
-				glBindTexture(GL_TEXTURE_2D, tex); CHECK_BREAK;
+				glBindTexture(GL_TEXTURE_2D, *tex); CHECK_BREAK;
 				glTexImage2D(GL_TEXTURE_2D, 0, internalformat, cinfo.output_width, cinfo.output_height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr); CHECK_BREAK;
 				glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, cinfo.output_width, cinfo.output_height, GL_RGB, GL_UNSIGNED_BYTE, BUFFER_OFFSET(0));
 
@@ -240,7 +261,7 @@ namespace TestJpeg {
 			jpeg_destroy_decompress(&cinfo);
 		}
 		if (ret != GL_NO_ERROR && cleanTex) {
-			glDeleteTextures(1, &tex);
+			glDeleteTextures(1, tex);
 		}
 		if (cleanUnpackBuffer) {
 			glDeleteBuffers(1, &unpackBuffer);
