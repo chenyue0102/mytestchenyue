@@ -32,10 +32,11 @@ void main(){
 	//fColor = vec4(lineColor.rgb, 1.0f);
 }
 )";
-	void buildVertices(int stackCount, int sectorCount, std::vector<float> &vertices, std::vector<float> &texCoords, std::vector<GLint> &indices);
+	void buildVertices(int stackCount, int sectorCount, std::vector<float> &vertices, std::vector<float> &texCoords, std::vector<GLfloat> &normals, std::vector<GLint> &indices);
 	static GLuint g_program;
 	static std::vector<GLfloat> g_vertexs;
 	static std::vector<GLfloat> g_texcoords;
+	static std::vector<GLfloat> g_normals;
 	static std::vector<GLfloat> g_allvertexs;
 	static std::vector<GLint> g_indices;
 	static GLuint g_vertexarray;
@@ -53,7 +54,7 @@ void main(){
 		OpenGLHelper::outputProgramLog(g_program);
 		CHECKERR();
 
-		buildVertices(250, 250, g_vertexs, g_texcoords, g_indices);
+		buildVertices(50, 50, g_vertexs, g_texcoords, g_normals, g_indices);
 
 		auto iterVertex = g_vertexs.begin(), iterTex = g_texcoords.begin();
 		while (iterVertex != g_vertexs.end() && iterTex != g_texcoords.end()) {
@@ -97,8 +98,9 @@ void main(){
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 
-	static void buildVertices(int stackCount, int sectorCount, std::vector<GLfloat> &vertices, std::vector<GLfloat> &texCoords, std::vector<GLint> &indices) {
+	static void buildVertices(int stackCount, int sectorCount, std::vector<GLfloat> &vertices, std::vector<GLfloat> &texCoords, std::vector<GLfloat> &normals, std::vector<GLint> &indices) {
 		GLfloat radius = 0.5f;
+		GLfloat lengthInv = 1.0f / radius;
 		GLfloat sectorSetp = static_cast<GLfloat>(2 * PI / sectorCount);
 		GLfloat stackStep = static_cast<GLfloat>(PI / stackCount);
 		GLfloat sectorAngle, stackAngle;
@@ -118,6 +120,10 @@ void main(){
 				vertices.push_back(x);
 				vertices.push_back(y);
 				vertices.push_back(z);
+
+				normals.push_back(x * lengthInv);
+				normals.push_back(y * lengthInv);
+				normals.push_back(z * lengthInv);
 
 				s = (GLfloat)j / sectorCount;
 				t = (GLfloat)i / stackCount;
