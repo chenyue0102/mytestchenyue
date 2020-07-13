@@ -1,8 +1,15 @@
-#pragma once
+ï»¿#pragma once
 #include "GL\glew.h"
 #include "TestSphere.h"
 #include "vmath.h"
 #include "TestJpeg.h"
+#include <glm/vec3.hpp> // glm::vec3
+#include <glm/vec4.hpp> // glm::vec4
+#include <glm/mat4x4.hpp> // glm::mat4
+#include <glm/ext/matrix_transform.hpp> // glm::translate, glm::rotate, glm::scale
+#include <glm/ext/matrix_clip_space.hpp> // glm::perspective
+#include <glm/ext/scalar_constants.hpp> // glm::pi
+#include <glm/gtx/rotate_vector.hpp>
 
 namespace TestLight {
 	static const char* g_vString = R"(
@@ -48,15 +55,32 @@ out vec4 fColor;
 void main(){
 	vec4 texColor = texture2D(tex, texCoord);
 	if (1 == esType){
+		//æ··åˆå…‰æºé¢œè‰²å’Œæè´¨é¢œè‰²
 		vec3 rgb = min(texColor.rgb * lightColor, vec3(1.0f, 1.0f, 1.0f));
 		fColor = vec4(rgb, texColor.a);
 	}else if (2 == esType){
+		//å¢åŠ æ³•å‘é‡
 		vec3 lightDirect = normalize(lightPosition - esPosition.xyz);
 		float diffuse = max(0.0, dot(esNormal, lightDirect));
 		if (diffuse == 0.0){
 			fColor = vec4(0.0f,0.0,0.0,1.0);
 		}else{
-			fColor = texColor * diffuse;
+			vec4 tmpTexColor = texColor * diffuse;
+			fColor = vec4(min(tmpTexColor.rgb * lightColor, vec3(1.0f, 1.0f, 1.0f)), 1.0f);
+		}
+	}else if (3 == esType){
+		vec3 lightDirect = normalize(lightPosition - esPosition.xyz);
+		float diffuse = max(0.0, dot(esNormal, lightDirect));
+		
+		if (0.0 == diffuse){
+			fColor = vec4(0.0f,0.0,0.0,1.0);
+		}else{
+			float specular = pow(diffuse, 10.0);
+			vec3 scatteredLight = texColor.rgb * lightColor * diffuse;
+			float Strength = 1.5f;
+			vec3 reflectedLight = lightColor * specular * Strength;
+			vec3 rgb = min(texColor.rgb * scatteredLight + reflectedLight, vec3(1.0));
+			fColor = vec4(rgb, 1.0f);
 		}
 	}
 }
@@ -74,6 +98,9 @@ void main(){
 	static GLfloat g_xoffset = 0.f;
 	static GLfloat g_yoffset = 0.f;
 	static GLfloat g_zoffset = 0.f;
+	static GLfloat g_xcameraoffset = 0.f;
+	static GLfloat g_ycameraoffset = 0.f;
+	static GLfloat g_zcameraoffset = 0.f;
 
 	void init() {
 		g_program = glCreateProgram();
@@ -156,15 +183,18 @@ void main(){
 			vmath::vec4(0.0f, 0.0f, 1.0f, 0.0f),
 			vmath::vec4(0.0f, 0.0f, 0.0f, 1.0f));
 
-		vmath::vec3 eye = vmath::vec3(0.f, -2.0f, 0.0f);
+		glm::vec3 tmpEye = glm::vec3(0.f, -2.0f, 0.0f);
+		tmpEye = glm::rotateZ(tmpEye, glm::radians(g_zcameraoffset));//æ—‹è½¬ç›¸æœºçš„ä½ç½®
+		//vmath::vec3 eye = vmath::vec3(0.f, -2.0f, 0.0f);
+		vmath::vec3 eye = vmath::vec3(tmpEye[0], tmpEye[1], tmpEye[2]);
 		vmath::vec3 center = vmath::vec3(0.f, 0.f, 0.f);
 		vmath::vec3 up = vmath::vec3(0.f, 0.f, 1.f);
-		vmath::mat4 viewMatrix = vmath::rotate(0.f, 0.f, g_zoffset);
+		vmath::mat4 viewMatrix = vmath::rotate(0.f, 0.f, g_zoffset);//æ—‹è½¬çƒ
 		float fovy = 45.f;
 		float aspect = 1.0f / 1.0f;//width/height
 		float n = 0.5f, f = 10.f;
-		//ÉèÖÃÏà»úÕÕÉäµÄ·¶Î§£¬³¤¿í±ÈÂÊ£¬½üµãÓëÔ¶µãÖµ
-		vmath::mat4 cameraLookAt = vmath::lookat(eye, center, up);//ÉèÖÃÏà»úÎ»ÖÃ£¬³¯Ïò£¬ÓëÏà»úÉÏ²¿µÄ·½Ïò
+		//è®¾ç½®ç›¸æœºç…§å°„çš„èŒƒå›´ï¼Œé•¿å®½æ¯”ç‡ï¼Œè¿‘ç‚¹ä¸è¿œç‚¹å€¼
+		vmath::mat4 cameraLookAt = vmath::lookat(eye, center, up);//è®¾ç½®ç›¸æœºä½ç½®ï¼Œæœå‘ï¼Œä¸ç›¸æœºä¸Šéƒ¨çš„æ–¹å‘
 		vmath::mat4 cameraPerspective = vmath::perspective(fovy, aspect, n, f);// vmath::perspective(fovy, aspect, 0.1f, 100.f);
 		vmath::mat4 projectionMatrix = cameraPerspective;
 		vmath::mat4 modelMatrix = cameraLookAt;
@@ -175,11 +205,11 @@ void main(){
 		GLuint projectionMatrixLocation = glGetUniformLocation(g_program, "projectionMatrix");
 		glProgramUniformMatrix4fv(g_program, projectionMatrixLocation, 1, GL_FALSE, projectionMatrix);
 		GLuint typeLocation = glGetUniformLocation(g_program, "type");
-		GLint type = 2;
+		GLint type = 3;
 		glProgramUniform1i(g_program, typeLocation, type);
 
 		GLuint vertexLightPositionLocation = glGetUniformLocation(g_program, "vertexLightPosition");
-		glProgramUniform3f(g_program, vertexLightPositionLocation, 1.f, -1.f, 1.f);
+		glProgramUniform3f(g_program, vertexLightPositionLocation, 1000.f, -1000.f, 1000.f);
 		CHECKERR();
 
 		GLuint lightColorLocation = glGetUniformLocation(g_program, "vertexLightColor");
@@ -194,9 +224,7 @@ void main(){
 		glUseProgram(0);
 	}
 
-
-
-	void onkeyboard(int key, int x, int y) {
+	static void onspecialkey(int key, int x, int y) {
 		if (key == GLUT_KEY_RIGHT) {
 			g_zoffset += 10.0f;
 		}
@@ -208,6 +236,15 @@ void main(){
 		}
 		else if (key == GLUT_KEY_DOWN) {
 			g_xoffset -= 10.f;
+		}
+	}
+
+	static void onkeyboard(int key, int x, int y) {
+		if (key == 'a' || key == 'A') {
+			g_zcameraoffset -= 10.f;
+		}
+		else if (key == 'd' || key == 'D') {
+			g_zcameraoffset += 10.f;
 		}
 	}
 }

@@ -582,16 +582,12 @@ void myIdle() {
 	std::this_thread::sleep_for(std::chrono::microseconds(1));
 }
 
-void mykeyboard(int key, int x, int y) {
+void keyboard(unsigned char key, int x, int y) {
 	TestLight::onkeyboard(key, x, y);
 }
 
-void keyboard(unsigned char key, int x, int y) {
-	mykeyboard(key, x, y);
-}
-
 void specialkey(int key, int x, int y) {
-	mykeyboard(key, x, y);
+	TestLight::onspecialkey(key, x, y);
 }
 
 int main(int argc, char *argv[])
