@@ -3,6 +3,7 @@ package com.test.testsurface;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
+import android.view.SurfaceView;
 import android.widget.Button;
 import android.widget.TextView;
 
@@ -19,6 +20,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         Button btnCreate = findViewById(R.id.btn_create);
+        SurfaceView surfaceView = findViewById(R.id.surfaceView);
+        surfaceView.setOnClickListener((v)->{});
     }
 
     /**
