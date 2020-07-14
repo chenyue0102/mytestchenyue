@@ -23,6 +23,7 @@
     <ClInclude Include="TestSphere.h" />
     <ClInclude Include="TestSprite.h" />
     <ClInclude Include="targa.h" />
+    <ClInclude Include="TestGLSL.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />

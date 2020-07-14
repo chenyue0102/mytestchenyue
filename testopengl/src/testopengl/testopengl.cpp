@@ -550,6 +550,7 @@ void myDisplay()
 #include "TestSphere.h"
 #include "TestLight.h"
 #include "TestSprite.h"
+#include "TestGLSL.h"
 
 void testdraw2() {
 	glClearColor(0, 0, 0, 1);
@@ -575,7 +576,7 @@ void testdraw2() {
 }
 
 void testdraw() {
-	TestSprite::testdraw();
+	TestGLSL::testdraw();
 }
 
 void myIdle() {
@@ -643,6 +644,7 @@ int main(int argc, char *argv[])
 	Test::init();
 	TestFrameBuffer::init();
 	TestSprite::init();
+	TestGLSL::init();
 #if 0
 	{
 		GLuint tex = 0;
