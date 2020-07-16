@@ -41,7 +41,7 @@ void main(){
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, g_rbuffer);
 		CHECKERR();
 
-		GLfloat f[3] = { 0.802, 0.267, 0.534 };
+		GLfloat f[3] = { 0.802f, 0.267f, 0.534f };
 		GLint paramLocation = glGetUniformLocation(g_program, "param");
 		glProgramUniform3f(g_program, paramLocation, f[0], f[1], f[2]);
 		CHECKERR();

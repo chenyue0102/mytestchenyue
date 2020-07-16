@@ -24,6 +24,7 @@
     <ClInclude Include="TestSprite.h" />
     <ClInclude Include="targa.h" />
     <ClInclude Include="TestGLSL.h" />
+    <ClInclude Include="TestNormalMapping.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />

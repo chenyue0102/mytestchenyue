@@ -551,6 +551,7 @@ void myDisplay()
 #include "TestLight.h"
 #include "TestSprite.h"
 #include "TestGLSL.h"
+#include "TestNormalMapping.h"
 
 void testdraw2() {
 	glClearColor(0, 0, 0, 1);
@@ -576,7 +577,7 @@ void testdraw2() {
 }
 
 void testdraw() {
-	TestGLSL::testdraw();
+	TestNormalMapping::testdraw();
 }
 
 void myIdle() {
@@ -645,6 +646,7 @@ int main(int argc, char *argv[])
 	TestFrameBuffer::init();
 	TestSprite::init();
 	TestGLSL::init();
+	TestNormalMapping::init();
 #if 0
 	{
 		GLuint tex = 0;

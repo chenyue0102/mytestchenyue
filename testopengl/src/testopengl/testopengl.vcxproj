@@ -164,6 +164,7 @@
     <ClInclude Include="TestFrameBuffer.h" />
     <ClInclude Include="TestGLSL.h" />
     <ClInclude Include="TestJpeg.h" />
+    <ClInclude Include="TestNormalMapping.h" />
     <ClInclude Include="TestSkyBox.h" />
     <ClInclude Include="TestLight.h" />
     <ClInclude Include="TestSphere.h" />
