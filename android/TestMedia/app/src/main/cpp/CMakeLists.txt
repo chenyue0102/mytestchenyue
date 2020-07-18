@@ -4,7 +4,7 @@
 # Sets the minimum version of CMake required to build the native library.
 
 cmake_minimum_required(VERSION 3.4.1)
-set(JNILIBS ${CMAKE_CURRENT_SOURCE_DIR}/../../jniLibs/${ANDROID_ABI})
+set(JNILIBS ${CMAKE_CURRENT_SOURCE_DIR}/../jniLibs/${ANDROID_ABI})
 set(LAME ${CMAKE_CURRENT_SOURCE_DIR}/include/lame)
 
 include_directories(
@@ -23,9 +23,12 @@ add_library( # Sets the name of the library.
 
              # Provides a relative path to your source file(s).
              TestMedia.cpp
+            Mp3Player.cpp
+            TaskPool.cpp
+            JniHelper.cpp
         )
 
-add_library(libaxTLS STATIC IMPORTED)
+add_library(libmp3lame STATIC IMPORTED)
 set_target_properties(libmp3lame PROPERTIES IMPORTED_LOCATION ${JNILIBS}/libmp3lame.a)
 
 # Searches for a specified prebuilt library and stores the path as a
@@ -48,8 +51,7 @@ find_library( # Sets the name of the path variable.
 #基础库放到最后,否则会提示库无法找到
 target_link_libraries( # Specifies the target library.
                        native-lib
-        libmp3lame
-        #TcpServer
+                        libmp3lame
                        # Links the target library to the log library
                        # included in the NDK.
                        ${log-lib} )
