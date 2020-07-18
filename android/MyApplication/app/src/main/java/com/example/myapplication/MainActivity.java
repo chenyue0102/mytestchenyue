@@ -1,5 +1,6 @@
 package com.example.myapplication;
 
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 
@@ -12,6 +13,7 @@ import android.net.wifi.ScanResult;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -35,6 +37,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.RandomAccessFile;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Field;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -56,6 +59,10 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
 
 import com.example.myapplication.SocketClient;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
+import static android.content.Context.WIFI_SERVICE;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -73,7 +80,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onReceive(Context context, Intent intent) {
             Toast.makeText(context, "myReceiver receive", Toast.LENGTH_SHORT).show();
-            WifiManager wifiManager = (WifiManager )getSystemService(WIFI_SERVICE);
+            WifiManager wifiManager = (WifiManager )getApplicationContext().getSystemService(WIFI_SERVICE);
             List<ScanResult> sr =  wifiManager.getScanResults();
             sr.size();
         }
@@ -81,7 +88,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void testWIFI()throws Exception
     {
-        WifiManager wifiManager = (WifiManager )getSystemService(WIFI_SERVICE);
+        WifiManager wifiManager = (WifiManager )getApplicationContext().getSystemService(WIFI_SERVICE);
         //wifiManager.setWifiEnabled(false);
         int state = wifiManager.getWifiState();
         //当前wifi信息
@@ -129,10 +136,32 @@ public class MainActivity extends AppCompatActivity {
         t.start();
     }
 
+    public static class Parent{
+        public transient String parent = "parent";
+    }
+    public static class StructTemplate<T>{
+        public String parent;
+        public T result;
+    }
+    public static class Child extends Parent{
+        public String child = "child";
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        Child child = new Child();
+        Parent parent = child;
+
+        StructTemplate<Parent> jsonParent = new StructTemplate<>();
+        jsonParent.result = parent;
+        jsonParent.parent = parent.parent;
+        Gson gson = new Gson();
+        String childJson = gson.toJson(jsonParent);
+        Log.i("tag", childJson);
+
 
         try{
             testWIFI();
@@ -206,6 +235,7 @@ public class MainActivity extends AppCompatActivity {
             Log.i("MyTest", s);
         }
 
+        @RequiresApi(api = Build.VERSION_CODES.N)
         class aaa implements Predicate<String>{
 
             @Override

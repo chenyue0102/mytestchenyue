@@ -90,7 +90,7 @@ void main(){
 		glBindVertexArray(0);
 
 		int width, height;
-		bool success = TestJpeg::loadJpg2Texture("earth.jpg", true, GL_RGB, &g_tex, &width, &height);
+		bool success = TestJpeg::genTextureAndLoadJpg("earth.jpg", true, GL_RGB, &g_tex, &width, &height, NULL);
 		assert(success);
 		glBindTexture(GL_TEXTURE_2D, g_tex);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);

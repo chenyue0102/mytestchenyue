@@ -173,8 +173,8 @@ namespace TestJpeg {
 		free(buffer);
 	}
 
-	//startBottom结果图片从左下角开始,否则从左上角开始
-	static bool loadJpg2Texture(const char *filePath, bool startBottom, GLenum internalformat, GLuint *tex, GLsizei *width, GLsizei *height) {
+	//创建tex，加载图片到tex，startBottom结果图片从左下角开始,否则从左上角开始
+	static bool genTextureAndLoadJpg(const char *filePath, bool startBottom, GLenum internalformat, GLuint *tex, GLsizei *width, GLsizei *height, GLsizei *channel) {
 		bool success = false;
 		jpeg_decompress_struct cinfo;
 		my_error_mgr jerr;
@@ -212,6 +212,9 @@ namespace TestJpeg {
 			if (NULL != height) {
 				*height = cinfo.output_height;
 			}
+			if (NULL != channel) {
+				*channel = cinfo.output_components;
+			}
 			if (JCS_RGB == cinfo.out_color_space) {
 				glGenBuffers(1, &unpackBuffer); CHECK_BREAK;
 				cleanUnpackBuffer = true;
@@ -245,6 +248,11 @@ namespace TestJpeg {
 
 				glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 				glBindTexture(GL_TEXTURE_2D, 0);
+			}
+			else {
+				jpeg_finish_decompress(&cinfo);
+				assert(false);
+				break;
 			}
 			jpeg_finish_decompress(&cinfo);
 			if (ret != GL_NO_ERROR) {

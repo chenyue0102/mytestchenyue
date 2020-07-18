@@ -549,6 +549,9 @@ void myDisplay()
 #include "TestComputer.h"
 #include "TestSphere.h"
 #include "TestLight.h"
+#include "TestSprite.h"
+#include "TestGLSL.h"
+#include "TestNormalMapping.h"
 
 void testdraw2() {
 	glClearColor(0, 0, 0, 1);
@@ -574,7 +577,7 @@ void testdraw2() {
 }
 
 void testdraw() {
-	TestLight::testdraw();
+	TestNormalMapping::testdraw();
 }
 
 void myIdle() {
@@ -582,16 +585,12 @@ void myIdle() {
 	std::this_thread::sleep_for(std::chrono::microseconds(1));
 }
 
-void mykeyboard(int key, int x, int y) {
+void keyboard(unsigned char key, int x, int y) {
 	TestLight::onkeyboard(key, x, y);
 }
 
-void keyboard(unsigned char key, int x, int y) {
-	mykeyboard(key, x, y);
-}
-
 void specialkey(int key, int x, int y) {
-	mykeyboard(key, x, y);
+	TestLight::onspecialkey(key, x, y);
 }
 
 int main(int argc, char *argv[])
@@ -645,6 +644,9 @@ int main(int argc, char *argv[])
 	TestStencil::init();
 	Test::init();
 	TestFrameBuffer::init();
+	TestSprite::init();
+	TestGLSL::init();
+	TestNormalMapping::init();
 #if 0
 	{
 		GLuint tex = 0;

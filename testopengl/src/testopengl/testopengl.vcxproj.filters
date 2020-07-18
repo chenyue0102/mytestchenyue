@@ -4,6 +4,7 @@
     <ClCompile Include="OpenGLHelper.cpp" />
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="testopengl.cpp" />
+    <ClCompile Include="targa.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="glsl.h" />
@@ -20,6 +21,10 @@
     <ClInclude Include="TestTexture.h" />
     <ClInclude Include="vmath.h" />
     <ClInclude Include="TestSphere.h" />
+    <ClInclude Include="TestSprite.h" />
+    <ClInclude Include="targa.h" />
+    <ClInclude Include="TestGLSL.h" />
+    <ClInclude Include="TestNormalMapping.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
