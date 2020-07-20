@@ -1,5 +1,5 @@
 ﻿/*
-执行任务,可以设置任务分组id,相同分组id,会按顺序执行
+执行任务
 */
 #pragma once
 #include <mutex>

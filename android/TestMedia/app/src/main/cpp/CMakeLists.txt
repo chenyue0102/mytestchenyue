@@ -23,9 +23,12 @@ add_library( # Sets the name of the library.
 
              # Provides a relative path to your source file(s).
              TestMedia.cpp
+            OpenSLESHelper.cpp
+            LameHelper.cpp
             Mp3Player.cpp
             TaskPool.cpp
             JniHelper.cpp
+            Log.cpp
         )
 
 add_library(libmp3lame STATIC IMPORTED)
@@ -54,4 +57,5 @@ target_link_libraries( # Specifies the target library.
                         libmp3lame
                        # Links the target library to the log library
                        # included in the NDK.
+        OpenSLES
                        ${log-lib} )
