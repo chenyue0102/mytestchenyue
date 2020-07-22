@@ -11,11 +11,18 @@
 #include <linux/in.h>
 #include <netinet/ip.h>
 #include <netinet/udp.h>
+#include <mutex>
+#include <atomic>
 #include "JniHelper.h"
 #include "TaskPool.h"
 #include "Mp3Player.h"
 #include "OpenSLESHelper.h"
 #include "LameHelper.h"
+#include "RingQueue.h"
+#include "MacroDefine.h"
+#include "Log.h"
+#include "Single.h"
+#include "SystemTime.h"
 
 __attribute__((constructor)) static void onDlOpen(void)
 {
@@ -44,21 +51,76 @@ JNI_OnLoad(JavaVM *vm, void *reserved){
 Mp3Player *g_Mp3Player = 0;
 OpenSLESHelper *g_OpenSLESHelper = nullptr;
 LameHelper *g_LameHelper = nullptr;
+RingQueue *g_RingQueue = nullptr;
+std::mutex g_mutex;
+std::condition_variable g_cv;
+std::atomic<bool> g_needCallMediaCallback;
+SystemTime *g_SystemTime = nullptr;
 
 void SLAPIENTRY mediaCallback(SLAndroidSimpleBufferQueueItf caller, void *pContext){
     if (nullptr != caller){
+        auto timePoint1 = g_SystemTime->getCurrentTimeMs();
+        if (g_RingQueue->getDataSize() > 0){
+            const int bufLen = 44100 * 2 * 2;
+            unsigned char buf[bufLen];
+            int getSize = g_RingQueue->get(buf, bufLen);
+            if (getSize > 0){
+                SC(Log).d("mediaCallback Enqueue size:%d", getSize);
+                auto timePoint2 = g_SystemTime->getCurrentTimeMs();
+                SC(Log).e("mediaCallback time:%lld", timePoint2 - timePoint1);
+                (*caller)->Enqueue(caller, buf, getSize);
+            }else{
+                SC(Log).d("mediaCallback g_RingQueue->get empty");
+            }
+            std::lock_guard<std::mutex> lk(g_mutex);
+            g_cv.notify_one();
+            g_needCallMediaCallback = false;
+        }else{
+            SC(Log).d("mediaCallback need buffer");
+            g_needCallMediaCallback = true;
+        }
+    }else{
+        SC(Log).d("mediaCallback error");
+    }
+}
+
+bool checkRead(){
+    if (g_RingQueue->getFreeSize() >= 1152 * 2 * 2){
+        return true;
+    }else{
+        return false;
+    }
+}
+
+void readThread(std::string filePath){
+    bool success = true;
+    g_LameHelper = new LameHelper();
+    g_LameHelper->open(filePath.c_str());
+    while(success){
+        std::unique_lock<std::mutex> lk(g_mutex);
+        g_cv.wait(lk, &checkRead);
+        lk.unlock();
         const int bufLen = 1152 * 2 * 2;
-        unsigned char buf[bufLen];
-        int readLen = g_LameHelper->decode(buf, bufLen);
-        if (readLen > 0){
-            (*caller)->Enqueue(caller, buf, readLen);
+        while (g_RingQueue->getFreeSize() >= bufLen){
+            unsigned char buf[bufLen];
+            int readLen = g_LameHelper->decode(buf, bufLen);
+            if (readLen > 0){
+                g_RingQueue->put(buf, readLen);
+                if (g_needCallMediaCallback){
+                    mediaCallback(g_OpenSLESHelper->getBufferQueue(), nullptr);
+                }
+            } else{
+                success = false;
+                break;
+            }
         }
     }
 }
 
 void testMedia(const std::string &filePath){
-    g_LameHelper = new LameHelper();
-    g_LameHelper->open(filePath.c_str());
+    SC(Log).setTag("testmedia");
+    g_SystemTime = new SystemTime();
+    g_RingQueue = new RingQueue(44100 * 2 * 2 * 2);
     g_OpenSLESHelper = new OpenSLESHelper();
     g_OpenSLESHelper->createEngine();
     g_OpenSLESHelper->createOutputMix();
@@ -80,7 +142,11 @@ void testMedia(const std::string &filePath){
     g_OpenSLESHelper->createPlayer(slDataSource, slDataSink, 3, ids, req);
     g_OpenSLESHelper->registerBufferQueueCallback(&mediaCallback, nullptr);
     g_OpenSLESHelper->setPlayState(SL_PLAYSTATE_PLAYING);
-    mediaCallback(g_OpenSLESHelper->getBufferQueue(), nullptr);
+    g_needCallMediaCallback = true;
+    g_TaskPool->AddTask([filePath](){
+        readThread(filePath.c_str());
+    });
+    //mediaCallback(g_OpenSLESHelper->getBufferQueue(), nullptr);
 }
 
 extern "C"

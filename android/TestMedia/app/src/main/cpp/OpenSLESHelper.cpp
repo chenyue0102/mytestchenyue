@@ -17,7 +17,8 @@
     REFM(slEnvironmentalReverb); \
     REFM(slPlayerObject); \
     REFM(slPlay); \
-    REFM(slPlayBufferQueue);
+    REFM(slPlayBufferQueue); \
+    REFM(slVolume)
 
 struct OpenSLESHelperData{
     SLObjectItf slObject;
@@ -29,6 +30,7 @@ struct OpenSLESHelperData{
     SLObjectItf slPlayerObject;
     SLPlayItf slPlay;
     SLAndroidSimpleBufferQueueItf slPlayBufferQueue;
+    SLVolumeItf slVolume;
 };
 OpenSLESHelper::OpenSLESHelper() :mData(new OpenSLESHelperData()){
 
@@ -73,6 +75,7 @@ bool OpenSLESHelper::createEngine() {
 
 bool OpenSLESHelper::destroy() {
     REFALL;
+    destroyOutputMix();
     destroyPlayer();
 
     if (nullptr != slObject){
@@ -89,6 +92,7 @@ bool OpenSLESHelper::createOutputMix() {
     SLresult result;
 
     do{
+        destroyOutputMix();
         if (nullptr == slEngine){
             SC(Log).e("OpenSLESHelper::createOutputMix failed nullptr == slEngine");
             assert(false);
@@ -117,7 +121,21 @@ bool OpenSLESHelper::createOutputMix() {
         }
         ret = true;
     }while (false);
+
+    if (!ret){
+        destroyOutputMix();
+    }
     return ret;
+}
+
+bool OpenSLESHelper::destroyOutputMix() {
+    REFALL;
+    if (nullptr != slOutputMixObject){
+        (*slOutputMixObject)->Destroy(slOutputMixObject);
+        slOutputMixObject = nullptr;
+    }
+    slEnvironmentalReverb = nullptr;
+    return true;
 }
 
 bool OpenSLESHelper::createPlayer(SLDataSource &slDataSource, SLDataSink &slDataSink, SLuint32 numInterfaces, const SLInterfaceID ids[], const SLboolean req[]) {
@@ -126,6 +144,7 @@ bool OpenSLESHelper::createPlayer(SLDataSource &slDataSource, SLDataSink &slData
     SLresult result;
 
     do{
+        destroyPlayer();
         if (nullptr == slEngine){
             SC(Log).e("OpenSLESHelper::createPlayer failed nullptr == slEngine");
             assert(false);
@@ -151,6 +170,11 @@ bool OpenSLESHelper::createPlayer(SLDataSource &slDataSource, SLDataSink &slData
             assert(false);
             break;
         }
+        if ((result = (*slPlayerObject)->GetInterface(slPlayerObject, SL_IID_VOLUME, &slVolume)) != SL_RESULT_SUCCESS){
+            SC(Log).e("OpenSLESHelper::createPlayer GetInterface SL_IID_VOLUME failed result:%x", result);
+            assert(false);
+            break;
+        }
         ret = true;
     }while(false);
 
@@ -169,6 +193,7 @@ bool OpenSLESHelper::destroyPlayer() {
     }
     slPlay = nullptr;
     slPlayBufferQueue = nullptr;
+    slVolume = nullptr;
     return true;
 }
 

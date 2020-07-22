@@ -18,6 +18,7 @@ public:
     bool createEngine();
     bool destroy();
     bool createOutputMix();
+    bool destroyOutputMix();
     bool createPlayer(SLDataSource &slDataSource, SLDataSink &slDataSink, SLuint32 numInterfaces, const SLInterfaceID ids[], const SLboolean req[]);
     bool destroyPlayer();
     bool registerBufferQueueCallback(slAndroidSimpleBufferQueueCallback callback, void *pContext);

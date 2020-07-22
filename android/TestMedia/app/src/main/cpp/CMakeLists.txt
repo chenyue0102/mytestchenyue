@@ -27,7 +27,9 @@ add_library( # Sets the name of the library.
             LameHelper.cpp
             Mp3Player.cpp
             TaskPool.cpp
+            RingQueue.cpp
             JniHelper.cpp
+            SystemTime.cpp
             Log.cpp
         )
 
@@ -58,4 +60,5 @@ target_link_libraries( # Specifies the target library.
                        # Links the target library to the log library
                        # included in the NDK.
         OpenSLES
+        android
                        ${log-lib} )
