@@ -17,13 +17,17 @@ public:
 public:
     bool createEngine();
     bool destroy();
+
+public:
     bool createOutputMix();
     bool destroyOutputMix();
+    //
+    bool setEnvironmentalReverbProperties(const SLEnvironmentalReverbSettings &reverbSettings);
+
+public:
     bool createPlayer(SLDataSource &slDataSource, SLDataSink &slDataSink, SLuint32 numInterfaces, const SLInterfaceID ids[], const SLboolean req[]);
     bool destroyPlayer();
     bool registerBufferQueueCallback(slAndroidSimpleBufferQueueCallback callback, void *pContext);
-
-public:
     //SL_PLAYSTATE_PLAYING, SL_PLAYSTATE_PAUSED, SL_PLAYSTATE_STOPPED
     bool setPlayState(SLuint32 playState);
 

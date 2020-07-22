@@ -11,7 +11,7 @@
 #include "MacroDefine.h"
 
 #define REFALL \
-    REFM(slObject); \
+    REFM(slEngineObject); \
     REFM(slEngine); \
     REFM(slOutputMixObject); \
     REFM(slEnvironmentalReverb); \
@@ -21,7 +21,7 @@
     REFM(slVolume)
 
 struct OpenSLESHelperData{
-    SLObjectItf slObject;
+    SLObjectItf slEngineObject;
     SLEngineItf slEngine;
 
     SLObjectItf slOutputMixObject;
@@ -32,6 +32,9 @@ struct OpenSLESHelperData{
     SLAndroidSimpleBufferQueueItf slPlayBufferQueue;
     SLVolumeItf slVolume;
 };
+static bool isEqual(const SLInterfaceID &left, const SLInterfaceID &right){
+    return 0 == memcmp(left, right, sizeof(SLInterfaceID_));
+}
 OpenSLESHelper::OpenSLESHelper() :mData(new OpenSLESHelperData()){
 
 }
@@ -49,17 +52,17 @@ bool OpenSLESHelper::createEngine() {
 
     do{
         destroy();
-        if ((result = slCreateEngine(&slObject, 0, nullptr, 0, nullptr, nullptr)) != SL_RESULT_SUCCESS){
+        if ((result = slCreateEngine(&slEngineObject, 0, nullptr, 0, nullptr, nullptr)) != SL_RESULT_SUCCESS){
             SC(Log).e("OpenSLESHelper::createEngine slCreateEngine failed result:%x", result);
             assert(false);
             break;
         }
-        if ((result = (*slObject)->Realize(slObject, SL_BOOLEAN_FALSE)) != SL_RESULT_SUCCESS){
+        if ((result = (*slEngineObject)->Realize(slEngineObject, SL_BOOLEAN_FALSE)) != SL_RESULT_SUCCESS){
             SC(Log).e("OpenSLESHelper::createEngine Realize failed result:%x", result);
             assert(false);
             break;
         }
-        if ((result = (*slObject)->GetInterface(slObject, SL_IID_ENGINE, &slEngine)) != SL_RESULT_SUCCESS){
+        if ((result = (*slEngineObject)->GetInterface(slEngineObject, SL_IID_ENGINE, &slEngine)) != SL_RESULT_SUCCESS){
             SC(Log).e("OpenSLESHelper::createEngine GetInterface failed result:%x", result);
             assert(false);
             break;
@@ -78,9 +81,9 @@ bool OpenSLESHelper::destroy() {
     destroyOutputMix();
     destroyPlayer();
 
-    if (nullptr != slObject){
-        (*slObject)->Destroy(slObject);
-        slObject = nullptr;
+    if (nullptr != slEngineObject){
+        (*slEngineObject)->Destroy(slEngineObject);
+        slEngineObject = nullptr;
         slEngine = nullptr;
     }
     return true;
@@ -115,10 +118,6 @@ bool OpenSLESHelper::createOutputMix() {
             assert(false);
             break;
         }
-        SLEnvironmentalReverbSettings reverbSettings = SL_I3DL2_ENVIRONMENT_PRESET_STONECORRIDOR;
-        if ((result = (*slEnvironmentalReverb)->SetEnvironmentalReverbProperties(slEnvironmentalReverb, &reverbSettings)) != SL_RESULT_SUCCESS){
-            SC(Log).e("OpenSLESHelper::createOutputMix SetEnvironmentalReverbProperties failed result:%x", result);
-        }
         ret = true;
     }while (false);
 
@@ -136,6 +135,28 @@ bool OpenSLESHelper::destroyOutputMix() {
     }
     slEnvironmentalReverb = nullptr;
     return true;
+}
+
+bool OpenSLESHelper::setEnvironmentalReverbProperties(const SLEnvironmentalReverbSettings &reverbSettings) {
+    REFALL;
+    bool ret = false;
+    SLresult result;
+
+    do{
+        if (nullptr == slEnvironmentalReverb){
+            SC(Log).e("OpenSLESHelper::setEnvironmentalReverbProperties failed nullptr == slEnvironmentalReverb");
+            assert(false);
+            break;
+        }
+        if ((result = (*slEnvironmentalReverb)->SetEnvironmentalReverbProperties(slEnvironmentalReverb, &reverbSettings)) != SL_RESULT_SUCCESS){
+            SC(Log).e("OpenSLESHelper::setEnvironmentalReverbProperties SetEnvironmentalReverbProperties failed result:%x", result);
+            assert(false);
+            break;
+        }
+        ret = true;
+    }while(false);
+
+    return ret;
 }
 
 bool OpenSLESHelper::createPlayer(SLDataSource &slDataSource, SLDataSink &slDataSink, SLuint32 numInterfaces, const SLInterfaceID ids[], const SLboolean req[]) {
@@ -167,13 +188,9 @@ bool OpenSLESHelper::createPlayer(SLDataSource &slDataSource, SLDataSink &slData
         }
         if ((result = (*slPlayerObject)->GetInterface(slPlayerObject, SL_IID_BUFFERQUEUE, &slPlayBufferQueue)) != SL_RESULT_SUCCESS){
             SC(Log).e("OpenSLESHelper::createPlayer GetInterface SL_IID_BUFFERQUEUE failed result:%x", result);
-            assert(false);
-            break;
         }
         if ((result = (*slPlayerObject)->GetInterface(slPlayerObject, SL_IID_VOLUME, &slVolume)) != SL_RESULT_SUCCESS){
             SC(Log).e("OpenSLESHelper::createPlayer GetInterface SL_IID_VOLUME failed result:%x", result);
-            assert(false);
-            break;
         }
         ret = true;
     }while(false);
@@ -244,7 +261,7 @@ bool OpenSLESHelper::setPlayState(SLuint32 playState) {
 }
 
 SLObjectItf OpenSLESHelper::getEngineObject() const {
-    return mData->slObject;
+    return mData->slEngineObject;
 }
 
 SLObjectItf OpenSLESHelper::getOutputMixObject() const {

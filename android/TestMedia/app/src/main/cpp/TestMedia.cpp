@@ -56,19 +56,19 @@ std::mutex g_mutex;
 std::condition_variable g_cv;
 std::atomic<bool> g_needCallMediaCallback;
 SystemTime *g_SystemTime = nullptr;
+const int g_bufLen = 44100 * 2 * 2;
+unsigned char g_buf[g_bufLen];
 
 void SLAPIENTRY mediaCallback(SLAndroidSimpleBufferQueueItf caller, void *pContext){
     if (nullptr != caller){
         auto timePoint1 = g_SystemTime->getCurrentTimeMs();
         if (g_RingQueue->getDataSize() > 0){
-            const int bufLen = 44100 * 2 * 2;
-            unsigned char buf[bufLen];
-            int getSize = g_RingQueue->get(buf, bufLen);
+            int getSize = g_RingQueue->get(g_buf, g_bufLen);
             if (getSize > 0){
                 SC(Log).d("mediaCallback Enqueue size:%d", getSize);
                 auto timePoint2 = g_SystemTime->getCurrentTimeMs();
                 SC(Log).e("mediaCallback time:%lld", timePoint2 - timePoint1);
-                (*caller)->Enqueue(caller, buf, getSize);
+                (*caller)->Enqueue(caller, g_buf, getSize);
             }else{
                 SC(Log).d("mediaCallback g_RingQueue->get empty");
             }
@@ -118,9 +118,9 @@ void readThread(std::string filePath){
 }
 
 void testMedia(const std::string &filePath){
-    SC(Log).setTag("testmedia");
+    SC(Log).setTag("myoutput");
     g_SystemTime = new SystemTime();
-    g_RingQueue = new RingQueue(44100 * 2 * 2 * 2);
+    g_RingQueue = new RingQueue(44100 * 2 * 2 * 5);
     g_OpenSLESHelper = new OpenSLESHelper();
     g_OpenSLESHelper->createEngine();
     g_OpenSLESHelper->createOutputMix();

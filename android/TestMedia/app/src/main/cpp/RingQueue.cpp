@@ -5,6 +5,8 @@
 #include "RingQueue.h"
 #include <stdlib.h>
 #include <mutex>
+#include <algorithm>
+#include <assert.h>
 #include "MacroDefine.h"
 
 #define REFALL \
@@ -101,7 +103,7 @@ size_t RingQueue::innerPut(const void *data, size_t dataLen) {
             memcpy(buffer + writeIndex, data, putSize);
             writeIndex += putSize;
         }
-        isFull == (writeIndex == readIndex);
+        isFull = (writeIndex == readIndex);
     }
     assert(putSize > 0);
     return putSize;
