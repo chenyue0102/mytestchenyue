@@ -28,7 +28,7 @@ private:
     size_t innerGet(void *data, size_t dataLen);
 
 private:
-    mutable RingQueueData *mData;
+    RingQueueData *mData;
 };
 
 
