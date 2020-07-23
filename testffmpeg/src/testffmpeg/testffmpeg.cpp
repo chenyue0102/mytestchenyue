@@ -1,4 +1,4 @@
-// testffmpeg.cpp : ¶¨Òå¿ØÖÆÌ¨Ó¦ÓÃ³ÌĞòµÄÈë¿Úµã¡£
+ï»¿// testffmpeg.cpp : å®šä¹‰æ§åˆ¶å°åº”ç”¨ç¨‹åºçš„å…¥å£ç‚¹ã€‚
 //
 #include <assert.h>
 #include <thread>
@@ -94,7 +94,7 @@ void readThread(AVFormatContext *ic, int videoStream, int audioStream, AVCodecCo
 		{
 			for (;;)
 			{
-				//ÄÚ²¿»áµ÷ÓÃav_frame_unref(frame)
+				//å†…éƒ¨ä¼šè°ƒç”¨av_frame_unref(frame)
 				ret = avcodec_receive_frame(cc, frame);
 				if (0 != ret)
 				{
@@ -139,7 +139,7 @@ int main()
 	char szError[128] = { 0 };
 	getCurrentDir(szError, _countof(szError));
 	strcat(szError, "/v1080.mp4");
-	AVFormatContext *ic = 0;//½â·â×°ÉÏÏÂÎÄ
+	AVFormatContext *ic = 0;//è§£å°è£…ä¸Šä¸‹æ–‡
 	av_register_all();
 	int ret = avformat_network_init();
 	assert(0 == ret);
@@ -151,20 +151,20 @@ int main()
 	}
 	ret = avformat_find_stream_info(ic, nullptr);
 	//assert(0 == ret);
-	//²éÕÒÁ÷id
+	//æŸ¥æ‰¾æµid
 	int videoStream = av_find_best_stream(ic, AVMEDIA_TYPE_VIDEO, -1, -1, nullptr, 0);
 	int audioStream = av_find_best_stream(ic, AVMEDIA_TYPE_AUDIO, -1, -1, nullptr, 0);
-	//²éÕÒ½âÂëÆ÷
+	//æŸ¥æ‰¾è§£ç å™¨
 	AVCodec *vcode = avcodec_find_decoder(ic->streams[videoStream]->codecpar->codec_id);
 	AVCodec *acode = avcodec_find_decoder(ic->streams[audioStream]->codecpar->codec_id);
 	
-	//´´½¨½âÂëÆ÷ÉÏÏÂÎÄ
+	//åˆ›å»ºè§£ç å™¨ä¸Šä¸‹æ–‡
 	AVCodecContext *vcc = avcodec_alloc_context3(vcode);
-	//ÅäÖÃ½âÂëÆ÷²ÎÊı
+	//é…ç½®è§£ç å™¨å‚æ•°
 	avcodec_parameters_to_context(vcc, ic->streams[videoStream]->codecpar);
-	//ÉèÖÃ½âÂëÏß³Ì
+	//è®¾ç½®è§£ç çº¿ç¨‹
 	vcc->thread_count = std::thread::hardware_concurrency();
-	//´ò¿ª½âÂëÆ÷
+	//æ‰“å¼€è§£ç å™¨
 	ret = avcodec_open2(vcc, 0, 0);
 
 	AVCodecContext *acc = avcodec_alloc_context3(acode);

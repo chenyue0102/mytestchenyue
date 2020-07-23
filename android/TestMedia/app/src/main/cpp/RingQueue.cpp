@@ -18,7 +18,7 @@
     REFM(isFull)
 
 struct RingQueueData{
-    std::mutex mutex;
+    mutable std::mutex mutex;
     size_t bufferLen;
     size_t readIndex;
     size_t writeIndex;

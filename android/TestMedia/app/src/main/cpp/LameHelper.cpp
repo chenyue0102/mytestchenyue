@@ -455,7 +455,8 @@ int LameHelper::decode(void *buffer, size_t bufLen) {
         short *tmpBuf = reinterpret_cast<short*>(buffer);
         for (int i = 0; i < readLen; i++){
             memcpy(tmpBuf++, &mpg123pcm[0][i], sizeof(short));
-            if (mp3str.stereo > 1){
+            //通道00 - Stereo 01 - Joint Stereo 10 - Dual channel   11 - Single channel
+            if (mp3str.stereo != 0b11){
                 memcpy(tmpBuf++, &mpg123pcm[1][i], sizeof(short));
             }
         }
