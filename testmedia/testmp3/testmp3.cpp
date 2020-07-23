@@ -134,9 +134,9 @@ struct Mp3VBRHeader {
 	char type[4];//Xing or Info 
 	unsigned char reserved[3];
 	unsigned char flags;
-	//unsigned int frameCount;//总帧数，big endian
+	//unsigned int frameCount;	//总帧数，big endian
 	//unsigned int fileSize;	//文件长度big endian
-	//unsigned char toc[100];		//TOC表，文件内快速寻址的位置索引，用于seek
+	//unsigned char toc[100];	//TOC表，文件内快速寻址的位置索引，用于seek
 	//unsigned int quaility;	//质量，0最好，100最差，big endian
 };
 
@@ -225,6 +225,9 @@ int getBitRate(const Mp3DataFrameHeader &header) {
 			0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320, 0xffffffff };
 		bitRate = bitRates[header.bitRateIndex];
 	}
+	else {
+		assert(false);
+	}
 	if (bitRate == 0xffffffff) {
 		bitRate = 0;
 	}
@@ -255,7 +258,10 @@ struct Mp3Info {
 	size_t checkLen;
 	size_t curFrameReadLen;
 
+	uint32_t firstAudioOffset;//第一个音频帧的偏移
+
 	Mp3DataFrameHeader header;//当前帧头部
+	Mp3DataFrameHeader vbrDataFrameHeader;
 
 	bool haveParseFirstFrame;
 	Mp3VBRHeader vbrHeader;//如果第一个帧包含vbr，则存储vbr
@@ -305,6 +311,8 @@ void parseXingHeader(Mp3Info &info) {
 		info.quaility = ByteSwap::betoh(info.quaility);
 		info.curFrameReadLen += sizeof(info.quaility);
 	}
+
+	info.vbrDataFrameHeader = header;
 }
 
 void parseFrame(Mp3Info &info) {
@@ -322,17 +330,27 @@ void parseFrame(Mp3Info &info) {
 	printf("\n");
 	printHeader(header);
 
+	bool needSetFirstAudioOffset = false;
 	if (!info.haveParseFirstFrame) {
 		info.haveParseFirstFrame = true;
+
 		int seekOffset = getVBROffset(header);
 		fseek(info.file, seekOffset, SEEK_CUR);
 		info.curFrameReadLen += seekOffset;
+
 		info.checkLen = fread(info.szCheck, 1, 4, info.file);
 		if (strncmp(reinterpret_cast<const char*>(info.szCheck), XING_NAME, 4) == 0) {
 			parseXingHeader(info);
+			needSetFirstAudioOffset = true;
 		}
 		else if (strncmp(reinterpret_cast<const char*>(info.szCheck), INFO_NAME, 4) == 0) {
 			parseXingHeader(info);
+			needSetFirstAudioOffset = true;
+		}
+		else {
+			info.curFrameReadLen += info.checkLen;
+			info.firstAudioOffset = ftell(info.file);
+			info.firstAudioOffset -= info.curFrameReadLen;
 		}
 	}
 
@@ -344,6 +362,9 @@ void parseFrame(Mp3Info &info) {
 	int musicSecond = totalSampleCount / sampleRate;
 
 	fseek(info.file, frameLen - info.curFrameReadLen, SEEK_CUR);
+	if (needSetFirstAudioOffset) {
+		info.firstAudioOffset = ftell(info.file);
+	}
 }
 
 struct Mp3ApeTagExHeader {
@@ -576,6 +597,15 @@ void parseID3V2Frame(Mp3Info &info, uint32_t totalSize) {
 				throw - 1;
 			}
 			info.curFrameReadLen += value.size();
+			/*
+			$00 – ISO-8859-1 (LATIN-1, Identical to ASCII for values smaller than 0x80).
+			$01 – UCS-2 encoded Unicode with BOM, in ID3v2.2 and ID3v2.3.
+			$02 – UTF-16BE encoded Unicode without BOM, in ID3v2.4.
+			$03 – UTF-8 encoded Unicode, in ID3v2.4.
+			*/
+			if (value[0] >= 0 && value[0] <= 0x03) {
+				value.erase(value.begin());
+			}
 			printf("id3v2 frame %s: %s\n", std::string(frame.frame, 4).c_str(), value.c_str());
 		}
 		else {
@@ -603,9 +633,11 @@ void parseID3V2(Mp3Info &info) {
 			throw - 1;
 		}
 		framesSize -= sizeof(Mp3ID3V2HeaderExtended);
+		assert(false);
 	}
 	if (id3V2Header.flag & 0b00010000) {
 		framesSize -= 10;
+		assert(false);
 	}
 	info.curFrameReadLen = 0;
 	parseID3V2Frame(info, framesSize);
@@ -680,16 +712,66 @@ void parseMp3(Mp3Info &info) {
 	}
 }
 
+bool seekToFrameHeader(FILE *file) {
+	uint8_t c;
+	while (1 == fread(&c, 1, 1, file)) {
+		if (c == 0xff) {
+			if (1 == fread(&c, 1, 1, file)) {
+				if ((c & 0b11100000) == 0b11100000) {
+					fseek(file, -2, SEEK_CUR);
+					return true;
+				}
+			}
+		}
+	}
+	return false;
+}
+
 
 int main()
 {
+	Mp3DataFrameHeader tmpHeader;
+	char cc[4] = { 0xFF, 0xFB, 0xb4, 0x40 };
+	memcpy(&tmpHeader, cc, sizeof(tmpHeader));
+
+	int frameLen2 = int(144 * getBitRate(tmpHeader) / getSampleRate(tmpHeader) + getPaddingCount(tmpHeader));
+
+
 	long curPos = 0;
 	Mp3Info info = Mp3Info();
-	info.file = fopen("d:/third.mp3", "rb");
+	info.file = fopen("d:/test2.mp3", "rb");
 	parseMp3(info);
+	
+
+	auto &header = info.vbrDataFrameHeader;
+
+	int paddingBytes = getPaddingCount(header);
+	int sampleRate = getSampleRate(header);
+	int bitRate = getBitRate(header);
+	int frameLen = int(144 * bitRate / sampleRate + paddingBytes);
+	int sampleCountPerFrame = getSampleCountPerFrame(header);
+	int totalSampleCount = info.frameCount * sampleCountPerFrame;
+	int totalSecond = totalSampleCount / sampleRate;
+
+	int seekSecond = 30;
+	int tocIndex = seekSecond * 100 / totalSecond;
+	uint8_t tocValue = info.toc[tocIndex];
+	double offsetPercent = (double)tocValue / 256;
+	int offsetSampleCount = offsetPercent * totalSampleCount;
+	int offsetFrameCount = offsetSampleCount / sampleCountPerFrame;
+	int offset = offsetFrameCount * frameLen + info.firstAudioOffset;
+
+
+	
+	fseek(info.file, offset, SEEK_SET);
+	if (!seekToFrameHeader(info.file)) {
+		assert(false);
+	}
+
+	parseMp3(info);
+
 	fclose(info.file);
 	info.file = NULL;
-	
 	return 0;
 }
 
