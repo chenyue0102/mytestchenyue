@@ -1,7 +1,19 @@
 CC=gcc
-target:TestObjectC.m
-	$(CC) `gnustep-config --objc-flags` -Wl,--no-as-needed -I/usr/include/GNUstep -lgnustep-base -lobjc -fconstant-string-class=NSConstantString TestObjectC.m -o test
+CFLAGS=`gnustep-config --objc-flags` -Wl,--no-as-needed
+LDFLAGS=-lgnustep-base -lobjc -fconstant-string-class=NSConstantString
+INCLUDE=-I/usr/include/GNUstep
+test:libanimal.a TestObjectC.m
+	$(CC) $(CFLAGS) $(INCLUDE) -I./ -L./ $(LDFLAGS) -lanimal TestObjectC.m -o test
+	rm -rf *.a
+	rm -rf *.o
+	rm -rf *.d
 
+libanimal.a:Animal.m
+	$(CC) $(CFLAGS) $(INCLUDE) $(LDFLAGS) -c Animal.m -o libanimal.a	
+	
+	
 clean:
-	rm -rf test.*
-	rm -rf test
+	rm -rf *.a
+	rm -rf *.o
+	rm -rf *.d
+	rm -f test
