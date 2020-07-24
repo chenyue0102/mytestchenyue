@@ -2,6 +2,13 @@
 #import "Animal.h"
 
 @implementation Animal
+
++(id)createAnimal:(int)age :(NSString*)name{
+	NSLog(@"createAnimal begin");
+	Animal *animal = [[Animal alloc]init : age : name];
+	return animal;
+}
+
 -(id)init:(int)age : (NSString*) name{
 	mAge = age;
 	mName = name;
