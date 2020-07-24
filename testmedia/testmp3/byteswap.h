@@ -42,6 +42,14 @@ inline uint32_t byteSwap(uint32_t n) {
 #define letoh htole
 #define betoh htobe
 
+inline unsigned char getField(unsigned char allField, unsigned char mask, uint32_t shift) {
+	return (allField & mask) >> shift;
+}
+
+inline unsigned char setField(unsigned char allField, unsigned char value, unsigned char mask, uint32_t shift) {
+	return (allField & (~mask)) | ((value << shift) & mask);
+}
+
 inline uint16_t htole(uint16_t n) {
 	if (getByteOrder() == LITTLE_ENDIAN) {
 		return n;

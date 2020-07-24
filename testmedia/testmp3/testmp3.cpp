@@ -9,11 +9,69 @@
 #include <stdint.h>
 #include "byteswap.h"
 
-#define	LITTLE_ENDIAN	1234
-#define	BIG_ENDIAN		4321
-#define BYTE_ORDER LITTLE_ENDIAN
+#define MASK_FRAME_SYNC_FLAG2 0b11100000
+#define SHIFT_FRAME_SYNC_FLAG2 5
 
+#define MASK_MPEG_VERSION 0b00011000
+#define SHIFT_MPEG_VERSION 3
 
+#define MASK_LAYER_VERSION 0b00000110
+#define SHIFT_LAYER_VERSION 1
+
+#define MASK_CRC 0b00000001
+#define SHIFT_CRC 0
+
+#define MASK_BIT_RATE_INDEX 0b11110000
+#define SHIFT_BIT_RATE_INDEX 4
+
+#define MASK_SAMPLE_RATE_INDEX 0b00001100
+#define SHIFT_SAMPLE_RATE_INDEX 2
+
+#define MASK_PADDING_BIT 0b00000010
+#define SHIFT_PADDING_BIT 1
+
+#define MASK_PRIVATE_BIT 0b00000001
+#define SHIFT_PRIVATE_BIT 0
+
+#define MASK_CHANNEL_MODE 0b11000000
+#define SHIFT_CHANNEL_MODE 6
+
+#define MASK_EXTERN_BITS 0b00110000
+#define SHIFT_EXTERN_BITS 4
+
+#define MASK_COPY_RIGHT_BIT 0b00001000
+#define SHIFT_COPY_RIGHT_BIT 3
+
+#define MASK_ORIGINAL_BIT 0b00000100
+#define SHIFT_ORIGINAL_BIT 2
+
+#define MASK_EMPHA_SIZE 0b00000011
+#define SHIFT_EMPHA_SIZE 0
+
+struct Mp3DataFrameHeader {
+	unsigned char frameSyncFlag1;//固定为0xff
+	//0b aaabbccd
+	//aaa frameSyncFlag2,每位固定为1，0b111 
+	//bb mpegVersion 00-MPEG 2.5   01-未定义     10-MPEG 2     11-MPEG 1
+	//cc layerVersion Layer 00-未定义      01-Layer 3     10-Layer 2      11-Layer 1
+	//d crc 校验位 0-校验        1-不校验
+	unsigned char versionFlag;	
+	//0b aaaabbcd
+	//aaaa bitRateIndex 比特率索引
+	//bb sampleRateIndex 采样率索引
+	//c paddingBit 是否填充，1 填充，0 不填充
+	//d privateBit 私有
+	unsigned char rateFlag;
+	//0b aabbcdee
+	//aa channelMode 通道00 - Stereo 01 - Joint Stereo 10 - Dual   11 - Single
+	//bb externBits
+	//c copyRightBit 0-不合法   1-合法
+	//d originalBit 0-非原版   1-原版
+	//ee emphasize 用于声音经降噪压缩后再补偿的分类，很少用到，今后也可能不会用。	00 - 未定义     01 - 50 / 15ms     10 - 保留       11 - CCITT J.17
+	unsigned char channelFlag;
+};
+
+#if 0
 struct Mp3DataFrameHeader {
 	unsigned char frameSyncFlag1;//固定为0xff
 #if BYTE_ORDER == BIG_ENDIAN
@@ -52,9 +110,15 @@ struct Mp3DataFrameHeader {
 	unsigned char channelMode : 2;//通道00 - Stereo 01 - Joint Stereo 10 - Dual   11 - Single
 #endif
 };
+#endif
 
 void printHeader(const Mp3DataFrameHeader &header) {
-	switch (header.mpegVersion) {
+	unsigned char mpegVersion = ByteSwap::getField(header.versionFlag, MASK_MPEG_VERSION, SHIFT_MPEG_VERSION);
+	unsigned char layerVersion = ByteSwap::getField(header.versionFlag, MASK_LAYER_VERSION, SHIFT_LAYER_VERSION);
+	unsigned char crc = ByteSwap::getField(header.versionFlag, MASK_CRC, SHIFT_CRC);
+	unsigned char bitRateIndex = ByteSwap::getField(header.rateFlag, MASK_BIT_RATE_INDEX, SHIFT_BIT_RATE_INDEX);
+	unsigned char sampleRateIndex = ByteSwap::getField(header.rateFlag, MASK_SAMPLE_RATE_INDEX, SHIFT_SAMPLE_RATE_INDEX);
+	switch (mpegVersion) {
 	case 0b00:
 		printf("mpegVersion: MPEG 2.5\n");
 		break;
@@ -68,7 +132,7 @@ void printHeader(const Mp3DataFrameHeader &header) {
 		printf("mpegVersion: MPEG 1\n");
 		break;
 	}
-	switch (header.layerVersion) {
+	switch (layerVersion) {
 	case 0b00:
 		printf("layerVersion: Unknown\n");
 		break;
@@ -82,20 +146,20 @@ void printHeader(const Mp3DataFrameHeader &header) {
 		printf("layerVersion: Layer 1\n");
 		break;
 	}
-	if (0 == header.crc) {
+	if (0 == crc) {
 		printf("crc: no\n");
 	}
 	else {
 		printf("crc: yes\n");
 	}
 	int bitRate = 0;
-	if (header.mpegVersion == 0b00 && header.layerVersion == 0b11) {
+	if (mpegVersion == 0b00 && layerVersion == 0b11) {
 
 	}
-	if (header.mpegVersion == 0b11 && header.layerVersion == 0b01) {
+	if (mpegVersion == 0b11 && layerVersion == 0b01) {
 		const unsigned int bitRates[] = {
 			0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320, 0xffffffff };
-		bitRate = bitRates[header.bitRateIndex];
+		bitRate = bitRates[bitRateIndex];
 	}
 	std::string strBitRate;
 	if (0 == bitRate) {
@@ -108,8 +172,8 @@ void printHeader(const Mp3DataFrameHeader &header) {
 		strBitRate = std::to_string(bitRate);
 	}
 	printf("bitRate: %s\n", strBitRate.c_str());
-	if (header.mpegVersion == 0b11) {
-		switch (header.sampleRateIndex) {
+	if (mpegVersion == 0b11) {
+		switch (sampleRateIndex) {
 		case 0b00:
 			printf("sampleRate: 44.1kHz\n");
 			break;
@@ -141,16 +205,18 @@ struct Mp3VBRHeader {
 };
 
 int getVBROffset(const Mp3DataFrameHeader &header) {
-	if (header.mpegVersion == 0b11) {//MPEG 1
-		if (header.channelMode == 0b11) {//单声道
+	unsigned char mpegVersion = ByteSwap::getField(header.versionFlag, MASK_MPEG_VERSION, SHIFT_MPEG_VERSION);
+	unsigned char channelMode = ByteSwap::getField(header.channelFlag, MASK_CHANNEL_MODE, SHIFT_CHANNEL_MODE);
+	if (mpegVersion == 0b11) {//MPEG 1
+		if (channelMode == 0b11) {//单声道
 			return 18;
 		}
 		else {
 			return 32;
 		}
 	}
-	else if (header.mpegVersion == 0b00 || header.mpegVersion == 0b10) {//MPEG 2.5 MPEG 2
-		if (header.channelMode == 0b11) {//单声道
+	else if (mpegVersion == 0b00 || mpegVersion == 0b10) {//MPEG 2.5 MPEG 2
+		if (channelMode == 0b11) {//单声道
 			return 9;
 		}
 		else {
@@ -165,8 +231,10 @@ int getVBROffset(const Mp3DataFrameHeader &header) {
 
 //一个mp3帧的采样数
 int getSampleCountPerFrame(const Mp3DataFrameHeader &header) {
-	if (header.mpegVersion == 0b11) {//MPEG 1
-		switch (header.layerVersion) {
+	unsigned char mpegVersion = ByteSwap::getField(header.versionFlag, MASK_MPEG_VERSION, SHIFT_MPEG_VERSION);
+	unsigned char layerVersion = ByteSwap::getField(header.versionFlag, MASK_LAYER_VERSION, SHIFT_LAYER_VERSION);
+	if (mpegVersion == 0b11) {//MPEG 1
+		switch (layerVersion) {
 		case 0b01://Layer 3
 			return 1152;
 		case 0b10://Layer 2
@@ -178,8 +246,8 @@ int getSampleCountPerFrame(const Mp3DataFrameHeader &header) {
 			return 0;
 		}
 	}
-	else if (header.mpegVersion == 0b00 || header.mpegVersion == 0b10) {//MPEG 2.5 MPEG 2
-		switch (header.layerVersion) {
+	else if (mpegVersion == 0b00 || mpegVersion == 0b10) {//MPEG 2.5 MPEG 2
+		switch (layerVersion) {
 		case 0b01://Layer 3
 			return 576;
 		case 0b10://Layer 2
@@ -199,8 +267,10 @@ int getSampleCountPerFrame(const Mp3DataFrameHeader &header) {
 
 //采样率
 int getSampleRate(const Mp3DataFrameHeader &header) {
-	if (header.mpegVersion == 0b11) {//11-MPEG 1
-		switch (header.sampleRateIndex) {
+	unsigned char mpegVersion = ByteSwap::getField(header.versionFlag, MASK_MPEG_VERSION, SHIFT_MPEG_VERSION);
+	unsigned char sampleRateIndex = ByteSwap::getField(header.rateFlag, MASK_SAMPLE_RATE_INDEX, SHIFT_SAMPLE_RATE_INDEX);
+	if (mpegVersion == 0b11) {//11-MPEG 1
+		switch (sampleRateIndex) {
 		case 0b00:
 			return 44100;
 		case 0b01:
@@ -219,11 +289,14 @@ int getSampleRate(const Mp3DataFrameHeader &header) {
 }
 
 int getBitRate(const Mp3DataFrameHeader &header) {
+	unsigned char mpegVersion = ByteSwap::getField(header.versionFlag, MASK_MPEG_VERSION, SHIFT_MPEG_VERSION);
+	unsigned char layerVersion = ByteSwap::getField(header.versionFlag, MASK_LAYER_VERSION, SHIFT_LAYER_VERSION);
+	unsigned char bitRateIndex = ByteSwap::getField(header.rateFlag, MASK_BIT_RATE_INDEX, SHIFT_BIT_RATE_INDEX);
 	int bitRate = 0;
-	if (header.mpegVersion == 0b11 && header.layerVersion == 0b01) {
+	if (mpegVersion == 0b11 && layerVersion == 0b01) {
 		const unsigned int bitRates[] = {
 			0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320, 0xffffffff };
-		bitRate = bitRates[header.bitRateIndex];
+		bitRate = bitRates[bitRateIndex];
 	}
 	else {
 		assert(false);
@@ -235,11 +308,13 @@ int getBitRate(const Mp3DataFrameHeader &header) {
 }
 
 int getPaddingCount(const Mp3DataFrameHeader &header) {
-	if (0 == header.paddingBit) {
+	unsigned char layerVersion = ByteSwap::getField(header.versionFlag, MASK_LAYER_VERSION, SHIFT_LAYER_VERSION);
+	unsigned char paddingBit = ByteSwap::getField(header.rateFlag, MASK_PADDING_BIT, SHIFT_PADDING_BIT);
+	if (0 == paddingBit) {
 		return 0;
 	}
 	else {
-		switch (header.layerVersion) {
+		switch (layerVersion) {
 		case 0b11://Layer 1
 			return 32 / 8;
 		case 0b01://Layer 3
@@ -739,7 +814,7 @@ int main()
 
 	long curPos = 0;
 	Mp3Info info = Mp3Info();
-	info.file = fopen("d:/test2.mp3", "rb");
+	info.file = fopen("d:/test.mp3", "rb");
 	parseMp3(info);
 	
 
