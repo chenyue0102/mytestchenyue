@@ -28,9 +28,10 @@ add_library( # Sets the name of the library.
             Mp3Player.cpp
             TaskPool.cpp
             RingQueue.cpp
+            Mp3Parse.cpp
             JniHelper.cpp
             SystemTime.cpp
-            Log.cpp
+        Log.cpp
         )
 
 add_library(libmp3lame STATIC IMPORTED)
