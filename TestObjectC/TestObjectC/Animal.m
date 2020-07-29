@@ -3,15 +3,17 @@
 
 @implementation Animal
 
-+(id)createAnimal:(int)age :(NSString*)name{
++(id)createAnimal:(int)age initName:(NSString*)name{
 	NSLog(@"createAnimal begin");
-	Animal *animal = [[Animal alloc]init : age : name];
+	Animal *animal = [[Animal alloc]init : age initName: name];
 	return animal;
 }
 
--(id)init:(int)age : (NSString*) name{
-	mAge = age;
-	mName = name;
+-(id)init:(int)age initName: (NSString*)name {
+	if ((self = [super init])){
+		mAge = age;
+		mName = name;
+	}
 	return self;
 }
 
@@ -30,4 +32,9 @@
 -(void) setName:(NSString*) name{
 	mName = name;
 }
+
+-(void) move{
+	NSLog(@"move\n");
+}
+
 @end

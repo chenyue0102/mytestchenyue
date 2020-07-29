@@ -6,10 +6,11 @@
 	@public
 	NSString *mName;
 }
-+(id)createAnimal: (int)age : (NSString*)name;
--(id)init:(int)age : (NSString*)name;
++(id)createAnimal: (int)age initName: (NSString*)name;
+-(id)init:(int)age initName: (NSString*)name;
 -(int) age;
 -(void) setAge:(int) age;
 -(NSString*) name;
 -(void) setName:(NSString*) name;
+-(void) move;
 @end
