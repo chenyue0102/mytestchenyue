@@ -7,20 +7,19 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.opengl.GLSurfaceView;
-import android.os.Build;
 import android.text.TextPaint;
 import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.SurfaceHolder;
-import android.view.SurfaceView;
-
-import androidx.annotation.RequiresApi;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class MySurfaceView extends GLSurfaceView implements SurfaceHolder.Callback{
+public class MySurfaceView extends GLSurfaceView
+        //implements SurfaceHolder.Callback
+        {
     private SurfaceHolder surfaceHolder;
     private AtomicBoolean mExit = new AtomicBoolean(false);
+    private GLSurfaceView.Renderer myGLRender;
 
     public MySurfaceView(Context context){
         this(context, null);
@@ -32,8 +31,13 @@ public class MySurfaceView extends GLSurfaceView implements SurfaceHolder.Callba
     }
 
     private void initView(){
-        surfaceHolder = getHolder();
-        surfaceHolder.addCallback(this);
+//        surfaceHolder = getHolder();
+//        surfaceHolder.addCallback(this);
+        setEGLContextClientVersion(3);
+        //myGLRender = new MyGLRender();
+        myGLRender = new MyNDKGLRender();
+        setRenderer(myGLRender);
+        setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
     }
 
     private void doDraw(){
@@ -51,30 +55,30 @@ public class MySurfaceView extends GLSurfaceView implements SurfaceHolder.Callba
         surfaceHolder.unlockCanvasAndPost(canvas);
     }
 
-    @Override
-    public void surfaceCreated(SurfaceHolder holder) {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try{
-                    while (!mExit.get()){
-                        doDraw();
-                        Thread.sleep(100);
-                    }
-                }catch (Exception e){
-                    e.printStackTrace();
-                }
-            }
-        }).start();
-    }
+ //   @Override
+//    public void surfaceCreated(SurfaceHolder holder) {
+//        new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//                try{
+//                    while (!mExit.get()){
+//                        doDraw();
+//                        Thread.sleep(100);
+//                    }
+//                }catch (Exception e){
+//                    e.printStackTrace();
+//                }
+//            }
+//        }).start();
+    //}
 
-    @Override
-    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-
-    }
-
-    @Override
-    public void surfaceDestroyed(SurfaceHolder holder) {
-
-    }
+//    @Override
+//    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+//
+//    }
+//
+//    @Override
+//    public void surfaceDestroyed(SurfaceHolder holder) {
+//
+//    }
 }
