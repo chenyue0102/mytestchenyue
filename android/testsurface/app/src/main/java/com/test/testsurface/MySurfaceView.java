@@ -34,8 +34,8 @@ public class MySurfaceView extends GLSurfaceView
 //        surfaceHolder = getHolder();
 //        surfaceHolder.addCallback(this);
         setEGLContextClientVersion(3);
-        //myGLRender = new MyGLRender();
-        myGLRender = new MyNDKGLRender();
+        myGLRender = new MyGLRender();
+        //myGLRender = new MyNDKGLRender();
         setRenderer(myGLRender);
         setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
     }

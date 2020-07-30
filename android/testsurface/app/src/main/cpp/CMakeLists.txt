@@ -44,4 +44,5 @@ target_link_libraries( # Specifies the target library.
                        # Links the target library to the log library
                        # included in the NDK.
                         GLESv3
+        camera2ndk
                        ${log-lib} )

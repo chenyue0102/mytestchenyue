@@ -2,6 +2,11 @@
 #include <string>
 #include <assert.h>
 #include <GLES3/gl3.h>
+#include <camera/NdkCameraManager.h>
+#include <camera/NdkCameraError.h>
+#include <camera/NdkCameraDevice.h>
+#include <camera/NdkCameraMetadataTags.h>
+#include <camera/NdkCameraMetadata.h>
 #include "OpenGLHelper.h"
 
 extern "C" JNIEXPORT jstring JNICALL
@@ -81,4 +86,48 @@ Java_com_test_testsurface_MyNDKGLRender_drawFrame(JNIEnv *env, jobject thiz) {
 
     glBindVertexArray(0);
     glUseProgram(0);
+}
+ACameraManager *g_cameraManager = nullptr;
+ACameraIdList *g_ACameraIdList = nullptr;
+std::string g_cameraId;
+static void EnumerateCamera(){
+    camera_status_t status = ACameraManager_getCameraIdList(g_cameraManager, &g_ACameraIdList);
+    assert(status == ACAMERA_OK);
+
+    bool bContinue = true;
+    for (int i = 0; i < g_ACameraIdList->numCameras && bContinue; i++){
+        ACameraMetadata *cameraMetadata = nullptr;
+        status = ACameraManager_getCameraCharacteristics(g_cameraManager, g_ACameraIdList->cameraIds[i], &cameraMetadata);
+        assert(status == ACAMERA_OK);
+        int32_t count = 0;
+        const uint32_t *tags = nullptr;
+        status = ACameraMetadata_getAllTags(cameraMetadata, &count, &tags);
+        assert(status == ACAMERA_OK);
+        for (int tagIdx = 0; tagIdx < count; tagIdx++){
+            if (ACAMERA_LENS_FACING == tags[tagIdx]){
+                ACameraMetadata_const_entry lensInfo = {0};
+                status = ACameraMetadata_getConstEntry(cameraMetadata, tags[tagIdx], &lensInfo);
+                assert(status == ACAMERA_OK);
+                acamera_metadata_enum_android_lens_facing_t facing = static_cast<acamera_metadata_enum_android_lens_facing_t>(lensInfo.data.u8[0]);
+                if (facing == ACAMERA_LENS_FACING_BACK){
+                    g_cameraId = g_ACameraIdList->cameraIds[i];
+                    bContinue = false;
+                    break;
+                }
+            }
+        }
+
+        ACameraMetadata_free(cameraMetadata);
+        cameraMetadata = nullptr;
+    }
+
+    ACameraManager_deleteCameraIdList(g_ACameraIdList);
+    g_ACameraIdList = nullptr;
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_test_testsurface_MainActivity_createCamera(JNIEnv *env, jobject thiz) {
+    g_cameraManager = ACameraManager_create();
+    ACameraManager_openCamera(g_cameraManager, )
 }
