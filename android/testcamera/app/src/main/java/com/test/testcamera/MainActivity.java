@@ -4,19 +4,19 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import android.Manifest;
-import android.app.ActivityManager;
 import android.content.pm.PackageManager;
 import android.graphics.ImageFormat;
 import android.hardware.Camera;
 import android.os.Bundle;
+import android.view.Display;
+import android.view.Surface;
+import android.view.SurfaceView;
 import android.widget.TextView;
 
 import java.io.InputStream;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 
 @SuppressWarnings("deprecation")
 public class MainActivity extends AppCompatActivity implements Camera.PreviewCallback {
@@ -29,6 +29,7 @@ public class MainActivity extends AppCompatActivity implements Camera.PreviewCal
     private static final int REQUEST_CODE = 1;
     private static final int REQUEST_READ_STORAGE_CODE = 2;
     private MySurfaceView glSurfaceView;
+    private SurfaceView surfaceView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,22 +40,14 @@ public class MainActivity extends AppCompatActivity implements Camera.PreviewCal
         TextView tv = findViewById(R.id.sample_text);
         //tv.setText(stringFromJNI());
         glSurfaceView = findViewById(R.id.gl_surface_view);
+        surfaceView = findViewById(R.id.surface_view);
         findViewById(R.id.btn_camera_java).setOnClickListener((v)->checkPermissionAndOpenCamera());
-
-        Timer timer = new Timer();
-        timer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                runOnUiThread(()->{
-                    com.android.tradefed.device.CpuStatsCollector s;
-                    float f = DeviceUtil.getCpuUsed();
-                    tv.setText("cpu:" + f * 100 + "%");
-                });
-            }
-        }, 0, 1000);
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, REQUEST_READ_STORAGE_CODE);
+        }
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_READ_STORAGE_CODE);
         }
     }
 
@@ -99,6 +92,21 @@ public class MainActivity extends AppCompatActivity implements Camera.PreviewCal
     public void onPreviewFrame(byte[] data, Camera camera){
         try{
             glSurfaceView.setBuffer(data);
+//            boolean b = false;
+//            if (b){
+//                if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)){
+//                    File sdDir = Environment.getExternalStorageDirectory();
+//                    String d = sdDir.getAbsolutePath();
+//                    try{
+//                        FileOutputStream fileOutputStream = new FileOutputStream(d + "/1.yuv");
+//                        fileOutputStream.write(data);
+//                        fileOutputStream.close();
+//                    }catch (Exception e){
+//                        e.printStackTrace();
+//                    }
+//
+//                }
+//            }
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -123,10 +131,35 @@ public class MainActivity extends AppCompatActivity implements Camera.PreviewCal
             Camera.Size largestRaw = Collections.max(sizes, new CompareSizesByArea());
             parameters.setPictureSize(largestRaw.width, largestRaw.height);
             Camera.Size previewSize =  parameters.getPreviewSize();
+            Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
+            Camera.getCameraInfo(Camera.CameraInfo.CAMERA_FACING_BACK, cameraInfo);
+            int angle;
+            Display display = getWindowManager().getDefaultDisplay();
+            switch (display.getRotation()) {
+                case Surface.ROTATION_0: // This is display orientation
+                    angle = 90; // This is camera orientation
+                    break;
+                case Surface.ROTATION_90:
+                    angle = 0;
+                    break;
+                case Surface.ROTATION_180:
+                    angle = 270;
+                    break;
+                case Surface.ROTATION_270:
+                    angle = 180;
+                    break;
+                default:
+                    angle = 90;
+                    break;
+            }
+
+            mCamera.setDisplayOrientation(angle);
             mCamera.setParameters(parameters);
             mCamera.setPreviewCallback(this);
+            mCamera.setPreviewDisplay(surfaceView.getHolder());
 
-            glSurfaceView.setInfo(previewSize.width, previewSize.height, ImageFormat.NV21);
+            angle = (360 - cameraInfo.orientation) % 360;
+            glSurfaceView.setInfo(previewSize.width, previewSize.height, ImageFormat.NV21, angle);
 
             mCamera.startPreview();
         }catch (Exception e){

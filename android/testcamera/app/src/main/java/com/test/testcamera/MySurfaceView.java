@@ -23,8 +23,8 @@ public class MySurfaceView extends GLSurfaceView {
         setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
     }
 
-    public void setInfo(int width, int height, int format){
-        myYUVRender.setInfo(width, height, format);
+    public void setInfo(int width, int height, int format, int angle){
+        myYUVRender.setInfo(width, height, format, angle);
     }
 
     public void setBuffer(byte []yuv) throws Exception{

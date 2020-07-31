@@ -3,8 +3,8 @@ package com.test.testcamera;
 import android.graphics.ImageFormat;
 import android.opengl.GLES30;
 import android.opengl.GLSurfaceView;
+import android.opengl.Matrix;
 
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.util.concurrent.locks.Lock;
@@ -18,9 +18,10 @@ public class MyYUVRender implements GLSurfaceView.Renderer {
     private static final String VERTEX = "#version 300 es\n" +
             "in vec3 vertexPosition;\n" +
             "in vec2 texturePosition;\n" +
+            "uniform mat4 matrix;\n" +
             "out vec2 esTexturePosition;\n" +
             "void main(){\n" +
-            "    gl_Position = vec4(vertexPosition, 1.0f);\n" +
+            "    gl_Position = matrix * vec4(vertexPosition, 1.0f);\n" +
             "    esTexturePosition = texturePosition;\n" +
             "}";
 
@@ -34,8 +35,8 @@ public class MyYUVRender implements GLSurfaceView.Renderer {
             "    vec3 yuv, uv, rgb;\n" +
             "    yuv.x = texture(y_texture, esTexturePosition).r;\n" +
             "    uv = texture(uv_texture, esTexturePosition).rgb;\n" +
-            "    yuv.y = uv.r - 0.5f;\n" +
-            "    yuv.z = uv.g - 0.5f;\n" +
+            "    yuv.y = uv.g - 0.5f;\n" +//NV21为v在前u在后，交替
+            "    yuv.z = uv.r - 0.5f;\n" +
             "    rgb = mat3(1.0, 1.0, 1.0,\n" +
             "    0.0, -0.39465, 2.03211,\n" +
             "    1.13983, -0.58060, 0.0) * yuv;\n" +
@@ -43,10 +44,10 @@ public class MyYUVRender implements GLSurfaceView.Renderer {
             "}";
 
     private static final float []vertexs = new float[]{
-            -0.5f, -0.5f, 0.0f,
-            0.5f, -0.5f, 0.0f,
-            -0.5f, 0.5f, 0.0f,
-            0.5f, 0.5f, 0.0f,
+            -1.0f, -1.0f, 0.0f,
+            1.0f, -1.0f, 0.0f,
+            -1.0f, 1.0f, 0.0f,
+            1.0f, 1.0f, 0.0f,
             //texture position
             0.0f, 0.0f,
             1.0f, 0.0f,
@@ -57,6 +58,7 @@ public class MyYUVRender implements GLSurfaceView.Renderer {
     private int mWidth;
     private int mHeight;
     private int mFormat;
+    private int mAngle;
     private int mProgram;
     private int []mBuffer = new int[1];
     private int []mVertexArray = new int[1];
@@ -66,17 +68,19 @@ public class MyYUVRender implements GLSurfaceView.Renderer {
     private ByteBuffer mYBuffer;
     private ByteBuffer mUVBuffer;
     private boolean mYUBBufferDirty;
+    private float []mMatrix;
 
     public MyYUVRender(){
 
     }
 
-    public void setInfo(int width, int height, int format){
+    public void setInfo(int width, int height, int format, int angle){
         try{
             mLock.lock();
             mWidth = width;
             mHeight = height;
             mFormat = format;
+            mAngle = angle;
         }finally {
             mLock.unlock();
         }
@@ -145,6 +149,12 @@ public class MyYUVRender implements GLSurfaceView.Renderer {
         }else{
             throw new Exception("");
         }
+
+        int matrixLocation = GLES30.glGetUniformLocation(mProgram, "matrix");
+        OpenGLHelper.checkError();
+        GLES30.glUniformMatrix4fv(matrixLocation, 1, false, mMatrix, 0);;
+        OpenGLHelper.checkError();
+
         GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, 4);
         GLES30.glFlush();
         OpenGLHelper.checkError();
@@ -208,6 +218,16 @@ public class MyYUVRender implements GLSurfaceView.Renderer {
             setTextureTexParameter(mTextures[1], GLES30.GL_RG, GLES30.GL_RG, GLES30.GL_LINEAR, mWidth / 2, mHeight / 2);
         }
 
+        mMatrix = new float[]{
+                1.0f, 0.0f, 0.0f, 0.0f,
+                0.0f, 1.0f, 0.0f, 0.0f,
+                0.0f, 0.0f, 1.0f, 0.0f,
+                0.0f, 0.0f, 0.0f, 1.0f,
+        };
+        if (0 != mAngle){
+            Matrix.rotateM(mMatrix, 0, 180, 0.0f, 1.0f, 0.0f);
+            Matrix.rotateM(mMatrix, 0, mAngle, 0.0f, 0.0f, 1.0f);
+        }
         mInit = true;
     }
 
