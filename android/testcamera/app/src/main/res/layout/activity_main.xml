@@ -12,10 +12,20 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal">
         <Button
-            android:id="@+id/btn_camera_java"
+            android:id="@+id/btn_camera_preview_java"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="java"/>
+            android:text="preview"/>
+        <Button
+            android:id="@+id/btn_camera_record_java"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="record"/>
+        <Button
+            android:id="@+id/btn_stop_record_java"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="stop record"/>
         <TextView
             android:id="@+id/sample_text"
             android:layout_width="wrap_content"
@@ -31,9 +41,10 @@
         android:id="@+id/gl_surface_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:visibility="gone"
         />
     <SurfaceView android:id="@+id/surface_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:visibility="gone"/>
+        android:visibility="visible"/>
 </LinearLayout>
