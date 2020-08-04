@@ -10,20 +10,17 @@
 #include "Log.h"
 #include "RingQueue.h"
 #include "byteswap.h"
+#include "AudioRecordLogic.h"
 
 OpenSLESHelper g_OpenSLESHelper;
 TaskPool g_TaskPool;
-RingQueue g_RingQueue = RingQueue(1024 * 1024 * 2);
-std::mutex g_mutex;
-std::condition_variable g_cv;
 std::string g_saveFile;
 JavaVM *g_JavaVM = 0;
 const int g_bufSize = 2048;
 uint8_t g_buffer[g_bufSize] = {0};
-std::atomic<bool> g_exit;
+AudioRecordLogic g_AudioRecordLogic;
 
 //小端对齐
-
 struct wav_fmt_header_t{
     char chunkID[4]; //"fmt " = 0x20746D66
     uint32_t chunkSize; //16 [+ sizeof(wExtraFormatBytes) + wExtraFormatBytes]
@@ -77,76 +74,13 @@ void SLAPIENTRY AndroidSimpleBufferQueueCallback(
         SLAndroidSimpleBufferQueueItf caller,
         void *pContext){
     SC(Log).e("AndroidSimpleBufferQueueCallback");
-    {
-        std::lock_guard<std::mutex> lk(g_mutex);
-        g_RingQueue.put(g_buffer, g_bufSize);
-        g_cv.notify_one();
-    }
-
+    g_AudioRecordLogic.appendData(g_buffer, g_bufSize);
     g_OpenSLESHelper.enqueueRecord(g_buffer, g_bufSize);
 }
 
-void adjustPCMWavHeader(FILE *file, size_t dataCount, uint16_t numChannels, uint32_t sampleRate, uint16_t bitsPerSample){
-    wav_header_t wavHeader = {0};
-    memcpy(wavHeader.chunkID, "RIFF", 4);
-    wavHeader.chunkSize = ByteSwap::htole32(sizeof(wav_header_t) - 8 + sizeof(chunk_t) + dataCount);
-    memcpy(wavHeader.format, "WAVE", 4);
-    memcpy(wavHeader.fmt.chunkID, "fmt ", 4);
-    wavHeader.fmt.chunkSize = ByteSwap::htole32(sizeof(wav_fmt_header_t) - 8);
-    wavHeader.fmt.audioFormat = ByteSwap::htole16(0x0001);
-    wavHeader.fmt.numChannels = ByteSwap::htole16(numChannels);
-    wavHeader.fmt.sampleRate = ByteSwap::htole32(sampleRate);
-    uint32_t byteRate = sampleRate * numChannels * bitsPerSample / 8;
-    wavHeader.fmt.byteRate = ByteSwap::htole32(byteRate);
-    uint16_t blockAlign = bitsPerSample * numChannels / 8;
-    wavHeader.fmt.blockAlign = ByteSwap::htole16(blockAlign);
-    wavHeader.fmt.bitsPerSample = ByteSwap::htole16(bitsPerSample);
-    fseek(file, 0, SEEK_SET);
-    fwrite(&wavHeader, 1, sizeof(wavHeader), file);
-    chunk_t chunk = {0};
-    memcpy(chunk.chunkID, "data", 4);
-    chunk.chunkSize = ByteSwap::htole32(dataCount);
-    fwrite(&chunk, 1, sizeof(chunk), file);
-}
-
-void saveFile(){
-    char szTmpBuffer[1024] = {0};
-    FILE *file = fopen(g_saveFile.c_str(), "wb+");
-    fseek(file, sizeof(wav_header_t) + sizeof(chunk_t), SEEK_SET);
-    size_t saveCount = 0;
-    size_t dataSize = 0;
-    if (nullptr != file){
-        while(!g_exit){
-            std::unique_lock<std::mutex> lk(g_mutex);
-            g_cv.wait(lk, [](){return g_exit || g_RingQueue.getDataSize() > 0;});
-            lk.unlock();
-            while(!g_exit && g_RingQueue.getDataSize() > 0){
-                dataSize = g_RingQueue.get(szTmpBuffer, 1024);
-                if (dataSize > 0){
-                    if (fwrite(szTmpBuffer, 1, dataSize, file) != dataSize){
-                        assert(false);
-                        break;
-                    }
-                    saveCount += dataSize;
-                }else{
-                    break;
-                }
-            }
-        }
-        while(g_RingQueue.getDataSize() > 0 && (dataSize = g_RingQueue.get(szTmpBuffer, 1024)) > 0){
-            if (fwrite(szTmpBuffer, 1, dataSize, file) != dataSize){
-                assert(false);
-                break;
-            }
-            saveCount += dataSize;
-        }
-        adjustPCMWavHeader(file, saveCount, 2, 44100, 16);
-        fclose(file);
-    }
-}
-
 void startRecord(){
-    g_TaskPool.AddTask(&saveFile);
+    g_AudioRecordLogic.setFileFormat(AudioRecordLogic::WAV, 2, 44100, 16);
+    g_AudioRecordLogic.startRecord(g_saveFile.c_str());
     g_OpenSLESHelper.createEngine();
     g_OpenSLESHelper.createRecord(&RecordCallback, nullptr, &AndroidSimpleBufferQueueCallback, nullptr);
     g_OpenSLESHelper.enqueueRecord(g_buffer, g_bufSize);
@@ -154,11 +88,10 @@ void startRecord(){
 }
 
 void stopRecord(){
-    g_exit = true;
-    g_cv.notify_one();
     g_OpenSLESHelper.setRecordState(SL_RECORDSTATE_STOPPED);
     g_OpenSLESHelper.destroyRecord();
     g_OpenSLESHelper.destroy();
+    g_AudioRecordLogic.stopRecord();
 }
 
 extern "C"
