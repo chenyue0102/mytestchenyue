@@ -79,7 +79,9 @@ void SLAPIENTRY AndroidSimpleBufferQueueCallback(
 }
 
 void startRecord(){
-    g_AudioRecordLogic.setFileFormat(AudioRecordLogic::WAV, 2, 44100, 16);
+    g_AudioRecordLogic.setOutputFormat(AudioRecordLogic::MP3);
+    g_AudioRecordLogic.setInputStreamInfo(2, 44100, 16);
+    g_AudioRecordLogic.setMp3BRate(256);
     g_AudioRecordLogic.startRecord(g_saveFile.c_str());
     g_OpenSLESHelper.createEngine();
     g_OpenSLESHelper.createRecord(&RecordCallback, nullptr, &AndroidSimpleBufferQueueCallback, nullptr);

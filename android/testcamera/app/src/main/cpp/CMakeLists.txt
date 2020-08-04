@@ -4,7 +4,11 @@
 # Sets the minimum version of CMake required to build the native library.
 
 cmake_minimum_required(VERSION 3.4.1)
-
+set(JNILIBS ${CMAKE_CURRENT_SOURCE_DIR}/../jniLibs/${ANDROID_ABI})
+set(LAME ${CMAKE_CURRENT_SOURCE_DIR}/include/lame)
+include_directories(
+        ${LAME}
+)
 # Creates and names a library, sets it as either STATIC
 # or SHARED, and provides the relative paths to its source code.
 # You can define multiple libraries, and CMake builds them for you.
@@ -24,6 +28,8 @@ add_library( # Sets the name of the library.
             RingQueue.cpp
             Log.cpp)
 
+add_library(libmp3lame STATIC IMPORTED)
+set_target_properties(libmp3lame PROPERTIES IMPORTED_LOCATION ${JNILIBS}/libmp3lame.a)
 # Searches for a specified prebuilt library and stores the path as a
 # variable. Because CMake includes system libraries in the search path by
 # default, you only need to specify the name of the public NDK library
@@ -43,6 +49,7 @@ find_library( # Sets the name of the path variable.
 
 target_link_libraries( # Specifies the target library.
                        native-lib
+        libmp3lame
 
         OpenSLES
         android

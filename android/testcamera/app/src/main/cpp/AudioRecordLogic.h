@@ -19,7 +19,9 @@ public:
     ~AudioRecordLogic();
 
 public:
-    void setFileFormat(int format, uint16_t numChannels, uint32_t sampleRate, uint16_t bitsPerSample);
+    void setOutputFormat(int format);
+    void setMp3BRate(int brate);
+    void setInputStreamInfo(uint16_t numChannels, uint32_t sampleRate, uint16_t bitsPerSample);
     bool startRecord(const char *filePath);
     void stopRecord();
     size_t appendData(const void *data, size_t len);

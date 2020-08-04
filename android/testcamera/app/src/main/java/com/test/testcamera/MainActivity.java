@@ -384,7 +384,7 @@ public class MainActivity extends AppCompatActivity implements Camera.PreviewCal
     }
 
     private void onRecordC(){
-        recordC("/storage/emulated/0/test.wav");
+        recordC("/storage/emulated/0/output.mp3");
     }
 
     private void onStopRecordC(){

@@ -12,8 +12,10 @@
 #include "MacroDefine.h"
 #include "Log.h"
 #include "byteswap.h"
+#include "lame.h"
 
 #define RING_BUFFER_SIZE (1024 * 1024 * 2)
+#define DEFAULT_MP3_BRATE 128
 
 struct AudioRecordLogicData{
     int format;
@@ -26,8 +28,9 @@ struct AudioRecordLogicData{
     std::thread thd;
     std::condition_variable cv;
     volatile bool exit;
+    int brate;//mp3 brate
 
-    AudioRecordLogicData():format(AudioRecordLogic::NONE), ringQueue(RING_BUFFER_SIZE), exit(false){}
+    AudioRecordLogicData():format(AudioRecordLogic::NONE), ringQueue(RING_BUFFER_SIZE), exit(false), brate(DEFAULT_MP3_BRATE){}
 };
 
 static bool adjustPCMWavHeader(FILE *file, size_t dataCount, uint16_t numChannels, uint32_t sampleRate, uint16_t bitsPerSample){
@@ -94,7 +97,8 @@ static void writeWAVThread(AudioRecordLogicData &data){
         assert(false);
         return;
     }
-    char szBuffer[1024] = {0};
+    const int BUFFER_LENGTH = 1024;
+    uint8_t *szBuffer = new uint8_t[BUFFER_LENGTH];
     uint32_t totalCount = 0;
     while(true){
         std::unique_lock<std::mutex> lk(data.mtx);
@@ -103,7 +107,8 @@ static void writeWAVThread(AudioRecordLogicData &data){
             SC(Log).i("AudioRecordLogic::writeWAVThread exit");
             break;
         }
-        std::size_t getSize = data.ringQueue.get(szBuffer, sizeof(szBuffer));
+        std::size_t getSize = data.ringQueue.get(szBuffer, BUFFER_LENGTH);
+        lk.unlock();
         if (fwrite(szBuffer, 1, getSize, file) != getSize){
             SC(Log).e("AudioRecordLogic::writeWAVThread fwrite failed");
             assert(false);
@@ -111,6 +116,9 @@ static void writeWAVThread(AudioRecordLogicData &data){
         }
         totalCount += getSize;
     }
+    delete []szBuffer;
+    szBuffer = nullptr;
+
     if (nullptr != file){
         uint16_t numChannels;
         uint32_t sampleRate;
@@ -126,6 +134,86 @@ static void writeWAVThread(AudioRecordLogicData &data){
         file = nullptr;
     }
 }
+
+static void writeMp3Thread(AudioRecordLogicData &data){
+    std::string filePath;
+    FILE *file = nullptr;
+    {
+        std::lock_guard<std::mutex> lk(data.mtx);
+        filePath = data.filePath;
+    }
+    if (nullptr == (file = fopen(filePath.c_str(), "wb+"))){
+        SC(Log).e("AudioRecordLogic::startRecord fopen failed");
+        assert(false);
+        return;
+    }
+
+    lame_t lameClient = lame_init();
+
+    if (nullptr == lameClient){
+        fclose(file);
+        SC(Log).e("AudioRecordLogic::writeMp3Thread nullptr == lameClient failed");
+        assert(false);
+        return;
+    }
+    uint16_t numChannels = 0;
+    uint32_t sampleRate = 0;
+    uint16_t bitsPerSample = 0;
+    int brate = 0;
+    {
+        std::lock_guard<std::mutex> lk(data.mtx);
+        numChannels = data.numChannels;
+        sampleRate = data.sampleRate;
+        bitsPerSample = data.bitsPerSample;
+        brate = data.brate;
+    }
+    lame_set_in_samplerate(lameClient, sampleRate);
+    lame_set_out_samplerate(lameClient, sampleRate);
+    lame_set_num_channels(lameClient, numChannels);
+    lame_set_brate(lameClient, brate);
+    lame_set_mode(lameClient, STEREO);
+    lame_set_quality(lameClient, 5);
+    lame_init_params(lameClient);
+
+    const int CHANNEL_BUFFER_SIZE = 1152 * sizeof(short);
+    uint8_t *leftBuffer = nullptr, *rightBuffer = nullptr, *szBuffer = nullptr, *mp3Buffer = nullptr;
+
+    leftBuffer = new uint8_t[CHANNEL_BUFFER_SIZE];
+    rightBuffer = new uint8_t[CHANNEL_BUFFER_SIZE];
+    szBuffer = new uint8_t[CHANNEL_BUFFER_SIZE * 2];
+    mp3Buffer = new uint8_t[CHANNEL_BUFFER_SIZE * 4];
+    while(true){
+        std::unique_lock<std::mutex> lk(data.mtx);
+        data.cv.wait(lk, [&data]()->bool{return data.exit || data.ringQueue.getDataSize() > 0;});
+        if (data.exit){
+            SC(Log).i("AudioRecordLogic::writeMp3Thread exit");
+            break;
+        }
+        std::size_t getSize = data.ringQueue.get(szBuffer, CHANNEL_BUFFER_SIZE * 2);
+        lk.unlock();
+
+        size_t i = 0;
+        while (i + sizeof(short) * 2 < getSize){
+            memcpy(leftBuffer + i / 2, szBuffer + i, sizeof(short));
+            memcpy(rightBuffer + i / 2, szBuffer + i + sizeof(short), sizeof(short));
+            i += sizeof(short) * 2;
+        }
+        int writeSize = lame_encode_buffer(lameClient, (short*)leftBuffer, (short*)rightBuffer, getSize / (2 * sizeof(short)), mp3Buffer, CHANNEL_BUFFER_SIZE * 4);
+        if (writeSize > 0){
+            if (fwrite(mp3Buffer, 1, writeSize, file) != writeSize){
+                SC(Log).e("AudioRecordLogic::writeMp3Thread fwrite failed");
+                assert(false);
+                break;
+            }
+        }
+    }
+    fclose(file);
+
+    delete []leftBuffer;
+    delete []rightBuffer;
+    delete []szBuffer;
+    delete []mp3Buffer;
+}
 AudioRecordLogic::AudioRecordLogic(): mData(new AudioRecordLogicData()) {
 
 }
@@ -136,9 +224,21 @@ AudioRecordLogic::~AudioRecordLogic() {
     mData = nullptr;
 }
 
-void AudioRecordLogic::setFileFormat(int format, uint16_t numChannels, uint32_t sampleRate,
-                                     uint16_t bitsPerSample) {
+void AudioRecordLogic::setOutputFormat(int format) {
+    std::lock_guard<std::mutex> lk(mData->mtx);
+
     mData->format = format;
+}
+
+void AudioRecordLogic::setMp3BRate(int brate){
+    std::lock_guard<std::mutex> lk(mData->mtx);
+
+    mData->brate = brate;
+}
+
+void AudioRecordLogic::setInputStreamInfo(uint16_t numChannels, uint32_t sampleRate, uint16_t bitsPerSample){
+    std::lock_guard<std::mutex> lk(mData->mtx);
+
     mData->numChannels = numChannels;
     mData->sampleRate = sampleRate;
     mData->bitsPerSample = bitsPerSample;
@@ -154,14 +254,15 @@ bool AudioRecordLogic::startRecord(const char *filePath) {
             assert(false);
             break;
         }
-        {
-            std::lock_guard<std::mutex> lk(mData->mtx);
-            mData->exit = false;
-            mData->filePath = filePath;
-        }
+        std::lock_guard<std::mutex> lk(mData->mtx);
+
+        mData->exit = false;
+        mData->filePath = filePath;
         if (WAV == mData->format){
             mData->thd = std::thread(&writeWAVThread, std::ref(*mData));
-        } else{
+        } else if(MP3 == mData->format){
+            mData->thd = std::thread(&writeMp3Thread, std::ref(*mData));
+        }else{
             SC(Log).e("AudioRecordLogic::startRecord format:%d failed", mData->format);
             break;
         }
@@ -184,6 +285,7 @@ void AudioRecordLogic::stopRecord() {
 
 size_t AudioRecordLogic::appendData(const void *data, size_t len) {
     std::lock_guard<std::mutex> lk(mData->mtx);
+
     size_t putSize = mData->ringQueue.put(data, len);
     mData->cv.notify_one();
     return putSize;
