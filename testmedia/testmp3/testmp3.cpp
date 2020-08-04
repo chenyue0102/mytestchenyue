@@ -802,9 +802,43 @@ bool seekToFrameHeader(FILE *file) {
 	return false;
 }
 
+struct wav_header_t
+{
+	char chunkID[4]; //"RIFF" = 0x46464952
+	uint32_t chunkSize; //文件长度-8
+	char format[4]; //"WAVE" = 0x45564157
+	char subchunk1ID[4]; //"fmt " = 0x20746D66
+	uint32_t subchunk1Size; //16 [+ sizeof(wExtraFormatBytes) + wExtraFormatBytes]
+	uint16_t audioFormat;//数据类型,"01 00"表示 PCM
+	uint16_t numChannels;//通道数
+	uint32_t sampleRate;//采样率，比如""表示44100采样率
+	uint32_t byteRate;//码率： 采样率x位深度x通道数/8 比如双通道的44.1K 16位采样的码率为176400
+	uint16_t blockAlign;//采样一次，占内存大小 ： 位深度x通道数/8
+	uint16_t bitsPerSample;//采样深度
+};
+
+//Chunks
+struct chunk_t
+{
+	char ID[4]; //"data" = 0x61746164
+	unsigned long size;  //Chunk data bytes
+};
 
 int main()
 {
+	FILE *f = fopen("d:/out.wav", "rb");
+	wav_header_t wav;
+	chunk_t chunk;
+	fread(&wav, 1, sizeof(wav), f);
+	do
+	{
+		fread(&chunk, 1, sizeof(chunk), f);
+		std::string s(chunk.ID, 4);
+		printf("chunk:%s size%d\n", s.c_str(), chunk.size);
+		fseek(f, chunk.size, SEEK_CUR);
+	} while (0 != strncmp(chunk.ID, "data", 4));
+	
+
 	Mp3DataFrameHeader tmpHeader;
 	char cc[4] = { 0xFF, 0xFB, 0xb4, 0x40 };
 	memcpy(&tmpHeader, cc, sizeof(tmpHeader));

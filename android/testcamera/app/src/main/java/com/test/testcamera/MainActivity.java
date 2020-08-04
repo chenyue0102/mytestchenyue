@@ -32,9 +32,9 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity implements Camera.PreviewCallback {
 
     // Used to load the 'native-lib' library on application startup.
-//    static {
-//        System.loadLibrary("native-lib");
-//    }
+    static {
+        System.loadLibrary("native-lib");
+    }
 
     private static final int REQUEST_CODE = 1;
     private static final int REQUEST_READ_STORAGE_CODE = 2;
@@ -46,14 +46,13 @@ public class MainActivity extends AppCompatActivity implements Camera.PreviewCal
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Example of a call to a native method
-        TextView tv = findViewById(R.id.sample_text);
-        //tv.setText(stringFromJNI());
         glSurfaceView = findViewById(R.id.gl_surface_view);
         surfaceView = findViewById(R.id.surface_view);
         findViewById(R.id.btn_camera_preview_java).setOnClickListener((v)->checkPermissionAndOpenCamera());
         findViewById(R.id.btn_camera_record_java).setOnClickListener(v->onRecordJava());
         findViewById(R.id.btn_stop_record_java).setOnClickListener(v->onStopRecordJava());
+        findViewById(R.id.btn_record_c).setOnClickListener(v->onRecordC());
+        findViewById(R.id.btn_stop_record_c).setOnClickListener(v->onStopRecordC());
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, REQUEST_READ_STORAGE_CODE);
@@ -272,112 +271,107 @@ public class MainActivity extends AppCompatActivity implements Camera.PreviewCal
             public void run() {
                 try{
 
-                    // BEGIN_INCLUDE (configure_preview)
-                    mCamera = Camera.open();
+                    if (false){
+                        // BEGIN_INCLUDE (configure_preview)
+                        mCamera = Camera.open();
 
-                    // We need to make sure that our preview and recording video size are supported by the
-                    // camera. Query camera to find all the sizes and choose the optimal size given the
-                    // dimensions of our preview surface.
-                    Camera.Parameters parameters = mCamera.getParameters();
-                    List<Camera.Size> mSupportedPreviewSizes = parameters.getSupportedPreviewSizes();
-                    List<Camera.Size> mSupportedVideoSizes = parameters.getSupportedVideoSizes();
-                    Camera.Size optimalSize = getOptimalVideoSize(mSupportedVideoSizes,
-                            mSupportedPreviewSizes, surfaceView.getWidth(), surfaceView.getHeight());
+                        // We need to make sure that our preview and recording video size are supported by the
+                        // camera. Query camera to find all the sizes and choose the optimal size given the
+                        // dimensions of our preview surface.
+                        Camera.Parameters parameters = mCamera.getParameters();
+                        List<Camera.Size> mSupportedPreviewSizes = parameters.getSupportedPreviewSizes();
+                        List<Camera.Size> mSupportedVideoSizes = parameters.getSupportedVideoSizes();
+                        Camera.Size optimalSize = getOptimalVideoSize(mSupportedVideoSizes,
+                                mSupportedPreviewSizes, surfaceView.getWidth(), surfaceView.getHeight());
 
 
-                    // Use the same size for recording profile.
-                    CamcorderProfile profile = CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH);
-                    profile.videoFrameWidth = 864;
-                    profile.videoFrameHeight = 480;
+                        // Use the same size for recording profile.
+                        CamcorderProfile profile = CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH);
+                        profile.videoFrameWidth = 864;
+                        profile.videoFrameHeight = 480;
 
-                    // likewise for the camera object itself.
-                    parameters.setPreviewSize(profile.videoFrameWidth, profile.videoFrameHeight);
-                    mCamera.setParameters(parameters);
-                    try {
-                        // Requires API level 11+, For backward compatibility use {@link setPreviewDisplay}
-                        // with {@link SurfaceView}
+                        // likewise for the camera object itself.
+                        parameters.setPreviewSize(profile.videoFrameWidth, profile.videoFrameHeight);
+                        mCamera.setParameters(parameters);
+                        try {
+                            // Requires API level 11+, For backward compatibility use {@link setPreviewDisplay}
+                            // with {@link SurfaceView}
+                            mCamera.setPreviewDisplay(surfaceView.getHolder());
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            return ;
+                        }
+                        // END_INCLUDE (configure_preview)
+
+
+                        // BEGIN_INCLUDE (configure_media_recorder)
+                        mMediaRecorder = new MediaRecorder();
+
+                        // Step 1: Unlock and set camera to MediaRecorder
+                        mCamera.unlock();
+                        mMediaRecorder.setCamera(mCamera);
+
+                        // Step 2: Set sources
+                        mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.DEFAULT );
+                        mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
+
+                        // Step 3: Set a CamcorderProfile (requires API Level 8 or higher)
+                        mMediaRecorder.setProfile(profile);
+
+                        // Step 4: Set output file
+                        mMediaRecorder.setOutputFile("/storage/emulated/0/Pictures/CameraSample/test.mp4");
+                        // END_INCLUDE (configure_media_recorder)
+
+                        // Step 5: Prepare configured MediaRecorder
+                        try {
+                            mMediaRecorder.prepare();
+                            mMediaRecorder.start();
+                        } catch (IllegalStateException e) {
+                            e.printStackTrace();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }else{
+                        int width = 1920, height = 1080;
+                        mCamera = Camera.open();
+                        Camera.Parameters parameters = mCamera.getParameters();
+                        List<Camera.Size> mSupportedPreviewSizes = parameters.getSupportedPreviewSizes();
+                        List<Camera.Size> mSupportedVideoSizes = parameters.getSupportedVideoSizes();
+                        parameters.setPreviewSize(width, height);
+                        mCamera.setParameters(parameters);
                         mCamera.setPreviewDisplay(surfaceView.getHolder());
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        return ;
-                    }
-                    // END_INCLUDE (configure_preview)
 
+                        CamcorderProfile camcorderProfile = CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH);
+                        camcorderProfile.videoFrameWidth = width;
+                        camcorderProfile.videoFrameHeight = height;
 
-                    // BEGIN_INCLUDE (configure_media_recorder)
-                    mMediaRecorder = new MediaRecorder();
+                        mMediaRecorder = new MediaRecorder();
+                        mCamera.unlock();
+                        mMediaRecorder.setCamera(mCamera);
+                        mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
+                        mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
 
-                    // Step 1: Unlock and set camera to MediaRecorder
-                    mCamera.unlock();
-                    mMediaRecorder.setCamera(mCamera);
+                        //mMediaRecorder.setProfile(camcorderProfile);
 
-                    // Step 2: Set sources
-                    mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.DEFAULT );
-                    mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
+                        mMediaRecorder.setVideoEncodingBitRate(1 * 1024 * 1024);
+                        mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
+                        mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
+                        mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.HE_AAC);
 
-                    // Step 3: Set a CamcorderProfile (requires API Level 8 or higher)
-                    mMediaRecorder.setProfile(profile);
+                        mMediaRecorder.setVideoSize(width, height);
+                        //mMediaRecorder.setOrientationHint(cameraInfo.orientation);
+                        mMediaRecorder.setVideoFrameRate(24);
 
-                    // Step 4: Set output file
-                    mMediaRecorder.setOutputFile("/storage/emulated/0/Pictures/CameraSample/test.mp4");
-                    // END_INCLUDE (configure_media_recorder)
+                        mMediaRecorder.setAudioEncodingBitRate(384000);
+                        mMediaRecorder.setAudioChannels(2);
+                        mMediaRecorder.setAudioSamplingRate(44100);
 
-                    // Step 5: Prepare configured MediaRecorder
-                    try {
+                        String saveFile = "/storage/emulated/0/Pictures/CameraSample/test.mp4";
+                        mMediaRecorder.setOutputFile(saveFile);
+
                         mMediaRecorder.prepare();
                         mMediaRecorder.start();
-                    } catch (IllegalStateException e) {
-                        e.printStackTrace();
-                    } catch (IOException e) {
-                        e.printStackTrace();
                     }
-//            mCamera.stopPreview();
-//            mCamera.setPreviewCallback(null);
-//            mCamera.unlock();
-
-//                    mCamera = Camera.open();
-//                    Camera.Parameters parameters = mCamera.getParameters();
-//                    List<Camera.Size> mSupportedPreviewSizes = parameters.getSupportedPreviewSizes();
-//                    List<Camera.Size> mSupportedVideoSizes = parameters.getSupportedVideoSizes();
-//                    parameters.setPreviewSize(640, 480);
-//                    mCamera.setParameters(parameters);
-//                    mCamera.setPreviewDisplay(surfaceView.getHolder());
-//
-//                    CamcorderProfile camcorderProfile = CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH);
-//                    camcorderProfile.videoFrameWidth = 640;
-//                    camcorderProfile.videoFrameHeight = 480;
-//
-//                    mMediaRecorder = new MediaRecorder();
-//                    mCamera.unlock();
-//                    mMediaRecorder.setCamera(mCamera);
-//                    //mMediaRecorder.setPreviewDisplay(surfaceView.getHolder().getSurface());
-//                    mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
-//                    mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.DEFAULT);
-//
-//                    mMediaRecorder.setProfile(camcorderProfile);
-//
-//                    //mMediaRecorder.setVideoEncodingBitRate(1 * 1024 * 1024);
-//                    //mMediaRecorder.setProfile(camcorderProfile);
-//                    //mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
-//                    //mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
-//                    //mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
-//
-//                    //mMediaRecorder.setVideoSize(640, 480);
-//                    //Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
-//                    //Camera.getCameraInfo(Camera.CameraInfo.CAMERA_FACING_BACK, cameraInfo);
-//                    //mMediaRecorder.setOrientationHint(cameraInfo.orientation);
-//                    //mMediaRecorder.setVideoFrameRate(20);
-//
-//
-////            mMediaRecorder.setAudioEncodingBitRate(384000);
-////            mMediaRecorder.setAudioChannels(2);
-////            mMediaRecorder.setAudioSamplingRate(44100);
-//
-//                    String saveFile = "/storage/emulated/0/Pictures/CameraSample/test.mp4";
-//                    mMediaRecorder.setOutputFile(saveFile);
-//
-//                    mMediaRecorder.prepare();
-//                    mMediaRecorder.start();
                 }catch (Exception e){
                     e.printStackTrace();
                 }
@@ -389,9 +383,19 @@ public class MainActivity extends AppCompatActivity implements Camera.PreviewCal
         mMediaRecorder.stop();
     }
 
+    private void onRecordC(){
+        recordC("/storage/emulated/0/test.wav");
+    }
+
+    private void onStopRecordC(){
+        stopRecordC();
+    }
+
     /**
      * A native method that is implemented by the 'native-lib' native library,
      * which is packaged with this application.
      */
-    //public native String stringFromJNI();
+    public native void recordC(String filePath);
+
+    public native void stopRecordC();
 }
