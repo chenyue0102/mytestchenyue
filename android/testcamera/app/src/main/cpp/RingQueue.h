@@ -5,7 +5,7 @@
 #ifndef TESTMEDIA_RINGQUEUE_H
 #define TESTMEDIA_RINGQUEUE_H
 #include <stdint.h>
-#if 0
+#if 1
 #include "MyLock.h"
 #define RING_MUTEX MyLock
 #else
@@ -25,17 +25,17 @@ public:
     uint32_t getFreeSize()const;
     //数据空间
     uint32_t getDataSize()const;
-    uint32_t put(const void *data, size_t dataLen);
-    uint32_t get(void *data, size_t dataLen);
+    uint32_t put(const void *data, size_t size);
+    uint32_t get(void *data, size_t size);
 
 private:
     uint32_t innerGetDataSize()const;
-    uint32_t innerPut(const void *data, size_t dataLen);
-    uint32_t innerGet(void *data, size_t dataLen);
+    uint32_t innerPut(const void *data, size_t size);
+    uint32_t innerGet(void *data, size_t size);
 
 private:
     mutable RING_MUTEX mutex;
-    uint32_t bufferLen;
+    uint32_t mask;
     uint32_t readIndex;
     uint32_t writeIndex;
     uint8_t * buffer;

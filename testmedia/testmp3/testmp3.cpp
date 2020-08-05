@@ -436,6 +436,9 @@ void parseFrame(Mp3Info &info) {
 	int sampleRate = getSampleRate(header);
 	int musicSecond = totalSampleCount / sampleRate;
 
+	printf("frameLen:%d\n", frameLen);
+	printf("sampleCountPerFrame:%d\n", sampleCountPerFrame);
+
 	fseek(info.file, frameLen - info.curFrameReadLen, SEEK_CUR);
 	if (needSetFirstAudioOffset) {
 		info.firstAudioOffset = ftell(info.file);
@@ -824,8 +827,7 @@ struct chunk_t
 	unsigned long size;  //Chunk data bytes
 };
 
-int main()
-{
+void testwav() {
 	FILE *f = fopen("d:/out.wav", "rb");
 	wav_header_t wav;
 	chunk_t chunk;
@@ -837,8 +839,12 @@ int main()
 		printf("chunk:%s size%d\n", s.c_str(), chunk.size);
 		fseek(f, chunk.size, SEEK_CUR);
 	} while (0 != strncmp(chunk.ID, "data", 4));
-	
 
+	fclose(f);
+}
+
+int main()
+{
 	Mp3DataFrameHeader tmpHeader;
 	char cc[4] = { 0xFF, 0xFB, 0xb4, 0x40 };
 	memcpy(&tmpHeader, cc, sizeof(tmpHeader));
@@ -848,7 +854,7 @@ int main()
 
 	long curPos = 0;
 	Mp3Info info = Mp3Info();
-	info.file = fopen("d:/test.mp3", "rb");
+	info.file = fopen("d:/output1.mp3", "rb");
 	parseMp3(info);
 	
 
