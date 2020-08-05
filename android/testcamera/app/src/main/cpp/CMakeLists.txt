@@ -26,6 +26,8 @@ add_library( # Sets the name of the library.
             OpenSLESHelper.cpp
             TaskPool.cpp
             RingQueue.cpp
+            SystemTime.cpp
+            MyLock.cpp
             Log.cpp)
 
 add_library(libmp3lame STATIC IMPORTED)

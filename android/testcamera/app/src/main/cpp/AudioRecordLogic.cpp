@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <thread>
+#include <condition_variable>
 #include "RingQueue.h"
 #include "WAVDefine.h"
 #include "Single.h"
@@ -13,6 +14,7 @@
 #include "Log.h"
 #include "byteswap.h"
 #include "lame.h"
+#include "MyLock.h"
 
 #define RING_BUFFER_SIZE (1024 * 1024 * 2)
 #define DEFAULT_MP3_BRATE 128
@@ -24,9 +26,9 @@ struct AudioRecordLogicData{
     uint16_t bitsPerSample;
     std::string filePath;
     RingQueue ringQueue;
-    std::mutex mtx;
+    MyLock mtx;
     std::thread thd;
-    std::condition_variable cv;
+    std::condition_variable_any cv;
     volatile bool exit;
     int brate;//mp3 brate
 
@@ -83,7 +85,7 @@ static void writeWAVThread(AudioRecordLogicData &data){
     FILE *file = nullptr;
     std::string filePath;
     {
-        std::lock_guard<std::mutex> lk(data.mtx);
+        std::lock_guard<MyLock> lk(data.mtx);
         filePath = data.filePath;
     }
     if (nullptr == (file = fopen(filePath.c_str(), "wb+"))){
@@ -101,14 +103,15 @@ static void writeWAVThread(AudioRecordLogicData &data){
     uint8_t *szBuffer = new uint8_t[BUFFER_LENGTH];
     uint32_t totalCount = 0;
     while(true){
-        std::unique_lock<std::mutex> lk(data.mtx);
+        std::unique_lock<MyLock> lk(data.mtx);
         data.cv.wait(lk, [&data]()->bool{return data.exit || data.ringQueue.getDataSize() > 0;});
         if (data.exit){
             SC(Log).i("AudioRecordLogic::writeWAVThread exit");
             break;
         }
-        std::size_t getSize = data.ringQueue.get(szBuffer, BUFFER_LENGTH);
         lk.unlock();
+
+        std::size_t getSize = data.ringQueue.get(szBuffer, BUFFER_LENGTH);
         if (fwrite(szBuffer, 1, getSize, file) != getSize){
             SC(Log).e("AudioRecordLogic::writeWAVThread fwrite failed");
             assert(false);
@@ -124,7 +127,7 @@ static void writeWAVThread(AudioRecordLogicData &data){
         uint32_t sampleRate;
         uint16_t bitsPerSample;
         {
-            std::lock_guard<std::mutex> lk(data.mtx);
+            std::lock_guard<MyLock> lk(data.mtx);
             numChannels = data.numChannels;
             sampleRate = data.sampleRate;
             bitsPerSample = data.bitsPerSample;
@@ -139,7 +142,7 @@ static void writeMp3Thread(AudioRecordLogicData &data){
     std::string filePath;
     FILE *file = nullptr;
     {
-        std::lock_guard<std::mutex> lk(data.mtx);
+        std::lock_guard<MyLock> lk(data.mtx);
         filePath = data.filePath;
     }
     if (nullptr == (file = fopen(filePath.c_str(), "wb+"))){
@@ -161,7 +164,7 @@ static void writeMp3Thread(AudioRecordLogicData &data){
     uint16_t bitsPerSample = 0;
     int brate = 0;
     {
-        std::lock_guard<std::mutex> lk(data.mtx);
+        std::lock_guard<MyLock> lk(data.mtx);
         numChannels = data.numChannels;
         sampleRate = data.sampleRate;
         bitsPerSample = data.bitsPerSample;
@@ -183,14 +186,14 @@ static void writeMp3Thread(AudioRecordLogicData &data){
     szBuffer = new uint8_t[CHANNEL_BUFFER_SIZE * 2];
     mp3Buffer = new uint8_t[CHANNEL_BUFFER_SIZE * 4];
     while(true){
-        std::unique_lock<std::mutex> lk(data.mtx);
+        std::unique_lock<MyLock> lk(data.mtx);
         data.cv.wait(lk, [&data]()->bool{return data.exit || data.ringQueue.getDataSize() > 0;});
         if (data.exit){
             SC(Log).i("AudioRecordLogic::writeMp3Thread exit");
             break;
         }
-        std::size_t getSize = data.ringQueue.get(szBuffer, CHANNEL_BUFFER_SIZE * 2);
         lk.unlock();
+        std::size_t getSize = data.ringQueue.get(szBuffer, CHANNEL_BUFFER_SIZE * 2);
 
         size_t i = 0;
         while (i + sizeof(short) * 2 < getSize){
@@ -225,19 +228,19 @@ AudioRecordLogic::~AudioRecordLogic() {
 }
 
 void AudioRecordLogic::setOutputFormat(int format) {
-    std::lock_guard<std::mutex> lk(mData->mtx);
+    std::lock_guard<MyLock> lk(mData->mtx);
 
     mData->format = format;
 }
 
 void AudioRecordLogic::setMp3BRate(int brate){
-    std::lock_guard<std::mutex> lk(mData->mtx);
+    std::lock_guard<MyLock> lk(mData->mtx);
 
     mData->brate = brate;
 }
 
 void AudioRecordLogic::setInputStreamInfo(uint16_t numChannels, uint32_t sampleRate, uint16_t bitsPerSample){
-    std::lock_guard<std::mutex> lk(mData->mtx);
+    std::lock_guard<MyLock> lk(mData->mtx);
 
     mData->numChannels = numChannels;
     mData->sampleRate = sampleRate;
@@ -254,7 +257,7 @@ bool AudioRecordLogic::startRecord(const char *filePath) {
             assert(false);
             break;
         }
-        std::lock_guard<std::mutex> lk(mData->mtx);
+        std::lock_guard<MyLock> lk(mData->mtx);
 
         mData->exit = false;
         mData->filePath = filePath;
@@ -274,7 +277,7 @@ bool AudioRecordLogic::startRecord(const char *filePath) {
 
 void AudioRecordLogic::stopRecord() {
     {
-        std::lock_guard<std::mutex> lk(mData->mtx);
+        std::lock_guard<MyLock> lk(mData->mtx);
         mData->exit = true;
         mData->cv.notify_one();
     }
@@ -284,9 +287,8 @@ void AudioRecordLogic::stopRecord() {
 }
 
 size_t AudioRecordLogic::appendData(const void *data, size_t len) {
-    std::lock_guard<std::mutex> lk(mData->mtx);
-
     size_t putSize = mData->ringQueue.put(data, len);
+
     mData->cv.notify_one();
     return putSize;
 }

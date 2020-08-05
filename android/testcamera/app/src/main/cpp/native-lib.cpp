@@ -11,6 +11,7 @@
 #include "RingQueue.h"
 #include "byteswap.h"
 #include "AudioRecordLogic.h"
+#include "SystemTime.h"
 
 OpenSLESHelper g_OpenSLESHelper;
 TaskPool g_TaskPool;
@@ -73,9 +74,14 @@ void SLAPIENTRY RecordCallback(
 void SLAPIENTRY AndroidSimpleBufferQueueCallback(
         SLAndroidSimpleBufferQueueItf caller,
         void *pContext){
-    SC(Log).e("AndroidSimpleBufferQueueCallback");
+    //SC(Log).e("AndroidSimpleBufferQueueCallback");
+    long long begin = SC(SystemTime).getCurrentTimeUs();
     g_AudioRecordLogic.appendData(g_buffer, g_bufSize);
+    long long step2 = SC(SystemTime).getCurrentTimeUs();
     g_OpenSLESHelper.enqueueRecord(g_buffer, g_bufSize);
+    long long step3 = SC(SystemTime).getCurrentTimeUs();
+    //std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    SC(Log).e("AndroidSimpleBufferQueueCallback first:%lld, second%lld total:%lld", step2 - begin, step3 - step2, step3 - begin);
 }
 
 void startRecord(){
