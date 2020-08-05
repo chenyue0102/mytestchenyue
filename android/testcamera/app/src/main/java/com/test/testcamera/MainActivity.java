@@ -8,6 +8,8 @@ import android.content.pm.PackageManager;
 import android.graphics.ImageFormat;
 import android.hardware.Camera;
 import android.hardware.camera2.CameraCharacteristics;
+import android.media.AudioFormat;
+import android.media.AudioRecord;
 import android.media.CamcorderProfile;
 import android.media.MediaMetadata;
 import android.media.MediaRecorder;
@@ -70,6 +72,9 @@ public class MainActivity extends AppCompatActivity implements Camera.PreviewCal
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_NETWORK_STATE}, REQUEST_READ_STORAGE_CODE);
         }
         requestCameraPermissions();
+
+        int size = AudioRecord.getMinBufferSize(44100, AudioFormat.CHANNEL_OUT_STEREO, AudioFormat.ENCODING_PCM_16BIT);
+        Log.i("MainActivity", "AudioRecord.getMinBufferSize " + size);
     }
 
     private void requestCameraPermissions(){

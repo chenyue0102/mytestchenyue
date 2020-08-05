@@ -290,21 +290,21 @@ bool OpenSLESHelper::createRecord(slRecordCallback callback, void *pRecordContex
         SLDataSource recSource = {&ioDevice, NULL};
         SLDataLocator_AndroidSimpleBufferQueue recBufferQueue = {
                 SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE,
-                1,
+                2,
         };
         SLDataFormat_PCM pcm = {
                 SL_DATAFORMAT_PCM,
                 2,
                 SL_SAMPLINGRATE_44_1,
                 SL_PCMSAMPLEFORMAT_FIXED_16,
-                16,
+                SL_PCMSAMPLEFORMAT_FIXED_16,
                 SL_SPEAKER_FRONT_LEFT | SL_SPEAKER_FRONT_RIGHT,
                 SL_BYTEORDER_LITTLEENDIAN,
         };
         SLDataSink dataSink = {&recBufferQueue, &pcm};
-        SLInterfaceID iids[] = {SL_IID_ANDROIDSIMPLEBUFFERQUEUE, SL_IID_ANDROIDCONFIGURATION};
-        SLboolean required[] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};
-        if ((result = (*slEngine)->CreateAudioRecorder(slEngine, &slRecorderObject, &recSource, &dataSink, 2, iids, required)) != SL_RESULT_SUCCESS){
+        SLInterfaceID iids[] = {SL_IID_ANDROIDSIMPLEBUFFERQUEUE/*, SL_IID_ANDROIDCONFIGURATION*/};
+        SLboolean required[] = {SL_BOOLEAN_TRUE/*, SL_BOOLEAN_TRUE*/};
+        if ((result = (*slEngine)->CreateAudioRecorder(slEngine, &slRecorderObject, &recSource, &dataSink, 1, iids, required)) != SL_RESULT_SUCCESS){
             SC(Log).e("OpenSLESHelper::createRecord CreateAudioRecorder failed result:%x", result);
             assert(false);
             break;
@@ -325,26 +325,26 @@ bool OpenSLESHelper::createRecord(slRecordCallback callback, void *pRecordContex
             break;
         }
         //设置
-        if ((result = (*slRecord)->SetMarkerPosition(slRecord, 2000)) != SL_RESULT_SUCCESS){
-            SC(Log).e("OpenSLESHelper::createRecord SetMarkerPosition failed result:%x", result);
-            assert(false);
-            break;
-        }
-        if ((result = (*slRecord)->SetPositionUpdatePeriod(slRecord, 500)) != SL_RESULT_SUCCESS){
-            SC(Log).e("OpenSLESHelper::createRecord SetPositionUpdatePeriod failed result:%x", result);
-            assert(false);
-            break;
-        }
-        if ((result = (*slRecord)->SetCallbackEventsMask(slRecord, SL_RECORDEVENT_HEADATMARKER | SL_RECORDEVENT_HEADATNEWPOS)) != SL_RESULT_SUCCESS){
-            SC(Log).e("OpenSLESHelper::createRecord SetCallbackEventsMask failed result:%x", result);
-            assert(false);
-            break;
-        }
-        if ((result = (*slRecord)->RegisterCallback(slRecord, callback, pRecordContext)) != SL_RESULT_SUCCESS){
-            SC(Log).e("OpenSLESHelper::createRecord RegisterCallback failed result:%x", result);
-            assert(false);
-            break;
-        }
+//        if ((result = (*slRecord)->SetMarkerPosition(slRecord, 2000)) != SL_RESULT_SUCCESS){
+//            SC(Log).e("OpenSLESHelper::createRecord SetMarkerPosition failed result:%x", result);
+//            assert(false);
+//            break;
+//        }
+//        if ((result = (*slRecord)->SetPositionUpdatePeriod(slRecord, 500)) != SL_RESULT_SUCCESS){
+//            SC(Log).e("OpenSLESHelper::createRecord SetPositionUpdatePeriod failed result:%x", result);
+//            assert(false);
+//            break;
+//        }
+//        if ((result = (*slRecord)->SetCallbackEventsMask(slRecord, SL_RECORDEVENT_HEADATMARKER | SL_RECORDEVENT_HEADATNEWPOS)) != SL_RESULT_SUCCESS){
+//            SC(Log).e("OpenSLESHelper::createRecord SetCallbackEventsMask failed result:%x", result);
+//            assert(false);
+//            break;
+//        }
+//        if ((result = (*slRecord)->RegisterCallback(slRecord, callback, pRecordContext)) != SL_RESULT_SUCCESS){
+//            SC(Log).e("OpenSLESHelper::createRecord RegisterCallback failed result:%x", result);
+//            assert(false);
+//            break;
+//        }
         if ((result = (*slRecordBufferQueue)->RegisterCallback(slRecordBufferQueue, recorderBufferQueueCallback, pBufferQueueContext)) != SL_RESULT_SUCCESS){
             SC(Log).e("OpenSLESHelper::createRecord RegisterCallback BufferQueue failed result:%x", result);
             assert(false);

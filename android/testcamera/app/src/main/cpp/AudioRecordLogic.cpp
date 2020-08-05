@@ -104,7 +104,7 @@ static void writeWAVThread(AudioRecordLogicData &data){
     uint32_t totalCount = 0;
     while(true){
         std::unique_lock<MyLock> lk(data.mtx);
-        data.cv.wait(lk, [&data]()->bool{return data.exit || data.ringQueue.getDataSize() > 0;});
+        data.cv.wait(lk, [&data]()->bool{return data.ringQueue.getDataSize() > 0 || data.exit;});
         if (data.exit){
             SC(Log).i("AudioRecordLogic::writeWAVThread exit");
             break;
@@ -187,7 +187,7 @@ static void writeMp3Thread(AudioRecordLogicData &data){
     mp3Buffer = new uint8_t[CHANNEL_BUFFER_SIZE * 4];
     while(true){
         std::unique_lock<MyLock> lk(data.mtx);
-        data.cv.wait(lk, [&data]()->bool{return data.exit || data.ringQueue.getDataSize() > 0;});
+        data.cv.wait(lk, [&data]()->bool{return data.ringQueue.getDataSize() > 0 || data.exit;});
         if (data.exit){
             SC(Log).i("AudioRecordLogic::writeMp3Thread exit");
             break;

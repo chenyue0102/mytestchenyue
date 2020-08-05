@@ -17,7 +17,7 @@ OpenSLESHelper g_OpenSLESHelper;
 TaskPool g_TaskPool;
 std::string g_saveFile;
 JavaVM *g_JavaVM = 0;
-const int g_bufSize = 2048;
+const int g_bufSize = 1024 * 8;
 uint8_t g_buffer[g_bufSize] = {0};
 AudioRecordLogic g_AudioRecordLogic;
 
