@@ -71,8 +71,8 @@ void main(){
 		}
 	}else if (3 == esType){
 		vec3 lightDirect = normalize(lightPosition - esPosition.xyz);
-		vec3 viewDirect = normalize(eyePositon - esPosition.xyz);
-		vec3 halfVector = normalize(lightDirect + viewDirect);
+		vec3 eyeDirect = normalize(eyePositon - esPosition.xyz);
+		vec3 halfVector = normalize(lightDirect + eyeDirect);
 		float diffuse = max(0.0, dot(esNormal, lightDirect));
 		float specular = max(0.0, dot(esNormal, halfVector));
 

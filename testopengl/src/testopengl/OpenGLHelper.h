@@ -28,6 +28,17 @@ GLenum attachShader(GLuint program, GLenum type, const char *source, GLint len);
 GLenum createTexture2D(GLint internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, GLint filterParam, GLuint& tex);
 GLenum createArrayBuffer(const void* vertexPointsBuffer, GLsizei vlen, const void* colorPointsBuffer, GLsizei clen, GLuint& buf);
 
+template<typename T>
+T length(T x, T y, T z) {
+	return (T)sqrt(x *x + y * y + z * z);
+}
+
+template<typename VEC3>
+VEC3 normalize(const VEC3 &in) {
+	auto l = length(in.x, in.y, in.z);
+	return VEC3(in.x / l, in.y / l, in.z / l);
+}
+
 
 template<typename VEC2, typename VEC3>
 static void getTangent(const VEC3 &vertexPos1, const VEC3 &vertexPos2, const VEC3 &vertexPos3,
@@ -40,8 +51,11 @@ static void getTangent(const VEC3 &vertexPos1, const VEC3 &vertexPos2, const VEC
 	tangent.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);//x
 	tangent.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);//y
 	tangent.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);//z
+	tangent = normalize(tangent);
+
 	bitangent.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);//x
 	bitangent.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);//y
 	bitangent.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);//z
+	bitangent = normalize(bitangent);
 }
 };
