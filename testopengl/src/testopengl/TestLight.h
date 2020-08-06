@@ -20,19 +20,16 @@ layout(location=2) in vec3 vertexNormal;
 layout(location=3) uniform mat4 viewMatrix;
 layout(location=4) uniform int type;
 layout(location=5) uniform vec3 vertexLightColor;
-layout(location=6) uniform vec3 vertexLightPosition;
 layout(location=7) uniform mat4 projectionMatrix;
-layout(location=9) uniform mat4 modelMatrix;
+layout(location=8) uniform mat4 modelMatrix;
 out vec2 texCoord;
 out vec3 lightColor;
-out vec3 lightPosition;
 out vec3 esNormal;
 out vec4 esPosition;
 flat out int esType;
 
 void main(){
 	esPosition = viewMatrix * vec4(vertexPosition, 1.0f);
-	lightPosition = vertexLightPosition;
 	gl_Position = projectionMatrix * modelMatrix * viewMatrix * vec4(vertexPosition, 1.0f);
 	texCoord = vertexTexCoord;
 	lightColor = vertexLightColor;
@@ -44,10 +41,14 @@ void main(){
 
 	static const char* g_fString = R"(
 #version 430 core
-layout(location=8) uniform sampler2D tex;
+layout(location=10) uniform sampler2D tex;
+layout(location=11) uniform vec3 lightPosition;//光源方向
+layout(location=12) uniform vec3 eyePositon;
+layout(location=13) uniform vec3 ambient;	//光照等级
+layout(location=14) uniform float strength;//调整光泽度数据
+layout(location=15) uniform float shininess;//高光尖锐指数
 in vec2 texCoord;
 in vec3 lightColor;
-in vec3 lightPosition;
 in vec3 esNormal;
 in vec4 esPosition;
 flat in int esType;
@@ -70,18 +71,22 @@ void main(){
 		}
 	}else if (3 == esType){
 		vec3 lightDirect = normalize(lightPosition - esPosition.xyz);
+		vec3 viewDirect = normalize(eyePositon - esPosition.xyz);
+		vec3 halfVector = normalize(lightDirect + viewDirect);
 		float diffuse = max(0.0, dot(esNormal, lightDirect));
-		
-		if (0.0 == diffuse){
-			fColor = vec4(0.0f,0.0,0.0,1.0);
+		float specular = max(0.0, dot(esNormal, halfVector));
+
+		if (diffuse == 0.0){
+			specular = 0.0f;
 		}else{
-			float specular = pow(diffuse, 10.0);
-			vec3 scatteredLight = texColor.rgb * lightColor * diffuse;
-			float Strength = 1.5f;
-			vec3 reflectedLight = lightColor * specular * Strength;
-			vec3 rgb = min(texColor.rgb * scatteredLight + reflectedLight, vec3(1.0));
-			fColor = vec4(rgb, 1.0f);
+			specular = pow(specular, shininess);
 		}
+		
+		vec3 scatteredLight = ambient + lightColor * diffuse;//散射光
+		vec3 reflectedLight = lightColor * specular * strength;//反射光
+
+		vec3 rgb = min(texColor.rgb * scatteredLight + reflectedLight, vec3(1.0f));
+		fColor = vec4(rgb, texColor.a);
 	}
 }
 )";
@@ -185,6 +190,7 @@ void main(){
 
 		glm::vec3 tmpEye = glm::vec3(0.f, -2.0f, 0.0f);
 		tmpEye = glm::rotateZ(tmpEye, glm::radians(g_zcameraoffset));//旋转相机的位置
+		glm::vec3 normalEye = glm::normalize(tmpEye);
 		//vmath::vec3 eye = vmath::vec3(0.f, -2.0f, 0.0f);
 		vmath::vec3 eye = vmath::vec3(tmpEye[0], tmpEye[1], tmpEye[2]);
 		vmath::vec3 center = vmath::vec3(0.f, 0.f, 0.f);
@@ -207,9 +213,30 @@ void main(){
 		GLuint typeLocation = glGetUniformLocation(g_program, "type");
 		GLint type = 3;
 		glProgramUniform1i(g_program, typeLocation, type);
+		CHECKERR();
 
-		GLuint vertexLightPositionLocation = glGetUniformLocation(g_program, "vertexLightPosition");
-		glProgramUniform3f(g_program, vertexLightPositionLocation, 1000.f, -1000.f, 1000.f);
+		glm::vec3 lightPosition(1.0, -1.0f, 1.0f);
+		GLuint lightPositonLocation = glGetUniformLocation(g_program, "lightPosition");
+		glProgramUniform3f(g_program, lightPositonLocation, lightPosition.x, lightPosition.y, lightPosition.z);
+		CHECKERR();
+
+		GLuint eyePositonLocation = glGetUniformLocation(g_program, "eyePositon");
+		glProgramUniform3f(g_program, eyePositonLocation, tmpEye.x, tmpEye.y, tmpEye.z);
+
+		glm::vec3 ambient = glm::vec3(1.0f, 1.0f, 1.0f) * 0.1f;//环境光照等级
+		GLuint ambientLocation = glGetUniformLocation(g_program, "ambient");
+		glProgramUniform3f(g_program, ambientLocation, ambient.r, ambient.g, ambient.b);
+		CHECKERR();
+		
+
+		float strength = 0.5f;//光泽度倍数调整值
+		GLuint strengthLocation = glGetUniformLocation(g_program, "strength");
+		glProgramUniform1f(g_program, strengthLocation, strength);
+		CHECKERR();
+
+		float shininess = 10.0f;//光泽度指数
+		GLuint shininessLocation = glGetUniformLocation(g_program, "shininess");
+		glProgramUniform1f(g_program, shininessLocation, shininess);
 		CHECKERR();
 
 		GLuint lightColorLocation = glGetUniformLocation(g_program, "vertexLightColor");
