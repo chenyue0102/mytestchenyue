@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import android.Manifest;
+import android.app.ActivityManager;
 import android.content.pm.PackageManager;
 import android.graphics.ImageFormat;
 import android.hardware.Camera;
@@ -22,21 +23,25 @@ import android.view.SurfaceView;
 import android.view.TextureView;
 import android.widget.TextView;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 @SuppressWarnings("deprecation")
 public class MainActivity extends AppCompatActivity implements Camera.PreviewCallback {
 
     // Used to load the 'native-lib' library on application startup.
-    static {
-        System.loadLibrary("native-lib");
-    }
+//    static {
+//        System.loadLibrary("native-lib");
+//    }
 
     private static final int REQUEST_CODE = 1;
     private static final int REQUEST_READ_STORAGE_CODE = 2;
@@ -71,10 +76,44 @@ public class MainActivity extends AppCompatActivity implements Camera.PreviewCal
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_NETWORK_STATE) != PackageManager.PERMISSION_GRANTED){
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_NETWORK_STATE}, REQUEST_READ_STORAGE_CODE);
         }
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED){
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_PHONE_STATE}, REQUEST_READ_STORAGE_CODE);
+        }
         requestCameraPermissions();
 
         int size = AudioRecord.getMinBufferSize(44100, AudioFormat.CHANNEL_OUT_STEREO, AudioFormat.ENCODING_PCM_16BIT);
         Log.i("MainActivity", "AudioRecord.getMinBufferSize " + size);
+
+        new Timer().schedule(new TimerTask() {
+            @Override
+            public void run() {
+                try{
+                    Runtime runtime = Runtime.getRuntime();
+                    //Process process = runtime.exec("ping -c 1 127.0.0.1");
+                    Process process = runtime.exec("cat /proc/stat");
+                    String data = null;
+                    BufferedReader ie = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+                    BufferedReader in = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                    String error = null;
+                    while ((error = ie.readLine()) != null
+                            && !error.equals("null")) {
+                        data += error + "\n";
+                    }
+                    String line = null;
+                    while ((line = in.readLine()) != null
+                            && !line.equals("null")) {
+                        data += line + "\n";
+                    }
+
+                    Log.v("ls", data);
+
+                    float f = DeviceUtil.getCpuUsed();
+                    Log.i("cpu", "cpu use:" + f);
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
+            }
+        }, 0, 1000);
     }
 
     private void requestCameraPermissions(){
