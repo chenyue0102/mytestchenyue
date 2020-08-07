@@ -39,9 +39,9 @@ import java.util.TimerTask;
 public class MainActivity extends AppCompatActivity implements Camera.PreviewCallback {
 
     // Used to load the 'native-lib' library on application startup.
-//    static {
-//        System.loadLibrary("native-lib");
-//    }
+    static {
+        System.loadLibrary("native-lib");
+    }
 
     private static final int REQUEST_CODE = 1;
     private static final int REQUEST_READ_STORAGE_CODE = 2;

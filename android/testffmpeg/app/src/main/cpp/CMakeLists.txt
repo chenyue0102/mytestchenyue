@@ -4,6 +4,13 @@
 # Sets the minimum version of CMake required to build the native library.
 
 cmake_minimum_required(VERSION 3.4.1)
+set(JNILIBS ${CMAKE_CURRENT_SOURCE_DIR}/../jniLibs/${ANDROID_ABI})
+
+include(
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/lame
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/fdk-aac
+)
 
 # Creates and names a library, sets it as either STATIC
 # or SHARED, and provides the relative paths to its source code.
@@ -39,6 +46,15 @@ find_library( # Sets the name of the path variable.
 target_link_libraries( # Specifies the target library.
                        native-lib
 
+        libavcodec
+        libavfilter
+        libavformat
+        libswresample
+        libswscale
+        libavutil
+        libfdk-aac
+        libmp3lame
+        libx264
                        # Links the target library to the log library
                        # included in the NDK.
                        ${log-lib} )
