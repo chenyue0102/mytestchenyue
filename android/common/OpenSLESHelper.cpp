@@ -222,24 +222,24 @@ bool OpenSLESHelper::destroyPlayer() {
     return true;
 }
 
-bool OpenSLESHelper::registerBufferQueueCallback(slAndroidSimpleBufferQueueCallback callback, void *pContext) {
+bool OpenSLESHelper::registerPlayBufferQueueCallback(slAndroidSimpleBufferQueueCallback callback, void *pContext) {
     REFALL;
     bool ret = false;
     SLresult result;
 
     do{
         if (nullptr == callback){
-            SC(Log).e("OpenSLESHelper::registerBufferQueueCallback failed nullptr == callback");
+            SC(Log).e("OpenSLESHelper::registerPlayBufferQueueCallback failed nullptr == callback");
             assert(false);
             break;
         }
         if (nullptr == slPlayBufferQueue){
-            SC(Log).e("OpenSLESHelper::registerBufferQueueCallback failed nullptr == slPlayBufferQueue");
+            SC(Log).e("OpenSLESHelper::registerPlayBufferQueueCallback failed nullptr == slPlayBufferQueue");
             assert(false);
             break;
         }
         if ((result = (*slPlayBufferQueue)->RegisterCallback(slPlayBufferQueue, callback, pContext)) != SL_RESULT_SUCCESS){
-            SC(Log).e("OpenSLESHelper::registerBufferQueueCallback RegisterCallback failed result:%x", result);
+            SC(Log).e("OpenSLESHelper::registerPlayBufferQueueCallback RegisterCallback failed result:%x", result);
             assert(false);
             break;
         }
@@ -424,7 +424,7 @@ SLObjectItf OpenSLESHelper::getPlayerObject() const {
     return mData->slPlayerObject;
 }
 
-SLAndroidSimpleBufferQueueItf OpenSLESHelper::getBufferQueue() const {
+SLAndroidSimpleBufferQueueItf OpenSLESHelper::getPlayBufferQueue() const {
     return mData->slPlayBufferQueue;
 }
 

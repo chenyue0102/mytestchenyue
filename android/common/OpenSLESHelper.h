@@ -27,7 +27,7 @@ public:
 public:
     bool createPlayer(SLDataSource &slDataSource, SLDataSink &slDataSink, SLuint32 numInterfaces, const SLInterfaceID ids[], const SLboolean req[]);
     bool destroyPlayer();
-    bool registerBufferQueueCallback(slAndroidSimpleBufferQueueCallback callback, void *pContext);
+    bool registerPlayBufferQueueCallback(slAndroidSimpleBufferQueueCallback callback, void *pContext);
     //SL_PLAYSTATE_PLAYING, SL_PLAYSTATE_PAUSED, SL_PLAYSTATE_STOPPED
     bool setPlayState(SLuint32 playState);
 
@@ -43,7 +43,7 @@ public:
     SLObjectItf getEngineObject()const;
     SLObjectItf getOutputMixObject()const;
     SLObjectItf getPlayerObject()const;
-    SLAndroidSimpleBufferQueueItf getBufferQueue()const;
+    SLAndroidSimpleBufferQueueItf getPlayBufferQueue()const;
 private:
     OpenSLESHelperData *mData;
 };

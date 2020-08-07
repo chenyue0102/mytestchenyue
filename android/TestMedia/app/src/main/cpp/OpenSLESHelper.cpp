@@ -276,3 +276,7 @@ SLAndroidSimpleBufferQueueItf OpenSLESHelper::getBufferQueue() const {
     return mData->slPlayBufferQueue;
 }
 
+SLPlayItf OpenSLESHelper::getPlay() const {
+    return mData->slPlay;
+}
+
