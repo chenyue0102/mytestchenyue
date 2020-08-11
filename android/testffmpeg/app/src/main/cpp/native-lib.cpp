@@ -1,6 +1,8 @@
 #include <jni.h>
 #include <string>
 #include <assert.h>
+#include <mutex>
+#include <condition_variable>
 #include <android/log.h>
 extern "C"{
 #include "libavformat/avformat.h"
@@ -12,6 +14,7 @@ extern "C"{
 #include "MacroDefine.h"
 #include "Log.h"
 #include "OpenSLESHelper.h"
+#include "ObjectPool.h"
 
 JavaVM *g_JavaVM = 0;
 TaskPool g_TaskPool;
@@ -61,7 +64,72 @@ AVFormatContext *g_formatContext = nullptr;
 AVCodecContext *g_vcc = nullptr;
 AVCodecContext *g_acc = nullptr;
 
-void readFrame(){
+uint64_t getAudioPosition(){
+    return 0;
+}
+
+uint64_t pts2ms(uint64_t pts){
+    return pts / AV_TIME_BASE;
+}
+
+void receiveVideoFrame(AVCodecContext *cc){
+    AVFrame *frame = av_frame_alloc();
+    int ret = 0;
+    for (;;){
+        ret = avcodec_receive_frame(cc, frame);
+        if (AVERROR_EOF == ret){
+            break;
+        }
+        else if (AVERROR(EAGAIN) == ret){
+            break;
+        }
+        else{
+            break;
+        }
+        if (pts2ms(frame->pts) < getAudioPosition()){
+            av_frame_unref(frame);
+            continue;
+        }
+
+        av_frame_unref(frame);
+    }
+    av_frame_unref(frame);
+    av_frame_free(&frame);
+}
+
+std::condition_variable g_cv;
+std::mutex g_mutex;
+std::list<AVPacket*> g_packets;
+
+
+void readFrame(int videoStream, int audioStream, AVCodecContext *vcc, AVCodecContext *acc){
+    int ret = 0;
+    for (;;){
+        AVPacket *pkt = av_packet_alloc();
+        ret = av_read_frame(g_formatContext, pkt);
+        if (0 != ret){
+            av_packet_free(&pkt);
+            break;
+        }
+        AVCodecContext *cc = nullptr;
+        if (pkt->stream_index == videoStream){
+            cc = vcc;
+        }else if (pkt->stream_index == audioStream){
+            cc = acc;
+        }else{
+            //other
+        }
+        if (nullptr == cc){
+            av_packet_unref(pkt);
+            av_packet_free(&pkt);
+            continue;
+        }else{
+
+            avcodec_send_packet(cc, pkt);
+            av_packet_unref(pkt);
+        }
+    }
+
 
 }
 
@@ -89,7 +157,7 @@ void openFile(){
     ret = avcodec_open2(g_acc, nullptr, nullptr);
     LogAvError(ret);
 
-    g_TaskPool.addTask(&readFrame);
+    g_TaskPool.addTask([videoStream, audioStream, vcodec, acodec](){readFrame(videoStream, audioStream, vcodec, acodec;});
 }
 
 void clean(){
