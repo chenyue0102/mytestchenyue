@@ -1,0 +1,8 @@
+//
+// Created by chenyue on 2020/8/8.
+//
+
+#ifndef TESTFFMPEG_INTERFACEDEFINE_H
+#define TESTFFMPEG_INTERFACEDEFINE_H
+
+#endif //TESTFFMPEG_INTERFACEDEFINE_H
