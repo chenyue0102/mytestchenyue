@@ -7,7 +7,6 @@ SET(CMAKE_CXX_FLAGS "-lpthread")
 add_library(CommonLib
         STATIC
         Log.cpp
-        MyLock.cpp
         OpenSLESHelper.cpp
         RingQueue.cpp
         SystemTime.cpp

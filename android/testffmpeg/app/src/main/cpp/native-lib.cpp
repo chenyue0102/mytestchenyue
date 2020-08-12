@@ -47,16 +47,7 @@ Java_com_test_testffmpeg_MainActivity_init(JNIEnv *env, jobject thiz) {
 
 std::string g_filePath;
 
-void LogAvError(int err){
-    if (0 != err){
-        const int BUF_SIZE = 128;
-        char szBuf[BUF_SIZE] = {0};
-        av_make_error_string(szBuf, BUF_SIZE, err);
-        szBuf[BUF_SIZE - 1] = '\0';
-        SC(Log).e("%s", szBuf);
-        assert(false);
-    }
-}
+extern void LogAvError(int err);
 
 int callback(void* param){
 

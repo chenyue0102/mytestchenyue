@@ -48,7 +48,10 @@ private:
     Demuxer *mDemuxer;
     FrameReceive *mVideoFrameReceive;
     FrameReceive *mAudioFrameReceive;
+#ifdef _WIN32
+#else
     OpenSLESHelper *mOpenSLESHelper;
+#endif
     std::vector<uint8_t> mBuffer;
     SwrContext *mSwrContext;
     enum STATE{

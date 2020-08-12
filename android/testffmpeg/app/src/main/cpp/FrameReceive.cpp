@@ -3,6 +3,7 @@
 //
 
 #include "FrameReceive.h"
+#include <assert.h>
 extern "C"{
 #include "libavutil/frame.h"
 }
@@ -21,7 +22,7 @@ FrameReceive::~FrameReceive() {
 
 }
 
-void FrameReceive::setMaxFrameCount(int maxFrameCount){
+void FrameReceive::setMaxFrameCount(unsigned int maxFrameCount){
     std::lock_guard<std::mutex> lk(mMutex);
 
     mMaxFrameCount = maxFrameCount;

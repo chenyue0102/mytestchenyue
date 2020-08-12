@@ -8,15 +8,17 @@
 #include <atomic>
 
 class MyLock {
-public:
-    MyLock();
 
 public:
-    void lock();
-    void unlock();
+	void lock() {
+		while (mLock.test_and_set());
+	}
+	void unlock() {
+		mLock.clear();
+	}
 
 private:
-    std::atomic_flag mLock;
+    std::atomic_flag mLock = ATOMIC_FLAG_INIT;
 };
 
 

@@ -22,7 +22,7 @@ public:
     ~FrameReceive();
 
 public:
-    void setMaxFrameCount(int maxFrameCount);
+    void setMaxFrameCount(unsigned int maxFrameCount);
     void setNotify(IFrameReceiveNotify *notify, int mediaType);
     void setCodecContext(AVCodecContext *codecContext);
     void startReceive();
@@ -42,7 +42,7 @@ private:
     std::list<AVFrame*> mFrames;
     IFrameReceiveNotify *mNotify;
     int mMediaType;
-    int mMaxFrameCount;
+    unsigned int mMaxFrameCount;
 };
 
 

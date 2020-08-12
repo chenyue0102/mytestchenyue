@@ -10,7 +10,10 @@ extern "C"{
 }
 #include "Demuxer.h"
 #include "FrameReceive.h"
+#ifdef _WIN32
+#else
 #include "OpenSLESHelper.h"
+#endif
 #include "Log.h"
 #include "MacroDefine.h"
 #include "Single.h"
@@ -18,13 +21,26 @@ extern "C"{
 
 #define MAX_AUDIO_DIFF_MS 5000
 
-extern void LogAvError(int err);
+void LogAvError(int err) {
+	if (0 != err) {
+		const int BUF_SIZE = 128;
+		char szBuf[BUF_SIZE] = { 0 };
+		av_make_error_string(szBuf, BUF_SIZE, err);
+		szBuf[BUF_SIZE - 1] = '\0';
+		SC(Log).e("%s", szBuf);
+		assert(false);
+	}
+}
+
+#ifdef _WIN32
+#else
 static void bufferQueueCallback(SLAndroidSimpleBufferQueueItf caller, void *pContext){
     PlayManager *playManager = reinterpret_cast<PlayManager*>(pContext);
     if (nullptr != playManager){
         playManager->onBufferQueueCallback();
     }
 }
+#endif
 PlayManager::PlayManager()
         : mFormatContext(nullptr),
           mVCC(nullptr),
@@ -32,7 +48,10 @@ PlayManager::PlayManager()
           mDemuxer(new Demuxer()),
           mVideoFrameReceive(new FrameReceive()),
           mAudioFrameReceive(new FrameReceive()),
+#ifdef _WIN32
+#else
           mOpenSLESHelper(new OpenSLESHelper()),
+#endif
           mSwrContext(nullptr){
     mDemuxer->setNotify(this);
     mVideoFrameReceive->setNotify(this, AVMEDIA_TYPE_VIDEO);
@@ -49,8 +68,11 @@ PlayManager::~PlayManager() {
     delete mAudioFrameReceive;
     mAudioFrameReceive = nullptr;
 
+#ifdef _WIN32
+#else
     delete mOpenSLESHelper;
     mOpenSLESHelper = nullptr;
+#endif
 }
 
 bool PlayManager::openFile(const char *filePath) {
@@ -129,6 +151,8 @@ bool PlayManager::openFile(const char *filePath) {
         mDemuxer->setFormatContext(mFormatContext);
         mDemuxer->startDemuxer();
 
+#ifdef _WIN32
+#else
         mOpenSLESHelper->createEngine();
         mOpenSLESHelper->createOutputMix();
 
@@ -149,6 +173,7 @@ bool PlayManager::openFile(const char *filePath) {
         const SLboolean req[3] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};
         mOpenSLESHelper->createPlayer(slDataSource, slDataSink, 3, ids, req);
         mOpenSLESHelper->registerPlayBufferQueueCallback(&bufferQueueCallback, this);
+#endif
         ret = true;
     }while(false);
     return ret;
@@ -195,7 +220,9 @@ void PlayManager::onReceiveFrame(int mediaType) {
                             swr_init(mSwrContext);
                         }
                         uint8_t *buffers[] = {mBuffer.data()};
-                        swr_convert(mSwrContext, buffers, outputSamplePerChanel, (const uint8_t**)frame->extended_data, frame->nb_samples);
+						uint8_t *d = frame->extended_data[0];
+                        int ret = swr_convert(mSwrContext, buffers, outputSamplePerChanel, (const uint8_t **)frame->extended_data, frame->nb_samples);
+						assert(ret > 0);
                         break;
                     }
                     default:
@@ -235,6 +262,8 @@ FrameReceive* PlayManager::getFrameReceive(int mediaType){
 
 int64_t PlayManager::getAudioPosition() {
     int64_t ret = 0;
+#ifdef _WIN32
+#else
     SLPlayItf play = mOpenSLESHelper->getPlay();
     if (nullptr != play){
         SLmillisecond position = 0;
@@ -242,5 +271,6 @@ int64_t PlayManager::getAudioPosition() {
             ret = position;
         }
     }
+#endif
     return ret;
 }

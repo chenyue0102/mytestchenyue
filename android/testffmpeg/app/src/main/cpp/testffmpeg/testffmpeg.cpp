@@ -2,10 +2,13 @@
 //
 
 #include "stdafx.h"
-
+#include "PlayManager.h"
 
 int main()
 {
+	PlayManager playManager;
+	playManager.openFile("D:/test.mp4");
+	getchar();
     return 0;
 }
 
