@@ -424,6 +424,11 @@ SLObjectItf OpenSLESHelper::getPlayerObject() const {
     return mData->slPlayerObject;
 }
 
+SLPlayItf OpenSLESHelper::getPlay()const{
+    return mData->slPlay;
+}
+
+
 SLAndroidSimpleBufferQueueItf OpenSLESHelper::getPlayBufferQueue() const {
     return mData->slPlayBufferQueue;
 }

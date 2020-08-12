@@ -5,11 +5,20 @@
 #ifndef TESTFFMPEG_PLAYMANAGER_H
 #define TESTFFMPEG_PLAYMANAGER_H
 
+#include <mutex>
+#include <thread>
+#include <vector>
+#include <condition_variable>
+extern "C"{
 #include "libavformat/avformat.h"
+#include "libswresample/swresample.h"
+}
 #include "InterfaceDefine.h"
+
 
 class Demuxer;
 class FrameReceive;
+class OpenSLESHelper;
 class PlayManager : protected IDemuxerNotify, protected IFrameReceiveNotify{
 public:
     PlayManager();
@@ -21,8 +30,6 @@ public:
 protected:
     void onReadFrame(int mediaType) override;
 
-    void onSendPacket(int mediaType) override;
-
     void onFinish() override;
 
 protected:
@@ -30,15 +37,24 @@ protected:
 
     void onReceiveFrame(int mediaType) override;
 
+public:
+    void onBufferQueueCallback();
+    FrameReceive* getFrameReceive(int mediaType);
+    int64_t getAudioPosition();
 private:
     AVFormatContext *mFormatContext;
     AVCodecContext *mVCC;
-    int mVideoIndex;
     AVCodecContext *mACC;
-    int mAudioIndex;
     Demuxer *mDemuxer;
     FrameReceive *mVideoFrameReceive;
     FrameReceive *mAudioFrameReceive;
+    OpenSLESHelper *mOpenSLESHelper;
+    std::vector<uint8_t> mBuffer;
+    SwrContext *mSwrContext;
+    enum STATE{
+        NONE,
+
+    };
 };
 
 

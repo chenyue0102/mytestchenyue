@@ -8,8 +8,7 @@
 
 struct IDemuxerNotify{
     virtual void onFinish() = 0;
-    virtual void onReadFrame(int meidaType) = 0;
-    virtual void onSendPacket(int mediaType) = 0;
+    virtual void onReadFrame(int mediaType) = 0;
 };
 
 struct IFrameReceiveNotify{

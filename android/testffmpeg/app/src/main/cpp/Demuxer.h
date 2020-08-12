@@ -22,11 +22,11 @@ public:
 
 public:
     void setFormatContext(AVFormatContext *formatContext);
-    void setDemuxerInfo(int mediaType, AVCodecContext *codecContext, int streamIndex);
+    void setDemuxerInfo(int mediaType, AVCodecContext *codecContext, int streamIndex, int maxPacketCount);
     void setNotify(IDemuxerNotify *notify);
     void startDemuxer();
     void stopDemuxer();
-    void sendPacket(int mediaType);
+    bool sendPacket(int mediaType);
 
 private:
     void demuxerThread();
@@ -39,8 +39,10 @@ private:
     IDemuxerNotify *mNotify;
     struct DemuxerInfo{
         std::list<AVPacket*> packets;
+        AVPacket *curPacket;
         AVCodecContext *codecContext;
         int streamIndex;
+        int maxPacketCount;
     };
     std::map<int, DemuxerInfo> mDemuxerInfo;
 };

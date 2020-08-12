@@ -4,22 +4,39 @@
 
 #include "PlayManager.h"
 #include <assert.h>
+extern "C"{
+#include "libavformat/avformat.h"
+#include "libavutil/opt.h"
+}
 #include "Demuxer.h"
 #include "FrameReceive.h"
+#include "OpenSLESHelper.h"
+#include "Log.h"
+#include "MacroDefine.h"
+#include "Single.h"
+#include "TaskPool.h"
+
+#define MAX_AUDIO_DIFF_MS 5000
 
 extern void LogAvError(int err);
+static void bufferQueueCallback(SLAndroidSimpleBufferQueueItf caller, void *pContext){
+    PlayManager *playManager = reinterpret_cast<PlayManager*>(pContext);
+    if (nullptr != playManager){
+        playManager->onBufferQueueCallback();
+    }
+}
 PlayManager::PlayManager()
-:mFormatContext(nullptr),
-mVCC(nullptr),
-mVideoIndex(-1),
-mACC(nullptr),
-mAudioIndex(-1),
-mDemuxer(new Demuxer()),
-mVideoFrameReceive(new FrameReceive()),
-mAudioFrameReceive(new FrameReceive()){
+        : mFormatContext(nullptr),
+          mVCC(nullptr),
+          mACC(nullptr),
+          mDemuxer(new Demuxer()),
+          mVideoFrameReceive(new FrameReceive()),
+          mAudioFrameReceive(new FrameReceive()),
+          mOpenSLESHelper(new OpenSLESHelper()),
+          mSwrContext(nullptr){
     mDemuxer->setNotify(this);
-    mVideoFrameReceive->setNotify(this, (void*)AVMEDIA_TYPE_VIDEO);
-    mAudioFrameReceive->setNotify(this, (void*)AVMEDIA_TYPE_AUDIO);
+    mVideoFrameReceive->setNotify(this, AVMEDIA_TYPE_VIDEO);
+    mAudioFrameReceive->setNotify(this, AVMEDIA_TYPE_AUDIO);
 }
 
 PlayManager::~PlayManager() {
@@ -31,6 +48,9 @@ PlayManager::~PlayManager() {
 
     delete mAudioFrameReceive;
     mAudioFrameReceive = nullptr;
+
+    delete mOpenSLESHelper;
+    mOpenSLESHelper = nullptr;
 }
 
 bool PlayManager::openFile(const char *filePath) {
@@ -52,14 +72,14 @@ bool PlayManager::openFile(const char *filePath) {
             assert(false);
             break;
         }
-        mVideoIndex = av_find_best_stream(mFormatContext, AVMEDIA_TYPE_VIDEO, -1, -1, nullptr, 0);
-        mAudioIndex = av_find_best_stream(mFormatContext, AVMEDIA_TYPE_AUDIO, -1, -1, nullptr, 0);
-        if (mVideoIndex < 0 && mAudioIndex < 0){
+        int videoIndex = av_find_best_stream(mFormatContext, AVMEDIA_TYPE_VIDEO, -1, -1, nullptr, 0);
+        int audioIndex = av_find_best_stream(mFormatContext, AVMEDIA_TYPE_AUDIO, -1, -1, nullptr, 0);
+        if (videoIndex < 0 && audioIndex < 0){
             assert(false);
             break;
         }
-        if (mVideoIndex >= 0){
-            AVCodec *vcodec = avcodec_find_decoder(mFormatContext->streams[mVideoIndex]->codecpar->codec_id);
+        if (videoIndex >= 0){
+            AVCodec *vcodec = avcodec_find_decoder(mFormatContext->streams[videoIndex]->codecpar->codec_id);
             if (nullptr == vcodec){
                 assert(false);
                 break;
@@ -69,31 +89,66 @@ bool PlayManager::openFile(const char *filePath) {
                 assert(false);
                 break;
             }
-            if (0 != (err = avcodec_parameters_to_context(mVCC, mFormatContext->streams[mVideoIndex]->codecpar))){
+            if (0 != (err = avcodec_parameters_to_context(mVCC, mFormatContext->streams[videoIndex]->codecpar))){
                 LogAvError(err);
                 assert(false);
                 break;
             }
-            mDemuxer->setVideoInfo(mVCC, mVideoIndex);
+            if (0 != (err = avcodec_open2(mVCC, nullptr, nullptr))){
+                LogAvError(err);
+                assert(false);
+                break;
+            }
+            mDemuxer->setDemuxerInfo(AVMEDIA_TYPE_VIDEO, mVCC, videoIndex, 10);
+            mVideoFrameReceive->setCodecContext(mVCC);
+            mVideoFrameReceive->startReceive();
         }
 
-        if (mAudioIndex >= 0){
-            AVCodec *acodec = avcodec_find_decoder(mFormatContext->streams[mAudioIndex]->codecpar->codec_id);
+        if (audioIndex >= 0){
+            AVCodec *acodec = avcodec_find_decoder(mFormatContext->streams[audioIndex]->codecpar->codec_id);
             if (nullptr == acodec){
                 assert(false);
                 break;
             }
             mACC = avcodec_alloc_context3(acodec);
-            if (0 != (err = avcodec_parameters_to_context(mACC, mFormatContext->streams[mAudioIndex]->codecpar)));{
+            if (0 != (err = avcodec_parameters_to_context(mACC, mFormatContext->streams[audioIndex]->codecpar))){
                 LogAvError(err);
                 assert(false);
                 break;
             }
-            mDemuxer->setAudioInfo(mACC, mAudioIndex);
+            if (0 != (err = avcodec_open2(mACC, nullptr, nullptr))){
+                LogAvError(err);
+                assert(false);
+                break;
+            }
+            mDemuxer->setDemuxerInfo(AVMEDIA_TYPE_AUDIO, mACC, audioIndex, 10);
+            mAudioFrameReceive->setCodecContext(mACC);
+            mAudioFrameReceive->startReceive();
         }
 
         mDemuxer->setFormatContext(mFormatContext);
         mDemuxer->startDemuxer();
+
+        mOpenSLESHelper->createEngine();
+        mOpenSLESHelper->createOutputMix();
+
+        SLDataLocator_AndroidSimpleBufferQueue bufferQueue = {SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE, 2};
+        SLDataFormat_PCM pcm = {
+                SL_DATAFORMAT_PCM,
+                2,
+                SL_SAMPLINGRATE_44_1,
+                SL_PCMSAMPLEFORMAT_FIXED_16,
+                SL_PCMSAMPLEFORMAT_FIXED_16,
+                SL_SPEAKER_FRONT_LEFT | SL_SPEAKER_FRONT_RIGHT,
+                SL_BYTEORDER_LITTLEENDIAN,
+        };
+        SLDataSource slDataSource = {&bufferQueue, &pcm};
+        SLDataLocator_OutputMix outputMix = {SL_DATALOCATOR_OUTPUTMIX, mOpenSLESHelper->getOutputMixObject()};
+        SLDataSink slDataSink = {&outputMix, nullptr};
+        const SLInterfaceID ids[] = {SL_IID_BUFFERQUEUE, SL_IID_EFFECTSEND, SL_IID_VOLUME};
+        const SLboolean req[3] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};
+        mOpenSLESHelper->createPlayer(slDataSource, slDataSink, 3, ids, req);
+        mOpenSLESHelper->registerPlayBufferQueueCallback(&bufferQueueCallback, this);
         ret = true;
     }while(false);
     return ret;
@@ -104,12 +159,6 @@ void PlayManager::onFinish() {
 }
 
 void PlayManager::onReadFrame(int mediaType) {
-    if (AVMEDIA_TYPE_VIDEO == mediaType){
-
-    }
-}
-
-void PlayManager::onSendPacket(int mediaType) {
 
 }
 
@@ -118,5 +167,80 @@ void PlayManager::onMoreData(int mediaType) {
 }
 
 void PlayManager::onReceiveFrame(int mediaType) {
+    if (AVMEDIA_TYPE_AUDIO == mediaType){
+        int64_t pts = mAudioFrameReceive->peekPTS();
+        int64_t positionMs = pts * 1000 / AV_TIME_BASE;
+        int64_t playPositionMs = getAudioPosition();
+        if (positionMs - positionMs < MAX_AUDIO_DIFF_MS){
+            AVFrame *frame = mAudioFrameReceive->popFont();
+            if (nullptr != frame){
+                switch (frame->format){
+                    case AV_SAMPLE_FMT_FLT:
+                        break;
+                    case AV_SAMPLE_FMT_FLTP:{
+                        const int byteCountPerChannel = frame->linesize[0];
+                        int sampleCountPerChannel = frame->nb_samples;
+                        assert(sampleCountPerChannel == byteCountPerChannel / (sizeof(float) * 2));
+                        const int outputSampleRate = 44100;
+                        int outputSamplePerChanel = av_rescale_rnd(sampleCountPerChannel, outputSampleRate, mACC->sample_rate, AV_ROUND_UP);
+                        mBuffer.resize(outputSamplePerChanel * 2 * sizeof(int16_t));
+                        if (nullptr == mSwrContext){
+                            mSwrContext = swr_alloc();
+                            av_opt_set_int(mSwrContext, "in_channel_layout", mACC->channel_layout, 0);
+                            av_opt_set_int(mSwrContext, "out_channel_layout", AV_CH_LAYOUT_STEREO, 0);
+                            av_opt_set_int(mSwrContext, "in_sample_rate", mACC->sample_rate, 0);
+                            av_opt_set_int(mSwrContext, "out_sample_rate", outputSampleRate, 0);
+                            av_opt_set_int(mSwrContext, "in_sample_fmt", AV_SAMPLE_FMT_FLTP, 0);
+                            av_opt_set_int(mSwrContext, "out_sample_fmt", AV_SAMPLE_FMT_S16, 0);
+                            swr_init(mSwrContext);
+                        }
+                        uint8_t *buffers[] = {mBuffer.data()};
+                        swr_convert(mSwrContext, buffers, outputSamplePerChanel, (const uint8_t**)frame->extended_data, frame->nb_samples);
+                        break;
+                    }
+                    default:
+                        SC(Log).e("PlayManager::onReceiveFrame not support format:%d failed", frame->format);
+                        assert(false);
+                        break;
+                }
+            }
+        }
+    }
+}
 
+void PlayManager::onBufferQueueCallback() {
+    AVFrame *frame = mAudioFrameReceive->popFont();
+    if (nullptr != frame){
+        switch (frame->format){
+            case AV_SAMPLE_FMT_FLT:
+                break;
+            default:
+                SC(Log).e("PlayManager::onBufferQueueCallback not support format:%d failed", frame->format);
+                assert(false);
+                break;
+        }
+    }
+}
+
+FrameReceive* PlayManager::getFrameReceive(int mediaType){
+    if (AVMEDIA_TYPE_AUDIO == mediaType){
+        return mAudioFrameReceive;
+    }else if (AVMEDIA_TYPE_VIDEO == mediaType){
+        return mVideoFrameReceive;
+    }else{
+        assert(false);
+        return nullptr;
+    }
+}
+
+int64_t PlayManager::getAudioPosition() {
+    int64_t ret = 0;
+    SLPlayItf play = mOpenSLESHelper->getPlay();
+    if (nullptr != play){
+        SLmillisecond position = 0;
+        if (SL_RESULT_SUCCESS == (*play)->GetPosition(play, &position)){
+            ret = position;
+        }
+    }
+    return ret;
 }

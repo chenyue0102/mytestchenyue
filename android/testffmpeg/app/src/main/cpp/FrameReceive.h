@@ -10,7 +10,9 @@
 #include <thread>
 #include <list>
 #include <stdint.h>
+extern "C"{
 #include "libavformat/avformat.h"
+};
 #include "InterfaceDefine.h"
 
 
@@ -20,10 +22,11 @@ public:
     ~FrameReceive();
 
 public:
-    void setFrameCount(int frameCount);
+    void setMaxFrameCount(int maxFrameCount);
     void setNotify(IFrameReceiveNotify *notify, int mediaType);
     void setCodecContext(AVCodecContext *codecContext);
     void startReceive();
+    AVFrame* popFont();
     int64_t peekPTS();
     bool check();
 
@@ -39,7 +42,7 @@ private:
     std::list<AVFrame*> mFrames;
     IFrameReceiveNotify *mNotify;
     int mMediaType;
-    int mFrameCount;
+    int mMaxFrameCount;
 };
 
 

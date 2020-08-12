@@ -15,6 +15,7 @@ extern "C"{
 #include "Log.h"
 #include "OpenSLESHelper.h"
 #include "ObjectPool.h"
+#include "PlayManager.h"
 
 JavaVM *g_JavaVM = 0;
 TaskPool g_TaskPool;
@@ -69,7 +70,7 @@ uint64_t getAudioPosition(){
 }
 
 uint64_t pts2ms(uint64_t pts){
-    return pts / AV_TIME_BASE;
+    return pts * 1000 / AV_TIME_BASE;
 }
 
 void receiveVideoFrame(AVCodecContext *cc){
@@ -157,7 +158,7 @@ void openFile(){
     ret = avcodec_open2(g_acc, nullptr, nullptr);
     LogAvError(ret);
 
-    g_TaskPool.addTask([videoStream, audioStream, vcodec, acodec](){readFrame(videoStream, audioStream, vcodec, acodec;});
+    g_TaskPool.addTask([videoStream, audioStream, vcodec, acodec](){readFrame(videoStream, audioStream, g_vcc, g_acc);});
 }
 
 void clean(){
@@ -204,6 +205,11 @@ void createPlayer(){
     SC(Log).e("%d %d", state.count, state.index);
 }
 
+PlayManager g_PlayManager;
+void openFile2(){
+    g_PlayManager.openFile(g_filePath.c_str());
+}
+
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_test_testffmpeg_MainActivity_openFile(JNIEnv *env, jobject thiz, jstring file_path) {
@@ -212,9 +218,9 @@ Java_com_test_testffmpeg_MainActivity_openFile(JNIEnv *env, jobject thiz, jstrin
     if (nullptr != str) {
         g_filePath = str;
         env->ReleaseStringUTFChars(file_path, str);
-        g_TaskPool.addTask(&openFile);
+        g_TaskPool.addTask(&openFile2);
     }
-    createPlayer();
+    //createPlayer();
 }extern "C"
 JNIEXPORT void JNICALL
 Java_com_test_testffmpeg_MainActivity_closeFile(JNIEnv *env, jobject thiz) {
