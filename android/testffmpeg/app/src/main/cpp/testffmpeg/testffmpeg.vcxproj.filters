@@ -1,0 +1,117 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="common">
+      <UniqueIdentifier>{706aba50-9a62-46b7-9eb0-8af6b31243ec}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="player">
+      <UniqueIdentifier>{f424819a-6089-42ce-9c39-66575d14a65c}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="ReadMe.txt" />
+    <Text Include="..\..\..\..\..\..\common\CMakeLists.txt">
+      <Filter>common</Filter>
+    </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="stdafx.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\common\AudioRecordLogic.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\common\byteswap.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\common\Log.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\common\MacroDefine.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\common\MyLock.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\common\ObjectPool.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\common\RingQueue.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\common\Single.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\common\SystemTime.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\common\TaskPool.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\common\WAVDefine.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Demuxer.h">
+      <Filter>player</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FrameReceive.h">
+      <Filter>player</Filter>
+    </ClInclude>
+    <ClInclude Include="..\InterfaceDefine.h">
+      <Filter>player</Filter>
+    </ClInclude>
+    <ClInclude Include="..\PlayManager.h">
+      <Filter>player</Filter>
+    </ClInclude>
+    <ClInclude Include="DirectSoundHelper.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="testffmpeg.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\..\common\Log.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\..\common\RingQueue.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\..\common\SystemTime.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\..\common\TaskPool.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Demuxer.cpp">
+      <Filter>player</Filter>
+    </ClCompile>
+    <ClCompile Include="..\FrameReceive.cpp">
+      <Filter>player</Filter>
+    </ClCompile>
+    <ClCompile Include="..\PlayManager.cpp">
+      <Filter>player</Filter>
+    </ClCompile>
+    <ClCompile Include="DirectSoundHelper.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

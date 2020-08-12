@@ -1,22 +1,22 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 29
+    compileSdkVersion 28
     buildToolsVersion "30.0.0"
 
     defaultConfig {
         applicationId "com.test.testcamera"
-        minSdkVersion 25
-        targetSdkVersion 29
+        minSdkVersion 21
+        targetSdkVersion 28
         versionCode 1
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-//        externalNativeBuild {
-//            cmake {
-//                cppFlags "-std=c++11"
-//            }
-//        }
+        externalNativeBuild {
+            cmake {
+                cppFlags "-std=c++11"
+            }
+        }
     }
 
     buildTypes {
@@ -25,12 +25,20 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
-//    externalNativeBuild {
-//        cmake {
-//            path "src/main/cpp/CMakeLists.txt"
-//            version "3.10.2"
-//        }
-//    }
+    externalNativeBuild {
+        cmake {
+            path "src/main/cpp/CMakeLists.txt"
+            version "3.10.2"
+        }
+    }
+    splits {
+        abi {
+            enable true
+            reset()
+            include('armeabi-v7a')
+            universalApk false
+        }
+    }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8

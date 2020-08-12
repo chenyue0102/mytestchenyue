@@ -117,6 +117,21 @@ void readThread(std::string filePath){
     }
 }
 
+void readState(){
+    while(true){
+        SLAndroidSimpleBufferQueueItf bufferQueue = g_OpenSLESHelper->getBufferQueue();
+        SLAndroidSimpleBufferQueueState state;
+        (*bufferQueue)->GetState(bufferQueue, &state);
+
+        SLPlayItf play = g_OpenSLESHelper->getPlay();
+        SLmillisecond duration = 0, position = 0;
+        (*play)->GetDuration(play, &duration);
+        (*play)->GetPosition(play, &position);
+        SC(Log).e("readState index:%d count:%d duration:%d position:%d", state.index, state.count, duration, position);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+}
+
 void testMedia(const std::string &filePath){
     SC(Log).setTag("myoutput");
     g_SystemTime = new SystemTime();
@@ -146,6 +161,7 @@ void testMedia(const std::string &filePath){
     g_TaskPool->AddTask([filePath](){
         readThread(filePath.c_str());
     });
+    g_TaskPool->AddTask(&readState);
     //mediaCallback(g_OpenSLESHelper->getBufferQueue(), nullptr);
 }
 

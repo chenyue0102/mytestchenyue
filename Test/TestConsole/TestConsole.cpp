@@ -7,7 +7,12 @@
 
 int main()
 {
-	RingQueue ringQueue(5);
+	uint32_t s = 0;
+	uint32_t s2 = 0;
+	s -= 6;
+	s2 += 2;
+	uint32_t s3 = s2 - s;
+	RingQueue ringQueue(8);
 	size_t dataSize = ringQueue.getDataSize();
 	size_t freeSize = ringQueue.getFreeSize();
 	char  str[] = "123456789";

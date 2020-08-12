@@ -35,6 +35,7 @@ public:
     SLObjectItf getEngineObject()const;
     SLObjectItf getOutputMixObject()const;
     SLObjectItf getPlayerObject()const;
+    SLPlayItf getPlay()const;
     SLAndroidSimpleBufferQueueItf getBufferQueue()const;
 private:
     OpenSLESHelperData *mData;

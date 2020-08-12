@@ -4,31 +4,41 @@
 
 #ifndef TESTMEDIA_RINGQUEUE_H
 #define TESTMEDIA_RINGQUEUE_H
-#include <stddef.h>
+#include <stdint.h>
+#if 0
+#include "MyLock.h"
+#define RING_MUTEX MyLock
+#else
+#include <mutex>
+#define RING_MUTEX std::mutex
+#endif
 
-struct RingQueueData;
 class RingQueue {
 public:
-    RingQueue(size_t bufSize);
+    RingQueue(uint32_t bufSize);
     ~RingQueue();
 
 public:
     //总空间
-    size_t getBufferSize()const;
+    uint32_t getBufferSize()const;
     //空闲空间
-    size_t getFreeSize()const;
+    uint32_t getFreeSize()const;
     //数据空间
-    size_t getDataSize()const;
-    size_t put(const void *data, size_t dataLen);
-    size_t get(void *data, size_t dataLen);
+    uint32_t getDataSize()const;
+    uint32_t put(const void *data, size_t size);
+    uint32_t get(void *data, size_t size);
 
 private:
-    size_t innerGetFreeSize()const;
-    size_t innerPut(const void *data, size_t dataLen);
-    size_t innerGet(void *data, size_t dataLen);
+    uint32_t innerGetDataSize()const;
+    uint32_t innerPut(const void *data, size_t size);
+    uint32_t innerGet(void *data, size_t size);
 
 private:
-    RingQueueData *mData;
+    mutable RING_MUTEX mutex;
+    uint32_t mask;
+    uint32_t readIndex;
+    uint32_t writeIndex;
+    uint8_t * buffer;
 };
 
 

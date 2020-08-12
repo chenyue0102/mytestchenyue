@@ -28,8 +28,8 @@ public class MainActivity extends AppCompatActivity {
 
         Button btnOpen = findViewById(R.id.btn_open_mp3);
         btnOpen.setOnClickListener((v)->playMp3File(mediaFile));
-        File  file = new File(mediaFile);
-        Log.i("tag", "file.exists()" + file.exists());
+//        File  file = new File(mediaFile);
+//        Log.i("tag", "file.exists()" + file.exists());
     }
 
     private void playMp3File(String mediaFile){

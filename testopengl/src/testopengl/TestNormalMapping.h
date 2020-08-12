@@ -32,9 +32,9 @@ void main(){
 	esPosition = viewMatrix * vec4(vertexPosition, 1.0f);
 	gl_Position = projectionMatrix * modelMatrix * esPosition;
 	lightPosition = vertexLightPosition;
-	vec3 T = normalize(vec3(modelMatrix * vec4(vertexTangent, 0.0)));
-	vec3 B = normalize(vec3(modelMatrix * vec4(vertexBitangent, 0.0)));
-	vec3 N = normalize(vec3(modelMatrix * vec4(vertexNormal, 0.0)));
+	vec3 T = normalize(vec3(modelMatrix * viewMatrix * vec4(vertexTangent, 0.0)));
+	vec3 B = normalize(vec3(modelMatrix * viewMatrix * vec4(vertexBitangent, 0.0)));
+	vec3 N = normalize(vec3(modelMatrix * viewMatrix * vec4(vertexNormal, 0.0)));
 	TBN = mat3(T, B, N);
 }
 )";
@@ -42,6 +42,10 @@ void main(){
 #version 430 core
 layout(location=10) uniform sampler2D tex;
 layout(location=11) uniform sampler2D normalMap;
+layout(location=12) uniform vec3 eyePositon;
+layout(location=13) uniform float constantAttenuation;//固定衰减系数
+layout(location=14) uniform float linearAttenuation;//线性衰减系数
+layout(location=15) uniform float quadraticAttenuation;//二次衰减系数
 
 in vec2 texCoord;
 in vec4 esPosition;
@@ -70,28 +74,37 @@ void main(){
 			fColor = vec4(min(tmpTexColor.rgb * lightColor, vec3(1.0f, 1.0f, 1.0f)), 1.0f);
 		}
 	}else if (2 == esType){
+		float lightDistance = length(lightPosition - esPosition.xyz);//光源到顶点的距离
+		vec3 lightDirect = normalize(lightPosition - esPosition.xyz);
+		vec3 eyeDirect = normalize(eyePositon - esPosition.xyz);
+		vec3 halfVector = normalize(lightDirect + eyeDirect);
+		
+
 		vec3 normal = texture(normalMap, texCoord).rgb;
 		normal = normalize(normal * 2.0 - 1.0);
+		normal = normalize(TBN * normal);
+
+		float tmpValue = (constantAttenuation + linearAttenuation * lightDistance + quadraticAttenuation * lightDistance * lightDistance);
+		float attenuation = tmpValue > 0.0f ? 1.0 / tmpValue : 1.0f ;
+
+		float diffuse = max(0.0, dot(normal, lightDirect));
+		float specular = max(0.0, dot(normal, halfVector));
 		
-		vec3 color = texColor.rgb;
+		if (diffuse == 0.0){
+			specular = 0.0f;
+		}else{
+			specular = pow(specular, 20.0f);
+		}
 		
 		// ambient
-		vec3 ambient = 0.1 * color;
-		
-		vec3 lightDir = normalize(lightPosition - esPosition.xyz);
-		//float diffuse = max(0.0, dot(normal, lightDir));
+		vec3 ambient = vec3(1.0f, 1.0f, 1.0f) * 0.1;
+		float strength = 0.5f;
 
-		float diff = max(dot(lightDir, normal), 0.0);
-		vec3 diffuse = diff * color;
+		vec3 scatteredLight = ambient + lightColor * diffuse * attenuation;//散射光
+		vec3 reflectedLight = lightColor * specular * strength * attenuation;//反射光
 
-// specular
-    vec3 viewDir = normalize(lightPosition - esPosition.xyz);
-    vec3 reflectDir = reflect(-lightDir, normal);
-    vec3 halfwayDir = normalize(lightDir + viewDir);  
-    float spec = pow(max(dot(normal, halfwayDir), 0.0), 32.0);
-
-    vec3 specular = vec3(0.2) * spec;
-    fColor = vec4(ambient + diffuse + specular, 1.0);
+		vec3 rgb = min(texColor.rgb * scatteredLight + reflectedLight, vec3(1.0f));
+		fColor = vec4(rgb, texColor.a);
 	}
 }
 )";
@@ -106,7 +119,8 @@ void main(){
 	static GLfloat g_yoffset = 0.f;
 	static GLfloat g_zoffset = 0.f;
 	static GLfloat g_xcameraoffset = 0.f;
-	static GLfloat g_ycameraoffset = -30.f;
+	//static GLfloat g_ycameraoffset = -30.f;
+	static GLfloat g_ycameraoffset = 0.f;
 	static GLfloat g_zcameraoffset = 0.f;
 
 	static void init() {
@@ -144,6 +158,14 @@ void main(){
 		glm::vec2 uv2(texUV[2], texUV[3]);
 		glm::vec2 uv3(texUV[4], texUV[5]);
 		glm::vec3 normal(normals[0], normals[1], normals[2]);
+
+		normal = glm::rotateY(normal, glm::radians(g_ycameraoffset));//旋转相机的位置,正值顺时针，负值逆时针
+		for (int i = 0; i < 3; i++) {
+			normals[i * 3 + 0] = normal.x;
+			normals[i * 3 + 1] = normal.y;
+			normals[i * 3 + 2] = normal.z;
+		}
+
 		glm::vec3 tangent, bitangent;
 		OpenGLHelper::getTangent<glm::vec2, glm::vec3>(vpos1, vpos2, vpos3, uv1, uv2, uv3, normal, tangent, bitangent);
 		
@@ -169,6 +191,7 @@ void main(){
 
 		//glGenTextures(1, &g_texturenormal);
 		success = TestJpeg::genTextureAndLoadJpg("brickwall_normal.jpg", false, GL_RGB, &g_texturenormal, &width, &height, NULL);
+		//success = TestJpeg::genTextureAndLoadJpg("normal.jpg", false, GL_RGB, &g_texturenormal, &width, &height, NULL);
 		assert(success);
 		glBindTexture(GL_TEXTURE_2D, g_texturenormal);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -199,7 +222,7 @@ void main(){
 		glVertexAttribPointer(vertexTexCoordLocation, 2, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(vertexs)));
 		glEnableVertexAttribArray(vertexTexCoordLocation);
 		CHECKERR();
-		/*GLuint vertexNormalLocation = glGetAttribLocation(g_program, "vertexNormal");
+		GLuint vertexNormalLocation = glGetAttribLocation(g_program, "vertexNormal");
 		glVertexAttribPointer(vertexNormalLocation, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(vertexs) + sizeof(texUV)));
 		glEnableVertexAttribArray(vertexNormalLocation);
 		CHECKERR();
@@ -210,12 +233,11 @@ void main(){
 		GLuint vertexBitangentLocation = glGetAttribLocation(g_program, "vertexBitangent");
 		glVertexAttribPointer(vertexBitangentLocation, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(vertexs) + sizeof(texUV) + sizeof(normals) + sizeof(tangentVertex)));
 		glVertexAttribPointer(vertexBitangentLocation, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(vertexs) + sizeof(texUV) + sizeof(normals)));
-		glEnableVertexAttribArray(vertexBitangentLocation);*/
+		glEnableVertexAttribArray(vertexBitangentLocation);
 		CHECKERR();
 
 		glBindVertexArray(0);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
-
 	}
 
 	static void testdraw() {
@@ -259,15 +281,34 @@ void main(){
 		vmath::mat4 cameraPerspective = vmath::perspective(fovy, aspect, n, f);// vmath::perspective(fovy, aspect, 0.1f, 100.f);
 		vmath::mat4 projectionMatrix = cameraPerspective;
 		vmath::mat4 modelMatrix = cameraLookAt;
+
+
 		GLuint viewMatrixLocation = glGetUniformLocation(g_program, "viewMatrix");
 		glProgramUniformMatrix4fv(g_program, viewMatrixLocation, 1, GL_FALSE, viewMatrix);
 		GLuint modelMatrixLocation = glGetUniformLocation(g_program, "modelMatrix");
 		glProgramUniformMatrix4fv(g_program, modelMatrixLocation, 1, GL_FALSE, modelMatrix);
 		GLuint projectionMatrixLocation = glGetUniformLocation(g_program, "projectionMatrix");
 		glProgramUniformMatrix4fv(g_program, projectionMatrixLocation, 1, GL_FALSE, projectionMatrix);
+		GLuint eyePositonLocation = glGetUniformLocation(g_program, "eyePositon");
+		glProgramUniform3f(g_program, eyePositonLocation, tmpEye.x, tmpEye.y, tmpEye.z);
 
 		GLuint vertexLightPositionLocation = glGetUniformLocation(g_program, "vertexLightPosition");
-		glProgramUniform3f(g_program, vertexLightPositionLocation, 0.f, 0.f, 10.f);
+		glProgramUniform3f(g_program, vertexLightPositionLocation, 1.f, 0.2f, 3.f);
+		CHECKERR();
+
+		float constantAttenuation = 0.2f;
+		GLuint constantAttenuationLocation = glGetUniformLocation(g_program, "constantAttenuation");
+		glProgramUniform1f(g_program, constantAttenuationLocation, constantAttenuation);
+		CHECKERR();
+
+		float linearAttenuation = 0.0 / 1.0f;
+		GLuint linearAttenuationLocation = glGetUniformLocation(g_program, "linearAttenuation");
+		glProgramUniform1f(g_program, linearAttenuationLocation, linearAttenuation);
+		CHECKERR();
+
+		float quadraticAttenuation = 0.1f / (1.0f * 1.0f);
+		GLuint quadraticAttenuationLocation = glGetUniformLocation(g_program, "quadraticAttenuation");
+		glProgramUniform1f(g_program, quadraticAttenuationLocation, quadraticAttenuation);
 		CHECKERR();
 
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);

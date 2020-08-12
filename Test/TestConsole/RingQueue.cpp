@@ -4,137 +4,71 @@
 
 #include "RingQueue.h"
 #include <stdlib.h>
-#include <mutex>
 #include <algorithm>
 #include <assert.h>
-#include "MacroDefine.h"
 
-#define REFALL \
-    REFM(mutex); \
-    REFM(bufferLen); \
-    REFM(readIndex); \
-    REFM(writeIndex); \
-    REFM(buffer); \
-    REFM(isFull)
-
-struct RingQueueData{
-    std::mutex mutex;
-    size_t bufferLen;
-    size_t readIndex;
-    size_t writeIndex;
-    unsigned char * buffer;
-    bool isFull;
-};
-RingQueue::RingQueue(size_t bufSize) :mData(new RingQueueData()){
-    mData->bufferLen = bufSize;
-    mData->buffer = new unsigned char[bufSize];
+#define is_power_of_2(x) ((x) != 0 && (((x) & ((x) - 1)) == 0))
+RingQueue::RingQueue(uint32_t bufSize) :mutex(), mask(bufSize - 1), readIndex(0), writeIndex(0), buffer(nullptr){
+    assert(is_power_of_2(bufSize));
+    buffer = new uint8_t[bufSize];
 }
 
 RingQueue::~RingQueue() {
-    delete []mData->buffer;
-    delete mData;
-    mData = nullptr;
+    delete []buffer;
 }
 
-size_t RingQueue::getBufferSize() const {
-    std::lock_guard<std::mutex> lk(mData->mutex);
+uint32_t RingQueue::getBufferSize() const {
+    std::lock_guard<RING_MUTEX> lk(mutex);
 
-    return mData->bufferLen;
+    return (mask + 1);
 }
 
-size_t RingQueue::getFreeSize() const {
-    std::lock_guard<std::mutex> lk(mData->mutex);
+uint32_t RingQueue::getFreeSize() const {
+    std::lock_guard<RING_MUTEX> lk(mutex);
 
-    return innerGetFreeSize();
+    return (mask + 1) - innerGetDataSize();
 }
 
-size_t RingQueue::getDataSize() const {
-    std::lock_guard<std::mutex> lk(mData->mutex);
+uint32_t RingQueue::getDataSize() const {
+    std::lock_guard<RING_MUTEX> lk(mutex);
 
-    return mData->bufferLen - innerGetFreeSize();
+    return innerGetDataSize();
 }
 
-size_t RingQueue::put(const void *data, size_t dataLen) {
-    std::lock_guard<std::mutex> lk(mData->mutex);
+uint32_t RingQueue::put(const void *data, uint32_t size) {
+    std::lock_guard<RING_MUTEX> lk(mutex);
 
-    return innerPut(data, dataLen);
+    return innerPut(data, size);
 }
 
-size_t RingQueue::get(void *data, size_t dataLen) {
-    std::lock_guard<std::mutex> lk(mData->mutex);
+uint32_t RingQueue::get(void *data, uint32_t size) {
+    std::lock_guard<RING_MUTEX> lk(mutex);
 
-    return innerGet(data, dataLen);
+    return innerGet(data, size);
 }
 
-size_t RingQueue::innerGetFreeSize() const {
-    REFALL;
-    size_t freeSize = 0;
-    if (!isFull){
-        if (writeIndex >= readIndex){
-            freeSize = bufferLen - (writeIndex - readIndex);
-        }else{
-            freeSize = readIndex - writeIndex;
-        }
-    }
-    return freeSize;
+uint32_t RingQueue::innerGetDataSize() const {
+    return (writeIndex - readIndex);
 }
 
-size_t RingQueue::innerPut(const void *data, size_t dataLen) {
-    REFALL;
-    size_t putSize = 0;
-    if (dataLen > 0 && nullptr != data && !isFull){
-        if (writeIndex >= readIndex){
-            size_t tmpPutSize = (std::min)(dataLen, bufferLen - writeIndex);
-            memcpy(buffer + writeIndex, data, tmpPutSize);
-            putSize += tmpPutSize;
-            writeIndex += tmpPutSize;
-            if (writeIndex >= bufferLen){
-                writeIndex = 0;
-            }
-            if (putSize < dataLen){
-                assert(readIndex >= writeIndex);
-                tmpPutSize = (std::min)(readIndex - writeIndex, dataLen - putSize);
-                memcpy(buffer + writeIndex, reinterpret_cast<const unsigned char*>(data) + putSize, tmpPutSize);
-                putSize += tmpPutSize;
-                writeIndex += tmpPutSize;
-            }
-        }else{
-            putSize = (std::min)(dataLen, readIndex - writeIndex);
-            memcpy(buffer + writeIndex, data, putSize);
-            writeIndex += putSize;
-        }
-        isFull = (writeIndex == readIndex);
-    }
-    assert(putSize > 0);
-    return putSize;
+uint32_t RingQueue::innerPut(const void *data, uint32_t size) {
+    assert(nullptr != data && size > 0);
+	uint32_t bufferLen = mask + 1;
+	size = (std::min)(size, bufferLen - writeIndex + readIndex);
+    uint32_t len = (std::min)(size, bufferLen - (writeIndex & mask));
+    memcpy(buffer + (writeIndex & mask), data, len);
+    memcpy(buffer, reinterpret_cast<const uint8_t*>(data) + len, size - len);
+	writeIndex += size;
+    return size;
 }
 
-size_t RingQueue::innerGet(void *data, size_t dataLen) {
-    REFALL;
-    size_t getSize = 0;
-    if (dataLen > 0 && nullptr != data && (writeIndex != readIndex || isFull)){
-        if (readIndex >= writeIndex){
-            size_t tmpGetSize = (std::min)(dataLen, bufferLen - readIndex);
-            memcpy(data, buffer + readIndex, tmpGetSize);
-            getSize += tmpGetSize;
-            readIndex += tmpGetSize;
-            if (readIndex >= bufferLen){
-                readIndex = 0;
-            }
-            if (getSize < dataLen){
-                assert(writeIndex >= readIndex);
-                tmpGetSize = (std::min)(dataLen - getSize, writeIndex - readIndex);
-                memcpy(reinterpret_cast<unsigned char*>(data) + getSize, buffer + readIndex, tmpGetSize);
-                getSize += tmpGetSize;
-                readIndex += tmpGetSize;
-            }
-        }else{
-            getSize = (std::min)(dataLen, writeIndex - readIndex);
-            memcpy(data, buffer + readIndex, getSize);
-            readIndex += getSize;
-        }
-        isFull = false;
-    }
-    assert(getSize > 0);
-    return getSize;
+uint32_t RingQueue::innerGet(void *data, uint32_t size) {
+    assert(nullptr != data && size > 0);
+	uint32_t bufferLen = mask + 1;
+	size = (std::min)(size, writeIndex - readIndex);
+    uint32_t  len = (std::min)(size, bufferLen - (readIndex & mask));
+    memcpy(data, buffer + (readIndex & mask), len);
+    memcpy(reinterpret_cast<uint8_t*>(data) + len, buffer, size - len);
+    readIndex += size;
+    return size;
 }
