@@ -20,7 +20,7 @@ void Demuxer::setFormatContext(AVFormatContext *formatContext) {
     mFormatContext = formatContext;
 }
 
-void Demuxer::setDemuxerInfo(int mediaType, AVCodecContext *codecContext, int streamIndex, int maxPacketCount){
+void Demuxer::setDemuxerInfo(uint32_t mediaType, AVCodecContext *codecContext, uint32_t streamIndex, uint32_t maxPacketCount){
     std::lock_guard<std::mutex> lk(mMutex);
 
     mDemuxerInfo[mediaType].streamIndex = streamIndex;
@@ -61,7 +61,7 @@ void Demuxer::demuxerThread() {
 
             lk.unlock();
             if (nullptr != notify){
-                notify->onFinish();
+                notify->onDemuxerEnd();
             }
             break;
         }
@@ -97,7 +97,7 @@ void Demuxer::stopDemuxer() {
 
 }
 
-bool Demuxer::sendPacket(int mediaType) {
+bool Demuxer::sendPacket(uint32_t mediaType) {
     bool ret = false;
     std::lock_guard<std::mutex> lk(mMutex);
 

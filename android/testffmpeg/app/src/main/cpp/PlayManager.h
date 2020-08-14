@@ -16,48 +16,31 @@ extern "C"{
 #include "InterfaceDefine.h"
 
 
-class Demuxer;
-class FrameReceive;
+#ifdef _WIN32
+class DirectSoundHelper;
+typedef DirectSoundHelper PlayHelper;
+#else
 class OpenSLESHelper;
-class PlayManager : protected IDemuxerNotify, protected IFrameReceiveNotify{
+typedef OpenSLESHelper PlayHelper;
+#endif
+
+struct PlayManagerData;
+class PlayManager : protected IAudioPlayCallback {
 public:
     PlayManager();
     ~PlayManager();
 
 public:
     bool openFile(const char *filePath);
+	bool setPlayState(uint32_t playState);
 
 protected:
-    void onReadFrame(int mediaType) override;
+	virtual void onBufferCallback(IAudioPlay *audioPlay, void *pContext)override;
 
-    void onFinish() override;
-
-protected:
-    void onMoreData(int mediaType) override;
-
-    void onReceiveFrame(int mediaType) override;
-
-public:
-    void onBufferQueueCallback();
-    FrameReceive* getFrameReceive(int mediaType);
-    int64_t getAudioPosition();
 private:
-    AVFormatContext *mFormatContext;
-    AVCodecContext *mVCC;
-    AVCodecContext *mACC;
-    Demuxer *mDemuxer;
-    FrameReceive *mVideoFrameReceive;
-    FrameReceive *mAudioFrameReceive;
-#ifdef _WIN32
-#else
-    OpenSLESHelper *mOpenSLESHelper;
-#endif
-    std::vector<uint8_t> mBuffer;
-    SwrContext *mSwrContext;
-    enum STATE{
-        NONE,
-
-    };
+	std::thread mReadThread;
+	std::thread mLoopThread;
+	PlayManagerData *mData;
 };
 
 

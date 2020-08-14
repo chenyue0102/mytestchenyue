@@ -57,9 +57,6 @@
     <ClInclude Include="..\..\..\..\..\..\common\Single.h">
       <Filter>common</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\..\..\common\SystemTime.h">
-      <Filter>common</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\..\..\..\common\TaskPool.h">
       <Filter>common</Filter>
     </ClInclude>
@@ -81,6 +78,12 @@
     <ClInclude Include="DirectSoundHelper.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\common\EnumDefine.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\common\BaseTime.h">
+      <Filter>common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -93,9 +96,6 @@
       <Filter>common</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\..\..\..\common\RingQueue.cpp">
-      <Filter>common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\..\..\common\SystemTime.cpp">
       <Filter>common</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\..\..\..\common\TaskPool.cpp">
@@ -112,6 +112,9 @@
     </ClCompile>
     <ClCompile Include="DirectSoundHelper.cpp">
       <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\..\common\BaseTime.cpp">
+      <Filter>common</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

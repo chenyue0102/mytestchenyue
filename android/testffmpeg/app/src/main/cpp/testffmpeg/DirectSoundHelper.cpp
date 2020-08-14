@@ -7,6 +7,8 @@
 #define SAFE_RELEASE(p)      { if(p) { (p)->Release(); (p)=NULL; } }
 
 #define MAX_AUDIO_BUF 10
+//#define BUFFERNOTIFYSIZE 19200
+//#define BUFFER_LENGTH (MAX_AUDIO_BUF * BUFFERNOTIFYSIZE)
 
 static void threadProc(HANDLE hExitEvent, HANDLE hNotifyEvent, LPDIRECTSOUNDBUFFER8 lpDirectSoundBuffer, IAudioPlay *play, IAudioPlayCallback *pCallback, void *pContext) {
 	assert(nullptr != hExitEvent && nullptr != hNotifyEvent && nullptr != lpDirectSoundBuffer 
@@ -30,13 +32,20 @@ static void threadProc(HANDLE hExitEvent, HANDLE hNotifyEvent, LPDIRECTSOUNDBUFF
 }
 
 DirectSoundHelper::DirectSoundHelper()
-	: mDirectSound8(nullptr)
-	, mDirectSoundBuffer8(nullptr)
+	: mThread()
 	, mNotifyEvent(CreateEvent(nullptr, TRUE, FALSE, nullptr))
 	, mExitEvent(CreateEvent(nullptr, TRUE, FALSE, nullptr))
-	, mThread()
+	, mMutex()
+	, mDirectSound8(nullptr)
+	, mDirectSoundBuffer8(nullptr)
+	, mCallback(nullptr)
+	, mContext(nullptr)
+	, mNumChannels(0)
+	, mSamplesPerSec(0)
+	, mBitsPerSample(0)
+	, mUpdateBufferBytes(0)
 	, mOffset(0)
-	, mBufferUpdateSize(0)
+	, mPlayState(0)
 {
 
 }
@@ -50,15 +59,39 @@ DirectSoundHelper::~DirectSoundHelper(){
 	mNotifyEvent = nullptr;
 }
 
-bool DirectSoundHelper::init(uint32_t numChannels, uint32_t samplesPerSec, uint32_t bitsPerSample, uint32_t bufUpdateSize, IAudioPlayCallback *pCallback, void *pContext)
+bool DirectSoundHelper::setCallback(IAudioPlayCallback *pCallback, void *pContext) {
+	std::lock_guard<std::mutex> lk(mMutex);
+	assert(!mThread.joinable());
+	mCallback = pCallback;
+	mContext = pContext;
+	return true;
+}
+
+bool DirectSoundHelper::setSampleInfo(uint32_t numChannels, uint32_t samplesPerSec, uint32_t bitsPerSample) {
+	std::lock_guard<std::mutex> lk(mMutex);
+	assert(!mThread.joinable());
+	mNumChannels = numChannels;
+	mSamplesPerSec = samplesPerSec;
+	mBitsPerSample = bitsPerSample;
+	return true;
+}
+
+bool DirectSoundHelper::setUpdateBufferLength(uint32_t updateBufferBytes) {
+	std::lock_guard<std::mutex> lk(mMutex);
+	assert(!mThread.joinable());
+	mUpdateBufferBytes = updateBufferBytes;
+	return true;
+}
+
+bool DirectSoundHelper::init()
 {
+	std::lock_guard<std::mutex> lk(mMutex);
+
 	HRESULT hr = S_OK;
 	bool ret = false;
 
 	do
 	{
-		destroy();
-		mBufferUpdateSize = bufUpdateSize;
 		if (FAILED(hr = DirectSoundCreate8(nullptr, &mDirectSound8, nullptr))) {
 			assert(false);
 			break;
@@ -85,9 +118,9 @@ bool DirectSoundHelper::init(uint32_t numChannels, uint32_t samplesPerSec, uint3
 			WAVEFORMATEX wfx;
 			ZeroMemory(&wfx, sizeof(WAVEFORMATEX));
 			wfx.wFormatTag = (WORD)WAVE_FORMAT_PCM;
-			wfx.nChannels = (WORD)numChannels;
-			wfx.nSamplesPerSec = (DWORD)samplesPerSec;
-			wfx.wBitsPerSample = (WORD)bitsPerSample;
+			wfx.nChannels = (WORD)mNumChannels;
+			wfx.nSamplesPerSec = (DWORD)mSamplesPerSec;
+			wfx.wBitsPerSample = (WORD)mBitsPerSample;
 			wfx.nBlockAlign = (WORD)(wfx.wBitsPerSample / 8 * wfx.nChannels);
 			wfx.nAvgBytesPerSec = (DWORD)(wfx.nSamplesPerSec * wfx.nBlockAlign);
 			wfx.cbSize = 0;
@@ -103,9 +136,9 @@ bool DirectSoundHelper::init(uint32_t numChannels, uint32_t samplesPerSec, uint3
 		WAVEFORMATEX wfx;
 		ZeroMemory(&wfx, sizeof(WAVEFORMATEX));
 		wfx.wFormatTag = (WORD)WAVE_FORMAT_PCM;
-		wfx.nChannels = (WORD)numChannels;
-		wfx.nSamplesPerSec = (DWORD)samplesPerSec;
-		wfx.wBitsPerSample = (WORD)bitsPerSample;
+		wfx.nChannels = (WORD)mNumChannels;
+		wfx.nSamplesPerSec = (DWORD)mSamplesPerSec;
+		wfx.wBitsPerSample = (WORD)mBitsPerSample;
 		wfx.nBlockAlign = (WORD)(wfx.wBitsPerSample / 8 * wfx.nChannels);
 		wfx.nAvgBytesPerSec = (DWORD)(wfx.nSamplesPerSec * wfx.nBlockAlign);
 		wfx.cbSize = 0;
@@ -114,7 +147,7 @@ bool DirectSoundHelper::init(uint32_t numChannels, uint32_t samplesPerSec, uint3
 		ZeroMemory(&dsbd, sizeof(DSBUFFERDESC));
 		dsbd.dwSize = sizeof(DSBUFFERDESC);
 		dsbd.dwFlags = DSBCAPS_CTRLVOLUME | DSBCAPS_GLOBALFOCUS | DSBCAPS_CTRLPOSITIONNOTIFY | DSBCAPS_GETCURRENTPOSITION2;
-		dsbd.dwBufferBytes = bufUpdateSize * MAX_AUDIO_BUF;
+		dsbd.dwBufferBytes = MAX_AUDIO_BUF * mUpdateBufferBytes;
 		dsbd.dwReserved = 0;
 		dsbd.lpwfxFormat = &wfx;
 		dsbd.guid3DAlgorithm = GUID_NULL;
@@ -136,7 +169,7 @@ bool DirectSoundHelper::init(uint32_t numChannels, uint32_t samplesPerSec, uint3
 		ResetEvent(mNotifyEvent);
 		DSBPOSITIONNOTIFY notifys[MAX_AUDIO_BUF] = { 0 };
 		for (int i = 0; i < MAX_AUDIO_BUF; i++) {
-			notifys[i].dwOffset = i * bufUpdateSize;
+			notifys[i].dwOffset = i * mUpdateBufferBytes;
 			notifys[i].hEventNotify = mNotifyEvent;
 		}
 		LPDIRECTSOUNDNOTIFY8 lpDirectSoundNotify8 = nullptr;
@@ -152,7 +185,9 @@ bool DirectSoundHelper::init(uint32_t numChannels, uint32_t samplesPerSec, uint3
 		SAFE_RELEASE(lpDirectSoundNotify8);
 		
 		mDirectSoundBuffer8->SetVolume(DSBVOLUME_MAX);
-		mThread = std::thread(&threadProc, mExitEvent, mNotifyEvent, mDirectSoundBuffer8, static_cast<IAudioPlay*>(this), pCallback, pContext);
+		mTotalWriteBytes = 0;
+		mPlayState = 0;
+		mThread = std::thread(&threadProc, mExitEvent, mNotifyEvent, mDirectSoundBuffer8, static_cast<IAudioPlay*>(this), mCallback, mContext);
 		ret = true;
 	} while (false);
 
@@ -167,25 +202,41 @@ bool DirectSoundHelper::destroy() {
 	if (mThread.joinable()) {
 		mThread.join();
 	}
+
+	std::lock_guard<std::mutex> lk(mMutex);
 	SAFE_RELEASE(mDirectSoundBuffer8);
 	SAFE_RELEASE(mDirectSound8);
+	mPlayState = 0;
+	mTotalWriteBytes = 0;
+	mOffset = 0;
 
 	return true;
 }
 
-bool DirectSoundHelper::setPlayState(int playState) {
+bool DirectSoundHelper::setPlayState(uint32_t playState) {
+	std::lock_guard<std::mutex> lk(mMutex);
+
 	bool ret = false;
-	if (nullptr != mDirectSoundBuffer8) {
+	if (nullptr != mDirectSoundBuffer8 && nullptr != mDirectSoundBuffer8) {
 		switch (playState) {
 		case EPlayStatePlaying: {
-			mDirectSoundBuffer8->SetCurrentPosition(0);
 			if (SUCCEEDED(mDirectSoundBuffer8->Play(0, 0, DSBPLAY_LOOPING))) {
+				mPlayState = playState;
 				ret = true;
 			}
 			break;
 		}
 		case EPlayStatePause: {
 			if (SUCCEEDED(mDirectSoundBuffer8->Stop())) {
+				mPlayState = playState;
+				ret = true;
+			}
+			break;
+		}
+		case EPlayStateStopped: {
+			if (SUCCEEDED(mDirectSoundBuffer8->Stop())) {
+				mPlayState = playState;
+				mDirectSoundBuffer8->SetCurrentPosition(0);
 				ret = true;
 			}
 			break;
@@ -195,6 +246,28 @@ bool DirectSoundHelper::setPlayState(int playState) {
 			break;
 		}
 		}	
+	}
+	return ret;
+}
+
+int64_t DirectSoundHelper::getPosition() {
+	std::lock_guard<std::mutex> lk(mMutex);
+
+	int64_t ret = -1;
+	if (nullptr != mDirectSoundBuffer8) {
+		HRESULT hr = S_OK;
+		DWORD dwPlayPos = 0, dwWritePos = 0;
+		if (SUCCEEDED(hr = mDirectSoundBuffer8->GetCurrentPosition(&dwPlayPos, &dwWritePos))) {
+			if (dwWritePos >= dwPlayPos) {
+				ret = mTotalWriteBytes - (dwWritePos - dwPlayPos);
+			}
+			else {
+				const DWORD BUFFER_LENGTH = mUpdateBufferBytes * MAX_AUDIO_BUF;
+				ret = mTotalWriteBytes - dwWritePos - (BUFFER_LENGTH - dwPlayPos);
+			}
+			uint32_t bytesPerSec = mSamplesPerSec * mNumChannels * mBitsPerSample / 8;
+			ret = ret * 1000 / bytesPerSec;
+		}
 	}
 	return ret;
 }
@@ -222,14 +295,20 @@ static DWORD writeBuffer(LPDIRECTSOUNDBUFFER8 lpDirectSoundBuffer, DWORD dwOffse
 }
 
 void DirectSoundHelper::putData(const void * data, uint32_t size){
+	std::lock_guard<std::mutex> lk(mMutex);
+
 	if (nullptr != mDirectSoundBuffer8) {
-		const DWORD BUFFER_LENGTH = mBufferUpdateSize * MAX_AUDIO_BUF;
+		const DWORD BUFFER_LENGTH = mUpdateBufferBytes * MAX_AUDIO_BUF;
 		DWORD dwMinLength = min(BUFFER_LENGTH, mOffset + size);
 		DWORD tmpSize = dwMinLength - mOffset;
-		mOffset += writeBuffer(mDirectSoundBuffer8, mOffset, data, tmpSize);
+		DWORD dwWriteBytes = writeBuffer(mDirectSoundBuffer8, mOffset, data, tmpSize);
+		mTotalWriteBytes += dwWriteBytes;
+		mOffset += dwWriteBytes;
 		mOffset %= BUFFER_LENGTH;
 		if (tmpSize < size) {
-			mOffset += writeBuffer(mDirectSoundBuffer8, mOffset, reinterpret_cast<const uint8_t*>(data) + tmpSize, size - tmpSize);
+			dwWriteBytes = writeBuffer(mDirectSoundBuffer8, mOffset, reinterpret_cast<const uint8_t*>(data) + tmpSize, size - tmpSize);
+			mTotalWriteBytes += dwWriteBytes;
+			mOffset += dwWriteBytes;
 			mOffset %= BUFFER_LENGTH;
 		}
 	}

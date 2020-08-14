@@ -4,11 +4,11 @@
 #pragma once
 #include <chrono>
 
-class SystemTime
+class BaseTime
 {
 public:
-	SystemTime();
-	~SystemTime();
+	BaseTime();
+	~BaseTime();
 public:
 	//设置UTC基准时间，单位秒
 	void setBaseTime(long long baseTime);

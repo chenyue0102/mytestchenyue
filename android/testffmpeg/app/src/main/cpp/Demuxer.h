@@ -22,11 +22,11 @@ public:
 
 public:
     void setFormatContext(AVFormatContext *formatContext);
-    void setDemuxerInfo(int mediaType, AVCodecContext *codecContext, int streamIndex, int maxPacketCount);
+    void setDemuxerInfo(uint32_t mediaType, AVCodecContext *codecContext, uint32_t streamIndex, uint32_t maxPacketCount);
     void setNotify(IDemuxerNotify *notify);
     void startDemuxer();
     void stopDemuxer();
-    bool sendPacket(int mediaType);
+    bool sendPacket(uint32_t mediaType);
 
 private:
     void demuxerThread();
@@ -41,10 +41,10 @@ private:
         std::list<AVPacket*> packets;
         AVPacket *curPacket;
         AVCodecContext *codecContext;
-        int streamIndex;
-        int maxPacketCount;
+		uint32_t streamIndex;
+        uint32_t maxPacketCount;
     };
-    std::map<int, DemuxerInfo> mDemuxerInfo;
+    std::map<uint32_t, DemuxerInfo> mDemuxerInfo;
 };
 
 

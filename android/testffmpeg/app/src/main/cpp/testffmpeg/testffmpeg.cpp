@@ -90,17 +90,37 @@ int main()
 	} while (0 != strncmp(chunk.ID, "data", 4));
 	MyAudioPlayCallback myCallback(file);
 	DirectSoundHelper directSoundHelper;
-	directSoundHelper.init(2, 44100, 16, BUFFER_UPDATE_SIZE, &myCallback, file);
-	directSoundHelper.setPlayState(EPlayStatePlaying);
-
-	MSG msg;
+	directSoundHelper.setCallback(&myCallback, nullptr);
+	directSoundHelper.setSampleInfo(2, 44100, 16);
+	directSoundHelper.setUpdateBufferLength(BUFFER_UPDATE_SIZE);
+	//directSoundHelper.init();
+	/*MSG msg;
 	while (GetMessage(&msg, 0, 0, 0)) {
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
-	}
-	//PlayManager playManager;
-	//playManager.openFile("D:/test.mp4");
-	getchar();
+	}*/
+	PlayManager playManager;
+	playManager.openFile("d:/test.wav");
+	int a = 0; 
+	do
+	{
+		printf("0:exit 1:play 2:pause 3:positon\n");
+		scanf("%d", &a);
+		switch (a) {
+		case 0:
+			break;
+		case 1:
+			directSoundHelper.setPlayState(EPlayStatePlaying);
+			break;
+		case 2:
+			directSoundHelper.setPlayState(EPlayStatePause);
+			break;
+		case 3:
+			printf("position:%lld\n", directSoundHelper.getPosition());
+			break;
+		}
+	} while (a != 0);
+	directSoundHelper.destroy();
     return 0;
 }
 

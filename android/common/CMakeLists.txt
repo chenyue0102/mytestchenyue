@@ -9,7 +9,7 @@ add_library(CommonLib
         Log.cpp
         OpenSLESHelper.cpp
         RingQueue.cpp
-        SystemTime.cpp
+        BaseTime.cpp
         TaskPool.cpp
         )
 

@@ -7,7 +7,7 @@
 #include <stdint.h>
 
 struct IDemuxerNotify{
-    virtual void onFinish() = 0;
+    virtual void onDemuxerEnd() = 0;
     virtual void onReadFrame(int mediaType) = 0;
 };
 
@@ -16,7 +16,14 @@ struct IFrameReceiveNotify{
     virtual void onReceiveFrame(int mediaType) = 0;
 };
 
+struct IAudioPlayCallback;
 struct IAudioPlay{
+	virtual bool setCallback(IAudioPlayCallback *pCallback, void *pContext) = 0;
+	virtual bool setSampleInfo(uint32_t numChannels, uint32_t samplesPerSec, uint32_t bitsPerSample) = 0;
+	virtual bool setUpdateBufferLength(uint32_t updateBufferBytes) = 0;
+	virtual bool init() = 0;
+	virtual bool setPlayState(uint32_t playState) = 0;
+	virtual bool destroy() = 0;
 	virtual void putData(const void *data, uint32_t size) = 0;
 };
 
