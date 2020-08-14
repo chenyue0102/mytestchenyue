@@ -10,9 +10,9 @@
 //#define BUFFERNOTIFYSIZE 19200
 //#define BUFFER_LENGTH (MAX_AUDIO_BUF * BUFFERNOTIFYSIZE)
 
-static void threadProc(HANDLE hExitEvent, HANDLE hNotifyEvent, LPDIRECTSOUNDBUFFER8 lpDirectSoundBuffer, IAudioPlay *play, IAudioPlayCallback *pCallback, void *pContext) {
+static void threadProc(HANDLE hExitEvent, HANDLE hNotifyEvent, LPDIRECTSOUNDBUFFER8 lpDirectSoundBuffer, IAudioPlay *play, DSBufferQueueCallback callback, void *pContext) {
 	assert(nullptr != hExitEvent && nullptr != hNotifyEvent && nullptr != lpDirectSoundBuffer 
-		&& nullptr != play && nullptr != pCallback);
+		&& nullptr != play && nullptr != callback);
 	const DWORD dwCount = 2;
 	HANDLE hEvents[] = { hExitEvent, hNotifyEvent };
 	for (;;) {
@@ -22,7 +22,7 @@ static void threadProc(HANDLE hExitEvent, HANDLE hNotifyEvent, LPDIRECTSOUNDBUFF
 		}
 		else if (WAIT_OBJECT_0 + 1 == dwWaitResult) {
 			ResetEvent(hEvents[1]);
-			pCallback->onBufferCallback(play, pContext);
+			callback(play, pContext);
 		}
 		else {
 			assert(false);
@@ -59,10 +59,10 @@ DirectSoundHelper::~DirectSoundHelper(){
 	mNotifyEvent = nullptr;
 }
 
-bool DirectSoundHelper::setCallback(IAudioPlayCallback *pCallback, void *pContext) {
+bool DirectSoundHelper::setBufferQueueCallback(DSBufferQueueCallback callback, void *pContext) {
 	std::lock_guard<std::mutex> lk(mMutex);
 	assert(!mThread.joinable());
-	mCallback = pCallback;
+	mCallback = callback;
 	mContext = pContext;
 	return true;
 }

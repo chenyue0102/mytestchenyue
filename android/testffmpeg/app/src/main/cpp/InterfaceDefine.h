@@ -15,10 +15,10 @@ struct IFrameReceiveNotify{
     virtual void onMoreData(int mediaType) = 0;
     virtual void onReceiveFrame(int mediaType) = 0;
 };
-
-struct IAudioPlayCallback;
+struct IAudioPlay;
+typedef void(*DSBufferQueueCallback)(IAudioPlay *pDirectSoundHelper, void *pContext);
 struct IAudioPlay{
-	virtual bool setCallback(IAudioPlayCallback *pCallback, void *pContext) = 0;
+	virtual bool setBufferQueueCallback(DSBufferQueueCallback callback, void *pContext) = 0;
 	virtual bool setSampleInfo(uint32_t numChannels, uint32_t samplesPerSec, uint32_t bitsPerSample) = 0;
 	virtual bool setUpdateBufferLength(uint32_t updateBufferBytes) = 0;
 	virtual bool init() = 0;

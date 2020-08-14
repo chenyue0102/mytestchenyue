@@ -7,6 +7,7 @@
 #include <dsound.h>
 #include "InterfaceDefine.h"
 
+
 class DirectSoundHelper : public IAudioPlay
 {
 public:
@@ -14,7 +15,7 @@ public:
 	~DirectSoundHelper();
 
 public:
-	virtual bool setCallback(IAudioPlayCallback *pCallback, void *pContext)override;
+	virtual bool setBufferQueueCallback(DSBufferQueueCallback callback, void *pContext)override;
 	virtual bool setSampleInfo(uint32_t numChannels, uint32_t samplesPerSec, uint32_t bitsPerSample)override;
 	//更新的时候，一次更新缓冲区的数据大小
 	virtual bool setUpdateBufferLength(uint32_t updateBufferBytes)override;
@@ -34,7 +35,7 @@ private:
 	std::mutex mMutex;
 	IDirectSound8 *mDirectSound8;
 	LPDIRECTSOUNDBUFFER8 mDirectSoundBuffer8;
-	IAudioPlayCallback *mCallback;
+	DSBufferQueueCallback mCallback;
 	void *mContext;
 	uint32_t mNumChannels;
 	uint32_t mSamplesPerSec;

@@ -8,10 +8,29 @@ extern "C"{
 #include "libavformat/avformat.h"
 #include "libavutil/opt.h"
 }
+#include "EnumDefine.h"
 #ifdef _WIN32
 #include "DirectSoundHelper.h"
+typedef IAudioPlay* BufferQueueParam;
+inline uint32_t convertPlayState(uint32_t playState){
+	return playState;
+}
 #else
 #include "OpenSLESHelper.h"
+typedef SLAndroidSimpleBufferQueueItf BufferQueueParam;
+inline uint32_t convertPlayState(uint32_t playState){
+	switch (playState){
+		case EPlayStatePlaying:
+			return SL_PLAYSTATE_PLAYING;
+		case EPlayStatePause:
+			return SL_PLAYSTATE_PAUSED;
+		case EPlayStateStopped:
+			return SL_PLAYSTATE_STOPPED;
+		default:
+			assert(false);
+			return 0;
+	}
+}
 #endif
 #include "Log.h"
 #include "MacroDefine.h"
@@ -34,34 +53,50 @@ void LogAvError(int err) {
 	}
 }
 
-int getAudioBitsPerSample(AVFrame *frame) {
-	int bits = 0;
-	switch (frame->format) {
-	case AV_SAMPLE_FMT_U8:
-	case AV_SAMPLE_FMT_U8P:
-		bits = 8;
-		break;
-	case AV_SAMPLE_FMT_S16:
-	case AV_SAMPLE_FMT_S16P:
-		bits = 16;
-		break;
-	case AV_SAMPLE_FMT_S32:
-
-		break;
-}
-	return bits;
-}
-
-
+extern void onBufferCallback(BufferQueueParam audioPlay, void *pContext);
 #ifdef _WIN32
+void initAudioPlayer(AVFrame *frame, PlayHelper &mPlayHelper, void *pContext){
+    mData->mPlayHelper.setBufferQueueCallback(&onBufferCallback, pContext);
+
+	int outNumChannel = frame->channels == 1 ? 1 : 2;
+	outNumChannel = 2;
+	mPlayHelper.setSampleInfo(outNumChannel, frame->sample_rate, 16);
+
+	uint32_t updateBufferBytes = frame->nb_samples * outNumChannel * 16 / 8;
+	mPlayHelper.setUpdateBufferLength(updateBufferBytes);
+
+	mPlayHelper.init();
+	mPlayHelper.setPlayState(convertPlayState(EPlayStatePlaying));
+}
 #else
-static void bufferQueueCallback(SLAndroidSimpleBufferQueueItf caller, void *pContext){
-    PlayManager *playManager = reinterpret_cast<PlayManager*>(pContext);
-    if (nullptr != playManager){
-        playManager->onBufferQueueCallback();
-    }
+void initAudioPlayer(AVFrame *frame, PlayHelper &mPlayHelper, void *pContext) {
+    bool b = mPlayHelper.createEngine();
+    b = mPlayHelper.createOutputMix();
+    SLDataLocator_AndroidSimpleBufferQueue bufferQueue = {SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE, 2};
+
+    SLDataFormat_PCM pcm = {
+            SL_DATAFORMAT_PCM,
+            2,
+            (SLuint32)(frame->sample_rate * 1000),
+            SL_PCMSAMPLEFORMAT_FIXED_16,
+            SL_PCMSAMPLEFORMAT_FIXED_16,
+            SL_SPEAKER_FRONT_LEFT | SL_SPEAKER_FRONT_RIGHT,
+            SL_BYTEORDER_LITTLEENDIAN,
+    };
+    SLDataSource slDataSource = {&bufferQueue, &pcm};
+    SLDataLocator_OutputMix outputMix = {SL_DATALOCATOR_OUTPUTMIX, mPlayHelper.getOutputMixObject()};
+    SLDataSink slDataSink = {&outputMix, nullptr};
+    const SLInterfaceID ids[] = {SL_IID_BUFFERQUEUE, SL_IID_EFFECTSEND, SL_IID_VOLUME};
+    const SLboolean req[3] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};
+    b = mPlayHelper.createPlayer(slDataSource, slDataSink, 3, ids, req);
+    SLAndroidSimpleBufferQueueItf slBufferQueue = mPlayHelper.getPlayBufferQueue();
+    mPlayHelper.registerPlayBufferQueueCallback(&onBufferCallback, pContext);
+    mPlayHelper.setPlayState(convertPlayState(EPlayStatePlaying));
+    char szBuffer[] = "\0\0\0\0";
+    (*slBufferQueue)->Enqueue(slBufferQueue, szBuffer, 4);
 }
 #endif
+
 #define MAX_QUEUE_SIZE (1024)
 
 struct MediaInfo {
@@ -298,14 +333,6 @@ void readThread(PlayManagerData *mediaInfo) {
 				std::lock_guard<std::mutex> lka(aMediaInfo.mtx);
 				if (!aMediaInfo.frames.empty()) {
 					AVFrame *frame = aMediaInfo.frames.front();
-					int outNumChannel = frame->channels == 1 ? 1 : 2;
-					outNumChannel = 2;
-					mediaInfo->mPlayHelper.setSampleInfo(outNumChannel, frame->sample_rate, 16);
-					
-					uint32_t updateBufferBytes = frame->nb_samples * outNumChannel * 16 / 8;
-					mediaInfo->mPlayHelper.setUpdateBufferLength(updateBufferBytes);
-					mediaInfo->initAudioPlay = true;
-
 					auto &swrContext = mediaInfo->swrContext;
 					assert(nullptr == swrContext);
 					swrContext = swr_alloc();
@@ -319,8 +346,8 @@ void readThread(PlayManagerData *mediaInfo) {
 					av_opt_set_int(swrContext, "out_sample_fmt", AV_SAMPLE_FMT_S16, 0);
 					swr_init(swrContext);
 
-					mediaInfo->mPlayHelper.init();
-					mediaInfo->mPlayHelper.setPlayState(EPlayStatePlaying);
+					initAudioPlayer(frame, mediaInfo->mPlayHelper, mediaInfo);
+					mediaInfo->initAudioPlay = true;
 				}
 			}
 
@@ -385,32 +412,16 @@ PlayManager::~PlayManager() {
 	mData = nullptr;
 }
 
-bool PlayManager::openFile(const char *filePath) {
-	assert(!mReadThread.joinable() && !mLoopThread.joinable());
-
-	mData->exit = false;
-	mData->fileName = filePath;
-	mReadThread = std::thread(&readThread, mData);
-    mLoopThread = std::thread(&loopThread, mData);
-	mData->mPlayHelper.setCallback(this, nullptr);
-	//mData->mPlayHelper.setUpdateBufferLength()
-	return true;
-}
-
-bool PlayManager::setPlayState(uint32_t playState) {
-	//std::lock_guard<std::mutex> lk(mMutex);
-
-	//mPlayState = playState;
-	return true;
-}
-
-void PlayManager::onBufferCallback(IAudioPlay *audioPlay, void *pContext) {
+void onBufferCallback(BufferQueueParam audioPlay, void *pContext) {
+	PlayManagerData *mData = reinterpret_cast<PlayManagerData*>(pContext);
 	auto &aMediaInfo = mData->aMediaInfo;
 	std::unique_lock<std::mutex> lk(aMediaInfo.mtx);
 	if (!aMediaInfo.frames.empty()) {
 		AVFrame *frame = aMediaInfo.frames.front();
 		aMediaInfo.frames.pop_front();
-		
+        aMediaInfo.cv.notify_all();
+        lk.unlock();
+
 		//int64_t outputSampleRate = frame->sample_rate;
 		//uint32_t outputSamplePerChanel = static_cast<uint32_t>(av_rescale_rnd(frame->nb_samples, outputSampleRate, frame->sample_rate, AV_ROUND_UP));
 		auto &swrBuffer = mData->swrBuffer;
@@ -423,12 +434,32 @@ void PlayManager::onBufferCallback(IAudioPlay *audioPlay, void *pContext) {
 
 		av_frame_unref(frame);
 		av_frame_free(&frame);
-		aMediaInfo.cv.notify_all();
-		lk.unlock();
-		audioPlay->putData(swrBuffer.data(), putSize);
+
+#ifdef _WIN32
+        audioPlay->putData(swrBuffer.data(), putSize);
+#else
+        (*audioPlay)->Enqueue(audioPlay, swrBuffer.data(), putSize);
+#endif
 	}
 	else {
 		assert(false);//解码没有跟上，
 	}
+}
+
+bool PlayManager::openFile(const char *filePath) {
+	assert(!mReadThread.joinable() && !mLoopThread.joinable());
+
+	mData->exit = false;
+	mData->fileName = filePath;
+	mReadThread = std::thread(&readThread, mData);
+    mLoopThread = std::thread(&loopThread, mData);
+	return true;
+}
+
+bool PlayManager::setPlayState(uint32_t playState) {
+	//std::lock_guard<std::mutex> lk(mMutex);
+
+	//mPlayState = playState;
+	return true;
 }
 

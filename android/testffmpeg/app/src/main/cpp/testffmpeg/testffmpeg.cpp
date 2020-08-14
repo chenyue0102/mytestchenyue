@@ -73,6 +73,11 @@ struct chunk_t
 	unsigned long size;  //Chunk data bytes
 };
 
+void directsoundCallback(IAudioPlay *pDirectSoundHelper, void *pContext) {
+	MyAudioPlayCallback *p = (MyAudioPlayCallback*)(pContext);
+	p->onBufferCallback(pDirectSoundHelper, pContext);
+}
+
 int main()
 {
 	FILE *file = fopen("d:/test.wav", "rb");
@@ -90,7 +95,7 @@ int main()
 	} while (0 != strncmp(chunk.ID, "data", 4));
 	MyAudioPlayCallback myCallback(file);
 	DirectSoundHelper directSoundHelper;
-	directSoundHelper.setCallback(&myCallback, nullptr);
+	directSoundHelper.setBufferQueueCallback(&directsoundCallback, &myCallback);
 	directSoundHelper.setSampleInfo(2, 44100, 16);
 	directSoundHelper.setUpdateBufferLength(BUFFER_UPDATE_SIZE);
 	//directSoundHelper.init();

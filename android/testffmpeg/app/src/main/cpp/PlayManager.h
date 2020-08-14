@@ -13,7 +13,6 @@ extern "C"{
 #include "libavformat/avformat.h"
 #include "libswresample/swresample.h"
 }
-#include "InterfaceDefine.h"
 
 
 #ifdef _WIN32
@@ -25,7 +24,7 @@ typedef OpenSLESHelper PlayHelper;
 #endif
 
 struct PlayManagerData;
-class PlayManager : protected IAudioPlayCallback {
+class PlayManager {
 public:
     PlayManager();
     ~PlayManager();
@@ -33,9 +32,6 @@ public:
 public:
     bool openFile(const char *filePath);
 	bool setPlayState(uint32_t playState);
-
-protected:
-	virtual void onBufferCallback(IAudioPlay *audioPlay, void *pContext)override;
 
 private:
 	std::thread mReadThread;
