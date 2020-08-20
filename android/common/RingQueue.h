@@ -27,6 +27,7 @@ public:
     uint32_t getDataSize()const;
     uint32_t put(const void *data, size_t size);
     uint32_t get(void *data, size_t size);
+    void clear();
 
 private:
     uint32_t innerGetDataSize()const;

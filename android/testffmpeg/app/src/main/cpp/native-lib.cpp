@@ -208,6 +208,8 @@ Java_com_test_testffmpeg_MainActivity_openFile(JNIEnv *env, jobject thiz, jstrin
     const char *str = env->GetStringUTFChars(file_path, &iscopy);
     if (nullptr != str) {
         g_filePath = str;
+        FILE *f = fopen(str, "rb");
+        fclose(f);
         env->ReleaseStringUTFChars(file_path, str);
         g_TaskPool.addTask(&openFile2);
     }

@@ -11,48 +11,6 @@
 #include "SDLAudioHelper.h"
 
 #define BUFFER_UPDATE_SIZE (1024*4)
-class MyAudioPlayCallback : public IAudioPlayCallback {
-public:
-	MyAudioPlayCallback(FILE *_file) :mRingQueue(1024 * 1024), mData(new uint8_t[BUFFER_UPDATE_SIZE]), file(_file){
-		mThread = std::thread(&MyAudioPlayCallback::readThread, this);
-	}
-	~MyAudioPlayCallback() {
-		delete[]mData;
-		mData = nullptr;
-	}
-public:
-	virtual void onBufferCallback(IAudioPlay *audioPlay, void *pContext) override{
-		if (mRingQueue.getDataSize() > 0) {
-			uint32_t len = mRingQueue.get(mData, BUFFER_UPDATE_SIZE);
-			audioPlay->putData(mData, len);
-		}
-	}
-private:
-	void readThread() {
-		uint8_t buf[1024];
-		while (true) {
-			if (mRingQueue.getFreeSize() > 1024) {
-				size_t len = fread(buf, 1, 1024, file);
-				if (len > 0) {
-					mRingQueue.put(buf, len);
-				}
-				else {
-					printf("finish\n");
-					break;
-				}
-			}
-			else {
-				std::this_thread::sleep_for(std::chrono::milliseconds(1));
-			}
-		}
-	}
-private:
-	RingQueue mRingQueue;
-	FILE* file;
-	std::thread mThread;
-	uint8_t* mData;
-};
-
 struct wav_header_t
 {
 	char chunkID[4]; //"RIFF" = 0x46464952
@@ -75,11 +33,6 @@ struct chunk_t
 	unsigned long size;  //Chunk data bytes
 };
 
-void directsoundCallback(IAudioPlay *pDirectSoundHelper, void *pContext) {
-	MyAudioPlayCallback *p = (MyAudioPlayCallback*)(pContext);
-	p->onBufferCallback(pDirectSoundHelper, pContext);
-}
-
 int main()
 {
 	FILE *file = fopen("d:/test.wav", "rb");
@@ -95,9 +48,9 @@ int main()
 			fseek(file, chunk.size, SEEK_CUR);
 		}
 	} while (0 != strncmp(chunk.ID, "data", 4));
-	MyAudioPlayCallback myCallback(file);
 
 	SDL_Init(SDL_INIT_AUDIO);
+#if 0
 	SDLAudioHelper sdlAudioHelper;
 	DirectSoundHelper directSoundHelper;
 	IAudioPlay *audioPlay = &directSoundHelper;
@@ -126,25 +79,11 @@ int main()
 		});
 
 	t.join();
-	
-	/*
-	
-	DirectSoundHelper directSoundHelper;
-	directSoundHelper.setBufferQueueCallback(&directsoundCallback, &myCallback);
-	directSoundHelper.setSampleInfo(2, 44100, 16);
-	directSoundHelper.setUpdateBufferLength(BUFFER_UPDATE_SIZE);
-	*/
-	//directSoundHelper.init();
-	/*MSG msg;
-	while (GetMessage(&msg, 0, 0, 0)) {
-		TranslateMessage(&msg);
-		DispatchMessage(&msg);
-	}*/
+#endif
 
-	/*PlayManager playManager;
-	playManager.openFile("d:/test.mp3");*/
-	getchar();
-	/*int a = 0; 
+	PlayManager playManager;
+	playManager.openFile("d:/test.mp3");
+	int a = 0; 
 	do
 	{
 		printf("0:exit 1:play 2:pause 3:positon\n");
@@ -153,17 +92,17 @@ int main()
 		case 0:
 			break;
 		case 1:
-			directSoundHelper.setPlayState(EPlayStatePlaying);
+			playManager.setPlayState(EPlayStatePlaying);
 			break;
 		case 2:
-			directSoundHelper.setPlayState(EPlayStatePause);
+			playManager.setPlayState(EPlayStatePause);
 			break;
 		case 3:
-			printf("position:%lld\n", directSoundHelper.getPosition());
+			//printf("position:%lld\n", directSoundHelper.getPosition());
 			break;
 		}
 	} while (a != 0);
-	directSoundHelper.destroy();*/
+	playManager.close();
 
 	SDL_Quit();
     return 0;

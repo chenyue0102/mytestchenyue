@@ -11,26 +11,8 @@ extern "C"{
 #include "EnumDefine.h"
 #ifdef _WIN32
 #include "DirectSoundHelper.h"
-typedef IAudioPlay* BufferQueueParam;
-inline uint32_t convertPlayState(uint32_t playState){
-	return playState;
-}
 #else
-#include "OpenSLESHelper.h"
-typedef SLAndroidSimpleBufferQueueItf BufferQueueParam;
-inline uint32_t convertPlayState(uint32_t playState){
-	switch (playState){
-		case EPlayStatePlaying:
-			return SL_PLAYSTATE_PLAYING;
-		case EPlayStatePause:
-			return SL_PLAYSTATE_PAUSED;
-		case EPlayStateStopped:
-			return SL_PLAYSTATE_STOPPED;
-		default:
-			assert(false);
-			return 0;
-	}
-}
+#include "OpenSLPlay.h"
 #endif
 #include "Log.h"
 #include "MacroDefine.h"
@@ -41,6 +23,7 @@ inline uint32_t convertPlayState(uint32_t playState){
 
 #define MAX_AUDIO_DIFF_MS 5000
 #define AUDIO_BITS 16
+#define AUDIO_BUFFER_SIZE (1024 * 200)
 
 void LogAvError(int err) {
 	if (0 != err) {
@@ -52,50 +35,6 @@ void LogAvError(int err) {
 		assert(false);
 	}
 }
-
-extern void onBufferCallback(BufferQueueParam audioPlay, void *pContext);
-#ifdef _WIN32
-void initAudioPlayer(AVFrame *frame, PlayHelper &mPlayHelper, void *pContext){
-    //mPlayHelper.setBufferQueueCallback(&onBufferCallback, pContext);
-
-	int outNumChannel = frame->channels == 1 ? 1 : 2;
-	outNumChannel = 2;
-	mPlayHelper.setSampleInfo(outNumChannel, frame->sample_rate, 16);
-
-	uint32_t updateBufferBytes = frame->nb_samples * outNumChannel * 16 / 8;
-	//mPlayHelper.setUpdateBufferLength(updateBufferBytes);
-
-	mPlayHelper.open();
-	mPlayHelper.setPlayState(convertPlayState(EPlayStatePlaying));
-}
-#else
-void initAudioPlayer(AVFrame *frame, PlayHelper &mPlayHelper, void *pContext) {
-    bool b = mPlayHelper.createEngine();
-    b = mPlayHelper.createOutputMix();
-    SLDataLocator_AndroidSimpleBufferQueue bufferQueue = {SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE, 2};
-
-    SLDataFormat_PCM pcm = {
-            SL_DATAFORMAT_PCM,
-            2,
-            (SLuint32)(frame->sample_rate * 1000),
-            SL_PCMSAMPLEFORMAT_FIXED_16,
-            SL_PCMSAMPLEFORMAT_FIXED_16,
-            SL_SPEAKER_FRONT_LEFT | SL_SPEAKER_FRONT_RIGHT,
-            SL_BYTEORDER_LITTLEENDIAN,
-    };
-    SLDataSource slDataSource = {&bufferQueue, &pcm};
-    SLDataLocator_OutputMix outputMix = {SL_DATALOCATOR_OUTPUTMIX, mPlayHelper.getOutputMixObject()};
-    SLDataSink slDataSink = {&outputMix, nullptr};
-    const SLInterfaceID ids[] = {SL_IID_BUFFERQUEUE, SL_IID_EFFECTSEND, SL_IID_VOLUME};
-    const SLboolean req[3] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};
-    b = mPlayHelper.createPlayer(slDataSource, slDataSink, 3, ids, req);
-    SLAndroidSimpleBufferQueueItf slBufferQueue = mPlayHelper.getPlayBufferQueue();
-    mPlayHelper.registerPlayBufferQueueCallback(&onBufferCallback, pContext);
-    mPlayHelper.setPlayState(convertPlayState(EPlayStatePlaying));
-    char szBuffer[] = "\0\0\0\0";
-    (*slBufferQueue)->Enqueue(slBufferQueue, szBuffer, 4);
-}
-#endif
 
 #define MAX_QUEUE_SIZE (1024)
 
@@ -139,9 +78,7 @@ struct PlayManagerData {
 	std::mutex mtx;
 	std::condition_variable cv;
 	bool exit = false;
-	bool initAudioPlay = false;
 	int64_t pausePosition = -1;
-	SwrContext *swrContext = nullptr;
 	std::vector<uint8_t> swrBuffer;
 	void notifyRead(){
 	    std::lock_guard<std::mutex> lk(mtx);
@@ -154,7 +91,7 @@ struct PlayManagerData {
 	PlayHelper mPlayHelper;
 };
 
-void sendPacket(MediaInfo &info) {
+static void sendPacket(MediaInfo &info) {
 	if (!info.packets.empty()) {
 		AVPacket *pkt = info.packets.front();
 		info.packets.pop_front();
@@ -166,11 +103,14 @@ void sendPacket(MediaInfo &info) {
 	}
 }
 
-void audioThread(MediaInfo *pInfo, std::function<void()> notifyReadFrame) {
+static void audioThread(MediaInfo *pInfo, PlayHelper *playHelper, std::function<void()> notifyReadFrame) {
 	auto &info = *pInfo;
 	auto &mtx = info.mtx;
 	auto &cv = info.cv;
+	std::vector<uint8_t> swrBuffer;
     AVFrame *frame = av_frame_alloc();
+	SwrContext *swrContext = nullptr;
+
 	for (;;) {
 		std::unique_lock<std::mutex> lk(info.mtx);
 		cv.wait(lk, [&info]()->bool {
@@ -188,6 +128,7 @@ void audioThread(MediaInfo *pInfo, std::function<void()> notifyReadFrame) {
                     break;
                 }else if(AVERROR(EAGAIN) == ret){
 					if (info.receivedFrame) {
+						info.packetDecoding = false;
 						if (info.packets.empty()) {
 							lk.unlock();//解锁audio的锁，防止死锁
 							notifyReadFrame();
@@ -230,14 +171,74 @@ void audioThread(MediaInfo *pInfo, std::function<void()> notifyReadFrame) {
     av_frame_free(&frame);
 }
 
-void videoThread(PlayManagerData *mediaInfo) {
+static void videoThread(PlayManagerData *mediaInfo) {
 
+}
+
+static void loopThread(PlayManagerData *mediaInfo){
+    auto &mtx = mediaInfo->mtx;
+    auto &cv = mediaInfo->cv;
+    auto &aMediaInfo = mediaInfo->aMediaInfo;
+    SwrContext *swrContext = nullptr;
+    auto &playHelper = mediaInfo->mPlayHelper;
+    std::vector<uint8_t> swrBuffer;
+    for (;;) {
+        std::unique_lock<std::mutex> lk(mtx);
+        cv.wait_for(lk, std::chrono::milliseconds(1), [mediaInfo]()->bool {
+            return mediaInfo->exit;
+        });
+        if (mediaInfo->exit) {
+            break;
+        }
+        lk.unlock();
+
+        if (nullptr == swrContext) {
+            std::lock_guard<std::mutex> lk(aMediaInfo.mtx);
+            if (!aMediaInfo.frames.empty()) {
+                AVFrame *frame = aMediaInfo.frames.front();
+                swrContext = swr_alloc();
+                av_opt_set_int(swrContext, "in_channel_layout", frame->channel_layout, 0);
+                av_opt_set_int(swrContext, "out_channel_layout", AV_CH_LAYOUT_STEREO, 0);
+                av_opt_set_int(swrContext, "in_channel_count", frame->channels, 0);
+                av_opt_set_int(swrContext, "out_channel_count", 2, 0);
+                av_opt_set_int(swrContext, "in_sample_rate", frame->sample_rate, 0);
+                av_opt_set_int(swrContext, "out_sample_rate", frame->sample_rate, 0);
+                av_opt_set_int(swrContext, "in_sample_fmt", frame->format, 0);
+                av_opt_set_int(swrContext, "out_sample_fmt", AV_SAMPLE_FMT_S16, 0);
+                swr_init(swrContext);
+            }
+        }
+
+        {
+            std::lock_guard<std::mutex> lk(aMediaInfo.mtx);
+            while (playHelper.getQueuedAudioSize() < AUDIO_BUFFER_SIZE && !aMediaInfo.frames.empty()) {
+                AVFrame *frame = aMediaInfo.frames.front();
+                aMediaInfo.frames.pop_front();
+
+                int putSize = frame->nb_samples * 2 * 16 / 8;
+                swrBuffer.resize(putSize);
+                uint8_t *buffers[] = { swrBuffer.data() };
+                uint32_t outputSamplePerChanel = frame->nb_samples;
+                int retNumSamplePerChannel = swr_convert(swrContext, buffers, outputSamplePerChanel, (const uint8_t **)frame->extended_data, frame->nb_samples);
+                assert(retNumSamplePerChannel > 0);
+                playHelper.putData(swrBuffer.data(), putSize);
+
+                av_frame_unref(frame);
+                av_frame_free(&frame);
+            }
+            aMediaInfo.cv.notify_all();
+        }
+    }
+    if (nullptr != swrContext) {
+        swr_close(swrContext);
+        swr_free(&swrContext);
+    }
 }
 
 void readThread(PlayManagerData *mediaInfo) {
 	int err = 0;
 	AVFormatContext *formatContext = nullptr;
-	std::thread aThread, vThread;
+	std::thread aThread, vThread, lThread;
 	do
 	{
 		if (0 != (err = avformat_open_input(&formatContext, mediaInfo->fileName.c_str(), nullptr, nullptr))) {
@@ -308,9 +309,15 @@ void readThread(PlayManagerData *mediaInfo) {
 			}
 
 
-			aThread = std::thread(&audioThread, &mediaInfo->aMediaInfo, notifyReadFrame);
+			aThread = std::thread(&audioThread, &mediaInfo->aMediaInfo, &mediaInfo->mPlayHelper, notifyReadFrame);
+
+			mediaInfo->mPlayHelper.setSampleInfo(2, 44100, EAudioFormatS16LE);
+			mediaInfo->mPlayHelper.open();
+			mediaInfo->mPlayHelper.setPlayState(EPlayStatePlaying);
 		}
 		
+		lThread = std::thread(&loopThread, mediaInfo);
+
 		auto &cv = mediaInfo->cv;
 		auto &mtx = mediaInfo->mtx;
 		for (;;) {
@@ -327,28 +334,6 @@ void readThread(PlayManagerData *mediaInfo) {
 
 			if (mediaInfo->exit) {
 				break;
-			}
-			if (!mediaInfo->initAudioPlay) {
-				auto &aMediaInfo = mediaInfo->aMediaInfo;
-				std::lock_guard<std::mutex> lka(aMediaInfo.mtx);
-				if (!aMediaInfo.frames.empty()) {
-					AVFrame *frame = aMediaInfo.frames.front();
-					auto &swrContext = mediaInfo->swrContext;
-					assert(nullptr == swrContext);
-					swrContext = swr_alloc();
-					av_opt_set_int(swrContext, "in_channel_layout", frame->channel_layout, 0);
-					av_opt_set_int(swrContext, "out_channel_layout", AV_CH_LAYOUT_STEREO, 0);
-					av_opt_set_int(swrContext, "in_channel_count", frame->channels, 0);
-					av_opt_set_int(swrContext, "out_channel_count", 2, 0);
-					av_opt_set_int(swrContext, "in_sample_rate", frame->sample_rate, 0);
-					av_opt_set_int(swrContext, "out_sample_rate", frame->sample_rate, 0);
-					av_opt_set_int(swrContext, "in_sample_fmt", frame->format, 0);
-					av_opt_set_int(swrContext, "out_sample_fmt", AV_SAMPLE_FMT_S16, 0);
-					swr_init(swrContext);
-
-					initAudioPlayer(frame, mediaInfo->mPlayHelper, mediaInfo);
-					mediaInfo->initAudioPlay = true;
-				}
 			}
 
 			lk.unlock();
@@ -378,27 +363,26 @@ void readThread(PlayManagerData *mediaInfo) {
 		}
 	} while (false);
 
+	{
+		std::lock_guard<std::mutex> lk(mediaInfo->aMediaInfo.mtx);
+		mediaInfo->aMediaInfo.exit = true;
+		mediaInfo->aMediaInfo.cv.notify_all();
+	}
+	{
+		std::lock_guard<std::mutex> lk(mediaInfo->vMediaInfo.mtx);
+		mediaInfo->vMediaInfo.exit = true;
+		mediaInfo->vMediaInfo.cv.notify_all();
+	}
 	if (aThread.joinable()) {
 		aThread.join();
 	}
 	if (vThread.joinable()) {
 		vThread.join();
 	}
-}
-
-void loopThread(PlayManagerData *mediaInfo){
-	auto &mtx = mediaInfo->mtx;
-	auto &cv = mediaInfo->cv;
-	for (;;) {
-		std::unique_lock<std::mutex> lk(mtx);
-		cv.wait_for(lk, std::chrono::milliseconds(20), [mediaInfo]()->bool {
-			return mediaInfo->exit;
-			});
-		if (mediaInfo->exit) {
-			break;
-		}
-
+	if (lThread.joinable()) {
+		lThread.join();
 	}
+	mediaInfo->mPlayHelper.close();
 }
 
 PlayManager::PlayManager()
@@ -412,54 +396,32 @@ PlayManager::~PlayManager() {
 	mData = nullptr;
 }
 
-void onBufferCallback(BufferQueueParam audioPlay, void *pContext) {
-	PlayManagerData *mData = reinterpret_cast<PlayManagerData*>(pContext);
-	auto &aMediaInfo = mData->aMediaInfo;
-	std::unique_lock<std::mutex> lk(aMediaInfo.mtx);
-	if (!aMediaInfo.frames.empty()) {
-		AVFrame *frame = aMediaInfo.frames.front();
-		aMediaInfo.frames.pop_front();
-        aMediaInfo.cv.notify_all();
-        lk.unlock();
-
-		//int64_t outputSampleRate = frame->sample_rate;
-		//uint32_t outputSamplePerChanel = static_cast<uint32_t>(av_rescale_rnd(frame->nb_samples, outputSampleRate, frame->sample_rate, AV_ROUND_UP));
-		auto &swrBuffer = mData->swrBuffer;
-		int putSize = frame->nb_samples * 2 * 16 / 8;
-		swrBuffer.resize(putSize);
-		uint8_t *buffers[] = { swrBuffer.data() };
-		uint32_t outputSamplePerChanel = frame->nb_samples;
-		int retNumSamplePerChannel = swr_convert(mData->swrContext, buffers, outputSamplePerChanel, (const uint8_t **)frame->extended_data, frame->nb_samples);
-		assert(retNumSamplePerChannel > 0);
-
-		av_frame_unref(frame);
-		av_frame_free(&frame);
-
-#ifdef _WIN32
-        audioPlay->putData(swrBuffer.data(), putSize);
-#else
-        (*audioPlay)->Enqueue(audioPlay, swrBuffer.data(), putSize);
-#endif
-	}
-	else {
-		assert(false);//解码没有跟上，
-	}
-}
-
 bool PlayManager::openFile(const char *filePath) {
-	assert(!mReadThread.joinable() && !mLoopThread.joinable());
+	assert(!mReadThread.joinable());
 
 	mData->exit = false;
 	mData->fileName = filePath;
 	mReadThread = std::thread(&readThread, mData);
-    mLoopThread = std::thread(&loopThread, mData);
 	return true;
 }
 
 bool PlayManager::setPlayState(uint32_t playState) {
-	//std::lock_guard<std::mutex> lk(mMutex);
+	std::lock_guard<std::mutex> lk(mData->mtx);
 
-	//mPlayState = playState;
+	mData->mPlayHelper.setPlayState(playState);
 	return true;
+}
+
+bool PlayManager::close()
+{
+	{
+		std::lock_guard<std::mutex> lk(mData->mtx);
+		mData->exit = true;
+		mData->cv.notify_all();
+	}
+	if (mReadThread.joinable()) {
+		mReadThread.join();
+	}
+	return false;
 }
 

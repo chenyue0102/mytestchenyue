@@ -6,6 +6,7 @@ SET(CMAKE_CXX_FLAGS "-lpthread")
 
 add_library(CommonLib
         STATIC
+        OpenSLPlay.cpp
         Log.cpp
         OpenSLESHelper.cpp
         RingQueue.cpp

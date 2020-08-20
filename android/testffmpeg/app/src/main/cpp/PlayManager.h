@@ -19,8 +19,8 @@ extern "C"{
 class DirectSoundHelper;
 typedef DirectSoundHelper PlayHelper;
 #else
-class OpenSLESHelper;
-typedef OpenSLESHelper PlayHelper;
+class OpenSLPlay;
+typedef OpenSLPlay PlayHelper;
 #endif
 
 struct PlayManagerData;
@@ -32,10 +32,10 @@ public:
 public:
     bool openFile(const char *filePath);
 	bool setPlayState(uint32_t playState);
+	bool close();
 
 private:
 	std::thread mReadThread;
-	std::thread mLoopThread;
 	PlayManagerData *mData;
 };
 

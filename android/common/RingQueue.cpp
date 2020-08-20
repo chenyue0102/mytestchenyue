@@ -48,6 +48,12 @@ uint32_t RingQueue::get(void *data, uint32_t size) {
     return innerGet(data, size);
 }
 
+void RingQueue::clear() {
+    std::lock_guard<RING_MUTEX> lk(mutex);
+
+    readIndex = writeIndex = 0;
+}
+
 uint32_t RingQueue::innerGetDataSize() const {
     return (writeIndex - readIndex);
 }

@@ -67,8 +67,13 @@ void threadProc(HANDLE hExitEvent, HANDLE hNotifyEvent, DirectSoundHelper *play)
 
 			std::lock_guard<std::mutex> lk(play->mMutex);
 			uint32_t len = play->mBuffer.get(buf, BUFFERNOTIFYSIZE);
-			assert(len == BUFFERNOTIFYSIZE);
-			writeToDirectSound(play->mDirectSoundBuffer8, play->mOffset, buf, len);
+			if (len == BUFFERNOTIFYSIZE) {
+				writeToDirectSound(play->mDirectSoundBuffer8, play->mOffset, buf, len);
+			}
+			else {
+				//assert(false);
+			}
+			
 		}
 		else {
 			assert(false);
