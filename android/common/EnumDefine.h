@@ -12,4 +12,9 @@ enum EPlayState{
     EPlayStateStopped,
 };
 
+enum EAudioFormat {
+	EAudioFormatNone,
+	EAudioFormatS16LE,
+};
+
 #endif //TESTFFMPEG_ENUMDEFINE_H

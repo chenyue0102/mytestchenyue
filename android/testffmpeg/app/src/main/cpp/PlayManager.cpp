@@ -56,16 +56,16 @@ void LogAvError(int err) {
 extern void onBufferCallback(BufferQueueParam audioPlay, void *pContext);
 #ifdef _WIN32
 void initAudioPlayer(AVFrame *frame, PlayHelper &mPlayHelper, void *pContext){
-    mData->mPlayHelper.setBufferQueueCallback(&onBufferCallback, pContext);
+    //mPlayHelper.setBufferQueueCallback(&onBufferCallback, pContext);
 
 	int outNumChannel = frame->channels == 1 ? 1 : 2;
 	outNumChannel = 2;
 	mPlayHelper.setSampleInfo(outNumChannel, frame->sample_rate, 16);
 
 	uint32_t updateBufferBytes = frame->nb_samples * outNumChannel * 16 / 8;
-	mPlayHelper.setUpdateBufferLength(updateBufferBytes);
+	//mPlayHelper.setUpdateBufferLength(updateBufferBytes);
 
-	mPlayHelper.init();
+	mPlayHelper.open();
 	mPlayHelper.setPlayState(convertPlayState(EPlayStatePlaying));
 }
 #else

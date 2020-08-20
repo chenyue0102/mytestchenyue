@@ -7,8 +7,10 @@
 #include "DirectSoundHelper.h"
 #include "EnumDefine.h"
 #include "RingQueue.h"
+#include "SDL.h"
+#include "SDLAudioHelper.h"
 
-#define BUFFER_UPDATE_SIZE 1920
+#define BUFFER_UPDATE_SIZE (1024*4)
 class MyAudioPlayCallback : public IAudioPlayCallback {
 public:
 	MyAudioPlayCallback(FILE *_file) :mRingQueue(1024 * 1024), mData(new uint8_t[BUFFER_UPDATE_SIZE]), file(_file){
@@ -94,19 +96,55 @@ int main()
 		}
 	} while (0 != strncmp(chunk.ID, "data", 4));
 	MyAudioPlayCallback myCallback(file);
+
+	SDL_Init(SDL_INIT_AUDIO);
+	SDLAudioHelper sdlAudioHelper;
+	DirectSoundHelper directSoundHelper;
+	IAudioPlay *audioPlay = &directSoundHelper;
+
+	audioPlay->setSampleInfo(2, 44100, EAudioFormatS16LE);
+	audioPlay->open();
+	audioPlay->setPlayState(EPlayStatePlaying);
+	std::thread t = std::thread([audioPlay, file]() {
+		uint8_t buf[1024];
+		for (;;) {
+			uint32_t queueSize = audioPlay->getQueuedAudioSize();
+			if (queueSize < 1024 * 200) {
+				size_t len = fread(buf, 1, 1024, file);
+				if (len > 0) {
+					audioPlay->putData(buf, len);
+				}
+				else {
+					printf("finish\n");
+					break;
+				}
+			}
+			else {
+				std::this_thread::sleep_for(std::chrono::milliseconds(1));
+			}
+		}
+		});
+
+	t.join();
+	
+	/*
+	
 	DirectSoundHelper directSoundHelper;
 	directSoundHelper.setBufferQueueCallback(&directsoundCallback, &myCallback);
 	directSoundHelper.setSampleInfo(2, 44100, 16);
 	directSoundHelper.setUpdateBufferLength(BUFFER_UPDATE_SIZE);
+	*/
 	//directSoundHelper.init();
 	/*MSG msg;
 	while (GetMessage(&msg, 0, 0, 0)) {
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}*/
-	PlayManager playManager;
-	playManager.openFile("d:/test.wav");
-	int a = 0; 
+
+	/*PlayManager playManager;
+	playManager.openFile("d:/test.mp3");*/
+	getchar();
+	/*int a = 0; 
 	do
 	{
 		printf("0:exit 1:play 2:pause 3:positon\n");
@@ -125,7 +163,9 @@ int main()
 			break;
 		}
 	} while (a != 0);
-	directSoundHelper.destroy();
+	directSoundHelper.destroy();*/
+
+	SDL_Quit();
     return 0;
 }
 
