@@ -11,46 +11,46 @@ BaseTime::~BaseTime()
 {
 }
 
-void BaseTime::setBaseTime(long long baseTime)
+void BaseTime::setBaseTime(int64_t baseTime)
 {
 	setBaseTimeMs(baseTime * 1000);
 }
 
-void BaseTime::setBaseTimeMs(long long baseTimeMs)
+void BaseTime::setBaseTimeMs(int64_t baseTimeMs)
 {
 	setBaseTimeUs(baseTimeMs * 1000);
 }
 
-void BaseTime::setBaseTimeUs(long long baseTimeUs){
+void BaseTime::setBaseTimeUs(int64_t baseTimeUs){
 	m_baseTimeUs = baseTimeUs;
 	m_timePoint = std::chrono::high_resolution_clock::now();//稳定时钟，更改系统时间，不影响此时钟
 }
 
-long long BaseTime::getBaseTime() const
+int64_t BaseTime::getBaseTime() const
 {
 	return getBaseTimeMs() / 1000;
 }
 
-long long BaseTime::getBaseTimeMs() const
+int64_t BaseTime::getBaseTimeMs() const
 {
 	return getBaseTimeUs() / 1000;
 }
 
-long long BaseTime::getBaseTimeUs()const{
+int64_t BaseTime::getBaseTimeUs()const{
 	return m_baseTimeUs;
 }
 
-long long BaseTime::getCurrentTime()
+int64_t BaseTime::getCurrentTime()
 {
 	return getCurrentTimeMs() / 1000;
 }
 
-long long BaseTime::getCurrentTimeMs()
+int64_t BaseTime::getCurrentTimeMs()
 {
 	return getCurrentTimeUs() / 1000;
 }
 
-long long BaseTime::getCurrentTimeUs(){
+int64_t BaseTime::getCurrentTimeUs(){
 	//计算时钟的差
 	auto diff = std::chrono::high_resolution_clock::now() - m_timePoint;
 	std::chrono::microseconds diffUs = std::chrono::duration_cast<std::chrono::microseconds>(diff);

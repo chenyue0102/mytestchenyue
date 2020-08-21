@@ -15,6 +15,7 @@ public:
 	virtual bool setPlayState(uint32_t playState)override;
 	uint32_t putData(const void *data, uint32_t size);
 	virtual uint32_t getQueuedAudioSize()override;
+	virtual bool flush()override;
 	bool close();
 private:
 	uint32_t mNumChannels;

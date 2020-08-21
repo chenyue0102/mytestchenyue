@@ -4,6 +4,7 @@
 
 #include "PlayManager.h"
 #include <assert.h>
+#include <algorithm>
 extern "C"{
 #include "libavformat/avformat.h"
 #include "libavutil/opt.h"
@@ -11,6 +12,7 @@ extern "C"{
 #include "EnumDefine.h"
 #ifdef _WIN32
 #include "DirectSoundHelper.h"
+#include "SDLAudioHelper.h"
 #else
 #include "OpenSLPlay.h"
 #endif
@@ -19,11 +21,13 @@ extern "C"{
 #include "Single.h"
 #include "TaskPool.h"
 #include "EnumDefine.h"
-#include "BaseTime.h"
+#include "ClockTime.h"
 
 #define MAX_AUDIO_DIFF_MS 5000
 #define AUDIO_BITS 16
 #define AUDIO_BUFFER_SIZE (1024 * 200)
+#define MAX_QUEUE_SIZE (1024)
+static AVPacket flush_pkt;
 
 void LogAvError(int err) {
 	if (0 != err) {
@@ -35,10 +39,26 @@ void LogAvError(int err) {
 		assert(false);
 	}
 }
+//second = ts * num / den
+int64_t ms2ts(const AVRational &rational, int64_t ms){
+	int64_t ts = 0;
+	if (rational.num != 0){
+		ts = ms * rational.den / rational.num / 1000;
+	}
+	return ts;
+}
 
-#define MAX_QUEUE_SIZE (1024)
+int64_t ts2ms(const AVRational &rational, int64_t ts) {
+	int64_t ms = 0;
+	if (rational.den != 0) {
+		ms = ts * rational.num * 1000 / rational.den;
+	}
+	return ms;
+}
+
 
 struct MediaInfo {
+	AVStream *stream = nullptr;
 	AVCodecContext *codecContext = nullptr;
 	int streamIndex = -1;
 
@@ -61,6 +81,32 @@ struct MediaInfo {
 		return packets.size();
 	}
 
+	void flushPacket() {
+		std::lock_guard<std::mutex> lk(mtx);
+
+		while (!packets.empty()){
+			AVPacket *pkt = packets.front();
+			packets.pop_front();
+			if (pkt == &flush_pkt) {
+				continue;
+			}
+			av_packet_unref(pkt);
+			av_packet_free(&pkt);
+		}
+	}
+
+	void flushFrame() {
+		std::lock_guard<std::mutex> lk(mtx);
+
+		while (!frames.empty()) {
+			AVFrame *frame = frames.front();
+			frames.pop_front();
+
+			av_frame_unref(frame);
+			av_frame_free(&frame);
+		}
+	}
+
 	void putFrame(AVFrame *frame){
         std::lock_guard<std::mutex> lk(mtx);
         frames.push_back(frame);
@@ -78,6 +124,11 @@ struct PlayManagerData {
 	std::mutex mtx;
 	std::condition_variable cv;
 	bool exit = false;
+
+	ClockTime clockTime;
+	bool seeking = false;
+	int64_t seekMs = 0;
+
 	int64_t pausePosition = -1;
 	std::vector<uint8_t> swrBuffer;
 	void notifyRead(){
@@ -87,7 +138,6 @@ struct PlayManagerData {
 
 	MediaInfo aMediaInfo;
 	MediaInfo vMediaInfo;
-	BaseTime systemTime;
 	PlayHelper mPlayHelper;
 };
 
@@ -95,10 +145,17 @@ static void sendPacket(MediaInfo &info) {
 	if (!info.packets.empty()) {
 		AVPacket *pkt = info.packets.front();
 		info.packets.pop_front();
-		avcodec_send_packet(info.codecContext, pkt);
-		av_packet_unref(pkt);
-		av_packet_free(&pkt);
-		info.packetDecoding = true;
+		
+		if (pkt->data == flush_pkt.data) {
+			avcodec_flush_buffers(info.codecContext);
+			info.packetDecoding = false;
+		}
+		else {
+			avcodec_send_packet(info.codecContext, pkt);
+			av_packet_unref(pkt);
+			av_packet_free(&pkt);
+			info.packetDecoding = true;
+		}
 		info.receivedFrame = false;
 	}
 }
@@ -188,22 +245,18 @@ SwrContext* initSwrContext(AVFrame *frame){
 }
 
 static void loopThread(PlayManagerData *mediaInfo){
-    auto &mtx = mediaInfo->mtx;
-    auto &cv = mediaInfo->cv;
     auto &aMediaInfo = mediaInfo->aMediaInfo;
     SwrContext *swrContext = nullptr;
     auto &playHelper = mediaInfo->mPlayHelper;
     int sample_rate = 0;
     std::vector<uint8_t> swrBuffer;
     for (;;) {
-        std::unique_lock<std::mutex> lk(mtx);
-        cv.wait_for(lk, std::chrono::milliseconds(1), [mediaInfo]()->bool {
-            return mediaInfo->exit;
-        });
-        if (mediaInfo->exit) {
-            break;
-        }
-        lk.unlock();
+		{
+			std::lock_guard<std::mutex> lk(mediaInfo->mtx);
+			if (mediaInfo->exit) {
+				break;
+			}
+		}
 
         {
             std::lock_guard<std::mutex> lk(aMediaInfo.mtx);
@@ -231,6 +284,8 @@ static void loopThread(PlayManagerData *mediaInfo){
             }
             aMediaInfo.cv.notify_all();
         }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
     if (nullptr != swrContext) {
         swr_close(swrContext);
@@ -267,18 +322,21 @@ void readThread(PlayManagerData *mediaInfo) {
 			mediaInfo->cv.notify_all();
 		};
 		if (videoIndex >= 0) {
-			AVCodec *vcodec = avcodec_find_decoder(formatContext->streams[videoIndex]->codecpar->codec_id);
+			AVStream *stream = formatContext->streams[videoIndex];
+			AVCodecParameters *codecParameters = stream->codecpar;
+			AVCodec *vcodec = avcodec_find_decoder(codecParameters->codec_id);
 			if (nullptr == vcodec) {
 				assert(false);
 				break;
 			}
+			mediaInfo->aMediaInfo.stream = stream;
 			auto &codecContext = mediaInfo->vMediaInfo.codecContext;
 			codecContext = avcodec_alloc_context3(vcodec);
 			if (nullptr == codecContext) {
 				assert(false);
 				break;
 			}
-			if (0 != (err = avcodec_parameters_to_context(codecContext, formatContext->streams[videoIndex]->codecpar))) {
+			if (0 != (err = avcodec_parameters_to_context(codecContext, codecParameters))) {
 				LogAvError(err);
 				assert(false);
 				break;
@@ -292,12 +350,14 @@ void readThread(PlayManagerData *mediaInfo) {
 		}
 
 		if (audioIndex >= 0) {
-			AVCodecParameters *codecParameters = formatContext->streams[audioIndex]->codecpar;
+			AVStream *stream = formatContext->streams[audioIndex];
+			AVCodecParameters *codecParameters = stream->codecpar;
 			AVCodec *acodec = avcodec_find_decoder(codecParameters->codec_id);
 			if (nullptr == acodec) {
 				assert(false);
 				break;
 			}
+			mediaInfo->aMediaInfo.stream = stream;
 			auto &codecContext = mediaInfo->aMediaInfo.codecContext;
 			codecContext = avcodec_alloc_context3(acodec);
 			if (0 != (err = avcodec_parameters_to_context(codecContext, codecParameters))) {
@@ -318,8 +378,10 @@ void readThread(PlayManagerData *mediaInfo) {
 			mediaInfo->mPlayHelper.setPlayState(EPlayStatePlaying);
 		}
 		
-		lThread = std::thread(&loopThread, mediaInfo);
+		mediaInfo->clockTime.setTimeMs(0);
+		mediaInfo->clockTime.resume();
 
+		lThread = std::thread(&loopThread, mediaInfo);
 		auto &cv = mediaInfo->cv;
 		auto &mtx = mediaInfo->mtx;
 		for (;;) {
@@ -330,12 +392,33 @@ void readThread(PlayManagerData *mediaInfo) {
 					return true;
 				}
 				else {
-					return mediaInfo->exit;
+					return mediaInfo->exit || mediaInfo->seeking;
 				}
 				});
 
 			if (mediaInfo->exit) {
 				break;
+			}
+			if (mediaInfo->seeking){
+				AVRational rational = { 1, AV_TIME_BASE };
+				int64_t ts = ms2ts(rational, mediaInfo->seekMs);
+				if ((err = avformat_seek_file(formatContext, -1, INT64_MIN, ts, INT64_MAX, AVSEEK_FLAG_BACKWARD | AVSEEK_FLAG_FRAME)) < 0) {
+					LogAvError(err);
+					assert(false);
+				}
+				if (mediaInfo->aMediaInfo.streamIndex >= 0) {
+					mediaInfo->aMediaInfo.flushPacket();
+					mediaInfo->aMediaInfo.flushFrame();
+					mediaInfo->aMediaInfo.putPacket(&flush_pkt);
+					mediaInfo->mPlayHelper.flush();
+				}
+				if (mediaInfo->vMediaInfo.streamIndex >= 0) {
+					mediaInfo->vMediaInfo.flushPacket();
+					mediaInfo->vMediaInfo.flushFrame();
+					mediaInfo->vMediaInfo.putPacket(&flush_pkt);
+				}
+				mediaInfo->seeking = false;
+				mediaInfo->clockTime.setTimeMs(mediaInfo->seekMs);
 			}
 
 			lk.unlock();
@@ -351,11 +434,14 @@ void readThread(PlayManagerData *mediaInfo) {
 				//todo free
 			}
 
-
 			if (pkt->stream_index == mediaInfo->aMediaInfo.streamIndex) {
+				int64_t timeMs = mediaInfo->clockTime.getTimeMs();
+				int64_t ptsMs = ts2ms(mediaInfo->aMediaInfo.stream->time_base, pkt->pts - mediaInfo->aMediaInfo.stream->start_time);
 				mediaInfo->aMediaInfo.putPacket(pkt);
 			}
 			else if (pkt->stream_index == mediaInfo->vMediaInfo.streamIndex) {
+				int64_t timeMs = mediaInfo->clockTime.getTimeMs();
+				int64_t ptsMs = ts2ms(mediaInfo->vMediaInfo.stream->time_base, pkt->pts - mediaInfo->aMediaInfo.stream->start_time);
 				mediaInfo->vMediaInfo.putPacket(pkt);
 			}
 			else {
@@ -390,7 +476,8 @@ void readThread(PlayManagerData *mediaInfo) {
 PlayManager::PlayManager()
 	: mData(new PlayManagerData())
 {
- 
+	av_init_packet(&flush_pkt);
+	flush_pkt.data = (uint8_t*)&flush_pkt;
 }
 
 PlayManager::~PlayManager() {
@@ -409,7 +496,12 @@ bool PlayManager::openFile(const char *filePath) {
 
 bool PlayManager::setPlayState(uint32_t playState) {
 	std::lock_guard<std::mutex> lk(mData->mtx);
-
+	if (playState == EPlayStatePlaying) {
+		mData->clockTime.resume();
+	}
+	else {
+		mData->clockTime.pause();
+	}
 	mData->mPlayHelper.setPlayState(playState);
 	return true;
 }
@@ -425,5 +517,13 @@ bool PlayManager::close()
 		mReadThread.join();
 	}
 	return false;
+}
+
+bool PlayManager::seek(int64_t ms) {
+	std::lock_guard<std::mutex> lk(mData->mtx);
+	mData->seeking = true;
+	mData->seekMs = ms;
+	mData->cv.notify_all();
+	return true;
 }
 

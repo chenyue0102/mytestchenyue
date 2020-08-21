@@ -624,7 +624,7 @@ void parseID3V1(Mp3Info &info) {
 		printf("ID3V1 commnet: %s\n", strTmp.c_str());
 	}
 
-	printf("ID3V1 genre: %d", (int)id3V1Header.genre);
+	printf("ID3V1 genre: %d\n", (int)id3V1Header.genre);
 }
 
 struct Mp3ID3V2Header {
@@ -854,7 +854,7 @@ int main()
 
 	long curPos = 0;
 	Mp3Info info = Mp3Info();
-	info.file = fopen("d:/output1.mp3", "rb");
+	info.file = fopen("d:/test.mp3", "rb");
 	parseMp3(info);
 	
 

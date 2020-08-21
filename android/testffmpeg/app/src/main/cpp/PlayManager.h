@@ -17,7 +17,8 @@ extern "C"{
 
 #ifdef _WIN32
 class DirectSoundHelper;
-typedef DirectSoundHelper PlayHelper;
+class SDLAudioHelper;
+typedef SDLAudioHelper PlayHelper;
 #else
 class OpenSLPlay;
 typedef OpenSLPlay PlayHelper;
@@ -32,6 +33,7 @@ public:
 public:
     bool openFile(const char *filePath);
 	bool setPlayState(uint32_t playState);
+	bool seek(int64_t ms);
 	bool close();
 
 private:

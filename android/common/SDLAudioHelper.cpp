@@ -93,6 +93,11 @@ uint32_t SDLAudioHelper::getQueuedAudioSize()
 	return SDL_GetQueuedAudioSize(mDeviceId);
 }
 
+bool SDLAudioHelper::flush() {
+	SDL_ClearQueuedAudio(mDeviceId);
+	return true;
+}
+
 bool SDLAudioHelper::close()
 {
 	if (0 != mDeviceId) {

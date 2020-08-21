@@ -26,6 +26,7 @@ public:
 public:
 	virtual uint32_t putData(const void *data, uint32_t size)override;
 	virtual uint32_t getQueuedAudioSize()override;
+	virtual bool flush()override;
 private:
 	std::thread mThread;
 	HANDLE mNotifyEvent;

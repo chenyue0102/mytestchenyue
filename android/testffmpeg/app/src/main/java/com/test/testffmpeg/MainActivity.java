@@ -22,6 +22,9 @@ public class MainActivity extends AppCompatActivity {
         // Example of a call to a native method
         findViewById(R.id.btn_open_file).setOnClickListener(v->onOpenFile());
         findViewById(R.id.btn_close_file).setOnClickListener(v->onCloseFile());
+        findViewById(R.id.btn_pause_play).setOnClickListener(v->onPausePlay());
+        findViewById(R.id.btn_resume_play).setOnClickListener(v->onResumePlay());
+        findViewById(R.id.btn_seek).setOnClickListener(v->onSeek());
 
         String []permissions = new String[]{
                 Manifest.permission.INTERNET,
@@ -54,6 +57,24 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public native void openFile(String filePath);
+
+    public void onPausePlay(){
+        pausePlay();
+    }
+
+    private native void pausePlay();
+
+    public void onResumePlay(){
+        resumePlay();
+    }
+
+    private native void resumePlay();
+
+    public void onSeek(){
+        seek();
+    }
+
+    private native void seek();
 
     private void onCloseFile(){
         closeFile();

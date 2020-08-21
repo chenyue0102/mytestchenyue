@@ -4,6 +4,8 @@
 #include <mutex>
 #include <condition_variable>
 #include <android/log.h>
+#include <EnumDefine.h>
+
 extern "C"{
 #include "libavformat/avformat.h"
 #include "libavutil/error.h"
@@ -223,4 +225,16 @@ Java_com_test_testffmpeg_MainActivity_openFile(JNIEnv *env, jobject thiz, jstrin
 JNIEXPORT void JNICALL
 Java_com_test_testffmpeg_MainActivity_closeFile(JNIEnv *env, jobject thiz) {
     clean();
+}extern "C"
+JNIEXPORT void JNICALL
+Java_com_test_testffmpeg_MainActivity_pausePlay(JNIEnv *env, jobject thiz) {
+    g_PlayManager.setPlayState(EPlayStatePause);
+}extern "C"
+JNIEXPORT void JNICALL
+Java_com_test_testffmpeg_MainActivity_resumePlay(JNIEnv *env, jobject thiz) {
+    g_PlayManager.setPlayState(EPlayStatePlaying);
+}extern "C"
+JNIEXPORT void JNICALL
+Java_com_test_testffmpeg_MainActivity_seek(JNIEnv *env, jobject thiz) {
+
 }

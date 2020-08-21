@@ -3,6 +3,7 @@
 */
 #pragma once
 #include <chrono>
+#include <stdint.h>
 
 class BaseTime
 {
@@ -11,27 +12,27 @@ public:
 	~BaseTime();
 public:
 	//设置UTC基准时间，单位秒
-	void setBaseTime(long long baseTime);
+	void setBaseTime(int64_t baseTime);
 	//设置UTC基准时间，单位毫秒
-	void setBaseTimeMs(long long baseTimeMs);
+	void setBaseTimeMs(int64_t baseTimeMs);
 	//设置UTC基准时间，单位微秒
-	void setBaseTimeUs(long long baseTimeUs);
+	void setBaseTimeUs(int64_t baseTimeUs);
 	//获取基准消息
-	long long getBaseTime()const;
+	int64_t getBaseTime()const;
 	//获取基准时间，单位毫秒
-	long long getBaseTimeMs()const;
+	int64_t getBaseTimeMs()const;
 	//获取基准时间，单位微秒
-	long long getBaseTimeUs()const;
+	int64_t getBaseTimeUs()const;
 public:
 	//获取UTC基准时间，单位秒
-	long long getCurrentTime();
+	int64_t getCurrentTime();
 	//获取UTC基准时间，单位毫秒
-	long long getCurrentTimeMs();
+	int64_t getCurrentTimeMs();
 	//获取UTC基准时间，单位微秒
-	long long getCurrentTimeUs();
+	int64_t getCurrentTimeUs();
 private:
 	//时间起点
 	std::chrono::high_resolution_clock::time_point m_timePoint;
 	//服务器基准时间点
-	long long m_baseTimeUs;
+	int64_t m_baseTimeUs;
 };

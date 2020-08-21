@@ -21,6 +21,7 @@ struct IAudioPlay{
 	virtual bool setPlayState(uint32_t playState) = 0;
 	virtual uint32_t putData(const void *data, uint32_t size) = 0;
 	virtual uint32_t getQueuedAudioSize() = 0;
+	virtual bool flush() = 0;
 	virtual bool close() = 0;
 };
 

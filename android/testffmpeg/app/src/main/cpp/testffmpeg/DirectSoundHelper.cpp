@@ -324,3 +324,14 @@ uint32_t DirectSoundHelper::getQueuedAudioSize()
 
 	return bufByte;
 }
+
+bool DirectSoundHelper::flush()
+{
+	std::lock_guard<std::mutex> lk(mMutex);
+	mBuffer.clear();
+	if (nullptr != mDirectSoundBuffer8) {
+		mDirectSoundBuffer8->Restore();
+	}
+	mOffset = 0;
+	return true;
+}

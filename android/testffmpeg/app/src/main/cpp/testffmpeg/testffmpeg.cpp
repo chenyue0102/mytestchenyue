@@ -88,7 +88,7 @@ int main()
 	int a = 0; 
 	do
 	{
-		printf("0:exit 1:play 2:pause 3:positon\n");
+		printf("0:exit 1:play 2:pause 3:seek\n");
 		scanf("%d", &a);
 		switch (a) {
 		case 0:
@@ -100,7 +100,7 @@ int main()
 			playManager.setPlayState(EPlayStatePause);
 			break;
 		case 3:
-			//printf("position:%lld\n", directSoundHelper.getPosition());
+			playManager.seek(5000);
 			break;
 		}
 	} while (a != 0);

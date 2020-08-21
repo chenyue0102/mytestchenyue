@@ -87,6 +87,9 @@
     <ClInclude Include="..\..\..\..\..\..\common\SDLAudioHelper.h">
       <Filter>common</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\common\ClockTime.h">
+      <Filter>common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -120,6 +123,9 @@
       <Filter>common</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\..\..\..\common\SDLAudioHelper.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\..\common\ClockTime.cpp">
       <Filter>common</Filter>
     </ClCompile>
   </ItemGroup>

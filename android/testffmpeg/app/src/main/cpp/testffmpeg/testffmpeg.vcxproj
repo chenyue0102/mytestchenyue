@@ -159,6 +159,7 @@
     <ClInclude Include="..\..\..\..\..\..\common\AudioRecordLogic.h" />
     <ClInclude Include="..\..\..\..\..\..\common\BaseTime.h" />
     <ClInclude Include="..\..\..\..\..\..\common\byteswap.h" />
+    <ClInclude Include="..\..\..\..\..\..\common\ClockTime.h" />
     <ClInclude Include="..\..\..\..\..\..\common\EnumDefine.h" />
     <ClInclude Include="..\..\..\..\..\..\common\Log.h" />
     <ClInclude Include="..\..\..\..\..\..\common\MacroDefine.h" />
@@ -179,6 +180,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\..\..\..\common\BaseTime.cpp" />
+    <ClCompile Include="..\..\..\..\..\..\common\ClockTime.cpp" />
     <ClCompile Include="..\..\..\..\..\..\common\Log.cpp" />
     <ClCompile Include="..\..\..\..\..\..\common\RingQueue.cpp" />
     <ClCompile Include="..\..\..\..\..\..\common\SDLAudioHelper.cpp" />
