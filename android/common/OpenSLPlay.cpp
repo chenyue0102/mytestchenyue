@@ -8,17 +8,23 @@
 void onBufferCallback(SLAndroidSimpleBufferQueueItf audioPlay, void *pContext){
     OpenSLPlay *play = reinterpret_cast<OpenSLPlay*>(pContext);
     if (nullptr != play){
+        std::lock_guard<std::mutex> lk(play->mMutex);
         uint32_t len = play->mRingQueue.get(play->mBuffer.data(), 1024);
-        assert(len == 1024);
-        (*audioPlay)->Enqueue(audioPlay, play->mBuffer.data(), len);
+        if (len > 0){
+            (*audioPlay)->Enqueue(audioPlay, play->mBuffer.data(), len);
+        }else{
+            play->mHavePutFirst = false;
+        }
     }
 }
 OpenSLPlay::OpenSLPlay()
-        : mNumChannels(0)
+        : mMutex()
+        , mNumChannels(0)
         , mSamplesPerSec(0)
         , mAudioFormat(0)
         , mRingQueue(1024 * 1024 * 2)
         , mBuffer(1024)
+        , mHavePutFirst(false)
 {
 
 }
@@ -28,6 +34,8 @@ OpenSLPlay::~OpenSLPlay() {
 }
 
 bool OpenSLPlay::setSampleInfo(uint32_t numChannels, uint32_t samplesPerSec, uint32_t audioFormat) {
+    std::lock_guard<std::mutex> lk(mMutex);
+
     mNumChannels = numChannels;
     mSamplesPerSec = samplesPerSec;
     mAudioFormat = audioFormat;
@@ -35,6 +43,8 @@ bool OpenSLPlay::setSampleInfo(uint32_t numChannels, uint32_t samplesPerSec, uin
 }
 
 bool OpenSLPlay::open() {
+    std::lock_guard<std::mutex> lk(mMutex);
+
     bool b = mOpenSLHelper.createEngine();
     b = mOpenSLHelper.createOutputMix();
     SLDataLocator_AndroidSimpleBufferQueue bufferQueue = {SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE, 2};
@@ -56,8 +66,7 @@ bool OpenSLPlay::open() {
     b = mOpenSLHelper.createPlayer(slDataSource, slDataSink, 3, ids, req);
     SLAndroidSimpleBufferQueueItf slBufferQueue = mOpenSLHelper.getPlayBufferQueue();
     mOpenSLHelper.registerPlayBufferQueueCallback(&onBufferCallback, this);
-
-    return false;
+    return true;
 }
 
 inline uint32_t convertPlayState(uint32_t playState){
@@ -75,19 +84,36 @@ inline uint32_t convertPlayState(uint32_t playState){
 }
 
 bool OpenSLPlay::setPlayState(uint32_t playState) {
+    std::lock_guard<std::mutex> lk(mMutex);
+
     mOpenSLHelper.setPlayState(convertPlayState(playState));
     return true;
 }
 
 uint32_t OpenSLPlay::putData(const void *data, uint32_t size) {
+    std::lock_guard<std::mutex> lk(mMutex);
+
+    if (!mHavePutFirst){
+        SLAndroidSimpleBufferQueueItf bufferQueue = mOpenSLHelper.getPlayBufferQueue();
+        if (nullptr != bufferQueue){
+            if (SL_RESULT_SUCCESS == (*bufferQueue)->Enqueue(bufferQueue, data, size)){
+                mHavePutFirst = true;
+                return size;
+            }
+        }
+    }
     return mRingQueue.put(data, size);
 }
 
 uint32_t OpenSLPlay::getQueuedAudioSize() {
+    std::lock_guard<std::mutex> lk(mMutex);
+
     return mRingQueue.getDataSize();
 }
 
 bool OpenSLPlay::close() {
+    std::lock_guard<std::mutex> lk(mMutex);
+
     mRingQueue.clear();
     return mOpenSLHelper.destroy();
 }

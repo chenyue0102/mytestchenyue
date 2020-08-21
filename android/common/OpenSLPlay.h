@@ -6,6 +6,7 @@
 #define TESTFFMPEG_OPENSLPLAY_H
 
 #include <vector>
+#include <mutex>
 #include "InterfaceDefine.h"
 #include "OpenSLESHelper.h"
 #include "RingQueue.h"
@@ -24,12 +25,14 @@ public:
     virtual bool close();
 
 private:
+    std::mutex mMutex;
     uint32_t mNumChannels;
     uint32_t mSamplesPerSec;
     uint32_t mAudioFormat;
     OpenSLESHelper mOpenSLHelper;
     RingQueue mRingQueue;
     std::vector<uint8_t> mBuffer;
+    bool mHavePutFirst;
 };
 
 

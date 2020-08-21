@@ -103,13 +103,11 @@ static void sendPacket(MediaInfo &info) {
 	}
 }
 
-static void audioThread(MediaInfo *pInfo, PlayHelper *playHelper, std::function<void()> notifyReadFrame) {
+static void audioThread(MediaInfo *pInfo, std::function<void()> notifyReadFrame) {
 	auto &info = *pInfo;
 	auto &mtx = info.mtx;
 	auto &cv = info.cv;
-	std::vector<uint8_t> swrBuffer;
     AVFrame *frame = av_frame_alloc();
-	SwrContext *swrContext = nullptr;
 
 	for (;;) {
 		std::unique_lock<std::mutex> lk(info.mtx);
@@ -175,12 +173,27 @@ static void videoThread(PlayManagerData *mediaInfo) {
 
 }
 
+SwrContext* initSwrContext(AVFrame *frame){
+    SwrContext *swrContext = swr_alloc();
+    av_opt_set_int(swrContext, "in_channel_layout", frame->channel_layout, 0);
+    av_opt_set_int(swrContext, "out_channel_layout", AV_CH_LAYOUT_STEREO, 0);
+    av_opt_set_int(swrContext, "in_channel_count", frame->channels, 0);
+    av_opt_set_int(swrContext, "out_channel_count", 2, 0);
+    av_opt_set_int(swrContext, "in_sample_rate", frame->sample_rate, 0);
+    av_opt_set_int(swrContext, "out_sample_rate", frame->sample_rate, 0);
+    av_opt_set_int(swrContext, "in_sample_fmt", frame->format, 0);
+    av_opt_set_int(swrContext, "out_sample_fmt", AV_SAMPLE_FMT_S16, 0);
+    swr_init(swrContext);
+    return swrContext;
+}
+
 static void loopThread(PlayManagerData *mediaInfo){
     auto &mtx = mediaInfo->mtx;
     auto &cv = mediaInfo->cv;
     auto &aMediaInfo = mediaInfo->aMediaInfo;
     SwrContext *swrContext = nullptr;
     auto &playHelper = mediaInfo->mPlayHelper;
+    int sample_rate = 0;
     std::vector<uint8_t> swrBuffer;
     for (;;) {
         std::unique_lock<std::mutex> lk(mtx);
@@ -192,29 +205,19 @@ static void loopThread(PlayManagerData *mediaInfo){
         }
         lk.unlock();
 
-        if (nullptr == swrContext) {
-            std::lock_guard<std::mutex> lk(aMediaInfo.mtx);
-            if (!aMediaInfo.frames.empty()) {
-                AVFrame *frame = aMediaInfo.frames.front();
-                swrContext = swr_alloc();
-                av_opt_set_int(swrContext, "in_channel_layout", frame->channel_layout, 0);
-                av_opt_set_int(swrContext, "out_channel_layout", AV_CH_LAYOUT_STEREO, 0);
-                av_opt_set_int(swrContext, "in_channel_count", frame->channels, 0);
-                av_opt_set_int(swrContext, "out_channel_count", 2, 0);
-                av_opt_set_int(swrContext, "in_sample_rate", frame->sample_rate, 0);
-                av_opt_set_int(swrContext, "out_sample_rate", frame->sample_rate, 0);
-                av_opt_set_int(swrContext, "in_sample_fmt", frame->format, 0);
-                av_opt_set_int(swrContext, "out_sample_fmt", AV_SAMPLE_FMT_S16, 0);
-                swr_init(swrContext);
-            }
-        }
-
         {
             std::lock_guard<std::mutex> lk(aMediaInfo.mtx);
             while (playHelper.getQueuedAudioSize() < AUDIO_BUFFER_SIZE && !aMediaInfo.frames.empty()) {
                 AVFrame *frame = aMediaInfo.frames.front();
                 aMediaInfo.frames.pop_front();
 
+                if (nullptr == swrContext || sample_rate != frame->sample_rate){
+                    if (nullptr != swrContext){
+                        swr_close(swrContext);
+                        swr_free(&swrContext);
+                    }
+                    swrContext = initSwrContext(frame);
+                }
                 int putSize = frame->nb_samples * 2 * 16 / 8;
                 swrBuffer.resize(putSize);
                 uint8_t *buffers[] = { swrBuffer.data() };
@@ -308,8 +311,7 @@ void readThread(PlayManagerData *mediaInfo) {
 				break;
 			}
 
-
-			aThread = std::thread(&audioThread, &mediaInfo->aMediaInfo, &mediaInfo->mPlayHelper, notifyReadFrame);
+			aThread = std::thread(&audioThread, &mediaInfo->aMediaInfo, notifyReadFrame);
 
 			mediaInfo->mPlayHelper.setSampleInfo(2, 44100, EAudioFormatS16LE);
 			mediaInfo->mPlayHelper.open();
