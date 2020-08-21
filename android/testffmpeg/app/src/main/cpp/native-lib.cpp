@@ -200,10 +200,15 @@ PlayManager g_PlayManager;
 void openFile2(){
     g_PlayManager.openFile(g_filePath.c_str());
 }
-
+static bool g_init = false;
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_test_testffmpeg_MainActivity_openFile(JNIEnv *env, jobject thiz, jstring file_path) {
+    if (!g_init){
+        g_init = true;
+        avcodec_register_all();
+        avformat_network_init();
+    }
     jboolean iscopy = 0;
     const char *str = env->GetStringUTFChars(file_path, &iscopy);
     if (nullptr != str) {

@@ -50,6 +50,8 @@ int main()
 	} while (0 != strncmp(chunk.ID, "data", 4));
 
 	SDL_Init(SDL_INIT_AUDIO);
+	avcodec_register_all();
+	avformat_network_init();
 #if 0
 	SDLAudioHelper sdlAudioHelper;
 	DirectSoundHelper directSoundHelper;
