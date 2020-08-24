@@ -29,6 +29,7 @@ extern "C"{
 #define AUDIO_BUFFER_SIZE (1024 * 200)
 #define MAX_QUEUE_SIZE (1024)
 #define MAX_FRAME_SIZE 100
+#define MAX_DECODE_PACKET_COUNT 20
 
 #ifdef _WIN32
 class DirectSoundHelper;
@@ -93,7 +94,7 @@ struct MediaInfo {
 	bool exit = false;
 	std::list<AVPacket*> packets;
 	std::list<AVFrame*> frames;
-	bool packetDecoding = false;
+	int decodingPacketCount = 0;
 	bool receivedFrame = false;
 
 	void putPacket(AVPacket *packet) {
@@ -175,7 +176,7 @@ static void sendPacket(MediaInfo &info) {
 		
 		if (pkt->data == flush_pkt.data) {
 			avcodec_flush_buffers(info.codecContext);
-			info.packetDecoding = false;
+			info.decodingPacketCount = 0;
 		}
 		else {
 			int err = 0;
@@ -183,7 +184,7 @@ static void sendPacket(MediaInfo &info) {
 				LogAvError(err);
 			}
 			else {
-				info.packetDecoding = true;
+				info.decodingPacketCount++;
 			}
 			av_packet_unref(pkt);
 			av_packet_free(&pkt);
@@ -209,54 +210,48 @@ static void audioThread(MediaInfo *pInfo, std::function<void()> notifyReadFrame)
 		    break;
 		}
 
-        if (info.packetDecoding){
-            int ret = avcodec_receive_frame(info.codecContext, frame);
-            if (ret < 0){
-                if (AVERROR_EOF == ret){
-                    break;
-                }else if(AVERROR(EAGAIN) == ret){
-					if (info.receivedFrame) {
-						info.packetDecoding = false;
-						if (info.packets.empty()) {
-							lk.unlock();//解锁audio的锁，防止死锁
-							notifyReadFrame();
-							std::this_thread::sleep_for(std::chrono::milliseconds(1));
-						}
-						else {
-							sendPacket(info);
-							lk.unlock();//解锁audio的锁，防止死锁
-							notifyReadFrame();
-						}
-					}
-					else {
-						//正在解码，等会
-						lk.unlock();
+		int ret = avcodec_receive_frame(info.codecContext, frame);
+		if (ret < 0) {
+			if (AVERROR_EOF == ret) {
+				break;
+			}
+			else if (AVERROR(EAGAIN) == ret) {
+				if (info.receivedFrame) {//avcodec_receive_frame成功过，然后出现EAGAIN，表示packet已经解码完了，继续投递新包
+					info.decodingPacketCount = 0;
+					if (info.packets.empty()) {
+						lk.unlock();//解锁audio的锁，防止死锁
+						notifyReadFrame();
 						std::this_thread::sleep_for(std::chrono::milliseconds(1));
 					}
-                    continue;
-                }else{
-                    assert(false);
-                    break;
-                }
+					else {
+						sendPacket(info);
+						lk.unlock();//解锁audio的锁，防止死锁
+						notifyReadFrame();
+					}
+				}
+				else if (info.decodingPacketCount < MAX_DECODE_PACKET_COUNT && !info.packets.empty()) {
+					sendPacket(info);
+					lk.unlock();//解锁audio的锁，防止死锁
+					notifyReadFrame();
+				}
+				else {
+					//正在解码，等会
+					lk.unlock();
+					std::this_thread::sleep_for(std::chrono::milliseconds(1));
+				}
 			}
 			else {
-				info.receivedFrame = true;
-				AVFrame *tmpFrame = av_frame_alloc();
-				av_frame_move_ref(tmpFrame, frame);
-				info.frames.push_back(tmpFrame);
-				info.cv.notify_all();
+				assert(false);
+				break;
 			}
-        }else{
-            if (info.packets.empty()){
-                lk.unlock();//解锁audio的锁，防止死锁
-				notifyReadFrame();
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
-            }else{
-				sendPacket(info);
-				lk.unlock();//解锁audio的锁，防止死锁
-				notifyReadFrame();
-            }
-        }
+		}
+		else {
+			info.receivedFrame = true;
+			AVFrame *tmpFrame = av_frame_alloc();
+			av_frame_move_ref(tmpFrame, frame);
+			info.frames.push_back(tmpFrame);
+			info.cv.notify_all();
+		}
 	}
     av_frame_free(&frame);
 }
@@ -277,54 +272,48 @@ static void videoThread(MediaInfo *pInfo, std::function<void()> notifyReadFrame)
             break;
         }
 
-        if (info.packetDecoding){
-            int ret = avcodec_receive_frame(info.codecContext, frame);
-            if (ret < 0){
-                if (AVERROR_EOF == ret){
-                    break;
-                }else if(AVERROR(EAGAIN) == ret){
-                    if (info.receivedFrame) {
-                        info.packetDecoding = false;
-                        if (info.packets.empty()) {
-                            lk.unlock();//解锁audio的锁，防止死锁
-                            notifyReadFrame();
-                            std::this_thread::sleep_for(std::chrono::milliseconds(1));
-                        }
-                        else {
-                            sendPacket(info);
-                            lk.unlock();//解锁audio的锁，防止死锁
-                            notifyReadFrame();
-                        }
-                    }
-                    else {
-                        //正在解码，等会
-                        lk.unlock();
-                        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-                    }
-                    continue;
-                }else{
-                    assert(false);
-                    break;
-                }
+		int ret = avcodec_receive_frame(info.codecContext, frame);
+		if (ret < 0) {
+			if (AVERROR_EOF == ret) {
+				break;
+			}
+			else if (AVERROR(EAGAIN) == ret) {
+				if (info.receivedFrame) {//avcodec_receive_frame成功过，然后出现EAGAIN，表示packet已经解码完了，继续投递新包
+					info.decodingPacketCount = 0;
+					if (info.packets.empty()) {
+						lk.unlock();//解锁audio的锁，防止死锁
+						notifyReadFrame();
+						std::this_thread::sleep_for(std::chrono::milliseconds(1));
+					}
+					else {
+						sendPacket(info);
+						lk.unlock();//解锁audio的锁，防止死锁
+						notifyReadFrame();
+					}
+				}
+				else if (info.decodingPacketCount < MAX_DECODE_PACKET_COUNT && !info.packets.empty()) {
+					sendPacket(info);
+					lk.unlock();//解锁audio的锁，防止死锁
+					notifyReadFrame();
+				}
+				else {
+					//正在解码，等会
+					lk.unlock();
+					std::this_thread::sleep_for(std::chrono::milliseconds(1));
+				}
 			}
 			else {
-				info.receivedFrame = true;
-				AVFrame *tmpFrame = av_frame_alloc();
-				av_frame_move_ref(tmpFrame, frame);
-				info.frames.push_back(tmpFrame);
-				info.cv.notify_all();
+				assert(false);
+				break;
 			}
-        }else{
-            if (info.packets.empty()){
-                lk.unlock();//解锁audio的锁，防止死锁
-                notifyReadFrame();
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
-            }else{
-                sendPacket(info);
-                lk.unlock();//解锁audio的锁，防止死锁
-                notifyReadFrame();
-            }
-        }
+		}
+		else {
+			info.receivedFrame = true;
+			AVFrame *tmpFrame = av_frame_alloc();
+			av_frame_move_ref(tmpFrame, frame);
+			info.frames.push_back(tmpFrame);
+			info.cv.notify_all();
+		}
     }
     av_frame_free(&frame);
 }
@@ -336,7 +325,7 @@ SwrContext* initSwrContext(AVFrame *frame){
     av_opt_set_int(swrContext, "in_channel_count", frame->channels, 0);
     av_opt_set_int(swrContext, "out_channel_count", 2, 0);
     av_opt_set_int(swrContext, "in_sample_rate", frame->sample_rate, 0);
-    av_opt_set_int(swrContext, "out_sample_rate", frame->sample_rate, 0);
+    av_opt_set_int(swrContext, "out_sample_rate", 44100, 0);
     av_opt_set_int(swrContext, "in_sample_fmt", frame->format, 0);
     av_opt_set_int(swrContext, "out_sample_fmt", AV_SAMPLE_FMT_S16, 0);
     swr_init(swrContext);
@@ -377,7 +366,7 @@ static void loopThread(PlayManagerData *mediaInfo){
                             swr_free(&swrContext);
                         }
                         swrContext = initSwrContext(frame);
-                        bytePerSecond = frame->channels * frame->sample_rate * 2;
+                        bytePerSecond = frame->channels * 44100 * 2;
                     }
                     int putSize = frame->nb_samples * 2 * 16 / 8;
                     swrBuffer.resize(putSize);
@@ -473,7 +462,7 @@ void readThread(PlayManagerData *mediaInfo) {
 				assert(false);
 				break;
 			}
-			codecContext->thread_count = std::thread::hardware_concurrency();
+			//codecContext->thread_count = std::thread::hardware_concurrency();
 			if (0 != (err = avcodec_parameters_to_context(codecContext, codecParameters))) {
 				LogAvError(err);
 				assert(false);
@@ -483,6 +472,12 @@ void readThread(PlayManagerData *mediaInfo) {
 				LogAvError(err);
 				assert(false);
 				break;
+			}
+			if (nullptr != stream->metadata) {
+				AVDictionaryEntry *entry = av_dict_get(stream->metadata, "rotate", nullptr, AV_DICT_IGNORE_SUFFIX);
+				if (nullptr != entry) {
+					int rotate = atoi(entry->value);
+				}
 			}
 			mediaInfo->mVideoPlayHelper.setVideoInfo(convertPixelFormat(codecParameters->format), codecParameters->width, codecParameters->height);
 			mediaInfo->mVideoPlayHelper.open();
@@ -500,7 +495,7 @@ void readThread(PlayManagerData *mediaInfo) {
 			mediaInfo->aMediaInfo.stream = stream;
 			auto &codecContext = mediaInfo->aMediaInfo.codecContext;
 			codecContext = avcodec_alloc_context3(acodec);
-			codecContext->thread_count = std::thread::hardware_concurrency();
+			//codecContext->thread_count = std::thread::hardware_concurrency();
 			if (0 != (err = avcodec_parameters_to_context(codecContext, codecParameters))) {
 				LogAvError(err);
 				assert(false);
