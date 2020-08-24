@@ -111,9 +111,20 @@ uint32_t OpenSLPlay::getQueuedAudioSize() {
     return mRingQueue.getDataSize();
 }
 
+bool OpenSLPlay::flush() {
+    std::lock_guard<std::mutex> lk(mMutex);
+    mRingQueue.clear();
+    SLAndroidSimpleBufferQueueItf bufferQueue = mOpenSLHelper.getPlayBufferQueue();
+    if (nullptr != bufferQueue){
+        (*bufferQueue)->Clear(bufferQueue);
+    }
+    return true;
+}
+
 bool OpenSLPlay::close() {
     std::lock_guard<std::mutex> lk(mMutex);
 
     mRingQueue.clear();
     return mOpenSLHelper.destroy();
 }
+

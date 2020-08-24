@@ -90,6 +90,15 @@
     <ClInclude Include="..\..\..\..\..\..\common\ClockTime.h">
       <Filter>common</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\common\OpenGLHelper.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\common\OpenGLPlay.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\common\RenderYUV420P.h">
+      <Filter>common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -126,6 +135,15 @@
       <Filter>common</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\..\..\..\common\ClockTime.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\..\common\OpenGLHelper.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\..\common\OpenGLPlay.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\..\common\RenderYUV420P.cpp">
       <Filter>common</Filter>
     </ClCompile>
   </ItemGroup>

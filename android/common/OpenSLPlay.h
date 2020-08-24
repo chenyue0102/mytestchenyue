@@ -22,6 +22,7 @@ public:
     virtual bool setPlayState(uint32_t playState);
     virtual uint32_t putData(const void *data, uint32_t size);
     virtual uint32_t getQueuedAudioSize();
+    virtual bool flush();
     virtual bool close();
 
 private:

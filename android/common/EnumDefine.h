@@ -17,4 +17,9 @@ enum EAudioFormat {
 	EAudioFormatS16LE,
 };
 
+enum EVideoFormat{
+	EVideoFormatNone,
+	EVideoFormatYUV420P,
+};
+
 #endif //TESTFFMPEG_ENUMDEFINE_H

@@ -22,11 +22,25 @@ extern "C"{
 #include "TaskPool.h"
 #include "EnumDefine.h"
 #include "ClockTime.h"
+#include "OpenGLPlay.h"
 
 #define MAX_AUDIO_DIFF_MS 5000
 #define AUDIO_BITS 16
 #define AUDIO_BUFFER_SIZE (1024 * 200)
 #define MAX_QUEUE_SIZE (1024)
+#define MAX_FRAME_SIZE 100
+
+#ifdef _WIN32
+class DirectSoundHelper;
+class SDLAudioHelper;
+typedef SDLAudioHelper PlayHelper;
+#else
+class OpenSLPlay;
+typedef OpenSLPlay PlayHelper;
+#endif
+
+typedef OpenGLPlay VideoPlayHelper;
+
 static AVPacket flush_pkt;
 
 void LogAvError(int err) {
@@ -56,6 +70,18 @@ int64_t ts2ms(const AVRational &rational, int64_t ts) {
 	return ms;
 }
 
+int convertPixelFormat(int format){
+    int ret = 0;
+    switch (format){
+        case AV_PIX_FMT_YUV420P:
+            ret = EVideoFormatYUV420P;
+            break;
+        default:
+            assert(false);
+            break;
+    }
+    return ret;
+}
 
 struct MediaInfo {
 	AVStream *stream = nullptr;
@@ -118,7 +144,7 @@ struct MediaInfo {
         return frames.size();
 	}
 };
-#define MAX_FRAME_SIZE 100
+
 struct PlayManagerData {
 	std::string fileName;
 	std::mutex mtx;
@@ -139,6 +165,7 @@ struct PlayManagerData {
 	MediaInfo aMediaInfo;
 	MediaInfo vMediaInfo;
 	PlayHelper mPlayHelper;
+    VideoPlayHelper mVideoPlayHelper;
 };
 
 static void sendPacket(MediaInfo &info) {
@@ -151,10 +178,16 @@ static void sendPacket(MediaInfo &info) {
 			info.packetDecoding = false;
 		}
 		else {
-			avcodec_send_packet(info.codecContext, pkt);
+			int err = 0;
+			if ((err = avcodec_send_packet(info.codecContext, pkt)) < 0) {
+				LogAvError(err);
+			}
+			else {
+				info.packetDecoding = true;
+			}
 			av_packet_unref(pkt);
 			av_packet_free(&pkt);
-			info.packetDecoding = true;
+			
 		}
 		info.receivedFrame = false;
 	}
@@ -205,12 +238,14 @@ static void audioThread(MediaInfo *pInfo, std::function<void()> notifyReadFrame)
                     assert(false);
                     break;
                 }
-            }
-			info.receivedFrame = true;
-            AVFrame *tmpFrame = av_frame_alloc();
-            av_frame_move_ref(tmpFrame, frame);
-            info.frames.push_back(tmpFrame);
-            info.cv.notify_all();
+			}
+			else {
+				info.receivedFrame = true;
+				AVFrame *tmpFrame = av_frame_alloc();
+				av_frame_move_ref(tmpFrame, frame);
+				info.frames.push_back(tmpFrame);
+				info.cv.notify_all();
+			}
         }else{
             if (info.packets.empty()){
                 lk.unlock();//解锁audio的锁，防止死锁
@@ -226,8 +261,72 @@ static void audioThread(MediaInfo *pInfo, std::function<void()> notifyReadFrame)
     av_frame_free(&frame);
 }
 
-static void videoThread(PlayManagerData *mediaInfo) {
+static void videoThread(MediaInfo *pInfo, std::function<void()> notifyReadFrame) {
+    auto &info = *pInfo;
+    auto &mtx = info.mtx;
+    auto &cv = info.cv;
+    AVFrame *frame = av_frame_alloc();
 
+    for (;;) {
+        std::unique_lock<std::mutex> lk(info.mtx);
+        cv.wait(lk, [&info]() -> bool {
+            return info.exit || (info.frames.size() < MAX_FRAME_SIZE);
+        });
+
+        if (info.exit) {
+            break;
+        }
+
+        if (info.packetDecoding){
+            int ret = avcodec_receive_frame(info.codecContext, frame);
+            if (ret < 0){
+                if (AVERROR_EOF == ret){
+                    break;
+                }else if(AVERROR(EAGAIN) == ret){
+                    if (info.receivedFrame) {
+                        info.packetDecoding = false;
+                        if (info.packets.empty()) {
+                            lk.unlock();//解锁audio的锁，防止死锁
+                            notifyReadFrame();
+                            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                        }
+                        else {
+                            sendPacket(info);
+                            lk.unlock();//解锁audio的锁，防止死锁
+                            notifyReadFrame();
+                        }
+                    }
+                    else {
+                        //正在解码，等会
+                        lk.unlock();
+                        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                    }
+                    continue;
+                }else{
+                    assert(false);
+                    break;
+                }
+			}
+			else {
+				info.receivedFrame = true;
+				AVFrame *tmpFrame = av_frame_alloc();
+				av_frame_move_ref(tmpFrame, frame);
+				info.frames.push_back(tmpFrame);
+				info.cv.notify_all();
+			}
+        }else{
+            if (info.packets.empty()){
+                lk.unlock();//解锁audio的锁，防止死锁
+                notifyReadFrame();
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            }else{
+                sendPacket(info);
+                lk.unlock();//解锁audio的锁，防止死锁
+                notifyReadFrame();
+            }
+        }
+    }
+    av_frame_free(&frame);
 }
 
 SwrContext* initSwrContext(AVFrame *frame){
@@ -249,7 +348,12 @@ static void loopThread(PlayManagerData *mediaInfo){
     SwrContext *swrContext = nullptr;
     auto &playHelper = mediaInfo->mPlayHelper;
     int sample_rate = 0;
+    uint32_t bytePerSecond = 0;
     std::vector<uint8_t> swrBuffer;
+    auto &vMediaInfo = mediaInfo->vMediaInfo;
+    auto &videoPlayHelper = mediaInfo->mVideoPlayHelper;
+    int64_t ms = 0;
+
     for (;;) {
 		{
 			std::lock_guard<std::mutex> lk(mediaInfo->mtx);
@@ -257,32 +361,65 @@ static void loopThread(PlayManagerData *mediaInfo){
 				break;
 			}
 		}
-
+        ms = -1;
         {
             std::lock_guard<std::mutex> lk(aMediaInfo.mtx);
-            while (playHelper.getQueuedAudioSize() < AUDIO_BUFFER_SIZE && !aMediaInfo.frames.empty()) {
-                AVFrame *frame = aMediaInfo.frames.front();
-                aMediaInfo.frames.pop_front();
+            if (aMediaInfo.streamIndex >= 0){
+                int64_t pts = -1;
+                while (playHelper.getQueuedAudioSize() < AUDIO_BUFFER_SIZE && !aMediaInfo.frames.empty()) {
+                    AVFrame *frame = aMediaInfo.frames.front();
+                    aMediaInfo.frames.pop_front();
 
-                if (nullptr == swrContext || sample_rate != frame->sample_rate){
-                    if (nullptr != swrContext){
-                        swr_close(swrContext);
-                        swr_free(&swrContext);
+                    pts = frame->pts;
+                    if (nullptr == swrContext || sample_rate != frame->sample_rate){
+                        if (nullptr != swrContext){
+                            swr_close(swrContext);
+                            swr_free(&swrContext);
+                        }
+                        swrContext = initSwrContext(frame);
+                        bytePerSecond = frame->channels * frame->sample_rate * 2;
                     }
-                    swrContext = initSwrContext(frame);
-                }
-                int putSize = frame->nb_samples * 2 * 16 / 8;
-                swrBuffer.resize(putSize);
-                uint8_t *buffers[] = { swrBuffer.data() };
-                uint32_t outputSamplePerChanel = frame->nb_samples;
-                int retNumSamplePerChannel = swr_convert(swrContext, buffers, outputSamplePerChanel, (const uint8_t **)frame->extended_data, frame->nb_samples);
-                assert(retNumSamplePerChannel > 0);
-                playHelper.putData(swrBuffer.data(), putSize);
+                    int putSize = frame->nb_samples * 2 * 16 / 8;
+                    swrBuffer.resize(putSize);
+                    uint8_t *buffers[] = { swrBuffer.data() };
+                    uint32_t outputSamplePerChanel = frame->nb_samples;
+                    int retNumSamplePerChannel = swr_convert(swrContext, buffers, outputSamplePerChanel, (const uint8_t **)frame->extended_data, frame->nb_samples);
+                    assert(retNumSamplePerChannel > 0);
+                    playHelper.putData(swrBuffer.data(), putSize);
 
-                av_frame_unref(frame);
-                av_frame_free(&frame);
+                    av_frame_unref(frame);
+                    av_frame_free(&frame);
+                }
+                if (-1 != pts){
+                    ms = ts2ms(aMediaInfo.stream->time_base, pts);
+                    ms -= (int64_t)playHelper.getQueuedAudioSize() * 1000 / bytePerSecond;
+                }
+                aMediaInfo.cv.notify_all();
             }
-            aMediaInfo.cv.notify_all();
+        }
+
+        {
+            std::lock_guard<std::mutex> lk(vMediaInfo.mtx);
+            if (vMediaInfo.streamIndex >= 0){
+                while(!vMediaInfo.frames.empty()){
+                    AVFrame *frame = vMediaInfo.frames.front();
+                    int64_t videoMs = ts2ms(vMediaInfo.stream->time_base, frame->pts);
+                    if (videoMs - ms > 21){
+                        break;
+                    }else if (videoMs < ms){
+                        vMediaInfo.frames.pop_front();
+                        av_frame_unref(frame);
+                        av_frame_free(&frame);
+                        continue;
+                    }else{
+                        vMediaInfo.frames.pop_front();
+                        videoPlayHelper.putData(frame->data, frame->linesize);
+                        av_frame_unref(frame);
+                        av_frame_free(&frame);
+                    }
+                }
+                vMediaInfo.cv.notify_all();
+            }
         }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
@@ -329,13 +466,14 @@ void readThread(PlayManagerData *mediaInfo) {
 				assert(false);
 				break;
 			}
-			mediaInfo->aMediaInfo.stream = stream;
+			mediaInfo->vMediaInfo.stream = stream;
 			auto &codecContext = mediaInfo->vMediaInfo.codecContext;
 			codecContext = avcodec_alloc_context3(vcodec);
 			if (nullptr == codecContext) {
 				assert(false);
 				break;
 			}
+			codecContext->thread_count = std::thread::hardware_concurrency();
 			if (0 != (err = avcodec_parameters_to_context(codecContext, codecParameters))) {
 				LogAvError(err);
 				assert(false);
@@ -346,7 +484,9 @@ void readThread(PlayManagerData *mediaInfo) {
 				assert(false);
 				break;
 			}
-			vThread = std::thread(&videoThread, mediaInfo);
+			mediaInfo->mVideoPlayHelper.setVideoInfo(convertPixelFormat(codecParameters->format), codecParameters->width, codecParameters->height);
+			mediaInfo->mVideoPlayHelper.open();
+			vThread = std::thread(&videoThread, &mediaInfo->vMediaInfo, notifyReadFrame);
 		}
 
 		if (audioIndex >= 0) {
@@ -360,6 +500,7 @@ void readThread(PlayManagerData *mediaInfo) {
 			mediaInfo->aMediaInfo.stream = stream;
 			auto &codecContext = mediaInfo->aMediaInfo.codecContext;
 			codecContext = avcodec_alloc_context3(acodec);
+			codecContext->thread_count = std::thread::hardware_concurrency();
 			if (0 != (err = avcodec_parameters_to_context(codecContext, codecParameters))) {
 				LogAvError(err);
 				assert(false);
@@ -371,11 +512,10 @@ void readThread(PlayManagerData *mediaInfo) {
 				break;
 			}
 
+            mediaInfo->mPlayHelper.setSampleInfo(2, 44100, EAudioFormatS16LE);
+            mediaInfo->mPlayHelper.open();
+            mediaInfo->mPlayHelper.setPlayState(EPlayStatePlaying);
 			aThread = std::thread(&audioThread, &mediaInfo->aMediaInfo, notifyReadFrame);
-
-			mediaInfo->mPlayHelper.setSampleInfo(2, 44100, EAudioFormatS16LE);
-			mediaInfo->mPlayHelper.open();
-			mediaInfo->mPlayHelper.setPlayState(EPlayStatePlaying);
 		}
 		
 		mediaInfo->clockTime.setTimeMs(0);
@@ -435,13 +575,9 @@ void readThread(PlayManagerData *mediaInfo) {
 			}
 
 			if (pkt->stream_index == mediaInfo->aMediaInfo.streamIndex) {
-				int64_t timeMs = mediaInfo->clockTime.getTimeMs();
-				int64_t ptsMs = ts2ms(mediaInfo->aMediaInfo.stream->time_base, pkt->pts - mediaInfo->aMediaInfo.stream->start_time);
 				mediaInfo->aMediaInfo.putPacket(pkt);
 			}
 			else if (pkt->stream_index == mediaInfo->vMediaInfo.streamIndex) {
-				int64_t timeMs = mediaInfo->clockTime.getTimeMs();
-				int64_t ptsMs = ts2ms(mediaInfo->vMediaInfo.stream->time_base, pkt->pts - mediaInfo->aMediaInfo.stream->start_time);
 				mediaInfo->vMediaInfo.putPacket(pkt);
 			}
 			else {
@@ -517,6 +653,11 @@ bool PlayManager::close()
 		mReadThread.join();
 	}
 	return false;
+}
+
+OpenGLPlay & PlayManager::getVideoPlay()
+{
+	return mData->mVideoPlayHelper;
 }
 
 bool PlayManager::seek(int64_t ms) {

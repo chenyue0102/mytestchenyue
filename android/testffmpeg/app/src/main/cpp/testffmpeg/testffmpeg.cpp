@@ -3,12 +3,17 @@
 
 #include "stdafx.h"
 #include <assert.h>
+#include <Windows.h>
+#include <GL/glew.h>
+#include "GL/glut.h"
+#include <GL/freeglut_ext.h>
 #include "PlayManager.h"
 #include "DirectSoundHelper.h"
 #include "EnumDefine.h"
 #include "RingQueue.h"
 #include "SDL.h"
 #include "SDLAudioHelper.h"
+#include "OpenGLPlay.h"
 
 #define BUFFER_UPDATE_SIZE (1024*4)
 struct wav_header_t
@@ -32,9 +37,37 @@ struct chunk_t
 	char ID[4]; //"data" = 0x61746164
 	unsigned long size;  //Chunk data bytes
 };
+PlayManager *g_playManager = 0;
 
-int main()
+void testdraw() {
+	g_playManager->getVideoPlay().draw();
+}
+
+void myIdle() {
+	testdraw();
+	std::this_thread::sleep_for(std::chrono::microseconds(1));
+}
+
+int main(int argc, char *argv[])
 {
+	glutInit(&argc, argv);
+	//glutInitDisplayMode(GLUT_RGB | GLUT_SINGLE);
+	glutInitDisplayMode(GLUT_RGBA);
+	glutInitWindowPosition(100, 100);
+	glutInitWindowSize(400, 400);
+	glutInitContextVersion(4, 3);
+	glutInitContextProfile(GLUT_CORE_PROFILE);
+	glutCreateWindow("OpenGL 程序");
+	auto v = glGetString(GL_VERSION);
+	GLint max;
+	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &max);
+	printf("OpenGL Version=%s texturemaxsize=%d\n", v, max);
+
+	//初始化 glew wglMakeCurrent
+	GLenum status = glewInit();
+	assert(GLEW_OK == status);
+
+
 	FILE *file = fopen("d:/test.wav", "rb");
 	wav_header_t wavHeader;
 	fread(&wavHeader, 1, sizeof(wavHeader), file);
@@ -84,7 +117,17 @@ int main()
 #endif
 
 	PlayManager playManager;
-	playManager.openFile("d:/test.mp3");
+	playManager.openFile("d:/v1080.mp4");
+
+	g_playManager = &playManager;
+	glutDisplayFunc(&testdraw);
+	glutIdleFunc(&myIdle);
+	//glutKeyboardFunc(&keyboard);
+	//glutSpecialFunc(&specialkey);
+	glutMainLoop();
+
+
+
 	int a = 0; 
 	do
 	{

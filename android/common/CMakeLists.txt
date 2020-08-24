@@ -6,7 +6,11 @@ SET(CMAKE_CXX_FLAGS "-lpthread")
 
 add_library(CommonLib
         STATIC
+        OpenGLHelper.cpp
+        RenderYUV420P.cpp
+        OpenGLPlay.cpp
         OpenSLPlay.cpp
+        ClockTime.cpp
         Log.cpp
         OpenSLESHelper.cpp
         RingQueue.cpp
@@ -16,4 +20,5 @@ add_library(CommonLib
 
 target_link_libraries(
         CommonLib
+        GLESv3
 )

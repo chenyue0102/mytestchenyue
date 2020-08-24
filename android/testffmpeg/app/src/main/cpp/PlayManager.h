@@ -14,17 +14,8 @@ extern "C"{
 #include "libswresample/swresample.h"
 }
 
-
-#ifdef _WIN32
-class DirectSoundHelper;
-class SDLAudioHelper;
-typedef SDLAudioHelper PlayHelper;
-#else
-class OpenSLPlay;
-typedef OpenSLPlay PlayHelper;
-#endif
-
 struct PlayManagerData;
+class OpenGLPlay;
 class PlayManager {
 public:
     PlayManager();
@@ -35,6 +26,7 @@ public:
 	bool setPlayState(uint32_t playState);
 	bool seek(int64_t ms);
 	bool close();
+	OpenGLPlay& getVideoPlay();
 
 private:
 	std::thread mReadThread;

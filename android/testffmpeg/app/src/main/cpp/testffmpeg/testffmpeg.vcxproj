@@ -91,14 +91,14 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;SDL_MAIN_HANDLED;_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../../../../../../../testffmpeg/include;../../../../../../include/SDL2;../../../../../../common;../;./;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>FREEGLUT_STATIC;WIN32;SDL_MAIN_HANDLED;_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>../../../../../../../testopengl/include;../../../../../../../testffmpeg/include;../../../../../../include/SDL2;../../../../../../common;../;./;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>../../../../../../../SDL/lib/x86;../../../../../../../testffmpeg/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>avformat.lib;avcodec.lib;avutil.lib;swresample.lib;swscale.lib;d3dx9.lib;dsound.lib;SDL2.lib;SDL2main.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>../../../../../../../SDL/lib/x86;../../../../../../../testopengl/lib;../../../../../../../testopengl/lib/Release/Win32;../../../../../../../testffmpeg/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glew32.lib;glew32s.lib;freeglut_staticd.lib;avformat.lib;avcodec.lib;avutil.lib;swresample.lib;swscale.lib;d3dx9.lib;dsound.lib;SDL2.lib;SDL2main.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -123,15 +123,15 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;SDL_MAIN_HANDLED;NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../../../../../../../testffmpeg/include;../../../../../../include/SDL2;../../../../../../common;../;./;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../../../../../../testopengl/include;../../../../../../../testffmpeg/include;../../../../../../include/SDL2;../../../../../../common;../;./;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>../../../../../../../SDL/lib/x86;../../../../../../../testffmpeg/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>avformat.lib;avcodec.lib;avutil.lib;swresample.lib;swscale.lib;d3dx9.lib;dsound.lib;SDL2.lib;SDL2main.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>../../../../../../../SDL/lib/x86;../../../../../../../testopengl/lib;../../../../../../../testopengl/lib/Release/Win32;../../../../../../../testffmpeg/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>avformat.lib;avcodec.lib;avutil.lib;swresample.lib;swscale.lib;d3dx9.lib;dsound.lib;SDL2.lib;SDL2main.lib;glew32.lib;freeglut_static.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -165,6 +165,9 @@
     <ClInclude Include="..\..\..\..\..\..\common\MacroDefine.h" />
     <ClInclude Include="..\..\..\..\..\..\common\MyLock.h" />
     <ClInclude Include="..\..\..\..\..\..\common\ObjectPool.h" />
+    <ClInclude Include="..\..\..\..\..\..\common\OpenGLHelper.h" />
+    <ClInclude Include="..\..\..\..\..\..\common\OpenGLPlay.h" />
+    <ClInclude Include="..\..\..\..\..\..\common\RenderYUV420P.h" />
     <ClInclude Include="..\..\..\..\..\..\common\RingQueue.h" />
     <ClInclude Include="..\..\..\..\..\..\common\SDLAudioHelper.h" />
     <ClInclude Include="..\..\..\..\..\..\common\Single.h" />
@@ -182,6 +185,9 @@
     <ClCompile Include="..\..\..\..\..\..\common\BaseTime.cpp" />
     <ClCompile Include="..\..\..\..\..\..\common\ClockTime.cpp" />
     <ClCompile Include="..\..\..\..\..\..\common\Log.cpp" />
+    <ClCompile Include="..\..\..\..\..\..\common\OpenGLHelper.cpp" />
+    <ClCompile Include="..\..\..\..\..\..\common\OpenGLPlay.cpp" />
+    <ClCompile Include="..\..\..\..\..\..\common\RenderYUV420P.cpp" />
     <ClCompile Include="..\..\..\..\..\..\common\RingQueue.cpp" />
     <ClCompile Include="..\..\..\..\..\..\common\SDLAudioHelper.cpp" />
     <ClCompile Include="..\..\..\..\..\..\common\TaskPool.cpp" />

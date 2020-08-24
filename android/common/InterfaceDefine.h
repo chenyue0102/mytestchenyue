@@ -25,4 +25,17 @@ struct IAudioPlay{
 	virtual bool close() = 0;
 };
 
+struct IVideoPlay{
+	virtual bool setVideoInfo(uint32_t format, uint32_t width, uint32_t height) = 0;
+	virtual bool open() = 0;
+	virtual bool putData(uint8_t *data[], int32_t linesize[]) = 0;
+	virtual void draw() = 0;
+	virtual bool close() = 0;
+};
+
+struct IVideoRender{
+	virtual ~IVideoRender(){}
+	virtual  void putData(uint8_t *data[], int32_t linesize[]) = 0;
+	virtual void draw() = 0;
+};
 #endif //TESTFFMPEG_INTERFACEDEFINE_H
