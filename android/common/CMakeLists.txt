@@ -5,12 +5,16 @@ set(CommonLib_VERSION_MINOR 0)
 SET(CMAKE_CXX_FLAGS "-lpthread")
 set(MYINCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
 
+#set(CMAKE_BUILD_TYPE Debug CACHE STRING "set build type to debug")
+
 include_directories(
         ${MYINCLUDE}
 )
 
 add_library(CommonLib
         STATIC
+        #SHARED
+
         OpenGLHelper.cpp
         RenderYUV420P.cpp
         OpenGLPlay.cpp

@@ -6,15 +6,17 @@
 cmake_minimum_required(VERSION 3.4.1)
 set(JNILIBS ${CMAKE_CURRENT_SOURCE_DIR}/../jniLibs/${ANDROID_ABI})
 set(COMMON ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../common)
+set(MYINCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../include)
 
 include_directories(
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/include/lame
         ${CMAKE_CURRENT_SOURCE_DIR}/include/fdk-aac
         ${COMMON}
+        ${MYINCLUDE}
 )
 
-add_subdirectory(${COMMON} common_binary_dir)
+#add_subdirectory(${COMMON} common_binary_dir)
 
 # Creates and names a library, sets it as either STATIC
 # or SHARED, and provides the relative paths to its source code.
@@ -32,7 +34,18 @@ add_library( # Sets the name of the library.
         PlayManager.cpp
         FrameReceive.cpp
         Demuxer.cpp
-             )
+
+        ${COMMON}/OpenGLHelper.cpp
+        ${COMMON}/RenderYUV420P.cpp
+        ${COMMON}/OpenGLPlay.cpp
+        ${COMMON}/OpenSLPlay.cpp
+        ${COMMON}/ClockTime.cpp
+        ${COMMON}/Log.cpp
+        ${COMMON}/OpenSLESHelper.cpp
+        ${COMMON}/RingQueue.cpp
+        ${COMMON}/BaseTime.cpp
+        ${COMMON}/TaskPool.cpp
+        )
 
 # Searches for a specified prebuilt library and stores the path as a
 # variable. Because CMake includes system libraries in the search path by
@@ -47,8 +60,7 @@ find_library( # Sets the name of the path variable.
               # you want CMake to locate.
               log )
 
-find_library(libz-lib
-        libz.so)
+find_library(libz-lib libz.so)
 
 add_library(libavcodec STATIC IMPORTED)
 set_target_properties(libavcodec PROPERTIES IMPORTED_LOCATION ${JNILIBS}/libavcodec.a)
@@ -95,9 +107,10 @@ target_link_libraries( # Specifies the target library.
         libx264
                        # Links the target library to the log library
                        # included in the NDK.
-        CommonLib
+        #CommonLib
 
         OpenSLES
+        GLESv3
         android
 
                        ${log-lib}

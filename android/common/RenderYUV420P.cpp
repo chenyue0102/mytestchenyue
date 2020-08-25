@@ -10,7 +10,7 @@
 #ifdef _WIN32
 #define GLSL_VERSION_TEXT "#version 430 core\n"
 #else
-#define GLSL_VERSION_TEXT "#version 300 es\n"
+#define GLSL_VERSION_TEXT "#version 310 es\n" "precision mediump float;\n"
 #endif
 static const char *g_VString = GLSL_VERSION_TEXT R"(
 layout(location=0) in vec2 vPosition;
@@ -28,15 +28,17 @@ layout(location=0) uniform sampler2D yTex;
 layout(location=1) uniform sampler2D uTex;
 layout(location=2) uniform sampler2D vTex;
 in vec2 texPosition;
+out vec4 fColor;
 void main(){
     vec3 yuv, rgb;
-    yuv.x = texture2D(yTex, texPosition).r;
-    yuv.y = texture2D(uTex, texPosition).r - 0.5;
-    yuv.z = texture2D(vTex, texPosition).r - 0.5;
+    yuv.x = texture(yTex, texPosition).r;
+    yuv.y = texture(uTex, texPosition).r - 0.5;
+    yuv.z = texture(vTex, texPosition).r - 0.5;
     rgb = mat3(1.0, 1.0, 1.0,
 					0.0, -0.39465, 2.03211,
 					1.13983, -0.58060, 0.0) * yuv;
-    gl_FragColor = vec4(rgb, 1.0);
+    //gl_FragColor = vec4(rgb, 1.0f);
+    fColor = vec4(rgb, 1.0f);
 }
 )";
 
@@ -106,7 +108,7 @@ void RenderYUV420P::draw() {
     }
 
 	vmath::mat4 matrix = vmath::rotate(mXRotate, mYRotate, mZRotate);
-	glProgramUniformMatrix4fv(mProgram, 3, 1, GL_FALSE, matrix);
+    glUniformMatrix4fv(3, 1, GL_FALSE, matrix);
 
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);CHECKERR();
     glFlush();CHECKERR();
@@ -116,9 +118,9 @@ void RenderYUV420P::init() {
     glGenTextures(3, mTextures);CHECKERR();
     GLenum err = OpenGLHelper::setTexture2D(mTextures[0], GL_RED, mWidth, mHeight, GL_RED, GL_UNSIGNED_BYTE, GL_LINEAR);
     assert(GL_NO_ERROR == err);
-    err = OpenGLHelper::setTexture2D(mTextures[1], GL_RGB, mWidth / 2, mHeight / 2, GL_RED, GL_UNSIGNED_BYTE, GL_LINEAR);
+    err = OpenGLHelper::setTexture2D(mTextures[1], GL_RED, mWidth / 2, mHeight / 2, GL_RED, GL_UNSIGNED_BYTE, GL_LINEAR);
     assert(GL_NO_ERROR == err);
-    err = OpenGLHelper::setTexture2D(mTextures[2], GL_RGB, mWidth / 2, mHeight / 2, GL_RED, GL_UNSIGNED_BYTE, GL_LINEAR);
+    err = OpenGLHelper::setTexture2D(mTextures[2], GL_RED, mWidth / 2, mHeight / 2, GL_RED, GL_UNSIGNED_BYTE, GL_LINEAR);
     assert(GL_NO_ERROR == err);
 
     mProgram = glCreateProgram();

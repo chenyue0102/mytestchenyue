@@ -1,6 +1,9 @@
 #include "OpenGLHelper.h"
 #include <assert.h>
 #include <stdio.h>
+#include "MacroDefine.h"
+#include "Log.h"
+#include "Single.h"
 
 
 namespace OpenGLHelper {
@@ -19,15 +22,15 @@ void outputCompileShader(GLuint shader)
 			GLchar szBuf[MAX_LOG_LENGTH] = { 0 };
 			int len = MAX_LOG_LENGTH;
 			glGetShaderInfoLog(shader, MAX_LOG_LENGTH, nullptr, szBuf);
-			printf("%s\n", szBuf);
+			SC(Log).e("%s", szBuf);
 		}
 		else
 		{
-			GLchar *buf = new GLchar[len + 1];
-			glGetShaderInfoLog(shader, len, nullptr, buf);
-			buf[len] = '\0';
-			printf("%s\n", buf);
-			delete[]buf;
+			GLchar *szBuf = new GLchar[len + 1];
+			glGetShaderInfoLog(shader, len, nullptr, szBuf);
+			szBuf[len] = '\0';
+			SC(Log).e("%s", szBuf);
+			delete[]szBuf;
 		}
 		assert(GL_FALSE != status);
 	}
@@ -46,15 +49,15 @@ void outputProgramLog(GLuint program)
 		{
 			GLchar szBuf[MAX_LOG_LENGTH] = { 0 };
 			glGetProgramInfoLog(program, MAX_LOG_LENGTH, nullptr, szBuf);
-			printf("%s\n", szBuf);
+			SC(Log).e("%s", szBuf);
 		}
 		else
 		{
-			GLchar *buf = new GLchar[len + 1];
-			glGetProgramInfoLog(program, len, nullptr, buf);
-			buf[len] = '\0';
-			printf("%s\n", buf);
-			delete[]buf;
+			GLchar *szBuf = new GLchar[len + 1];
+			glGetProgramInfoLog(program, len, nullptr, szBuf);
+			szBuf[len] = '\0';
+			SC(Log).e("%s", szBuf);
+			delete[]szBuf;
 		}
 		assert(false);
 	}
@@ -144,7 +147,7 @@ GLenum setTexture2D(GLuint tex, GLint internalformat, GLsizei width, GLsizei hei
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filterParam); CHECK_BREAK;
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filterParam); CHECK_BREAK;
 	}while (false);
-	glBindTexture(GL_TEXTURE_2D, 0);
+	glBindTexture(GL_TEXTURE_2D, 0);CHECKERR();
 	return ret;
 }
 

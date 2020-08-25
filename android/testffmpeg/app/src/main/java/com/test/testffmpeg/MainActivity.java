@@ -52,7 +52,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void onOpenFile(){
         String filePath = StorageHelper.getSDCardPath();
-        filePath += "/test.mp4";
+        filePath += "/v1080.mp4";
         openFile(filePath);
     }
 

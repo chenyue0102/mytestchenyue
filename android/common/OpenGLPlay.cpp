@@ -54,6 +54,7 @@ bool OpenGLPlay::open() {
 
 bool OpenGLPlay::putData(uint8_t * data[], int32_t linesize[]){
     std::lock_guard<std::mutex> lk(mMutex);
+
     if (nullptr != mVideoRender){
         mVideoRender->putData(data, linesize);
     }

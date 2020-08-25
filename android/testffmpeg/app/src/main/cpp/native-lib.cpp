@@ -5,6 +5,7 @@
 #include <condition_variable>
 #include <android/log.h>
 #include <EnumDefine.h>
+#include <GLES3/gl3.h>
 
 extern "C"{
 #include "libavformat/avformat.h"
@@ -18,6 +19,7 @@ extern "C"{
 #include "OpenSLESHelper.h"
 #include "ObjectPool.h"
 #include "PlayManager.h"
+#include "OpenGLPlay.h"
 
 JavaVM *g_JavaVM = 0;
 TaskPool g_TaskPool;
@@ -237,4 +239,18 @@ Java_com_test_testffmpeg_MainActivity_resumePlay(JNIEnv *env, jobject thiz) {
 JNIEXPORT void JNICALL
 Java_com_test_testffmpeg_MainActivity_seek(JNIEnv *env, jobject thiz) {
 
+}extern "C"
+JNIEXPORT void JNICALL
+Java_com_test_testffmpeg_MyRenderer_init(JNIEnv *env, jobject thiz) {
+    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+}extern "C"
+JNIEXPORT void JNICALL
+Java_com_test_testffmpeg_MyRenderer_surfaceChanged(JNIEnv *env, jobject thiz, jint width,
+                                                   jint height) {
+    glViewport(0, 0, width, height);
+}extern "C"
+JNIEXPORT void JNICALL
+Java_com_test_testffmpeg_MyRenderer_drawFrame(JNIEnv *env, jobject thiz) {
+    OpenGLPlay &play = g_PlayManager.getVideoPlay();
+    play.draw();
 }

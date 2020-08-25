@@ -461,7 +461,7 @@ void readThread(PlayManagerData *mediaInfo) {
 				assert(false);
 				break;
 			}
-			//codecContext->thread_count = std::thread::hardware_concurrency();
+			codecContext->thread_count = std::thread::hardware_concurrency();
 			if (0 != (err = avcodec_parameters_to_context(codecContext, codecParameters))) {
 				LogAvError(err);
 				assert(false);
@@ -496,7 +496,7 @@ void readThread(PlayManagerData *mediaInfo) {
 			mediaInfo->aMediaInfo.stream = stream;
 			auto &codecContext = mediaInfo->aMediaInfo.codecContext;
 			codecContext = avcodec_alloc_context3(acodec);
-			//codecContext->thread_count = std::thread::hardware_concurrency();
+			codecContext->thread_count = std::thread::hardware_concurrency();
 			if (0 != (err = avcodec_parameters_to_context(codecContext, codecParameters))) {
 				LogAvError(err);
 				assert(false);
@@ -607,6 +607,7 @@ void readThread(PlayManagerData *mediaInfo) {
 
 PlayManager::PlayManager()
 	: mData(new PlayManagerData())
+	, mReadThread()
 {
 	av_init_packet(&flush_pkt);
 	flush_pkt.data = (uint8_t*)&flush_pkt;

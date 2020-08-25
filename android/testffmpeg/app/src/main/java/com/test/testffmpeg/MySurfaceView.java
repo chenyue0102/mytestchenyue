@@ -19,6 +19,6 @@ public class MySurfaceView extends GLSurfaceView {
         setEGLContextClientVersion(3);
         MyRenderer myRenderer = new MyRenderer();
         setRenderer(myRenderer);
-        setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
+        setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
     }
 }
