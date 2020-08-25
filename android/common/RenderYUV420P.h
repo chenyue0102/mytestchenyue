@@ -23,10 +23,11 @@ extern "C"{
 
 class RenderYUV420P : public IVideoRender{
 public:
-    RenderYUV420P(int width, int height);
+    RenderYUV420P(uint32_t width, uint32_t height);
     ~RenderYUV420P();
 
 public:
+    virtual bool setRotate(float x, float y, float z);
     //
     virtual void putData(uint8_t *data[], int32_t linesize[]);
     //主线程调用
@@ -39,14 +40,16 @@ private:
     void updateTexture();
 private:
     bool mInit;
-    int mWidth;
-    int mHeight;
+    uint32_t mWidth;
+    uint32_t mHeight;
+    float mXRotate;
+    float mYRotate;
+    float mZRotate;
     GLuint mTextures[3];
     GLuint mProgram;
     GLuint mVertex;
     GLuint mBuffer;
 
-    std::mutex mMutex;
     std::vector<uint8_t> mDataBuffer[3];
     bool mBufferChanged;
     int32_t mLineSize[3];

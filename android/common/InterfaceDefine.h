@@ -27,6 +27,7 @@ struct IAudioPlay{
 
 struct IVideoPlay{
 	virtual bool setVideoInfo(uint32_t format, uint32_t width, uint32_t height) = 0;
+	virtual bool setRotate(float x, float y, float z) = 0;
 	virtual bool open() = 0;
 	virtual bool putData(uint8_t *data[], int32_t linesize[]) = 0;
 	virtual void draw() = 0;
@@ -35,6 +36,7 @@ struct IVideoPlay{
 
 struct IVideoRender{
 	virtual ~IVideoRender(){}
+    virtual bool setRotate(float x, float y, float z) = 0;
 	virtual  void putData(uint8_t *data[], int32_t linesize[]) = 0;
 	virtual void draw() = 0;
 };

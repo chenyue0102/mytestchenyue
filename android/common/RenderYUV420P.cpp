@@ -5,6 +5,7 @@
 #include "RenderYUV420P.h"
 #include <assert.h>
 #include "OpenGLHelper.h"
+#include "vmath.h"
 
 #ifdef _WIN32
 #define GLSL_VERSION_TEXT "#version 430 core\n"
@@ -14,9 +15,10 @@
 static const char *g_VString = GLSL_VERSION_TEXT R"(
 layout(location=0) in vec2 vPosition;
 layout(location=1) in vec2 tPosition;
+layout(location=3) uniform mat4 matrix;
 out vec2 texPosition;
 void main(){
-    gl_Position = vec4(vPosition, 1.0f, 1.0f);
+    gl_Position = matrix * vec4(vPosition, 0.0f, 1.0f);
     texPosition = tPosition;
 }
 )";
@@ -38,15 +40,17 @@ void main(){
 }
 )";
 
-RenderYUV420P::RenderYUV420P(int width, int height)
+RenderYUV420P::RenderYUV420P(uint32_t width, uint32_t height)
         : mInit(false)
         , mWidth(width)
         , mHeight(height)
+        , mXRotate()
+        , mYRotate()
+        , mZRotate()
         , mTextures()
         , mProgram()
         , mVertex()
         , mBuffer()
-        , mMutex()
         , mDataBuffer()
         , mBufferChanged(false)
         , mLineSize(){
@@ -60,11 +64,16 @@ RenderYUV420P::~RenderYUV420P() {
     glDeleteBuffers(1, &mBuffer);
 }
 
-void RenderYUV420P::putData(uint8_t *data[], int32_t linesize[]) {
-    std::lock_guard<std::mutex> lk(mMutex);
+bool RenderYUV420P::setRotate(float x, float y, float z) {
+    mXRotate = x;
+    mYRotate = y;
+    mZRotate = z;
+    return true;
+}
 
+void RenderYUV420P::putData(uint8_t *data[], int32_t linesize[]) {
     memcpy(mLineSize, linesize, sizeof(mLineSize));
-	int heights[] = { mHeight, mHeight / 2, mHeight / 2 };
+	uint32_t heights[] = { mHeight, mHeight / 2, mHeight / 2 };
     for (int i = 0; i < 3; i++){
         int32_t size = mLineSize[i] * heights[i];
         mDataBuffer[i].resize(size);
@@ -79,25 +88,26 @@ void RenderYUV420P::draw() {
         init();
     }
 
-    {
-        std::lock_guard<std::mutex> lk(mMutex);
-        if (mBufferChanged){
-			mBufferChanged = false;
-            updateTexture();
-        }
+    if (mBufferChanged){
+        mBufferChanged = false;
+        updateTexture();
     }
 
     glClear(GL_COLOR_BUFFER_BIT);
     glUseProgram(mProgram);CHECKERR();
 
-    int widths[] = {mWidth, mWidth / 2, mWidth / 2};
-    int heights[] = {mHeight, mHeight / 2, mHeight / 2};
+    uint32_t widths[] = {mWidth, mWidth / 2, mWidth / 2};
+    uint32_t heights[] = {mHeight, mHeight / 2, mHeight / 2};
     for (int i = 0; i < 3; i++){
         glActiveTexture(GL_TEXTURE0 + i);CHECKERR();
         glBindTexture(GL_TEXTURE_2D, mTextures[i]);CHECKERR();
         GLint location = i;
         glUniform1i(location, i);CHECKERR();
     }
+
+	vmath::mat4 matrix = vmath::rotate(mXRotate, mYRotate, mZRotate);
+	glProgramUniformMatrix4fv(mProgram, 3, 1, GL_FALSE, matrix);
+
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);CHECKERR();
     glFlush();CHECKERR();
 }

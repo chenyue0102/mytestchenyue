@@ -3,6 +3,11 @@ project(CommonLib)
 set(CommonLib_VERSION_MAJOR 1)
 set(CommonLib_VERSION_MINOR 0)
 SET(CMAKE_CXX_FLAGS "-lpthread")
+set(MYINCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
+
+include_directories(
+        ${MYINCLUDE}
+)
 
 add_library(CommonLib
         STATIC

@@ -341,7 +341,7 @@ static void loopThread(PlayManagerData *mediaInfo){
     std::vector<uint8_t> swrBuffer;
     auto &vMediaInfo = mediaInfo->vMediaInfo;
     auto &videoPlayHelper = mediaInfo->mVideoPlayHelper;
-    int64_t ms = 0;
+    int64_t lastPts = -1;
 
     for (;;) {
 		{
@@ -350,16 +350,15 @@ static void loopThread(PlayManagerData *mediaInfo){
 				break;
 			}
 		}
-        ms = -1;
+		int64_t ms = -1;
         {
             std::lock_guard<std::mutex> lk(aMediaInfo.mtx);
             if (aMediaInfo.streamIndex >= 0){
-                int64_t pts = -1;
                 while (playHelper.getQueuedAudioSize() < AUDIO_BUFFER_SIZE && !aMediaInfo.frames.empty()) {
                     AVFrame *frame = aMediaInfo.frames.front();
                     aMediaInfo.frames.pop_front();
 
-                    pts = frame->pts;
+					lastPts = frame->pts;
                     if (nullptr == swrContext || sample_rate != frame->sample_rate){
                         if (nullptr != swrContext){
                             swr_close(swrContext);
@@ -379,8 +378,8 @@ static void loopThread(PlayManagerData *mediaInfo){
                     av_frame_unref(frame);
                     av_frame_free(&frame);
                 }
-                if (-1 != pts){
-                    ms = ts2ms(aMediaInfo.stream->time_base, pts);
+                if (-1 != lastPts){
+                    ms = ts2ms(aMediaInfo.stream->time_base, lastPts);
                     ms -= (int64_t)playHelper.getQueuedAudioSize() * 1000 / bytePerSecond;
                 }
                 aMediaInfo.cv.notify_all();
@@ -389,7 +388,7 @@ static void loopThread(PlayManagerData *mediaInfo){
 
         {
             std::lock_guard<std::mutex> lk(vMediaInfo.mtx);
-            if (vMediaInfo.streamIndex >= 0){
+            if (vMediaInfo.streamIndex >= 0 && ms >= 0){
                 while(!vMediaInfo.frames.empty()){
                     AVFrame *frame = vMediaInfo.frames.front();
                     int64_t videoMs = ts2ms(vMediaInfo.stream->time_base, frame->pts);
@@ -473,12 +472,14 @@ void readThread(PlayManagerData *mediaInfo) {
 				assert(false);
 				break;
 			}
+			float xRotate = 180.f, yRotate = 0.f, zRotate = 0.f;
 			if (nullptr != stream->metadata) {
 				AVDictionaryEntry *entry = av_dict_get(stream->metadata, "rotate", nullptr, AV_DICT_IGNORE_SUFFIX);
 				if (nullptr != entry) {
-					int rotate = atoi(entry->value);
+					zRotate = (float)atof(entry->value);
 				}
 			}
+			mediaInfo->mVideoPlayHelper.setRotate(xRotate, yRotate, zRotate);
 			mediaInfo->mVideoPlayHelper.setVideoInfo(convertPixelFormat(codecParameters->format), codecParameters->width, codecParameters->height);
 			mediaInfo->mVideoPlayHelper.open();
 			vThread = std::thread(&videoThread, &mediaInfo->vMediaInfo, notifyReadFrame);

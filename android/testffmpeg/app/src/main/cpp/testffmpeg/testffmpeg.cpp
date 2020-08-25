@@ -117,7 +117,7 @@ int main(int argc, char *argv[])
 #endif
 	av_log_set_level(AV_LOG_DEBUG);
 	PlayManager playManager;
-	playManager.openFile("d:/test.mp4");
+	playManager.openFile("d:/v1080.mp4");
 
 	g_playManager = &playManager;
 	glutDisplayFunc(&testdraw);
