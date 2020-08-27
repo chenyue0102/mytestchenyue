@@ -99,6 +99,12 @@
     <ClInclude Include="..\..\..\..\..\..\common\RenderYUV420P.h">
       <Filter>common</Filter>
     </ClInclude>
+    <ClInclude Include="..\FFMPEGTest.h">
+      <Filter>player</Filter>
+    </ClInclude>
+    <ClInclude Include="..\EncodeHelper.h">
+      <Filter>player</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -145,6 +151,12 @@
     </ClCompile>
     <ClCompile Include="..\..\..\..\..\..\common\RenderYUV420P.cpp">
       <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\FFMPEGTest.cpp">
+      <Filter>player</Filter>
+    </ClCompile>
+    <ClCompile Include="..\EncodeHelper.cpp">
+      <Filter>player</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

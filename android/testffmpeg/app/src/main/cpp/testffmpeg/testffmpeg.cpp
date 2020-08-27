@@ -14,6 +14,7 @@
 #include "SDL.h"
 #include "SDLAudioHelper.h"
 #include "OpenGLPlay.h"
+#include "FFMPEGTest.h"
 
 #define BUFFER_UPDATE_SIZE (1024*4)
 struct wav_header_t
@@ -67,7 +68,7 @@ int main(int argc, char *argv[])
 	GLenum status = glewInit();
 	assert(GLEW_OK == status);
 
-
+#if 0
 	FILE *file = fopen("d:/test.wav", "rb");
 	wav_header_t wavHeader;
 	fread(&wavHeader, 1, sizeof(wavHeader), file);
@@ -81,10 +82,14 @@ int main(int argc, char *argv[])
 			fseek(file, chunk.size, SEEK_CUR);
 		}
 	} while (0 != strncmp(chunk.ID, "data", 4));
+#endif
 
 	SDL_Init(SDL_INIT_AUDIO);
 	avcodec_register_all();
 	avformat_network_init();
+	//av_log_set_level(AV_LOG_DEBUG);
+
+	FFMPEGTest::test_decode_encode("d:/v1080.mp4", "d:/mux.mp4");
 #if 0
 	SDLAudioHelper sdlAudioHelper;
 	DirectSoundHelper directSoundHelper;
@@ -115,9 +120,9 @@ int main(int argc, char *argv[])
 
 	t.join();
 #endif
-	av_log_set_level(AV_LOG_DEBUG);
 	PlayManager playManager;
-	playManager.openFile("d:/v1080.mp4");
+	//playManager.openFile("d:/v1080.mp4");
+	playManager.openFile("rtmp://58.200.131.2:1935/livetv/hunantv");
 
 	g_playManager = &playManager;
 	glutDisplayFunc(&testdraw);

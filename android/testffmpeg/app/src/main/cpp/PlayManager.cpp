@@ -51,7 +51,6 @@ void LogAvError(int err) {
 		av_make_error_string(szBuf, BUF_SIZE, err);
 		szBuf[BUF_SIZE - 1] = '\0';
 		SC(Log).e("%s", szBuf);
-		assert(false);
 	}
 }
 //second = ts * num / den
@@ -603,6 +602,7 @@ void readThread(PlayManagerData *mediaInfo) {
 		lThread.join();
 	}
 	mediaInfo->mPlayHelper.close();
+	avformat_close_input(&formatContext);
 }
 
 PlayManager::PlayManager()
