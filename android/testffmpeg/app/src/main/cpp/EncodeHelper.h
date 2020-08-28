@@ -17,9 +17,11 @@ extern "C"{
 class EncodeHelper {
 public:
     struct StreamInfo{
+		AVStream *stream = nullptr;
         AVCodecParameters *codecParameters = nullptr;
-        AVCodecContext *codecContext = nullptr;
-        AVRational time_base;
+        //AVCodecContext *codecContext = nullptr;
+		AVRational streamTimeBase;
+		AVRational encoderTimeBase;
         std::list<AVFrame*> frames;
         int32_t sendFrameCount = 0;
         bool receivePacketEnd = false;
@@ -40,7 +42,7 @@ public:
 
 public:
     //按照stream index顺序依次填入AVCodecParameters
-    bool addStreamInfo(AVCodecParameters *codecParameters, AVRational time_base);
+    bool addStreamInfo(AVCodecParameters *codecParameters, AVRational encoderTimeBase, AVRational streamTimeBase);
     bool open(const char *outputFile);
     //frame为null表示最后一个包
     bool addFrame(uint32_t streamIndex, AVFrame *frame);

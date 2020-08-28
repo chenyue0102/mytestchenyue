@@ -533,7 +533,7 @@ void parsemp4()
     g_parseFun.insert(std::make_pair(std::string("stbl"), &parsestbl));
     g_parseFun.insert(std::make_pair(std::string("edts"), &parseedts));
 
-    const char* fileName = "E:\\video.mp4";
+    const char* fileName = "d:/test.mp4";
     FILE* f = fopen(fileName, "rb");
     fseek(f, 0, SEEK_END);
     long size = ftell(f);
@@ -937,7 +937,7 @@ void parseflv()
 
 int main()
 {
-    //parsemp4();
+    parsemp4();
     parseflv();
     std::cout << "Hello World!\n";
 }

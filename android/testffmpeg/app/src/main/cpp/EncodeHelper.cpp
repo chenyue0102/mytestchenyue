@@ -22,7 +22,7 @@ static const int64_t MIN_MS = std::numeric_limits<int64_t>::min();
 
 struct PacketInfo{
     std::list<AVPacket*> packets;
-	AVRational time_base;
+	AVRational streamTimeBase;
     bool receivePacketEnd = false;
     int64_t lastWriteMS = MIN_MS;
 };
@@ -48,7 +48,7 @@ int64_t getMaxWriteMS(const std::vector<PacketInfo> &packetInfo){
         if (info.packets.empty()){
 			ms = (std::min)(ms, info.lastWriteMS);
         }else{
-			ms = (std::min)(ms, ts2ms(info.time_base, info.packets.back()->pts));
+			ms = (std::min)(ms, ts2ms(info.streamTimeBase, info.packets.back()->pts));
         }
     }
     return ms;
@@ -86,7 +86,7 @@ void writeThread(WriteThreadInfo *pInfo){
             auto iter = info.packets.begin();
             while ( iter != info.packets.end()){
                 AVPacket *pkt = (*iter);
-                int64_t curMS = ts2ms(info.time_base, pkt->pts);
+                int64_t curMS = ts2ms(info.streamTimeBase, pkt->pts);
                 if (curMS <= maxMS){
                     writePacket.insert(std::make_pair(pkt->dts, pkt));
                     info.lastWriteMS = curMS;
@@ -130,7 +130,7 @@ void encodeThread(EncodeHelper::EncodeThreadInfo *pInfo) {
         std::lock_guard<std::mutex> lk(pInfo->mtx);
         writeInfo.packetInfo.resize(pInfo->streamInfo.size());
 		for (size_t i = 0; i < pInfo->streamInfo.size(); i++) {
-			writeInfo.packetInfo[i].time_base = pInfo->streamInfo[i].time_base;
+			writeInfo.packetInfo[i].streamTimeBase = pInfo->streamInfo[i].streamTimeBase;
 		}
         writeInfo.formatContext = pInfo->formatContext;
     }
@@ -167,7 +167,7 @@ void encodeThread(EncodeHelper::EncodeThreadInfo *pInfo) {
             }*/
             AVFrame *frame = streamInfo.frames.front();
             streamInfo.frames.pop_front();
-            if ((err = avcodec_send_frame(streamInfo.codecContext, frame)) == 0){
+            if ((err = avcodec_send_frame(streamInfo.stream->codec, frame)) == 0){
                 streamInfo.sendFrameCount++;
                 if (nullptr != frame){
                     av_frame_unref(frame);
@@ -182,7 +182,7 @@ void encodeThread(EncodeHelper::EncodeThreadInfo *pInfo) {
 
         for (auto &streamInfo : pInfo->streamInfo){
             while (!streamInfo.receivePacketEnd){
-                if ((err = avcodec_receive_packet(streamInfo.codecContext, pkt)) == 0){
+                if ((err = avcodec_receive_packet(streamInfo.stream->codec, pkt)) == 0){
                     AVPacket *tmpPacket = av_packet_alloc();
                     av_packet_move_ref(tmpPacket, pkt);
 					tmpPacket->stream_index = streamInfo.streamIndex;
@@ -263,16 +263,16 @@ EncodeHelper::~EncodeHelper() {
 
 }
 
-bool EncodeHelper::addStreamInfo(AVCodecParameters *parameters, AVRational time_base) {
+bool EncodeHelper::addStreamInfo(AVCodecParameters *parameters, AVRational encoderTimeBase, AVRational streamTimeBase) {
     std::lock_guard<std::mutex> lk(mEncodeThreadInfo.mtx);
 
     int err = 0;
     StreamInfo streamInfo;
-    AVCodecContext *codecContext = nullptr;
+    //AVCodecContext *codecContext = nullptr;
     AVCodecParameters *codecParameters = avcodec_parameters_alloc();
-    AVCodec *codec = avcodec_find_encoder(parameters->codec_id);
+    //AVCodec *codec = avcodec_find_encoder(parameters->codec_id);
 
-    if (nullptr == codec || nullptr == codecParameters){
+    if (/*nullptr == codec || */nullptr == codecParameters){
         assert(false);
         goto ERROR;
     }
@@ -281,32 +281,33 @@ bool EncodeHelper::addStreamInfo(AVCodecParameters *parameters, AVRational time_
         assert(false);
         goto ERROR;
     }
-    if (nullptr == (codecContext = avcodec_alloc_context3(codec))){
+    /*if (nullptr == (codecContext = avcodec_alloc_context3(codec))){
         assert(false);
         goto ERROR;
-    }
-    if ((err = avcodec_parameters_to_context(codecContext, codecParameters)) < 0){
+    }*/
+   /* if ((err = avcodec_parameters_to_context(codecContext, codecParameters)) < 0){
         LOGAVERROR(err);
         assert(false);
         goto ERROR;
     }
     codecContext->thread_count = std::thread::hardware_concurrency();
-    codecContext->time_base = time_base;
+    codecContext->time_base = encoderTimeBase;
     if ((err = avcodec_open2(codecContext, codec, nullptr)) < 0){
         LOGAVERROR(err);
         assert(false);
         goto ERROR;
-    }
+    }*/
     streamInfo.codecParameters = codecParameters;
-    streamInfo.codecContext = codecContext;
-    streamInfo.time_base = time_base;
+    //streamInfo.codecContext = codecContext;
+    streamInfo.streamTimeBase = streamTimeBase;
+	streamInfo.encoderTimeBase = encoderTimeBase;
     streamInfo.streamIndex = mEncodeThreadInfo.streamInfo.size();
     mEncodeThreadInfo.streamInfo.push_back(streamInfo);
     return true;
 
 ERROR:
     avcodec_parameters_free(&codecParameters);
-    avcodec_free_context(&codecContext);
+    //avcodec_free_context(&codecContext);
     return false;
 }
 
@@ -321,29 +322,53 @@ bool EncodeHelper::open(const char *outputFile) {
         assert(false);
         goto ERROR;
     }
-    for (StreamInfo &streamInfo: mEncodeThreadInfo.streamInfo){
-        AVStream *stream = avformat_new_stream(formatContext, streamInfo.codecContext->codec);
+	for (size_t i = 0; i < mEncodeThreadInfo.streamInfo.size(); i++) {
+		StreamInfo &streamInfo = mEncodeThreadInfo.streamInfo[i];
+        AVStream *stream = avformat_new_stream(formatContext, nullptr);
         AVCodecParameters *codecParameters = stream->codecpar;
         if ((err = avcodec_parameters_copy(codecParameters, streamInfo.codecParameters)) < 0){
             LOGAVERROR(err);
             assert(false);
             goto ERROR;
         }
-        stream->time_base = streamInfo.time_base;
-		//stream->codec->codec_tag = 0;
-		avcodec_copy_context(stream->codec, streamInfo.codecContext);
-		if (formatContext->oformat->flags & AVFMT_GLOBALHEADER) {
-			stream->codec->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
-		}
-		if (codecParameters->codec_type == AVMEDIA_TYPE_VIDEO) {
-			streamInfo.codecContext->gop_size = 50;
-		}
-
-		/*if ((err = avcodec_open2(stream->codec, avcodec_find_encoder(codecParameters->codec_id), nullptr)) < 0) {
+        stream->time_base = streamInfo.streamTimeBase;
+		streamInfo.stream = stream;
+		if ((err = avcodec_parameters_to_context(stream->codec, codecParameters)) < 0) {
 			LOGAVERROR(err);
 			assert(false);
 			goto ERROR;
-		}*/
+		}
+		stream->codec->time_base = streamInfo.encoderTimeBase;
+		stream->codec->thread_count = std::thread::hardware_concurrency();
+		stream->codec->qcompress = 0.9f;
+		stream->codec->qmin = 30;
+		stream->codec->qmax = 50;
+		stream->codec->me_range = 16;
+		stream->codec->max_qdiff = 4*20;
+		if (codecParameters->codec_type == AVMEDIA_TYPE_VIDEO) {
+			stream->codec->max_qdiff = 3 * 100;//视频中所有桢（包括i/b/P）的最大Q值差距
+			stream->codec->gop_size = 300;
+			stream->codec->refs = 200;
+			stream->codec->max_b_frames = 200;
+			stream->codec->bit_rate = 1024 * 10;//目标码率，采样码率越大，目标文件越大
+			stream->codec->bit_rate_tolerance = 8000 * 1024;// 码率误差，允许的误差越大，视频越小
+			stream->codec->i_quant_factor = 0.1 / 1000;//i 帧相对p帧的量化系数比，值越小，说明p帧的量化系数越大，视频越小
+			stream->codec->b_quant_factor = 4.9 * 1000;//b 帧相对p帧的量化系数比，值越大，b帧的量化系数越大，视频越小
+			stream->codec->me_pre_cmp = 2 * 10;//运动场景预判功能的力度。数值越大编码时间越长。
+			//B帧量化系数=b_quant_factor* p帧量化系数+b_quant_offset
+		}
+		stream->codec->codec_tag = 0;
+		AVCodec *codec = avcodec_find_encoder(streamInfo.codecParameters->codec_id);
+		if ((err = avcodec_open2(stream->codec, codec, nullptr)) < 0) {
+			LOGAVERROR(err);
+			assert(false);
+			goto ERROR;
+		}
+		
+		if (formatContext->oformat->flags & AVFMT_GLOBALHEADER) {
+			stream->codec->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+		}
+		SC(Log).d("stream");
     }
     if ((err = avio_open(&formatContext->pb, outputFile, AVIO_FLAG_WRITE)) < 0){
         LOGAVERROR(err);
@@ -385,4 +410,5 @@ bool EncodeHelper::addFrame(uint32_t streamIndex, AVFrame *frame) {
         return true;
     }
 }
+
 

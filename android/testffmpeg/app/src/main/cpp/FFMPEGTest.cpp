@@ -156,19 +156,44 @@ namespace FFMPEGTest{
                 assert(false);
                 goto ERROR;
             }
+			AVRational encodeRate = stream->codec->time_base;
             if (codecpar->codec_type == AVMEDIA_TYPE_VIDEO || codecpar->codec_type == AVMEDIA_TYPE_AUDIO){
                 codecParameters->codec_type = codecpar->codec_type;
                 codecParameters->codec_id = codecpar->codec_id;
+				codecParameters->format = codecpar->format;
                 codecParameters->bit_rate = codecpar->bit_rate;
-                codecParameters->format = codecpar->format;
                 if (codecpar->codec_type == AVMEDIA_TYPE_VIDEO){
+					codecParameters->width = codecpar->width;
                     codecParameters->height = codecpar->height;
-                    codecParameters->width = codecpar->width;
                     codecParameters->sample_aspect_ratio = codecpar->sample_aspect_ratio;
+					codecParameters->bit_rate = 1024 * 500;
+					//codecParameters->field_order = codecpar->field_order;
+#if 0
+					encodeRate.num = 1;
+					encodeRate.den = 25;
+					codecParameters->extradata = (uint8_t*)av_mallocz(codecpar->extradata_size);
+					memcpy(codecParameters->extradata, codecpar->extradata, codecpar->extradata_size);
+					codecParameters->extradata_size = codecpar->extradata_size;
+#endif
+#if 0
+					codecParameters->bits_per_coded_sample = 24;
+					codecParameters->bits_per_raw_sample = 8;
+					codecParameters->field_order = codecpar->field_order;
+					codecParameters->color_primaries = codecpar->color_primaries;
+					codecParameters->color_trc = codecpar->color_trc;
+					codecParameters->color_space = codecpar->color_space;
+					codecParameters->chroma_location = codecpar->chroma_location;
+#endif
                 }else{
                     codecParameters->sample_rate = codecpar->sample_rate;
                     codecParameters->channel_layout = codecpar->channel_layout;
                     codecParameters->channels = codecpar->channels;
+					codecParameters->frame_size = codecpar->frame_size;
+#if 0
+					codecParameters->extradata = (uint8_t*)av_mallocz(codecpar->extradata_size);
+					memcpy(codecParameters->extradata, codecpar->extradata, codecpar->extradata_size);
+					codecParameters->extradata_size = codecpar->extradata_size;
+#endif
                 }
             }else{
                 if ((err = avcodec_parameters_copy(codecParameters, codecpar)) < 0){
@@ -177,7 +202,7 @@ namespace FFMPEGTest{
                     goto ERROR;
                 }
             }
-            if (!encodeHelper.addStreamInfo(codecParameters, stream->time_base)){
+            if (!encodeHelper.addStreamInfo(codecParameters, encodeRate, stream->time_base)){
                 assert(false);
                 goto ERROR;
             }
@@ -269,5 +294,72 @@ namespace FFMPEGTest{
         avformat_close_input(&formatContext);
 
 		getchar();
+    }
+
+    struct AVCDecoderConfigurationRecord{
+        uint8_t configurationVersion;           //0x01
+        uint8_t AVCProfileIndication;
+        uint8_t profile_compatibility;
+        uint8_t AVCLevelIndication;
+        uint8_t lengthSizeMinusOne;//0b111111aa
+        //uint8_t numOfSequenceParameterSets;//0b111aaaaa
+        //uint16_t sequenceParameterSetLength
+        //sequenceParameterSetNALUnit
+        //uint8_t numOfPictureParameterSets;
+        //uint16_t pictureParameterSetLength
+        //pictureParameterSetNALUnit
+    };
+
+    enum {
+        HighProfile = 0x64,
+    };
+    enum{
+        Version1 = 0x01,
+    };
+
+    enum{
+        Level40 = 40,
+    };
+    enum NALType{
+        NALTypeSPS = 0b00111,//序列参数集SPS
+        NALTypePPS = 0b01000,//图像参数集PPS
+        NALTypeIDR = 0b00101,//IDR图像中的片(I帧)
+    };
+    struct SequenceParameterSet{
+        uint8_t type;//0b0aabbbbb  aa为参考级别 bbbbb为nal单元类型
+        uint8_t profile_idc;
+        uint8_t constraint_set_flag; //0babcd0000 0 mean We’re not going to honor constraints.
+        uint8_t level_idc;
+    };
+    /*
+    01 64 00 28
+    ff
+    e1
+    00 1b
+    67 64 00 28    ac d9 40 78    02 27 e5 c0    44 00 00 03    00 04 00 00   03 00 c8 3c   60 c6 58
+    01
+    00 06
+    68 eb e3 cb 22 c0
+     */
+
+    void setExtraData(AVCodecParameters *codecParameters){
+        if (codecParameters->codec_type == AVMEDIA_TYPE_VIDEO){
+            if (codecParameters->codec_id == AV_CODEC_ID_H264){
+                uint16_t sequenceParameterSetLength = 0;
+                uint16_t pictureParameterSetLength = 0;
+                size_t extraSize = sizeof(AVCDecoderConfigurationRecord) + sizeof(uint8_t) + sizeof(uint16_t) + sequenceParameterSetLength + sizeof(uint8_t) + sizeof(uint16_t) + pictureParameterSetLength;
+                codecParameters->extradata = (uint8_t*)av_mallocz(extraSize);
+                AVCDecoderConfigurationRecord record;
+                record.configurationVersion = Version1;
+                record.AVCProfileIndication = HighProfile;
+                record.profile_compatibility = 0x00;
+                record.AVCLevelIndication = Level40;
+                record.lengthSizeMinusOne = 0xff;
+                memcpy(codecParameters->extradata, &record, sizeof(record));
+                int offset = sizeof(record);
+                codecParameters->extradata[offset] =
+                codecParameters->extradata_size = extraSize;
+            }
+        }
     }
 }
