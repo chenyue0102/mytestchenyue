@@ -25,7 +25,10 @@ public:
         std::list<AVFrame*> frames;
         int32_t sendFrameCount = 0;
         bool receivePacketEnd = false;
+        bool bsfPacketEnd = false;
         uint32_t streamIndex = 0;
+        const AVBitStreamFilter *bsf = nullptr;
+        AVBSFContext *bsfContext = nullptr;
     };
 
     struct EncodeThreadInfo{

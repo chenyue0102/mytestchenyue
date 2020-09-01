@@ -10,6 +10,8 @@
 #include <vector>
 extern "C" {
 #include "libavformat/avformat.h"
+#include "bytestream.h"
+#include "put_bits.h"
 }
 
 #include "EncodeHelper.h"
@@ -124,6 +126,8 @@ namespace FFMPEGTest{
         EncodeHelper encodeHelper;
         std::vector<DecodeInfo>  decodeInfo;
         AVCodecParameters *codecParameters = avcodec_parameters_alloc();
+        const AVBitStreamFilter *bsf = nullptr;
+        AVBSFContext *bsfContext = nullptr;
 
         if ((err = avformat_open_input(&formatContext, inputfile, nullptr, nullptr)) < 0) {
             LogAvError(err);
@@ -157,16 +161,41 @@ namespace FFMPEGTest{
                 goto ERROR;
             }
 			AVRational encodeRate = stream->codec->time_base;
+            AVRational streamRate;
             if (codecpar->codec_type == AVMEDIA_TYPE_VIDEO || codecpar->codec_type == AVMEDIA_TYPE_AUDIO){
                 codecParameters->codec_type = codecpar->codec_type;
                 codecParameters->codec_id = codecpar->codec_id;
 				codecParameters->format = codecpar->format;
                 codecParameters->bit_rate = codecpar->bit_rate;
+                streamRate = stream->time_base;
                 if (codecpar->codec_type == AVMEDIA_TYPE_VIDEO){
 					codecParameters->width = codecpar->width;
                     codecParameters->height = codecpar->height;
                     codecParameters->sample_aspect_ratio = codecpar->sample_aspect_ratio;
 					codecParameters->bit_rate = 1024 * 500;
+                    //bsf = av_bsf_get_by_name("h264_mp4toannexb");
+                    //if ((err = av_bsf_alloc(bsf, &bsfContext)) < 0){
+                    //    LogAvError(err);
+                    //    assert(false);
+                    //    goto ERROR;
+                    //}
+                    //if ((err = avcodec_parameters_copy(bsfContext->par_in, codecParameters)) < 0) {
+                    //    LogAvError(err);
+                    //    assert(false);
+                    //    goto ERROR;
+                    //}
+                    //bsfContext->time_base_in = stream->time_base;//pkt 的timebase， 是stream的timebase
+                    //if ((err = av_bsf_init(bsfContext)) < 0){
+                    //    LogAvError(err);
+                    //    assert(false);
+                    //    goto ERROR;
+                    //}
+                    //if ((err = avcodec_parameters_copy(codecParameters, bsfContext->par_out)) < 0) {
+                    //    LogAvError(err);
+                    //    assert(false);
+                    //    goto ERROR;
+                    //}
+                    //streamRate = bsfContext->time_base_out;
 					//codecParameters->field_order = codecpar->field_order;
 #if 0
 					encodeRate.num = 1;
@@ -195,6 +224,8 @@ namespace FFMPEGTest{
 					codecParameters->extradata_size = codecpar->extradata_size;
 #endif
                 }
+                extern void setExtraData(AVCodecParameters * codecParameters/*, AVRational timeBase*/);
+                setExtraData(codecParameters);
             }else{
                 if ((err = avcodec_parameters_copy(codecParameters, codecpar)) < 0){
                     LogAvError(err);
@@ -202,7 +233,7 @@ namespace FFMPEGTest{
                     goto ERROR;
                 }
             }
-            if (!encodeHelper.addStreamInfo(codecParameters, encodeRate, stream->time_base)){
+            if (!encodeHelper.addStreamInfo(codecParameters, encodeRate, streamRate)){
                 assert(false);
                 goto ERROR;
             }
@@ -331,6 +362,36 @@ namespace FFMPEGTest{
         uint8_t constraint_set_flag; //0babcd0000 0 mean We’re not going to honor constraints.
         uint8_t level_idc;
     };
+
+    const uint8_t ff_ue_golomb_len[256] = {
+ 1, 3, 3, 5, 5, 5, 5, 7, 7, 7, 7, 7, 7, 7, 7, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9,11,
+11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,13,
+13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,
+13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,15,
+15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,
+15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,
+15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,
+15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,17,
+    };
+    static inline void set_ue_golomb(PutBitContext* pb, int i)
+    {
+        av_assert2(i >= 0);
+        av_assert2(i <= 0xFFFE);
+
+        if (i < 256)
+            put_bits(pb, ff_ue_golomb_len[i], i + 1);
+        else {
+            int e = av_log2(i + 1);
+            put_bits(pb, 2 * e + 1, i + 1);
+        }
+    }
+    static inline void set_se_golomb(PutBitContext* pb, int i)
+    {
+        i = 2 * i - 1;
+        if (i < 0)
+            i ^= -1;    //FIXME check if gcc does the right thing
+        set_ue_golomb(pb, i);
+    }
     /*
     01 64 00 28
     ff
@@ -342,23 +403,101 @@ namespace FFMPEGTest{
     68 eb e3 cb 22 c0
      */
 
-    void setExtraData(AVCodecParameters *codecParameters){
+    void setExtraData(AVCodecParameters *codecParameters/*, AVRational timeBase*/){
         if (codecParameters->codec_type == AVMEDIA_TYPE_VIDEO){
             if (codecParameters->codec_id == AV_CODEC_ID_H264){
-                uint16_t sequenceParameterSetLength = 0;
-                uint16_t pictureParameterSetLength = 0;
-                size_t extraSize = sizeof(AVCDecoderConfigurationRecord) + sizeof(uint8_t) + sizeof(uint16_t) + sequenceParameterSetLength + sizeof(uint8_t) + sizeof(uint16_t) + pictureParameterSetLength;
-                codecParameters->extradata = (uint8_t*)av_mallocz(extraSize);
-                AVCDecoderConfigurationRecord record;
-                record.configurationVersion = Version1;
-                record.AVCProfileIndication = HighProfile;
-                record.profile_compatibility = 0x00;
-                record.AVCLevelIndication = Level40;
-                record.lengthSizeMinusOne = 0xff;
-                memcpy(codecParameters->extradata, &record, sizeof(record));
-                int offset = sizeof(record);
-                codecParameters->extradata[offset] =
-                codecParameters->extradata_size = extraSize;
+                const int size = 64;
+                uint8_t buf[size] = { 0 };
+                uint8_t profile_idc = 66;
+                uint8_t pic_order_cnt_type = 0;
+                uint8_t frame_mbs_only_flag = 1;
+                uint8_t frame_cropping_flag = 0;
+                uint8_t vui_prameters_present_flag = 0;
+                PutBitContext pbc;
+                init_put_bits(&pbc, buf, size);
+                put_bits(&pbc, 1, 0);//forbidden_zero_bit
+                put_bits(&pbc, 2, 3);//nal_ref_idc
+                put_bits(&pbc, 5, 7);//nal_unit_type
+                put_bits(&pbc, 8, profile_idc);//profile_idc
+                put_bits(&pbc, 8, 0);//constraint_setx_flag
+                put_bits(&pbc, 8, 10);//level_idc
+                set_ue_golomb(&pbc, 0);//seq_parameter_set_id
+                if (profile_idc == 100) {
+
+                }
+                set_ue_golomb(&pbc, 0);//log2_max_frame_num_minus4
+                set_ue_golomb(&pbc, pic_order_cnt_type);//pic_order_cnt_type
+                if (0 == pic_order_cnt_type) {
+                    set_ue_golomb(&pbc, 0);//log2_max_pic_order_cnt_lsb_minus4
+                }
+                else {
+                    assert(false);
+                }
+                
+                set_ue_golomb(&pbc, 50);//num_ref_frames
+                put_bits(&pbc, 1, 0);//gaps_in_frame_num_value_allowed_flag
+                set_ue_golomb(&pbc, 7);//pic_width_in_mbs_minus_1
+                set_ue_golomb(&pbc, 5);//pic_height_in_map_units_minus_1
+                put_bits(&pbc, 1, frame_mbs_only_flag);//frame_mbs_only_flag
+                if (!frame_mbs_only_flag) {
+                    assert(false);
+                }
+                put_bits(&pbc, 1, 0);//direct_8x8_inference_flag
+                put_bits(&pbc, 1, frame_cropping_flag);//frame_cropping_flag
+                if (frame_cropping_flag) {
+                    assert(false);
+                }
+                put_bits(&pbc, 1, vui_prameters_present_flag);//vui_prameters_present_flag
+                if (vui_prameters_present_flag) {
+                    assert(false);
+                }
+                put_bits(&pbc, 1, 1);//rbsp_stop_one_bit
+                flush_put_bits(&pbc);
+                uint16_t sequenceParameterSetLength = put_bits_count(&pbc) >> 3;
+
+                const int ppsSize = 32;
+                uint8_t pps[ppsSize] = { 0 };
+                PutBitContext pbcPPS;
+                init_put_bits(&pbcPPS, pps, ppsSize);
+                put_bits(&pbcPPS, 1, 0);//forbidden_zero_bit
+                put_bits(&pbcPPS, 2, 3);//nal_ref_idc
+                put_bits(&pbcPPS, 5, 8);//nal_unit_type
+                set_ue_golomb(&pbcPPS, 0);//pic_parameter_set_id
+                set_ue_golomb(&pbcPPS, 0);//seq_parameter_set_id
+                put_bits(&pbcPPS, 1, 0);//entropy_coding_mode_flag
+                put_bits(&pbcPPS, 1, 0);//bottom_field_pic_order_in_frame_present_flag
+                set_ue_golomb(&pbcPPS, 0);//num_slice_groups_minus1
+                set_ue_golomb(&pbcPPS, 0);//num_ref_idx_10_active_minus1
+                set_ue_golomb(&pbcPPS, 0);//num_ref_idx_11_active_minus1
+                put_bits(&pbcPPS, 1, 0);//weighted_pred_flag
+                put_bits(&pbcPPS, 2, 0);//weighted_bipred_idc
+                set_se_golomb(&pbcPPS, 0);//pic_init_qp_minus26
+                set_se_golomb(&pbcPPS, 0);//pic_init_qs_minus26
+                set_se_golomb(&pbcPPS, 0);//chroma_qp_index_offset
+                put_bits(&pbcPPS, 1, 1);//deblocking_filter_control_present_flag
+                put_bits(&pbcPPS, 1, 0);//constained_intra_pred_flag
+                put_bits(&pbcPPS, 1, 0);//redundant_pic_cnt_present_flag
+
+                flush_put_bits(&pbcPPS);
+                uint16_t pictureParameterSetLength = put_bits_count(&pbcPPS);
+
+                size_t recordSize = sizeof(AVCDecoderConfigurationRecord) + sizeof(uint8_t) + sizeof(uint16_t) + sequenceParameterSetLength + sizeof(uint8_t) + sizeof(uint16_t) + pictureParameterSetLength;
+                codecParameters->extradata = (uint8_t*)av_mallocz(recordSize);
+                codecParameters->extradata_size = recordSize;
+
+                PutByteContext pb;
+                bytestream2_init_writer(&pb, codecParameters->extradata, codecParameters->extradata_size);
+                bytestream2_put_byte(&pb, 0x01);//configurationVersion
+                bytestream2_put_byte(&pb, 64);//AVCProfileIndication
+                bytestream2_put_byte(&pb, 0);//profile_compatibility
+                bytestream2_put_byte(&pb, 28);//AVCLevelIndication
+                bytestream2_put_byte(&pb, 0xff);//lengthSizeMinusOne
+                bytestream2_put_byte(&pb, 0xe1);//numOfSequenceParameterSets
+                bytestream2_put_be16(&pb, sequenceParameterSetLength);
+                bytestream2_put_buffer(&pb, buf, sequenceParameterSetLength);
+                bytestream2_put_byte(&pb, 0x01);//numOfPictureParameterSets
+                bytestream2_put_be16(&pb, pictureParameterSetLength);
+                bytestream2_put_buffer(&pb, pps, pictureParameterSetLength);
             }
         }
     }

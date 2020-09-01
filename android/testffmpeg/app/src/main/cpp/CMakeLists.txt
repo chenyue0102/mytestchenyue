@@ -37,6 +37,7 @@ add_library( # Sets the name of the library.
         FrameReceive.cpp
         Demuxer.cpp
 
+        ${COMMON}/BitBuffer.cpp
         ${COMMON}/OpenGLHelper.cpp
         ${COMMON}/RenderYUV420P.cpp
         ${COMMON}/OpenGLPlay.cpp

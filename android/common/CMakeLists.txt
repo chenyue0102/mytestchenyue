@@ -15,6 +15,7 @@ add_library(CommonLib
         STATIC
         #SHARED
 
+        BitBuffer.cpp
         OpenGLHelper.cpp
         RenderYUV420P.cpp
         OpenGLPlay.cpp

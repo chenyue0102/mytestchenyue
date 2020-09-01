@@ -105,6 +105,9 @@
     <ClInclude Include="..\EncodeHelper.h">
       <Filter>player</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\common\BitBuffer.h">
+      <Filter>common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -157,6 +160,9 @@
     </ClCompile>
     <ClCompile Include="..\EncodeHelper.cpp">
       <Filter>player</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\..\common\BitBuffer.cpp">
+      <Filter>common</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
