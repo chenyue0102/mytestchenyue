@@ -367,97 +367,74 @@ bool EncodeHelper::open(const char *outputFile) {
     }
 	for (size_t i = 0; i < mEncodeThreadInfo.streamInfo.size(); i++) {
 		StreamInfo &streamInfo = mEncodeThreadInfo.streamInfo[i];
-        AVCodec* codec = avcodec_find_encoder(streamInfo.codecParameters->codec_id);
         AVStream *stream = avformat_new_stream(formatContext, nullptr);
-        AVCodecParameters *codecParameters = stream->codecpar;
+        AVCodecParameters *codecParameters = streamInfo.codecParameters;
+        auto &codec = stream->codec;
 
-        AVRational streamTimeBase = streamInfo.streamTimeBase;
-        if (streamInfo.codecParameters->codec_type == AVMEDIA_TYPE_VIDEO && false){
-            auto &bsf = streamInfo.bsf;
-            auto &bsfContext = streamInfo.bsfContext;
-            bsf = av_bsf_get_by_name("h264_mp4toannexb");
-            if ((err = av_bsf_alloc(bsf, &bsfContext)) < 0){
-                LogAvError(err);
-                assert(false);
-                goto ERROR;
-            }
-            if ((err = avcodec_parameters_copy(bsfContext->par_in, streamInfo.codecParameters)) < 0) {
-                LogAvError(err);
-                assert(false);
-                goto ERROR;
-            }
-            bsfContext->time_base_in = streamTimeBase;//pkt 的timebase， 是stream的timebase
-            if ((err = av_bsf_init(bsfContext)) < 0){
-                LogAvError(err);
-                assert(false);
-                goto ERROR;
-            }
-            if ((err = avcodec_parameters_copy(codecParameters, bsfContext->par_out)) < 0) {
-                LogAvError(err);
-                assert(false);
-                goto ERROR;
-            }
-            streamTimeBase = bsfContext->time_base_out;
-            streamInfo.bsfPacketEnd = false;
-        }else{
-            if ((err = avcodec_parameters_copy(codecParameters, streamInfo.codecParameters)) < 0){
-                LOGAVERROR(err);
-                assert(false);
-                goto ERROR;
-            }
-            streamInfo.bsfPacketEnd = true;
-        }
-
-        stream->time_base = streamTimeBase;
+        stream->time_base = streamInfo.streamTimeBase;
 		streamInfo.stream = stream;
-		if ((err = avcodec_parameters_to_context(stream->codec, codecParameters)) < 0) {
+        streamInfo.bsfPacketEnd = true;
+		if ((err = avcodec_parameters_to_context(codec, codecParameters)) < 0) {
 			LOGAVERROR(err);
 			assert(false);
 			goto ERROR;
 		}
-        av_opt_set(stream->codec->priv_data, "preset", "fast", 0);
-		stream->codec->time_base = streamInfo.encoderTimeBase;
-		stream->codec->thread_count = std::thread::hardware_concurrency();
-		stream->codec->qcompress = 0.9f;
-		stream->codec->qmin = 30;
-		stream->codec->qmax = 50;
-		stream->codec->me_range = 16;
-		stream->codec->max_qdiff = 4*20;
-        
-		if (codecParameters->codec_type == AVMEDIA_TYPE_VIDEO) {
-            stream->codec->pix_fmt = AV_PIX_FMT_YUV420P;
-//			stream->codec->max_qdiff = 3 * 100;//视频中所有桢（包括i/b/P）的最大Q值差距
-//			stream->codec->gop_size = 300;
-//			stream->codec->refs = 200;
-//			stream->codec->max_b_frames = 200;
-//			stream->codec->bit_rate = 1024 * 10;//目标码率，采样码率越大，目标文件越大
-//			stream->codec->bit_rate_tolerance = 8000 * 1024;// 码率误差，允许的误差越大，视频越小
-//			stream->codec->i_quant_factor = 0.1f / 1000;//i 帧相对p帧的量化系数比，值越小，说明p帧的量化系数越大，视频越小
-//			stream->codec->b_quant_factor = 4.9 * 1000;//b 帧相对p帧的量化系数比，值越大，b帧的量化系数越大，视频越小
-//			stream->codec->me_pre_cmp = 2 * 10;//运动场景预判功能的力度。数值越大编码时间越长。
-//			//B帧量化系数=b_quant_factor* p帧量化系数+b_quant_offset
-		}
-        if (stream->codec->codec_type == AVMEDIA_TYPE_VIDEO) {
-            stream->codec->bit_rate = 2 * 1000 * 1000;
-            stream->codec->rc_buffer_size = 4 * 1000 * 1000;
-            stream->codec->rc_max_rate = 2 * 1000 * 1000;
-            stream->codec->rc_min_rate = 2.5 * 1000 * 1000;
+		codec->time_base = streamInfo.encoderTimeBase;
+		codec->thread_count = std::thread::hardware_concurrency();
+        //stream->codec->codec_tag = 0;
+        if (formatContext->oformat->flags & AVFMT_GLOBALHEADER){
+            codec->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
         }
-		stream->codec->codec_tag = 0;
-		if ((err = avcodec_open2(stream->codec, codec, nullptr)) < 0) {
-			LOGAVERROR(err);
-			assert(false);
-			goto ERROR;
-		}
+        if (codecParameters->codec_type == AVMEDIA_TYPE_VIDEO) {
+            codec->qcompress = 0.9f;
+            codec->qmin = 30;
+            codec->qmax = 50;
+            codec->me_range = 16;
+            codec->max_qdiff = 4 * 20;
+        }
+        if ((err = avcodec_open2(codec, avcodec_find_encoder(codecParameters->codec_id), nullptr)) < 0) {
+            LOGAVERROR(err);
+            assert(false);
+            goto ERROR;
+        }
+        if ((err = avcodec_parameters_from_context(stream->codecpar, codec)) < 0){
+            LOGAVERROR(err);
+            assert(false);
+            goto ERROR;
+        }
+//        av_opt_set(stream->codec->priv_data, "preset", "fast", 0);
+//		stream->codec->time_base = streamInfo.encoderTimeBase;
+//		stream->codec->thread_count = std::thread::hardware_concurrency();
+
+//
+//		if (codecParameters->codec_type == AVMEDIA_TYPE_VIDEO) {
+//            stream->codec->pix_fmt = AV_PIX_FMT_YUV420P;
+////			stream->codec->max_qdiff = 3 * 100;//视频中所有桢（包括i/b/P）的最大Q值差距
+////			stream->codec->gop_size = 300;
+////			stream->codec->refs = 200;
+////			stream->codec->max_b_frames = 200;
+////			stream->codec->bit_rate = 1024 * 10;//目标码率，采样码率越大，目标文件越大
+////			stream->codec->bit_rate_tolerance = 8000 * 1024;// 码率误差，允许的误差越大，视频越小
+////			stream->codec->i_quant_factor = 0.1f / 1000;//i 帧相对p帧的量化系数比，值越小，说明p帧的量化系数越大，视频越小
+////			stream->codec->b_quant_factor = 4.9 * 1000;//b 帧相对p帧的量化系数比，值越大，b帧的量化系数越大，视频越小
+////			stream->codec->me_pre_cmp = 2 * 10;//运动场景预判功能的力度。数值越大编码时间越长。
+////			//B帧量化系数=b_quant_factor* p帧量化系数+b_quant_offset
+//		}
+//        if (stream->codec->codec_type == AVMEDIA_TYPE_VIDEO) {
+//            stream->codec->bit_rate = 2 * 1000 * 1000;
+//            stream->codec->rc_buffer_size = 4 * 1000 * 1000;
+//            stream->codec->rc_max_rate = 2 * 1000 * 1000;
+//            stream->codec->rc_min_rate = 2.5 * 1000 * 1000;
+//        }
+
 		
 		/*if (formatContext->oformat->flags & AVFMT_GLOBALHEADER) {
 			stream->codec->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
 		}*/
-		SC(Log).d("stream");
     }
-    if (formatContext->oformat->flags & AVFMT_GLOBALHEADER) {
-        formatContext->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
-    }
+//    if (formatContext->oformat->flags & AVFMT_GLOBALHEADER) {
+//        formatContext->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+//    }
     if ((err = avio_open(&formatContext->pb, outputFile, AVIO_FLAG_WRITE)) < 0){
         LOGAVERROR(err);
         assert(false);

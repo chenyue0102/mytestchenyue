@@ -160,72 +160,25 @@ namespace FFMPEGTest{
                 assert(false);
                 goto ERROR;
             }
-			AVRational encodeRate = stream->codec->time_base;
+			AVRational encodeRate;
             AVRational streamRate;
             if (codecpar->codec_type == AVMEDIA_TYPE_VIDEO || codecpar->codec_type == AVMEDIA_TYPE_AUDIO){
                 codecParameters->codec_type = codecpar->codec_type;
                 codecParameters->codec_id = codecpar->codec_id;
 				codecParameters->format = codecpar->format;
-                codecParameters->bit_rate = codecpar->bit_rate;
                 streamRate = stream->time_base;
                 if (codecpar->codec_type == AVMEDIA_TYPE_VIDEO){
 					codecParameters->width = codecpar->width;
                     codecParameters->height = codecpar->height;
                     codecParameters->sample_aspect_ratio = codecpar->sample_aspect_ratio;
-					codecParameters->bit_rate = 1024 * 500;
-                    //bsf = av_bsf_get_by_name("h264_mp4toannexb");
-                    //if ((err = av_bsf_alloc(bsf, &bsfContext)) < 0){
-                    //    LogAvError(err);
-                    //    assert(false);
-                    //    goto ERROR;
-                    //}
-                    //if ((err = avcodec_parameters_copy(bsfContext->par_in, codecParameters)) < 0) {
-                    //    LogAvError(err);
-                    //    assert(false);
-                    //    goto ERROR;
-                    //}
-                    //bsfContext->time_base_in = stream->time_base;//pkt 的timebase， 是stream的timebase
-                    //if ((err = av_bsf_init(bsfContext)) < 0){
-                    //    LogAvError(err);
-                    //    assert(false);
-                    //    goto ERROR;
-                    //}
-                    //if ((err = avcodec_parameters_copy(codecParameters, bsfContext->par_out)) < 0) {
-                    //    LogAvError(err);
-                    //    assert(false);
-                    //    goto ERROR;
-                    //}
-                    //streamRate = bsfContext->time_base_out;
-					//codecParameters->field_order = codecpar->field_order;
-#if 0
-					encodeRate.num = 1;
-					encodeRate.den = 25;
-					codecParameters->extradata = (uint8_t*)av_mallocz(codecpar->extradata_size);
-					memcpy(codecParameters->extradata, codecpar->extradata, codecpar->extradata_size);
-					codecParameters->extradata_size = codecpar->extradata_size;
-#endif
-#if 0
-					codecParameters->bits_per_coded_sample = 24;
-					codecParameters->bits_per_raw_sample = 8;
-					codecParameters->field_order = codecpar->field_order;
-					codecParameters->color_primaries = codecpar->color_primaries;
-					codecParameters->color_trc = codecpar->color_trc;
-					codecParameters->color_space = codecpar->color_space;
-					codecParameters->chroma_location = codecpar->chroma_location;
-#endif
+                    encodeRate = av_inv_q(stream->codec->framerate);
                 }else{
                     codecParameters->sample_rate = codecpar->sample_rate;
                     codecParameters->channel_layout = codecpar->channel_layout;
                     codecParameters->channels = codecpar->channels;
-					codecParameters->frame_size = codecpar->frame_size;
-#if 0
-					codecParameters->extradata = (uint8_t*)av_mallocz(codecpar->extradata_size);
-					memcpy(codecParameters->extradata, codecpar->extradata, codecpar->extradata_size);
-					codecParameters->extradata_size = codecpar->extradata_size;
-#endif
+                    encodeRate.num = 1;
+                    encodeRate.den = codecpar->sample_rate;
                 }
-                extern void setExtraData(AVCodecParameters * codecParameters/*, AVRational timeBase*/);
-                setExtraData(codecParameters);
             }else{
                 if ((err = avcodec_parameters_copy(codecParameters, codecpar)) < 0){
                     LogAvError(err);
@@ -237,6 +190,8 @@ namespace FFMPEGTest{
                 assert(false);
                 goto ERROR;
             }
+            assert(nullptr == codecParameters->extradata);
+            memset(codecParameters, 0, sizeof(AVCodecParameters));
         }
         if (!encodeHelper.open(outputfile)){
             assert(false);
@@ -434,10 +389,10 @@ namespace FFMPEGTest{
                     assert(false);
                 }
                 
-                set_ue_golomb(&pbc, 50);//num_ref_frames
+                set_ue_golomb(&pbc, 0);//num_ref_frames
                 put_bits(&pbc, 1, 0);//gaps_in_frame_num_value_allowed_flag
-                set_ue_golomb(&pbc, 7);//pic_width_in_mbs_minus_1
-                set_ue_golomb(&pbc, 5);//pic_height_in_map_units_minus_1
+                set_ue_golomb(&pbc, 21);//pic_width_in_mbs_minus_1
+                set_ue_golomb(&pbc, 17);//pic_height_in_map_units_minus_1
                 put_bits(&pbc, 1, frame_mbs_only_flag);//frame_mbs_only_flag
                 if (!frame_mbs_only_flag) {
                     assert(false);
