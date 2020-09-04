@@ -15,7 +15,18 @@ public class PlayerController : MonoBehaviour
 
     [Header("States Check")]
     public bool isGround;
+    public bool isJump;
     public bool canJump;
+
+    [Header("Game Object")]
+    public GameObject gameObjectJump;
+    public GameObject gameObjectLand;
+
+    [Header("Attack")]
+    public GameObject bombObject;
+    public float nextAttack = 0.0f;
+    public float attackRate;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -33,6 +44,15 @@ public class PlayerController : MonoBehaviour
         PhysicsCheck();
         Movement();
         Jump();
+    }
+
+    public void Attack()
+    {
+        if (Time.time > nextAttack)
+        {
+            Instantiate(bombObject, transform.position, bombObject.transform.rotation);
+            nextAttack = Time.time + attackRate;
+        }
     }
 
     void Movement()
@@ -53,6 +73,10 @@ public class PlayerController : MonoBehaviour
         {
             canJump = true;
         }
+        if (Input.GetKeyDown(KeyCode.B))
+        {
+            Attack();
+        }
     }
 
     void Jump()
@@ -61,7 +85,10 @@ public class PlayerController : MonoBehaviour
         {
             rb.velocity = new Vector2(rb.velocity.x, jumpForce);
             canJump = false;
+            isJump = true;
             rb.gravityScale = 4;//重力
+            gameObjectJump.SetActive(true);
+            gameObjectJump.transform.position = transform.position + new Vector3(0, -0.1f, 0);
         }
     }
 
@@ -71,6 +98,7 @@ public class PlayerController : MonoBehaviour
         if (isGround)
         {
             rb.gravityScale = 1;
+            isJump = false;
         }
     }
 
@@ -79,4 +107,9 @@ public class PlayerController : MonoBehaviour
         Gizmos.DrawWireSphere(groundCheck.position, checkRadius);
     }
 
+    public void landFX()
+    {
+        gameObjectLand.SetActive(true);
+        gameObjectLand.transform.position = transform.position + new Vector3(0, -1.0f, 0);
+    }
 }
