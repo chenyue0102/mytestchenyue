@@ -20,7 +20,6 @@ public class Bomb : MonoBehaviour
         startTime = Time.time;
         anim = GetComponent<Animator>();
         rb = GetComponent<Rigidbody2D>();
-        targeLayer = GetComponent<LayerMask>();
         coll = GetComponent<Collider2D>();
     }
 

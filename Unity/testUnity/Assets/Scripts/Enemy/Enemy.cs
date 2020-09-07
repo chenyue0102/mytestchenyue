@@ -2,29 +2,49 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Enemy : MonoBehaviour
+public abstract class Enemy : MonoBehaviour
 {
     public EnemyBaseState currentState;
     public float speed;
     public Transform pointA, pointB;
     public Transform targetPoint;
-    public List<Transform> attachList = new List<Transform>();
+    public List<Transform> attackList = new List<Transform>();
     public GameObject checkArea;
-    private PatrolState patrolState = new PatrolState();
+    public Animator anim;
+    public int animState = 0;
+    public PatrolState patrolState = new PatrolState();
+    public AttachState attachState = new AttachState();
+
+    [Header("attack")]
+    public float attackRange, skillRange;
+    public float attackRate;
+    protected float nextAttack = 0;
+
+    public virtual void Init()
+    {
+        targetPoint = pointA;
+        anim = GetComponent<Animator>();
+    }
+
+    private void Awake()
+    {
+        Init();
+    }
+
     // Start is called before the first frame update
     void Start()
     {
-        targetPoint = pointA;
-        TranslateState(patrolState);
+        TransitionToState(patrolState);
     }
 
     // Update is called once per frame
     void Update()
     {
-        patrolState.OnUpdate(this);
+        currentState.OnUpdate(this);
+        anim.SetInteger("state", animState);
     }
 
-    public void TranslateState(EnemyBaseState state)
+    public void TransitionToState(EnemyBaseState state)
     {
         currentState = state;
         currentState.OnEnterState(this);
@@ -60,27 +80,21 @@ public class Enemy : MonoBehaviour
         }
     }
 
-    public virtual void Attack()
-    {
+    public abstract void Attack();
 
-    }
-
-    public virtual void SkillAttack()
-    {
-
-    }
+    public abstract void SkillAttack();
 
     public void OnTriggerStay2D(Collider2D collision)//停留在区域中
     {
-        if (!attachList.Contains(collision.transform))
+        if (!attackList.Contains(collision.transform))
         {
-            attachList.Add(collision.transform);
+            attackList.Add(collision.transform);
         }
     }
 
     public void OnTriggerExit2D(Collider2D collision)//离开区域
     {
-        attachList.Remove(collision.transform);
+        attackList.Remove(collision.transform);
     }
 
     public void OnTriggerEnter2D(Collider2D collision)

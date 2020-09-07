@@ -4,25 +4,29 @@ using UnityEngine;
 
 public class Cucumber : Enemy
 {
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
 
     public override void Attack()
     {
-        base.Attack();
+        Debug.Log("Attack");
+        if (Vector2.Distance(transform.position, targetPoint.position) < attackRange)
+        {
+            if (Time.time > nextAttack)
+            {
+                Debug.Log("Attack");
+                nextAttack = Time.time + attackRange;
+            }
+        }
     }
 
     public override void SkillAttack()
     {
-        base.SkillAttack();
+        if (Vector2.Distance(transform.position, targetPoint.position) < skillRange)
+        {
+            if (Time.time > nextAttack)
+            {
+                Debug.Log("SkillAttack");
+                nextAttack = Time.time + attackRange;
+            }
+        }
     }
 }
