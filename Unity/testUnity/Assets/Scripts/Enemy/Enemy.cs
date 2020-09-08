@@ -131,7 +131,10 @@ public class Enemy : MonoBehaviour, IDamageable
 
     public void OnTriggerEnter2D(Collider2D collision)
     {
-        StartCoroutine(OnAlaram());
+        if (!isDead)
+        {
+            StartCoroutine(OnAlaram());
+        }
     }
 
     IEnumerator OnAlaram()
