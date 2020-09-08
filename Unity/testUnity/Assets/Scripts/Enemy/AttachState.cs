@@ -6,6 +6,7 @@ public class AttachState : EnemyBaseState
 {
     public override void OnEnterState(Enemy enemy)
     {
+        enemy.animState = 2;
         enemy.targetPoint = enemy.attackList[0];
     }
 
@@ -27,6 +28,10 @@ public class AttachState : EnemyBaseState
                         enemy.targetPoint = enemy.attackList[i];
                     }
                 }
+            }
+            else
+            {
+                enemy.targetPoint = enemy.attackList[0];
             }
 
             if (enemy.targetPoint.CompareTag("Player"))

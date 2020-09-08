@@ -26,9 +26,12 @@ public class Bomb : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (Time.time > startTime + waitTime)
+        if (!anim.GetCurrentAnimatorStateInfo(0).IsName("BombOff"))
         {
-            anim.Play("BombExplotion");
+            if (Time.time > startTime + waitTime)
+            {
+                anim.Play("BombExplotion");
+            }
         }
     }
 
@@ -46,11 +49,39 @@ public class Bomb : MonoBehaviour
         {
             Vector3 pos = transform.position - item.transform.position;
             item.GetComponent<Rigidbody2D>().AddForce((-pos + Vector3.up) * bombForce, ForceMode2D.Impulse);
+
+            if (item.CompareTag("Bomb") && item.GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).IsName("BombOff"))
+            {
+                item.GetComponent<Bomb>().TurnOn();
+            }
+            if (item.CompareTag("Player"))
+            {
+                item.GetComponent<IDamageable>().GetHit(3);
+            }
+            if (item.CompareTag("Enemy"))
+            {
+                item.GetComponent<IDamageable>().GetHit(2);
+            }
         }
     }
 
     void DestroyThis()
     {
         Destroy(gameObject);
+    }
+
+    public void TurnOff()
+    {
+        anim.Play("BombOff");
+        gameObject.layer = LayerMask.NameToLayer("NPC");
+        gameObject.GetComponent<SpriteRenderer>().sortingLayerName = "NPC";
+    }
+
+    public void TurnOn()
+    {
+        anim.Play("BomoOn");
+        gameObject.layer = LayerMask.NameToLayer("Bomb");
+        gameObject.GetComponent<SpriteRenderer>().sortingLayerName = "Bomb";
+        startTime = Time.time;
     }
 }

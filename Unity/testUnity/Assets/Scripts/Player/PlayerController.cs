@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PlayerController : MonoBehaviour
+public class PlayerController : MonoBehaviour,IDamageable
 {
     private Rigidbody2D rb;
+    private Animator anim;
+
     public float speed;
     public float jumpForce;
 
@@ -27,20 +29,34 @@ public class PlayerController : MonoBehaviour
     public float nextAttack = 0.0f;
     public float attackRate;
 
+    [Header("Health")]
+    public float health;
+    public bool isDead;
+
     // Start is called before the first frame update
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
+        anim = GetComponent<Animator>();
     }
 
     // Update is called once per frame
     void Update()
     {
+        if (isDead)
+        {
+            return;
+        }
         CheckInput();
     }
 
     private void FixedUpdate()
     {
+        if (isDead)
+        {
+            rb.velocity = Vector2.zero;//速度设置成0
+            return;
+        }
         PhysicsCheck();
         Movement();
         Jump();
@@ -111,5 +127,23 @@ public class PlayerController : MonoBehaviour
     {
         gameObjectLand.SetActive(true);
         gameObjectLand.transform.position = transform.position + new Vector3(0, -1.0f, 0);
+    }
+
+    public void GetHit(float damage)
+    {
+        if (!anim.GetCurrentAnimatorStateInfo(1).IsName("Hit"))
+        {
+            health -= damage;
+            if (health < 1)
+            {
+                health = 0;
+                isDead = true;
+                anim.SetBool("dead", isDead);
+            }
+            else
+            {
+                anim.SetTrigger("hit");
+            }
+        }
     }
 }
