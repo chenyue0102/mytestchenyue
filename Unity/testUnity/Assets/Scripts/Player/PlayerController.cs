@@ -33,6 +33,8 @@ public class PlayerController : MonoBehaviour,IDamageable
     public float health;
     public bool isDead;
 
+    private List<Transform> bombs = new List<Transform>();
+
     // Start is called before the first frame update
     void Start()
     {
@@ -50,6 +52,7 @@ public class PlayerController : MonoBehaviour,IDamageable
         CheckInput();
     }
 
+    //固定周期执行，初始值为0.02秒
     private void FixedUpdate()
     {
         if (isDead)
@@ -66,7 +69,10 @@ public class PlayerController : MonoBehaviour,IDamageable
     {
         if (Time.time > nextAttack)
         {
-            Instantiate(bombObject, transform.position, bombObject.transform.rotation);
+            Vector2 position = new Vector2();
+            position.y = transform.position.y;
+            position.x = transform.GetChild(1).transform.position.x;
+            Instantiate(bombObject, position, bombObject.transform.rotation);
             nextAttack = Time.time + attackRate;
         }
     }
@@ -92,6 +98,10 @@ public class PlayerController : MonoBehaviour,IDamageable
         if (Input.GetKeyDown(KeyCode.B))
         {
             Attack();
+        }
+        if (Input.GetKeyDown(KeyCode.N))
+        {
+            KickBomb();
         }
     }
 
@@ -145,5 +155,36 @@ public class PlayerController : MonoBehaviour,IDamageable
                 anim.SetTrigger("hit");
             }
         }
+    }
+
+    public void KickBomb()
+    {
+        if (bombs.Count > 0)
+        {
+            Transform nearestBomb = bombs[0];
+            for (int i = 1; i < bombs.Count; i++)
+            {
+                Transform kickBomb = bombs[i];
+                if (Mathf.Abs(transform.position.x - kickBomb.position.x) < Mathf.Abs(transform.position.x - nearestBomb.position.x))
+                {
+                    nearestBomb = transform;
+                }
+            }
+            int dir = transform.position.x < nearestBomb.position.x ? 1 : -1;
+            nearestBomb.GetComponent<Rigidbody2D>().AddForce(new Vector2(dir, 0.5f) * 5, ForceMode2D.Impulse);
+        }
+    }
+
+    public void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.CompareTag("Bomb"))
+        {
+            bombs.Add(collision.transform);
+        }
+    }
+
+    private void OnTriggerExit2D(Collider2D collision)
+    {
+        bombs.Remove(collision.transform);
     }
 }

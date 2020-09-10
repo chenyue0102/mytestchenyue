@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class Bomb : MonoBehaviour
 {
+    public delegate void ExplotionNotify(Transform transform);
+    private ExplotionNotify explotionNotify;
     private Animator anim;
     private Rigidbody2D rb;
     private Collider2D coll;
@@ -63,6 +65,8 @@ public class Bomb : MonoBehaviour
                 item.GetComponent<IDamageable>().GetHit(2);
             }
         }
+        explotionNotify(transform);
+        explotionNotify = null;
     }
 
     void DestroyThis()
@@ -83,5 +87,17 @@ public class Bomb : MonoBehaviour
         gameObject.layer = LayerMask.NameToLayer("Bomb");
         gameObject.GetComponent<SpriteRenderer>().sortingLayerName = "Bomb";
         startTime = Time.time;
+    }
+
+    public void SetExplotionNotify(ExplotionNotify notify)
+    {
+        if (null != explotionNotify)
+        {
+            explotionNotify = notify;
+        }
+        else
+        {
+            explotionNotify += notify;
+        }
     }
 }

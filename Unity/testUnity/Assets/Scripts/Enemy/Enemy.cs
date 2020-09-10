@@ -45,7 +45,7 @@ public class Enemy : MonoBehaviour, IDamageable
     }
 
     // Update is called once per frame
-    void Update()
+    public virtual void Update()
     {
         if (isDead)
         {
@@ -116,7 +116,7 @@ public class Enemy : MonoBehaviour, IDamageable
         }
     }
 
-    public void OnTriggerStay2D(Collider2D collision)//停留在区域中
+    public virtual void OnTriggerStay2D(Collider2D collision)//停留在区域中
     {
         if (!attackList.Contains(collision.transform))
         {
