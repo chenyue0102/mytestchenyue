@@ -24,7 +24,7 @@ TagManager:
   - CheckArea
   - Player
   - KickBomb
-  - 
+  - Door
   - 
   - 
   - 
@@ -51,6 +51,9 @@ TagManager:
     locked: 0
   - name: Default
     uniqueID: 0
+    locked: 0
+  - name: Door
+    uniqueID: 2856149199
     locked: 0
   - name: NPC
     uniqueID: 1467561463

@@ -6,6 +6,7 @@ public class PlayerController : MonoBehaviour,IDamageable
 {
     private Rigidbody2D rb;
     private Animator anim;
+    private FixedJoystick joystick;
 
     public float speed;
     public float jumpForce;
@@ -40,6 +41,9 @@ public class PlayerController : MonoBehaviour,IDamageable
     {
         rb = GetComponent<Rigidbody2D>();
         anim = GetComponent<Animator>();
+        health = GameManager.instance.LoadHealth();
+        UIManager.instance.UpdateHealth(health);
+        joystick = FindObjectOfType<FixedJoystick>();
     }
 
     // Update is called once per frame
@@ -80,7 +84,15 @@ public class PlayerController : MonoBehaviour,IDamageable
     void Movement()
     {
         //float horizontalInput = Input.GetAxis("Horizontal");//-1.0 ~ 1.0 包含小数
-        float horizontalInput = Input.GetAxisRaw("Horizontal");//-1.0 ~ 1.0  不包含小数
+        //float horizontalInput = Input.GetAxisRaw("Horizontal");//-1.0 ~ 1.0  不包含小数
+        float horizontalInput = joystick.Horizontal;
+        if (horizontalInput > 0)
+        {
+            horizontalInput = 1;
+        }else if (horizontalInput < 0)
+        {
+            horizontalInput = -1;
+        }
         rb.velocity = new Vector2(horizontalInput * speed, rb.velocity.y);
 
         if (0 != horizontalInput)
@@ -105,7 +117,13 @@ public class PlayerController : MonoBehaviour,IDamageable
         }
     }
 
-    void Jump()
+    public void JoystickJump()
+    {
+        canJump = true;
+        Jump();
+    }
+
+    public void Jump()
     {
         if (canJump)
         {
@@ -149,11 +167,13 @@ public class PlayerController : MonoBehaviour,IDamageable
                 health = 0;
                 isDead = true;
                 anim.SetBool("dead", isDead);
+                GameManager.instance.GameOver();
             }
             else
             {
                 anim.SetTrigger("hit");
             }
+            UIManager.instance.UpdateHealth(health);
         }
     }
 

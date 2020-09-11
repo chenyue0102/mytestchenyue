@@ -12,6 +12,7 @@ public class Enemy : MonoBehaviour, IDamageable
     public GameObject checkArea;
     public Animator anim;
     public int animState = 0;
+    public bool isBoss;
     public PatrolState patrolState = new PatrolState();
     public AttachState attachState = new AttachState();
 
@@ -42,6 +43,11 @@ public class Enemy : MonoBehaviour, IDamageable
     void Start()
     {
         TransitionToState(patrolState);
+        if (isBoss)
+        {
+            UIManager.instance.SetBossMaxHealth(health);
+        }
+        GameManager.instance.addEnemy(this);
     }
 
     // Update is called once per frame
@@ -118,7 +124,7 @@ public class Enemy : MonoBehaviour, IDamageable
 
     public virtual void OnTriggerStay2D(Collider2D collision)//停留在区域中
     {
-        if (!attackList.Contains(collision.transform))
+        if (!attackList.Contains(collision.transform) && !GameManager.instance.gameOver)
         {
             attackList.Add(collision.transform);
         }
@@ -131,10 +137,11 @@ public class Enemy : MonoBehaviour, IDamageable
 
     public void OnTriggerEnter2D(Collider2D collision)
     {
-        if (!isDead)
+        if (isDead || GameManager.instance.gameOver)
         {
-            StartCoroutine(OnAlaram());
+            return;
         }
+        StartCoroutine(OnAlaram());
     }
 
     IEnumerator OnAlaram()
@@ -153,10 +160,15 @@ public class Enemy : MonoBehaviour, IDamageable
             health = 0;
             isDead = true;
             anim.SetBool("dead", isDead);
+            GameManager.instance.removeEnemy(this);
         }
         else
         {
             anim.SetTrigger("hit");
+        }
+        if (isBoss)
+        {
+            UIManager.instance.SetBossCurrentHealth(health);
         }
     }
 }

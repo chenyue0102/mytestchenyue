@@ -362,13 +362,14 @@ MonoBehaviour:
   checkArea: {fileID: 0}
   anim: {fileID: 0}
   animState: 0
+  isBoss: 0
   attackRange: 1
   skillRange: 1
   attackRate: 1
   health: 5
   isDead: 0
   scaleStep: 1.2
-  maxScale: 3
+  maxScale: 1.8
 --- !u!1 &6382982499286735711
 GameObject:
   m_ObjectHideFlags: 0
