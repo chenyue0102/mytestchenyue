@@ -13,9 +13,19 @@ buildscript {
 }
 
 allprojects {
+    buildscript {
+        repositories {
+            google()
+            jcenter()
+        }
+    }
+
     repositories {
         google()
         jcenter()
+        flatDir {
+            dirs "${project(':unityLibrary').projectDir}/libs"
+        }
     }
 }
 
