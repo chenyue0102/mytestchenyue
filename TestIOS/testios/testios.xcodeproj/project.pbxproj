@@ -1,0 +1,584 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 50;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		DCC1796B250EF51F00D9F8D4 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = DCC1796A250EF51F00D9F8D4 /* AppDelegate.m */; };
+		DCC1796E250EF51F00D9F8D4 /* SceneDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = DCC1796D250EF51F00D9F8D4 /* SceneDelegate.m */; };
+		DCC17971250EF51F00D9F8D4 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = DCC17970250EF51F00D9F8D4 /* ViewController.m */; };
+		DCC17974250EF51F00D9F8D4 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = DCC17972250EF51F00D9F8D4 /* Main.storyboard */; };
+		DCC17976250EF52000D9F8D4 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DCC17975250EF52000D9F8D4 /* Assets.xcassets */; };
+		DCC17979250EF52000D9F8D4 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = DCC17977250EF52000D9F8D4 /* LaunchScreen.storyboard */; };
+		DCC1797C250EF52000D9F8D4 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = DCC1797B250EF52000D9F8D4 /* main.m */; };
+		DCC17986250EF52100D9F8D4 /* testiosTests.m in Sources */ = {isa = PBXBuildFile; fileRef = DCC17985250EF52100D9F8D4 /* testiosTests.m */; };
+		DCC17991250EF52100D9F8D4 /* testiosUITests.m in Sources */ = {isa = PBXBuildFile; fileRef = DCC17990250EF52100D9F8D4 /* testiosUITests.m */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		DCC17982250EF52100D9F8D4 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = DCC1795E250EF51F00D9F8D4 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = DCC17965250EF51F00D9F8D4;
+			remoteInfo = testios;
+		};
+		DCC1798D250EF52100D9F8D4 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = DCC1795E250EF51F00D9F8D4 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = DCC17965250EF51F00D9F8D4;
+			remoteInfo = testios;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		DCC17966250EF51F00D9F8D4 /* testios.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = testios.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		DCC17969250EF51F00D9F8D4 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
+		DCC1796A250EF51F00D9F8D4 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
+		DCC1796C250EF51F00D9F8D4 /* SceneDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SceneDelegate.h; sourceTree = "<group>"; };
+		DCC1796D250EF51F00D9F8D4 /* SceneDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SceneDelegate.m; sourceTree = "<group>"; };
+		DCC1796F250EF51F00D9F8D4 /* ViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
+		DCC17970250EF51F00D9F8D4 /* ViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
+		DCC17973250EF51F00D9F8D4 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		DCC17975250EF52000D9F8D4 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		DCC17978250EF52000D9F8D4 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		DCC1797A250EF52000D9F8D4 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		DCC1797B250EF52000D9F8D4 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		DCC17981250EF52100D9F8D4 /* testiosTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = testiosTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		DCC17985250EF52100D9F8D4 /* testiosTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = testiosTests.m; sourceTree = "<group>"; };
+		DCC17987250EF52100D9F8D4 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		DCC1798C250EF52100D9F8D4 /* testiosUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = testiosUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		DCC17990250EF52100D9F8D4 /* testiosUITests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = testiosUITests.m; sourceTree = "<group>"; };
+		DCC17992250EF52100D9F8D4 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		DCC17963250EF51F00D9F8D4 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DCC1797E250EF52100D9F8D4 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DCC17989250EF52100D9F8D4 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		DCC1795D250EF51F00D9F8D4 = {
+			isa = PBXGroup;
+			children = (
+				DCC17968250EF51F00D9F8D4 /* testios */,
+				DCC17984250EF52100D9F8D4 /* testiosTests */,
+				DCC1798F250EF52100D9F8D4 /* testiosUITests */,
+				DCC17967250EF51F00D9F8D4 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		DCC17967250EF51F00D9F8D4 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				DCC17966250EF51F00D9F8D4 /* testios.app */,
+				DCC17981250EF52100D9F8D4 /* testiosTests.xctest */,
+				DCC1798C250EF52100D9F8D4 /* testiosUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		DCC17968250EF51F00D9F8D4 /* testios */ = {
+			isa = PBXGroup;
+			children = (
+				DCC17969250EF51F00D9F8D4 /* AppDelegate.h */,
+				DCC1796A250EF51F00D9F8D4 /* AppDelegate.m */,
+				DCC1796C250EF51F00D9F8D4 /* SceneDelegate.h */,
+				DCC1796D250EF51F00D9F8D4 /* SceneDelegate.m */,
+				DCC1796F250EF51F00D9F8D4 /* ViewController.h */,
+				DCC17970250EF51F00D9F8D4 /* ViewController.m */,
+				DCC17972250EF51F00D9F8D4 /* Main.storyboard */,
+				DCC17975250EF52000D9F8D4 /* Assets.xcassets */,
+				DCC17977250EF52000D9F8D4 /* LaunchScreen.storyboard */,
+				DCC1797A250EF52000D9F8D4 /* Info.plist */,
+				DCC1797B250EF52000D9F8D4 /* main.m */,
+			);
+			path = testios;
+			sourceTree = "<group>";
+		};
+		DCC17984250EF52100D9F8D4 /* testiosTests */ = {
+			isa = PBXGroup;
+			children = (
+				DCC17985250EF52100D9F8D4 /* testiosTests.m */,
+				DCC17987250EF52100D9F8D4 /* Info.plist */,
+			);
+			path = testiosTests;
+			sourceTree = "<group>";
+		};
+		DCC1798F250EF52100D9F8D4 /* testiosUITests */ = {
+			isa = PBXGroup;
+			children = (
+				DCC17990250EF52100D9F8D4 /* testiosUITests.m */,
+				DCC17992250EF52100D9F8D4 /* Info.plist */,
+			);
+			path = testiosUITests;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		DCC17965250EF51F00D9F8D4 /* testios */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DCC17995250EF52100D9F8D4 /* Build configuration list for PBXNativeTarget "testios" */;
+			buildPhases = (
+				DCC17962250EF51F00D9F8D4 /* Sources */,
+				DCC17963250EF51F00D9F8D4 /* Frameworks */,
+				DCC17964250EF51F00D9F8D4 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = testios;
+			productName = testios;
+			productReference = DCC17966250EF51F00D9F8D4 /* testios.app */;
+			productType = "com.apple.product-type.application";
+		};
+		DCC17980250EF52100D9F8D4 /* testiosTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DCC17998250EF52100D9F8D4 /* Build configuration list for PBXNativeTarget "testiosTests" */;
+			buildPhases = (
+				DCC1797D250EF52100D9F8D4 /* Sources */,
+				DCC1797E250EF52100D9F8D4 /* Frameworks */,
+				DCC1797F250EF52100D9F8D4 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				DCC17983250EF52100D9F8D4 /* PBXTargetDependency */,
+			);
+			name = testiosTests;
+			productName = testiosTests;
+			productReference = DCC17981250EF52100D9F8D4 /* testiosTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		DCC1798B250EF52100D9F8D4 /* testiosUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DCC1799B250EF52100D9F8D4 /* Build configuration list for PBXNativeTarget "testiosUITests" */;
+			buildPhases = (
+				DCC17988250EF52100D9F8D4 /* Sources */,
+				DCC17989250EF52100D9F8D4 /* Frameworks */,
+				DCC1798A250EF52100D9F8D4 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				DCC1798E250EF52100D9F8D4 /* PBXTargetDependency */,
+			);
+			name = testiosUITests;
+			productName = testiosUITests;
+			productReference = DCC1798C250EF52100D9F8D4 /* testiosUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		DCC1795E250EF51F00D9F8D4 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 1160;
+				ORGANIZATIONNAME = chenyue;
+				TargetAttributes = {
+					DCC17965250EF51F00D9F8D4 = {
+						CreatedOnToolsVersion = 11.6;
+					};
+					DCC17980250EF52100D9F8D4 = {
+						CreatedOnToolsVersion = 11.6;
+						TestTargetID = DCC17965250EF51F00D9F8D4;
+					};
+					DCC1798B250EF52100D9F8D4 = {
+						CreatedOnToolsVersion = 11.6;
+						TestTargetID = DCC17965250EF51F00D9F8D4;
+					};
+				};
+			};
+			buildConfigurationList = DCC17961250EF51F00D9F8D4 /* Build configuration list for PBXProject "testios" */;
+			compatibilityVersion = "Xcode 9.3";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = DCC1795D250EF51F00D9F8D4;
+			productRefGroup = DCC17967250EF51F00D9F8D4 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				DCC17965250EF51F00D9F8D4 /* testios */,
+				DCC17980250EF52100D9F8D4 /* testiosTests */,
+				DCC1798B250EF52100D9F8D4 /* testiosUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		DCC17964250EF51F00D9F8D4 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DCC17979250EF52000D9F8D4 /* LaunchScreen.storyboard in Resources */,
+				DCC17976250EF52000D9F8D4 /* Assets.xcassets in Resources */,
+				DCC17974250EF51F00D9F8D4 /* Main.storyboard in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DCC1797F250EF52100D9F8D4 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DCC1798A250EF52100D9F8D4 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		DCC17962250EF51F00D9F8D4 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DCC17971250EF51F00D9F8D4 /* ViewController.m in Sources */,
+				DCC1796B250EF51F00D9F8D4 /* AppDelegate.m in Sources */,
+				DCC1797C250EF52000D9F8D4 /* main.m in Sources */,
+				DCC1796E250EF51F00D9F8D4 /* SceneDelegate.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DCC1797D250EF52100D9F8D4 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DCC17986250EF52100D9F8D4 /* testiosTests.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DCC17988250EF52100D9F8D4 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DCC17991250EF52100D9F8D4 /* testiosUITests.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		DCC17983250EF52100D9F8D4 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = DCC17965250EF51F00D9F8D4 /* testios */;
+			targetProxy = DCC17982250EF52100D9F8D4 /* PBXContainerItemProxy */;
+		};
+		DCC1798E250EF52100D9F8D4 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = DCC17965250EF51F00D9F8D4 /* testios */;
+			targetProxy = DCC1798D250EF52100D9F8D4 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		DCC17972250EF51F00D9F8D4 /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				DCC17973250EF51F00D9F8D4 /* Base */,
+			);
+			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+		DCC17977250EF52000D9F8D4 /* LaunchScreen.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				DCC17978250EF52000D9F8D4 /* Base */,
+			);
+			name = LaunchScreen.storyboard;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		DCC17993250EF52100D9F8D4 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 13.6;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+			};
+			name = Debug;
+		};
+		DCC17994250EF52100D9F8D4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 13.6;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		DCC17996250EF52100D9F8D4 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				INFOPLIST_FILE = testios/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.chenyue.test.testios;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		DCC17997250EF52100D9F8D4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				INFOPLIST_FILE = testios/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.chenyue.test.testios;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		DCC17999250EF52100D9F8D4 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				INFOPLIST_FILE = testiosTests/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 13.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.chenyue.test.testiosTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/testios.app/testios";
+			};
+			name = Debug;
+		};
+		DCC1799A250EF52100D9F8D4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				INFOPLIST_FILE = testiosTests/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 13.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.chenyue.test.testiosTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/testios.app/testios";
+			};
+			name = Release;
+		};
+		DCC1799C250EF52100D9F8D4 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				INFOPLIST_FILE = testiosUITests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.chenyue.test.testiosUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = testios;
+			};
+			name = Debug;
+		};
+		DCC1799D250EF52100D9F8D4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				INFOPLIST_FILE = testiosUITests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.chenyue.test.testiosUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = testios;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		DCC17961250EF51F00D9F8D4 /* Build configuration list for PBXProject "testios" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DCC17993250EF52100D9F8D4 /* Debug */,
+				DCC17994250EF52100D9F8D4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		DCC17995250EF52100D9F8D4 /* Build configuration list for PBXNativeTarget "testios" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DCC17996250EF52100D9F8D4 /* Debug */,
+				DCC17997250EF52100D9F8D4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		DCC17998250EF52100D9F8D4 /* Build configuration list for PBXNativeTarget "testiosTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DCC17999250EF52100D9F8D4 /* Debug */,
+				DCC1799A250EF52100D9F8D4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		DCC1799B250EF52100D9F8D4 /* Build configuration list for PBXNativeTarget "testiosUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DCC1799C250EF52100D9F8D4 /* Debug */,
+				DCC1799D250EF52100D9F8D4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = DCC1795E250EF51F00D9F8D4 /* Project object */;
+}
