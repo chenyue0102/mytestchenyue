@@ -18,7 +18,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void startGame(){
-        Intent intent = new Intent(this, UnityPlayerActivity.class);
+        Intent intent = new Intent(this, MyUnityPlayerActivity.class);
         startActivity(intent);
     }
 }
