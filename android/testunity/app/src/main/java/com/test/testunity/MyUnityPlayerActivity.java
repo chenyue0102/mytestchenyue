@@ -28,7 +28,7 @@ public class MyUnityPlayerActivity extends UnityPlayerActivity {
     }
 
     public void unityCallback(String text){
-        Log.i("MyUnityPlayerActivity", "unityCallback:" + text);
+        Log.i("MyUnityPlayerActivity", "receive unitymsg:" + text);
     }
 
     @Override
