@@ -35,8 +35,8 @@ public class UnityPlayerActivity extends Activity implements IUnityPlayerLifecyc
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         super.onCreate(savedInstanceState);
 
-        //String cmdLine = updateUnityCommandLineArguments(getIntent().getStringExtra("unity"));
-        //getIntent().putExtra("unity", cmdLine);
+        String cmdLine = updateUnityCommandLineArguments(getIntent().getStringExtra("unity"));
+        getIntent().putExtra("unity", cmdLine);
 
         mUnityPlayer = new UnityPlayer(this, this);
         setContentView(mUnityPlayer);

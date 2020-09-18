@@ -4,14 +4,9 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 
-import com.unity3d.player.UnityPlayerActivity;
+import com.unity3d.player.UnityMessagePlayerActivity;
 
-public class MyUnityPlayerActivity extends UnityPlayerActivity {
-
-    private static MyUnityPlayerActivity instance = null;
-    public static MyUnityPlayerActivity getInstance(){
-        return instance;
-    }
+public class MyUnityPlayerActivity extends UnityMessagePlayerActivity {
 
     public MyUnityPlayerActivity(){
         super();
@@ -19,27 +14,16 @@ public class MyUnityPlayerActivity extends UnityPlayerActivity {
     }
 
     public void delaySendMsg(){
+        Log.i("MyUnityPlayerActivity", "delaySendMsg");
         new Handler().postDelayed(()->{
-            String gameObjectName = "Player";//unity 对象名称
-            String methodName = "OnAppMessage";//对象方法
-            String paramText = "Put Bomb";//参数字符串
-            mUnityPlayer.UnitySendMessage(gameObjectName, methodName, paramText);
+            String paramText = "{\"msgId\":100, \"action\":\"Put Bomb\"}";//参数字符串
+            unitySendMessage(paramText);
         }, 5000);
     }
 
-    public void unityCallback(String text){
-        Log.i("MyUnityPlayerActivity", "receive unitymsg:" + text);
+    @Override
+    protected void onUnityMessage(String msgText) {
+        Log.i("MyUnityPlayerActivity", "receive unitymsg:" + msgText);
     }
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState){
-        super.onCreate(savedInstanceState);
-        MyUnityPlayerActivity.instance = this;
-    }
-
-    @Override
-    protected void onDestroy(){
-        MyUnityPlayerActivity.instance = null;
-        super.onDestroy();
-    }
 }
