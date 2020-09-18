@@ -41,6 +41,8 @@ public class UIManager : MonoBehaviour
     {
         pauseMenu.SetActive(false);
         Time.timeScale = 1;
+        string testMsg = "{\"msgId\":100}";
+        MessageBriage.GetInstance().OnAppMessage(testMsg);
     }
 
     public void SetBossMaxHealth(float health)

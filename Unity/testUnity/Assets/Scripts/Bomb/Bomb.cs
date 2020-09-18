@@ -65,8 +65,8 @@ public class Bomb : MonoBehaviour
                 item.GetComponent<IDamageable>().GetHit(2);
             }
         }
-        explotionNotify(transform);
-        explotionNotify = null;
+        //explotionNotify(transform);
+        //explotionNotify = null;
     }
 
     void DestroyThis()

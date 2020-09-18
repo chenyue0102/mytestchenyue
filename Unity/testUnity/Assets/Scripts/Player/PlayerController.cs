@@ -44,6 +44,14 @@ public class PlayerController : MonoBehaviour,IDamageable
         health = GameManager.instance.LoadHealth();
         UIManager.instance.UpdateHealth(health);
         joystick = FindObjectOfType<FixedJoystick>();
+
+        MessageBriage.GetInstance().RegMsg(100, OnMessageBomb);
+    }
+
+    void OnMessageBomb(int msgId, string msgText)
+    {
+        Debug.LogFormat("OnMessageBomb msgId:{0} msgText:{1}", new object[] { msgId, msgText });
+        Attack();
     }
 
     // Update is called once per frame
@@ -206,5 +214,11 @@ public class PlayerController : MonoBehaviour,IDamageable
     private void OnTriggerExit2D(Collider2D collision)
     {
         bombs.Remove(collision.transform);
+    }
+
+    public void OnAppMessage(string msg)
+    {
+        Debug.Log(msg);
+        Attack();
     }
 }
