@@ -13,5 +13,5 @@ public class MessageBriage : MessageBriageReceive
     {
         Debug.Log("MessageBriage SendMessageToApp " + paramText);
     }
-
+}
 #endif
