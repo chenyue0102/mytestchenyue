@@ -7,7 +7,12 @@
 //
 
 #import <Foundation/Foundation.h>
+#import <UnityFramework/UnityFramework.h>
+#import <UnityFramework/NativeCallProxy.h>
 #import "UnityHelper.h"
+
+static const char *UNITY_RECEIVE_OBJECT_NAME = "MessageBriage";
+static const char *UNITY_RECEIVE_METHOD_NAME = "OnAppMessage";
 
 UnityFramework* UnityFrameworkLoad(){
     NSString* bundlePath = nil;
@@ -51,7 +56,7 @@ UnityFramework* UnityFrameworkLoad(){
     return nil != ufw && nil != [ufw appController];
 }
 
--(bool)initUnity:(const char*)dataBundleId argc:(int)argc argv:(char*[])argv appLaunchOpts:(NSDictionary*)appLaunchOpts{
+-(bool)initUnity:(const char*)dataBundleId argc:(int)argc argv:(char*[])argv appLaunchOpts:(NSDictionary*)appLaunchOpts aApi:(id<NativeCallsProtocol>)aApi{
     bool ret = false;
     
     do {
@@ -68,7 +73,7 @@ UnityFramework* UnityFrameworkLoad(){
         }
         [ufw setDataBundleId: dataBundleId];
         [ufw registerFrameworkListener: self];
-        //[NSClassFromString(@"FrameworkLibAPI") registerAPIforNativeCalls:self];
+        [NSClassFromString(@"FrameworkLibAPI") registerAPIforNativeCalls:aApi];
         
         [ufw runEmbeddedWithArgc:argc argv:argv appLaunchOpts:appLaunchOpts];
         [ufw appController].quitHandler = ^{
@@ -86,8 +91,16 @@ UnityFramework* UnityFrameworkLoad(){
         [ufw showUnityWindow];
         return true;
     }else{
-        NSAssert(false, @"unity not init failed");
+        NSAssert(false, @"showUnityWindow unity not init failed");
         return false;
+    }
+}
+
+-(void)UnitySendMessage:(const char*)jsonText{
+    if ([self unityIsInitialized]){
+        [ufw sendMessageToGOWithName:UNITY_RECEIVE_OBJECT_NAME functionName:UNITY_RECEIVE_METHOD_NAME message:jsonText];
+    }else{
+        NSAssert(false, @"UnitySendMessage unity not init failed");
     }
 }
 @end

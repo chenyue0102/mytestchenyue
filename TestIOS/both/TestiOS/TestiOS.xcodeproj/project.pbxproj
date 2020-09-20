@@ -8,8 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		DC5248B9251206D9008776B2 /* UnityHelper.mm in Sources */ = {isa = PBXBuildFile; fileRef = DC5248B7251206D9008776B2 /* UnityHelper.mm */; };
-		DC92CB282512340C00FBC0A9 /* UnityFramework.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = DC92CB262512340C00FBC0A9 /* UnityFramework.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		DC92CB2A25123F5400FBC0A9 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DC92CB2925123F5400FBC0A9 /* UIKit.framework */; };
+		DCC0F48C2514A8FA00038B79 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DCC0F48B2514A8FA00038B79 /* UIKit.framework */; };
+		DCC0F48F2514A92300038B79 /* UnityFramework.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = DCC0F48D2514A92300038B79 /* UnityFramework.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		DCD1B0232511EE8F00D334AB /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = DCD1B0222511EE8F00D334AB /* AppDelegate.m */; };
 		DCD1B0292511EE8F00D334AB /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = DCD1B0282511EE8F00D334AB /* ViewController.m */; };
 		DCD1B02C2511EE8F00D334AB /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = DCD1B02A2511EE8F00D334AB /* Main.storyboard */; };
@@ -44,7 +44,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				DC92CB282512340C00FBC0A9 /* UnityFramework.framework in Embed Frameworks */,
+				DCC0F48F2514A92300038B79 /* UnityFramework.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -54,8 +54,8 @@
 /* Begin PBXFileReference section */
 		DC5248B7251206D9008776B2 /* UnityHelper.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = UnityHelper.mm; sourceTree = "<group>"; };
 		DC5248B8251206D9008776B2 /* UnityHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = UnityHelper.h; sourceTree = "<group>"; };
-		DC92CB262512340C00FBC0A9 /* UnityFramework.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = UnityFramework.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		DC92CB2925123F5400FBC0A9 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
+		DCC0F48B2514A8FA00038B79 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
+		DCC0F48D2514A92300038B79 /* UnityFramework.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = UnityFramework.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		DCD1B01E2511EE8F00D334AB /* TestiOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TestiOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		DCD1B0212511EE8F00D334AB /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		DCD1B0222511EE8F00D334AB /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
@@ -79,7 +79,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				DC92CB2A25123F5400FBC0A9 /* UIKit.framework in Frameworks */,
+				DCC0F48C2514A8FA00038B79 /* UIKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -103,8 +103,8 @@
 		DC5248B22511F4FF008776B2 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				DC92CB2925123F5400FBC0A9 /* UIKit.framework */,
-				DC92CB262512340C00FBC0A9 /* UnityFramework.framework */,
+				DCC0F48D2514A92300038B79 /* UnityFramework.framework */,
+				DCC0F48B2514A8FA00038B79 /* UIKit.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -405,7 +405,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.7;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.4;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -457,7 +457,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.7;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.4;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = NO;

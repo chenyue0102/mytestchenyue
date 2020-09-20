@@ -5,7 +5,6 @@
 //  Created by chenyue on 2020/9/14.
 //  Copyright © 2020 chenyue. All rights reserved.
 //
-
 #import "ViewController.h"
 #import "UnityHelper.h"
 
@@ -34,6 +33,10 @@
     
     messageout = (UITextView*)[self.view viewWithTag:4];
 }
+
+-(void)onUnityMessage:(NSString *)msgText{
+    [self appendLog:msgText];
+}
      
 - (void) onClickTest{
      UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"Alert Title"
@@ -50,9 +53,11 @@
     extern int g_argc;
     extern char ** g_argv;
     NSDictionary *g_launchOptions;
-    bool ret = [unityHelper initUnity:"com.unity3d.framework" argc:g_argc argv:g_argv appLaunchOpts:g_launchOptions];
+    bool ret = [unityHelper initUnity:"com.unity3d.framework" argc:g_argc argv:g_argv appLaunchOpts:g_launchOptions aApi:self];
     NSLog(@"init unity:%d", ret);
     [self appendLog: [NSString stringWithFormat:@"init unity result:%d\n", ret]];
+    
+    [self performSelector:@selector(delayMethod) withObject:nil afterDelay:5.0];
 }
 
 -(void) onClickShowUnity{
@@ -62,5 +67,9 @@
 
 -(void) appendLog:(NSString*)text{
     [messageout setText: [[messageout text] stringByAppendingString:text]];
+}
+
+-(void) delayMethod{
+    [unityHelper UnitySendMessage:""];
 }
 @end

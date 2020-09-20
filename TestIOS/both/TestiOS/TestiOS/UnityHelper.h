@@ -9,16 +9,18 @@
 #ifndef UnityHelper_h
 #define UnityHelper_h
 #import <UnityFramework/UnityFramework.h>
-//#import <Libraries/Plugins/iOS/NativeCallProxy.h>
+
 
 @class UnityFramework;
-@interface UnityHelper : UIResponder<UnityFrameworkListener/*, NativeCallsProtocol*/>{
+@protocol NativeCallsProtocol;
+@interface UnityHelper : UIResponder<UnityFrameworkListener>{
 @private UnityFramework *ufw;
 }
 
 -(id)init;
 -(bool) unityIsInitialized;
--(bool)initUnity:(const char*)dataBundleId argc:(int)argc argv:(char*[])argv appLaunchOpts:(NSDictionary*)appLaunchOpts;
+-(bool)initUnity:(const char*)dataBundleId argc:(int)argc argv:(char*[])argv appLaunchOpts:(NSDictionary*)appLaunchOpts aApi:(id<NativeCallsProtocol>)aApi;
 -(bool)showUnityWindow;
+-(void)UnitySendMessage:(const char*)jsonText;
 @end
 #endif /* UnityHelper_h */

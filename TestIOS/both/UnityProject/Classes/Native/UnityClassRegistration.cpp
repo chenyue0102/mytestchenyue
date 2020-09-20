@@ -39,6 +39,9 @@ extern "C" void RegisterStaticallyLinkedModulesGranular()
 	void RegisterModule_Tilemap();
 	RegisterModule_Tilemap();
 
+	void RegisterModule_TLS();
+	RegisterModule_TLS();
+
 	void RegisterModule_UI();
 	RegisterModule_UI();
 

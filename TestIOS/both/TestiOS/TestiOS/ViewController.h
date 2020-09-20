@@ -7,15 +7,16 @@
 //
 
 #import <UIKit/UIKit.h>
-
+#import <Libraries/Plugins/iOS/NativeCallProxy.h>
 @class UnityHelper;
-@interface ViewController : UIViewController{
+@interface ViewController : UIViewController<NativeCallsProtocol>{
 @private UnityHelper *unityHelper;
 @private UITextView *messageout;
 }
 -(void) onClickTest;
 -(void) onClickInitUnity;
 -(void) onClickShowUnity;
--(void)appendLog:(NSString*)text;
+-(void) appendLog:(NSString*)text;
+-(void) delayMethod;
 @end
 
