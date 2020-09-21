@@ -10,6 +10,7 @@ public class Bomb : MonoBehaviour
     private Rigidbody2D rb;
     private Collider2D coll;
     public LayerMask targeLayer;
+    public AudioClip bombExplotion;
 
     public float startTime;
     public float waitTime;
@@ -44,8 +45,7 @@ public class Bomb : MonoBehaviour
 
     void Explotion()
     {
-        StartCoroutine(OnPlaySound());
-
+        AudioSource.PlayClipAtPoint(bombExplotion, transform.position);
         Collider2D[] aroundObjects = Physics2D.OverlapCircleAll(transform.position, radius, targeLayer);//检测周围物体
         //coll.enabled = false;
         //rb.gravityScale = 0;
@@ -69,18 +69,6 @@ public class Bomb : MonoBehaviour
         }
         //explotionNotify(transform);
         //explotionNotify = null;
-    }
-
-    IEnumerator OnPlaySound()
-    {
-        GameObject bombExplotion = GameObject.Find("BombExplotion");
-        AudioSource audioSource = mainCamera.GetComponent<AudioSource>();
-        AudioClip audioClip = new AudioClip();
-        audioSource.PlayOneShot(audioClip);
-        float length = audioSource.clip.length;
-        yield return new WaitForSeconds(length);
-        audioSource.Stop();
-        Destroy(gameObject);
     }
 
     void DestroyThis()
