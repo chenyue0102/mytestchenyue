@@ -101,6 +101,10 @@ public class PlayerController : MonoBehaviour,IDamageable
         {
             horizontalInput = -1;
         }
+        if (0.0f == horizontalInput)
+        {
+            horizontalInput = Input.GetAxisRaw("Horizontal");
+        }
         rb.velocity = new Vector2(horizontalInput * speed, rb.velocity.y);
 
         if (0 != horizontalInput)
