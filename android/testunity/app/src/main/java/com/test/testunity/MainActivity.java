@@ -7,6 +7,8 @@ import android.os.Bundle;
 
 import com.unity3d.player.UnityPlayerActivity;
 
+import java.io.FileReader;
+
 public class MainActivity extends AppCompatActivity {
 
     @Override
@@ -18,6 +20,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void startGame(){
+        try{
+            FileReader file = new FileReader("/storage/emulated/0/AssetScene.unity3d");
+            char c[] = new char[4];
+            file.read(c);
+            file.close();
+        }catch(Exception e){
+            e.printStackTrace();
+        }
         Intent intent = new Intent(this, MyUnityPlayerActivity.class);
         startActivity(intent);
     }
