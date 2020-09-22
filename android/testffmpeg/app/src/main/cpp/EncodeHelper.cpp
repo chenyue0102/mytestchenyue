@@ -357,7 +357,7 @@ ERROR:
 bool EncodeHelper::open(const char *outputFile) {
     assert(!mEncodeThread.joinable());
     int err = 0;
-
+    AVDictionary* muxer_opts = NULL;
     std::lock_guard<std::mutex> lk(mEncodeThreadInfo.mtx);
     auto &formatContext = mEncodeThreadInfo.formatContext;
     if ((err = avformat_alloc_output_context2(&formatContext, nullptr, nullptr, outputFile)) < 0){
@@ -445,7 +445,7 @@ bool EncodeHelper::open(const char *outputFile) {
         assert(false);
         goto ERROR;
     }*/
-    AVDictionary* muxer_opts = NULL;
+
     //if (AVSTREAM_INIT_IN_WRITE_HEADER == err) {
         if ((err = avformat_write_header(formatContext, &muxer_opts)) < 0) {
             LOGAVERROR(err);
