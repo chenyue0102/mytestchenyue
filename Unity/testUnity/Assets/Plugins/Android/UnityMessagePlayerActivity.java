@@ -2,7 +2,6 @@ package com.unity3d.player;
 
 import android.os.Bundle;
 
-import com.unity3d.player.UnityPlayerActivity;
 public abstract class UnityMessagePlayerActivity extends UnityPlayerActivity{
     public static final String UNITY_RECEIVE_OBJECT_NAME = "MessageBriage";
     public static final String UNITY_RECEIVE_METHOD_NAME = "OnAppMessage";
