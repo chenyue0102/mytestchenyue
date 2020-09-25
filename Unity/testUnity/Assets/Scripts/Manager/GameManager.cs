@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Data.SqlTypes;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -38,6 +39,14 @@ public class GameManager : MonoBehaviour
     public void Start()
     {
         MessageBriage.GetInstance().SendMessageToApp(APP_BRIAGE_INIT_TEXT);
+    }
+
+    public void Update()
+    {
+        if (Input.GetKeyUp(KeyCode.Escape))
+        {
+            QuitGame();
+        }
     }
 
     public void GameOver()
@@ -81,7 +90,16 @@ public class GameManager : MonoBehaviour
 
     public void QuitGame()
     {
-        Application.Quit();
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+        Debug.Log("GameManager QuitGame isPlaying=false");
+#else
+
+    //Application.Quit();
+    string exitUnityMsg = "{\"msgId\": 2}";
+    MessageBriage.GetInstance().SendMessageToApp(exitUnityMsg);
+#endif
+
     }
 
     public float LoadHealth()
