@@ -589,7 +589,7 @@ int main(int argc, char *argv[])
 	avformat_network_init();
 	av_log_set_level(AV_LOG_DEBUG);
 
-	FFMPEGTest::test_decode_encode("d:/v1080.mp4", "d:/mux.mp4");
+	//FFMPEGTest::test_decode_encode("d:/v1080.mp4", "d:/mux.mp4");
 #if 0
 	SDLAudioHelper sdlAudioHelper;
 	DirectSoundHelper directSoundHelper;
@@ -622,13 +622,15 @@ int main(int argc, char *argv[])
 #endif
 	PlayManager playManager;
 	//playManager.openFile("d:/v1080.mp4");
-	playManager.openFile("rtmp://58.200.131.2:1935/livetv/hunantv");
+	playManager.openFile("d:/test.mp3");
+	//playManager.openFile("rtmp://58.200.131.2:1935/livetv/hunantv");
 
 	g_playManager = &playManager;
 	glutDisplayFunc(&testdraw);
 	glutIdleFunc(&myIdle);
 	//glutKeyboardFunc(&keyboard);
 	//glutSpecialFunc(&specialkey);
+	
 	glutMainLoop();
 
 

@@ -8,6 +8,9 @@
 extern "C"{
 #include "libavformat/avformat.h"
 #include "libavutil/opt.h"
+#include "libavfilter/avfilter.h"
+#include "libavfilter/buffersrc.h"
+#include "libavfilter/buffersink.h"
 }
 #include "EnumDefine.h"
 #ifdef _WIN32
@@ -198,6 +201,49 @@ static void audioThread(MediaInfo *pInfo, std::function<void()> notifyReadFrame)
 	auto &mtx = info.mtx;
 	auto &cv = info.cv;
     AVFrame *frame = av_frame_alloc();
+	const AVFilter *abuffersrc = avfilter_get_by_name("abuffer");
+	const AVFilter *abuffersink = avfilter_get_by_name("abuffersink");
+	AVFilterContext *in = nullptr;
+	AVFilterContext *out = nullptr;
+	AVFilterContext *aecho = nullptr;
+	AVFilterGraph *graph = avfilter_graph_alloc();
+	const char *args = "0.8:0.88:60:0.4";
+	int ret = 0;
+	char szBufArg[128] = { 0 };
+	AVRational time_base = pInfo->stream->time_base;
+	AVCodecContext *dec_ctx = pInfo->codecContext;
+	if (!dec_ctx->channel_layout)
+		dec_ctx->channel_layout = av_get_default_channel_layout(dec_ctx->channels);
+	snprintf(szBufArg, sizeof(szBufArg),
+		"time_base=%d/%d:sample_rate=%d:sample_fmt=%s:channel_layout=%d",
+		time_base.num, time_base.den, dec_ctx->sample_rate,
+		av_get_sample_fmt_name(dec_ctx->sample_fmt), dec_ctx->channel_layout);
+	if ((ret = avfilter_graph_create_filter(&in, abuffersrc, "in", szBufArg, nullptr, graph)) < 0) {
+		LogAvError(ret);
+		assert(false);
+	}
+
+	if ((ret = avfilter_graph_create_filter(&out, avfilter_get_by_name("abuffersink"), "out", nullptr, nullptr, graph)) < 0) {
+		LogAvError(ret);
+		assert(false);
+	}
+	if ((ret = avfilter_graph_create_filter(&aecho, avfilter_get_by_name("aecho"), nullptr, args, nullptr, graph)) < 0) {
+		LogAvError(ret);
+		assert(false);
+	}
+	if ((ret = avfilter_link(in, 0, aecho, 0)) < 0) {
+		LogAvError(ret);
+		assert(false);
+	}
+	if ((ret = avfilter_link(aecho, 0, out, 0)) < 0) {
+		LogAvError(ret);
+		assert(false);
+	}
+	if ((ret = avfilter_graph_config(graph, nullptr)) < 0) {
+		LogAvError(ret);
+		assert(false);
+	}
+	
 
 	for (;;) {
 		std::unique_lock<std::mutex> lk(info.mtx);
@@ -209,7 +255,7 @@ static void audioThread(MediaInfo *pInfo, std::function<void()> notifyReadFrame)
 		    break;
 		}
 
-		int ret = avcodec_receive_frame(info.codecContext, frame);
+		ret = avcodec_receive_frame(info.codecContext, frame);
 		if (ret < 0) {
 			if (AVERROR_EOF == ret) {
 				break;
@@ -246,13 +292,33 @@ static void audioThread(MediaInfo *pInfo, std::function<void()> notifyReadFrame)
 		}
 		else {
 			info.receivedFrame = true;
+#if 0
 			AVFrame *tmpFrame = av_frame_alloc();
 			av_frame_move_ref(tmpFrame, frame);
 			info.frames.push_back(tmpFrame);
 			info.cv.notify_all();
+#else
+			if ((ret = av_buffersrc_write_frame(in, frame)) < 0) {
+				LogAvError(ret);
+				assert(false);
+			}
+			av_frame_unref(frame);
+			bool notify = false;
+			while (av_buffersink_get_frame(out, frame) >= 0 ){
+				AVFrame *tmpFrame = av_frame_alloc();
+				av_frame_move_ref(tmpFrame, frame);
+				info.frames.push_back(tmpFrame);
+				notify = true;
+			}
+			if (notify) {
+				info.cv.notify_all();
+			}
+#endif
 		}
 	}
     av_frame_free(&frame);
+
+	avfilter_graph_free(&graph);
 }
 
 static void videoThread(MediaInfo *pInfo, std::function<void()> notifyReadFrame) {
