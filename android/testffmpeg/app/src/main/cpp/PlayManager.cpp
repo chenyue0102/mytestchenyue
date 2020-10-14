@@ -198,28 +198,9 @@ static void sendPacket(MediaInfo &info) {
 	}
 }
 
-void reverb_frame(reverb_state_st rv, AVFrame *frame) {
+void my_reverb_frame(reverb_state_st rv, AVFrame *frame) {
 	BaseTime bastTime;
-	assert(2 == frame->channels);
-	if (frame->format == AV_SAMPLE_FMT_FLTP){
-        float *l = (float*)frame->data[0], *r = (float*)frame->data[1];
-        float outl, outr;
-        for (int i = 0; i < frame->nb_samples; i++) {
-            reverb_float(rv, l[i], r[i], &outl, &outr);
-            l[i] = outl;
-            r[i] = outr;
-        }
-	}else if (frame->format == AV_SAMPLE_FMT_S16P){
-        uint16_t *l = (uint16_t*)frame->data[0], *r = (uint16_t*)frame->data[1];
-        uint16_t outl, outr;
-        for (int i = 0; i < frame->nb_samples; i++) {
-            reverb_uint16(rv, l[i], r[i], &outl, &outr);
-            l[i] = outl;
-            r[i] = outr;
-        }
-	}else{
-	    assert(false);
-	}
+	reverb_frame(rv, frame);
     SC(Log).i("reverb_frame %lld", bastTime.getCurrentTimeUs());
 }
 
@@ -323,7 +304,7 @@ static void audioThread(MediaInfo *pInfo, std::function<void()> notifyReadFrame)
 		}
 		else {
 			info.receivedFrame = true;
-			reverb_frame(rv, frame);
+			my_reverb_frame(rv, frame);
 			AVFrame *tmpFrame = av_frame_alloc();
 			av_frame_move_ref(tmpFrame, frame);
 			info.frames.push_back(tmpFrame);

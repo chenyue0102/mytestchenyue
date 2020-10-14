@@ -2,6 +2,7 @@
 #include <malloc.h>
 #include <assert.h>
 #include <string.h>
+#include "libavformat/avformat.h"
 #include "reverb.h"
 
 extern sf_sample_st earlyref_step(sf_rv_earlyref_st *earlyref, sf_sample_st input);
@@ -242,6 +243,31 @@ void reverb_uint16(reverb_state_st rv, uint16_t left, uint16_t right, uint16_t *
 	reverb_float(rv, fl, fr, &outl, &outr);
 	*outleft = float_to_uint16(outl);
 	*outright = float_to_uint16(outr);
+}
+
+void reverb_frame(reverb_state_st rv, struct AVFrame *frame) {
+	assert(2 == frame->channels);
+	if (frame->format == AV_SAMPLE_FMT_FLTP) {
+		float *l = (float*)frame->data[0], *r = (float*)frame->data[1];
+		float outl, outr;
+		for (int i = 0; i < frame->nb_samples; i++) {
+			reverb_float(rv, l[i], r[i], &outl, &outr);
+			l[i] = outl;
+			r[i] = outr;
+		}
+	}
+	else if (frame->format == AV_SAMPLE_FMT_S16P) {
+		uint16_t *l = (uint16_t*)frame->data[0], *r = (uint16_t*)frame->data[1];
+		uint16_t outl, outr;
+		for (int i = 0; i < frame->nb_samples; i++) {
+			reverb_uint16(rv, l[i], r[i], &outl, &outr);
+			l[i] = outl;
+			r[i] = outr;
+		}
+	}
+	else {
+		assert(0);
+	}
 }
 
 void free_reverb_state(reverb_state_st rv)
