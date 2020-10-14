@@ -36,6 +36,8 @@ add_library( # Sets the name of the library.
         PlayManager.cpp
         FrameReceive.cpp
         Demuxer.cpp
+        reverdhelper.c
+        reverb.c
 
         ${COMMON}/BitBuffer.cpp
         ${COMMON}/OpenGLHelper.cpp

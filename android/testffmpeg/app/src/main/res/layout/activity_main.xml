@@ -43,6 +43,11 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="seek"/>
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="mp3"
+            android:id="@+id/btn_open_mp3"/>
     </LinearLayout>
 
     <com.test.testffmpeg.MySurfaceView

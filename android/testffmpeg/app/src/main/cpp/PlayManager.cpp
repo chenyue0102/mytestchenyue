@@ -201,15 +201,26 @@ static void sendPacket(MediaInfo &info) {
 void reverb_frame(reverb_state_st rv, AVFrame *frame) {
 	BaseTime bastTime;
 	assert(2 == frame->channels);
-	assert(frame->format == AV_SAMPLE_FMT_FLTP);
-	float *l = (float*)frame->data[0], *r = (float*)frame->data[1];
-	float outl, outr;
-	for (int i = 0; i < frame->nb_samples; i++) {
-		reverb_float(rv, l[i], r[i], &outl, &outr);
-		l[i] = outl;
-		r[i] = outr;
+	if (frame->format == AV_SAMPLE_FMT_FLTP){
+        float *l = (float*)frame->data[0], *r = (float*)frame->data[1];
+        float outl, outr;
+        for (int i = 0; i < frame->nb_samples; i++) {
+            reverb_float(rv, l[i], r[i], &outl, &outr);
+            l[i] = outl;
+            r[i] = outr;
+        }
+	}else if (frame->format == AV_SAMPLE_FMT_S16P){
+        uint16_t *l = (uint16_t*)frame->data[0], *r = (uint16_t*)frame->data[1];
+        uint16_t outl, outr;
+        for (int i = 0; i < frame->nb_samples; i++) {
+            reverb_uint16(rv, l[i], r[i], &outl, &outr);
+            l[i] = outl;
+            r[i] = outr;
+        }
+	}else{
+	    assert(false);
 	}
-	printf("reverb_frame %lld\n", bastTime.getCurrentTimeUs());
+    SC(Log).i("reverb_frame %lld", bastTime.getCurrentTimeUs());
 }
 
 static void audioThread(MediaInfo *pInfo, std::function<void()> notifyReadFrame) {
@@ -228,6 +239,7 @@ static void audioThread(MediaInfo *pInfo, std::function<void()> notifyReadFrame)
 	char szBufArg[128] = { 0 };
 	AVRational time_base = pInfo->stream->time_base;
 	AVCodecContext *dec_ctx = pInfo->codecContext;
+#ifdef _WIN32
 	if (!dec_ctx->channel_layout)
 		dec_ctx->channel_layout = av_get_default_channel_layout(dec_ctx->channels);
 	snprintf(szBufArg, sizeof(szBufArg),
@@ -259,6 +271,7 @@ static void audioThread(MediaInfo *pInfo, std::function<void()> notifyReadFrame)
 		LogAvError(ret);
 		assert(false);
 	}
+#endif
 	
 	reverb_state_st rv = alloc_reverb_state();
 	set_reverb(rv, "largehall1", pInfo->codecContext->sample_rate);
@@ -341,8 +354,9 @@ static void audioThread(MediaInfo *pInfo, std::function<void()> notifyReadFrame)
 		}
 	}
     av_frame_free(&frame);
-
+#ifdef _WIN32
 	avfilter_graph_free(&graph);
+#endif
 	free_reverb_state(rv);
 }
 

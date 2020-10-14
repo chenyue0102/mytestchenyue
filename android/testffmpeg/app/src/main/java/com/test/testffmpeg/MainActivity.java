@@ -25,6 +25,7 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.btn_pause_play).setOnClickListener(v->onPausePlay());
         findViewById(R.id.btn_resume_play).setOnClickListener(v->onResumePlay());
         findViewById(R.id.btn_seek).setOnClickListener(v->onSeek());
+        findViewById(R.id.btn_open_mp3).setOnClickListener(v->onOpenMp3());
 
         String []permissions = new String[]{
                 Manifest.permission.INTERNET,
@@ -53,6 +54,12 @@ public class MainActivity extends AppCompatActivity {
     private void onOpenFile(){
         String filePath = StorageHelper.getSDCardPath();
         filePath += "/v1080.mp4";
+        openFile(filePath);
+    }
+
+    private void onOpenMp3(){
+        String filePath = StorageHelper.getSDCardPath();
+        filePath += "/test.mp3";
         openFile(filePath);
     }
 
