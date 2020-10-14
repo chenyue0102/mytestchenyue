@@ -587,7 +587,7 @@ int main(int argc, char *argv[])
 	SDL_Init(SDL_INIT_AUDIO);
 	avcodec_register_all();
 	avformat_network_init();
-	av_log_set_level(AV_LOG_DEBUG);
+	//av_log_set_level(AV_LOG_DEBUG);
 
 	//FFMPEGTest::test_decode_encode("d:/v1080.mp4", "d:/mux.mp4");
 #if 0

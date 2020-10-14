@@ -15,5 +15,6 @@
 .vs
 .idea
 app/src/main/cpp/testffmpeg/Debug
+app/src/main/cpp/testffmpeg/Release
 app/src/main/cpp/testffmpeg/testffmpeg.VC.db
 app/src/main/cpp/testffmpeg/testffmpeg.vcxproj.user

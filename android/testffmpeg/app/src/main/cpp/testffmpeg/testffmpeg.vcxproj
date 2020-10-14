@@ -91,7 +91,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>FREEGLUT_STATIC;WIN32;SDL_MAIN_HANDLED;_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_USE_MATH_DEFINES;FREEGLUT_STATIC;WIN32;SDL_MAIN_HANDLED;_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>../../../../../../../testopengl/include;../../../../../../../testffmpeg/include;../../../../../../include;../../../../../../include/SDL2;../../../../../../common;../;./;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
     </ClCompile>
@@ -108,7 +108,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_USE_MATH_DEFINES;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -123,8 +123,8 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;SDL_MAIN_HANDLED;NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../../../../../../../testopengl/include;../../../../../../../testffmpeg/include;../../../../../../include/SDL2;../../../../../../common;../;./;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_USE_MATH_DEFINES;FREEGLUT_STATIC;WIN32;SDL_MAIN_HANDLED;NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>../../../../../../../testopengl/include;../../../../../../../testffmpeg/include;../../../../../../include;../../../../../../include/SDL2;../../../../../../common;../;./;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
     </ClCompile>
     <Link>
@@ -133,7 +133,8 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>../../../../../../../SDL/lib/x86;../../../../../../../testopengl/lib;../../../../../../../testopengl/lib/Release/Win32;../../../../../../../testffmpeg/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>avformat.lib;avcodec.lib;avutil.lib;swresample.lib;swscale.lib;d3dx9.lib;dsound.lib;SDL2.lib;SDL2main.lib;glew32.lib;freeglut_static.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>glew32.lib;glew32s.lib;freeglut_static.lib;avformat.lib;avcodec.lib;avutil.lib;avfilter.lib;swresample.lib;swscale.lib;d3dx9.lib;dsound.lib;SDL2.lib;SDL2main.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -144,7 +145,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_USE_MATH_DEFINES;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -182,6 +183,8 @@
     <ClInclude Include="..\FrameReceive.h" />
     <ClInclude Include="..\InterfaceDefine.h" />
     <ClInclude Include="..\PlayManager.h" />
+    <ClInclude Include="..\reverb.h" />
+    <ClInclude Include="..\reverdhelper.h" />
     <ClInclude Include="DirectSoundHelper.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
@@ -202,6 +205,8 @@
     <ClCompile Include="..\FFMPEGTest.cpp" />
     <ClCompile Include="..\FrameReceive.cpp" />
     <ClCompile Include="..\PlayManager.cpp" />
+    <ClCompile Include="..\reverb.c" />
+    <ClCompile Include="..\reverdhelper.c" />
     <ClCompile Include="DirectSoundHelper.cpp" />
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="testffmpeg.cpp" />

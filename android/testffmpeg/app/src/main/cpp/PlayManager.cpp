@@ -26,6 +26,8 @@ extern "C"{
 #include "EnumDefine.h"
 #include "ClockTime.h"
 #include "OpenGLPlay.h"
+#include "reverdhelper.h"
+#include "BaseTime.h"
 
 #define MAX_AUDIO_DIFF_MS 5000
 #define AUDIO_BITS 16
@@ -196,6 +198,20 @@ static void sendPacket(MediaInfo &info) {
 	}
 }
 
+void reverb_frame(reverb_state_st rv, AVFrame *frame) {
+	BaseTime bastTime;
+	assert(2 == frame->channels);
+	assert(frame->format == AV_SAMPLE_FMT_FLTP);
+	float *l = (float*)frame->data[0], *r = (float*)frame->data[1];
+	float outl, outr;
+	for (int i = 0; i < frame->nb_samples; i++) {
+		reverb_float(rv, l[i], r[i], &outl, &outr);
+		l[i] = outl;
+		r[i] = outr;
+	}
+	printf("reverb_frame %lld\n", bastTime.getCurrentTimeUs());
+}
+
 static void audioThread(MediaInfo *pInfo, std::function<void()> notifyReadFrame) {
 	auto &info = *pInfo;
 	auto &mtx = info.mtx;
@@ -215,7 +231,7 @@ static void audioThread(MediaInfo *pInfo, std::function<void()> notifyReadFrame)
 	if (!dec_ctx->channel_layout)
 		dec_ctx->channel_layout = av_get_default_channel_layout(dec_ctx->channels);
 	snprintf(szBufArg, sizeof(szBufArg),
-		"time_base=%d/%d:sample_rate=%d:sample_fmt=%s:channel_layout=%d",
+		"time_base=%d/%d:sample_rate=%d:sample_fmt=%s:channel_layout=%llu",
 		time_base.num, time_base.den, dec_ctx->sample_rate,
 		av_get_sample_fmt_name(dec_ctx->sample_fmt), dec_ctx->channel_layout);
 	if ((ret = avfilter_graph_create_filter(&in, abuffersrc, "in", szBufArg, nullptr, graph)) < 0) {
@@ -244,6 +260,8 @@ static void audioThread(MediaInfo *pInfo, std::function<void()> notifyReadFrame)
 		assert(false);
 	}
 	
+	reverb_state_st rv = alloc_reverb_state();
+	set_reverb(rv, "largehall1", pInfo->codecContext->sample_rate);
 
 	for (;;) {
 		std::unique_lock<std::mutex> lk(info.mtx);
@@ -292,12 +310,18 @@ static void audioThread(MediaInfo *pInfo, std::function<void()> notifyReadFrame)
 		}
 		else {
 			info.receivedFrame = true;
+			reverb_frame(rv, frame);
+			AVFrame *tmpFrame = av_frame_alloc();
+			av_frame_move_ref(tmpFrame, frame);
+			info.frames.push_back(tmpFrame);
+			info.cv.notify_all();
 #if 0
 			AVFrame *tmpFrame = av_frame_alloc();
 			av_frame_move_ref(tmpFrame, frame);
 			info.frames.push_back(tmpFrame);
 			info.cv.notify_all();
-#else
+#endif
+#if 0
 			if ((ret = av_buffersrc_write_frame(in, frame)) < 0) {
 				LogAvError(ret);
 				assert(false);
@@ -319,6 +343,7 @@ static void audioThread(MediaInfo *pInfo, std::function<void()> notifyReadFrame)
     av_frame_free(&frame);
 
 	avfilter_graph_free(&graph);
+	free_reverb_state(rv);
 }
 
 static void videoThread(MediaInfo *pInfo, std::function<void()> notifyReadFrame) {
