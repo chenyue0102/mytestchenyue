@@ -9,4 +9,3 @@ Java_com_test_testspine_MainActivity_stringFromJNI(
     return env->NewStringUTF(hello.c_str());
 }
 
-

@@ -28,6 +28,7 @@ extern "C"{
 #include "OpenGLPlay.h"
 #include "reverdhelper.h"
 #include "BaseTime.h"
+#include "freeverb/myexport.h"
 
 #define MAX_AUDIO_DIFF_MS 5000
 #define AUDIO_BITS 16
@@ -220,6 +221,7 @@ static void audioThread(MediaInfo *pInfo, std::function<void()> notifyReadFrame)
 	char szBufArg[128] = { 0 };
 	AVRational time_base = pInfo->stream->time_base;
 	AVCodecContext *dec_ctx = pInfo->codecContext;
+	//my_progenitor_t progenitor = alloc_my_progenitor();
 #ifdef _WIN32
 	if (!dec_ctx->channel_layout)
 		dec_ctx->channel_layout = av_get_default_channel_layout(dec_ctx->channels);
@@ -303,12 +305,25 @@ static void audioThread(MediaInfo *pInfo, std::function<void()> notifyReadFrame)
 			}
 		}
 		else {
+#if 0
+			info.receivedFrame = true;
+			assert(frame->format == AV_SAMPLE_FMT_FLTP);
+			processreplace(progenitor, (float*)frame->data[0], (float*)frame->data[1], (float*)frame->data[0], (float*)frame->data[1], frame->nb_samples);
+
+
+			AVFrame *tmpFrame = av_frame_alloc();
+			av_frame_move_ref(tmpFrame, frame);
+			info.frames.push_back(tmpFrame);
+			info.cv.notify_all();
+#endif
+#if 1
 			info.receivedFrame = true;
 			my_reverb_frame(rv, frame);
 			AVFrame *tmpFrame = av_frame_alloc();
 			av_frame_move_ref(tmpFrame, frame);
 			info.frames.push_back(tmpFrame);
 			info.cv.notify_all();
+#endif
 #if 0
 			AVFrame *tmpFrame = av_frame_alloc();
 			av_frame_move_ref(tmpFrame, frame);
@@ -339,6 +354,7 @@ static void audioThread(MediaInfo *pInfo, std::function<void()> notifyReadFrame)
 	avfilter_graph_free(&graph);
 #endif
 	free_reverb_state(rv);
+	//free_my_progenitor(progenitor);
 }
 
 static void videoThread(MediaInfo *pInfo, std::function<void()> notifyReadFrame) {

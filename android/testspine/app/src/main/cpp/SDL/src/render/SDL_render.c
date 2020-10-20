@@ -3273,6 +3273,14 @@ SDL_DestroyRenderer(SDL_Renderer * renderer)
     renderer->DestroyRenderer(renderer);
 }
 
+//spine sdl add begin
+int
+SDL_RenderCopySpine(SDL_Renderer * renderer, SDL_Texture * texture,unsigned int mode,unsigned int VertexSize,unsigned int firstVertex,unsigned int vertexCount,const char* src_data)
+{
+    return renderer->RenderCopySpine(renderer, texture, mode, VertexSize, firstVertex, vertexCount, src_data);
+}
+//spine sdl add end
+
 int SDL_GL_BindTexture(SDL_Texture *texture, float *texw, float *texh)
 {
     SDL_Renderer *renderer;
@@ -3423,5 +3431,4 @@ SDL_GetBlendModeAlphaOperation(SDL_BlendMode blendMode)
     blendMode = SDL_GetLongBlendMode(blendMode);
     return (SDL_BlendOperation)(((Uint32)blendMode >> 16) & 0xF);
 }
-
 /* vi: set ts=4 sw=4 expandtab: */

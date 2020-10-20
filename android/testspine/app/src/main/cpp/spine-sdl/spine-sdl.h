@@ -3,10 +3,9 @@
 */
 #ifndef SPINE_SDL_H
 #define SPINE_SDL_H
-
 #define SPINE_SHORT_NAMES
-#include "spine.h"
-#include "extension.h"
+#include "spine/spine.h"
+#include "spine/extension.h"
 #include "SDL.h"
 #include <string>
 #include <vector>

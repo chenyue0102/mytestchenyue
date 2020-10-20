@@ -61,5 +61,7 @@ SDL_PROC(void, glTranslatef, (GLfloat, GLfloat, GLfloat))
 SDL_PROC(void, glRotatef, (GLfloat, GLfloat, GLfloat, GLfloat))
 SDL_PROC(void, glPopMatrix, (void))
 SDL_PROC_OES(void, glDeleteFramebuffersOES, (GLsizei, const GLuint*))
+//spine sdl add
+SDL_PROC(void, glColorPointer, (GLint, GLenum, GLsizei, const GLvoid *))
 
 /* vi: set ts=4 sw=4 expandtab: */

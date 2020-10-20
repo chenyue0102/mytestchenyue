@@ -92,14 +92,14 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_USE_MATH_DEFINES;FREEGLUT_STATIC;WIN32;SDL_MAIN_HANDLED;_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../../../../../../../testopengl/include;../../../../../../../testffmpeg/include;../../../../../../include;../../../../../../include/SDL2;../../../../../../common;../;./;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../../../../../../testopengl/include;../../../../../../../testffmpeg/include;../../../../../../include;../../../../../../include/libfreeverb3-3/freeverb;../../../../../../include/libfreeverb3-3;../../../../../../include/SDL2;../../../../../../common;../;./;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>../../../../../../../SDL/lib/x86;../../../../../../../testopengl/lib;../../../../../../../testopengl/lib/Release/Win32;../../../../../../../testffmpeg/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>glew32.lib;glew32s.lib;freeglut_staticd.lib;avformat.lib;avcodec.lib;avutil.lib;avfilter.lib;swresample.lib;swscale.lib;d3dx9.lib;dsound.lib;SDL2.lib;SDL2main.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>../../../../../../../SDL/lib/x86;../../../../../../../testopengl/lib;../../../../../../../testopengl/lib/Release/Win32;../../../../../../../testffmpeg/lib;../../../../../../../Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glew32.lib;glew32s.lib;libfreeverb3.dll.a;freeglut_staticd.lib;avformat.lib;avcodec.lib;avutil.lib;avfilter.lib;swresample.lib;swscale.lib;d3dx9.lib;dsound.lib;SDL2.lib;SDL2main.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -109,6 +109,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_USE_MATH_DEFINES;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>../../../../../../../testopengl/include;../../../../../../../testffmpeg/include;../../../../../../include;../../../../../../include/libfreeverb3-3/freeverb;../../../../../../include/libfreeverb3-3;../../../../../../include/SDL2;../../../../../../common;../;./;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -124,7 +125,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>_USE_MATH_DEFINES;FREEGLUT_STATIC;WIN32;SDL_MAIN_HANDLED;NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../../../../../../../testopengl/include;../../../../../../../testffmpeg/include;../../../../../../include;../../../../../../include/SDL2;../../../../../../common;../;./;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../../../../../../testopengl/include;../../../../../../../testffmpeg/include;../../../../../../include;../../../../../../include/libfreeverb3-3/freeverb;../../../../../../include/libfreeverb3-3;../../../../../../include/SDL2;../../../../../../common;../;./;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
     </ClCompile>
     <Link>
@@ -132,8 +133,8 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>../../../../../../../SDL/lib/x86;../../../../../../../testopengl/lib;../../../../../../../testopengl/lib/Release/Win32;../../../../../../../testffmpeg/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>glew32.lib;glew32s.lib;freeglut_static.lib;avformat.lib;avcodec.lib;avutil.lib;avfilter.lib;swresample.lib;swscale.lib;d3dx9.lib;dsound.lib;SDL2.lib;SDL2main.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>../../../../../../../SDL/lib/x86;../../../../../../../testopengl/lib;../../../../../../../testopengl/lib/Release/Win32;../../../../../../../testffmpeg/lib;../../../../../../../Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glew32.lib;glew32s.lib;libfreeverb3.dll.a;freeglut_static.lib;avformat.lib;avcodec.lib;avutil.lib;avfilter.lib;swresample.lib;swscale.lib;d3dx9.lib;dsound.lib;SDL2.lib;SDL2main.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
   </ItemDefinitionGroup>
@@ -146,6 +147,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>_USE_MATH_DEFINES;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>../../../../../../../testopengl/include;../../../../../../../testffmpeg/include;../../../../../../include;../../../../../../include/libfreeverb3-3/freeverb;../../../../../../include/libfreeverb3-3;../../../../../../include/SDL2;../../../../../../common;../;./;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

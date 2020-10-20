@@ -6,7 +6,7 @@
 cmake_minimum_required(VERSION 3.4.1)
 set(targetName  "native-lib")
 
-
+#add_definitions("-DSPINE_SHORT_NAMES")
 
 set(sdlDir "${CMAKE_CURRENT_SOURCE_DIR}/SDL")
 add_subdirectory(${sdlDir} EXCLUDE_FROM_ALL)
@@ -15,15 +15,24 @@ set(SDL2_LIBRARY SDL2)
 
 set(spineDir "${CMAKE_CURRENT_SOURCE_DIR}/spine-c")
 add_subdirectory(${spineDir} EXCLUDE_FROM_ALL)
-set(spine_LIBRARY spine-c)
+
+
+set(spinesdlDir "${CMAKE_CURRENT_SOURCE_DIR}/spine-sdl")
+add_subdirectory(${spinesdlDir} EXCLUDE_FROM_ALL)
 
 
 # Joysticks were causing trouble on android.
 add_definitions(-DSDL_JOYSTICK=0)
 
 # Include dirs.
-include_directories("${sdlDir}/include")
+include_directories(
+        "${sdlDir}/include"
+        ${spineDir}/spine-c/include/spine
+        ${spineDir}/spine-c/include
+        )
 
+message("my message")
+message("${spineDir}/spine-c/include")
 
 # Creates and names a library, sets it as either STATIC
 # or SHARED, and provides the relative paths to its source code.
@@ -66,4 +75,5 @@ target_link_libraries( # Specifies the target library.
         ${SDL2MAIN_LIBRARY}
         ${SDL2_LIBRARY}
         spine-c
+        spine-sdl
         GLESv2)

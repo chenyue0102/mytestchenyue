@@ -14,6 +14,7 @@ include_directories(
         ${CMAKE_CURRENT_SOURCE_DIR}/include/fdk-aac
         ${COMMON}
         ${MYINCLUDE}
+        ${MYINCLUDE}/libfreeverb3-3
 )
 
 #add_subdirectory(${COMMON} common_binary_dir)

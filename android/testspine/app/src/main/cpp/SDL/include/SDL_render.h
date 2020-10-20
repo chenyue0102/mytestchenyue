@@ -1136,6 +1136,13 @@ extern DECLSPEC int SDLCALL SDL_GL_UnbindTexture(SDL_Texture *texture);
  */
 extern DECLSPEC void *SDLCALL SDL_RenderGetMetalLayer(SDL_Renderer * renderer);
 
+//spine sdl add begin
+/**
+ *  \brief Copy a portion of the SPINE texture to the current rendering target.
+ */
+extern DECLSPEC int SDLCALL SDL_RenderCopySpine(SDL_Renderer * renderer, SDL_Texture * texture,unsigned int mode,unsigned int VertexSize,unsigned int firstVertex,unsigned int vertexCount,const char* src_data);
+//spine sdl add end
+
 /**
  *  \brief Get the Metal command encoder for the current frame
  *

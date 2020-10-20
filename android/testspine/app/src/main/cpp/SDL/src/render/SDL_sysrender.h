@@ -143,6 +143,9 @@ struct SDL_Renderer
     int (*SetRenderTarget) (SDL_Renderer * renderer, SDL_Texture * texture);
     int (*RenderReadPixels) (SDL_Renderer * renderer, const SDL_Rect * rect,
                              Uint32 format, void * pixels, int pitch);
+    //spine sdl add begin
+    int (*RenderCopySpine) (SDL_Renderer * renderer, SDL_Texture * texture,unsigned int mode,int VertexSize,int firstVertex,int vertexCount,const char* src_data);
+    //spine sdl add end
     void (*RenderPresent) (SDL_Renderer * renderer);
     void (*DestroyTexture) (SDL_Renderer * renderer, SDL_Texture * texture);
 

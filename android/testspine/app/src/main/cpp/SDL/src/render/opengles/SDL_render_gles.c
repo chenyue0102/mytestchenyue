@@ -83,6 +83,14 @@ typedef struct
 typedef struct
 {
     SDL_GLContext context;
+    //spine sdl add begin
+    struct {
+        Uint32 color;
+        SDL_BlendMode blendMode;
+        SDL_bool tex_coords;
+        SDL_bool col_array;
+    } current;
+    //spine sdl add end
 
 #define SDL_PROC(ret,func,params) ret (APIENTRY *func) params;
 #define SDL_PROC_OES SDL_PROC
@@ -591,6 +599,98 @@ GLES_QueueFillRects(SDL_Renderer * renderer, SDL_RenderCommand *cmd, const SDL_F
 
     return 0;
 }
+
+//spine sdl add begin
+static void
+GLES_SetColorArraY(GLES_RenderData * data, SDL_bool enabled)
+{
+    if (enabled != data->current.col_array) {
+        if (enabled) {
+            data->glEnableClientState(GL_COLOR_ARRAY);
+        } else {
+            data->glDisableClientState(GL_COLOR_ARRAY);
+        }
+        data->current.col_array = enabled;
+    }
+}
+
+static void
+GLES_SetTexCoords(GLES_RenderData * data, SDL_bool enabled)
+{
+    if (enabled != data->current.tex_coords) {
+        if (enabled) {
+            data->glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+        } else {
+            data->glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+        }
+        data->current.tex_coords = enabled;
+    }
+}
+
+static void
+GLES_SetBlendMode(GLES_RenderData * data, SDL_BlendMode blendMode)
+{
+    if (blendMode != data->current.blendMode) {
+        if (blendMode == SDL_BLENDMODE_NONE) {
+            data->glDisable(GL_BLEND);
+        } else {
+            data->glEnable(GL_BLEND);
+            if (data->GL_OES_blend_func_separate_supported) {
+                data->glBlendFuncSeparateOES(GetBlendFunc(SDL_GetBlendModeSrcColorFactor(blendMode)),
+                                             GetBlendFunc(SDL_GetBlendModeDstColorFactor(blendMode)),
+                                             GetBlendFunc(SDL_GetBlendModeSrcAlphaFactor(blendMode)),
+                                             GetBlendFunc(SDL_GetBlendModeDstAlphaFactor(blendMode)));
+            } else {
+                data->glBlendFunc(GetBlendFunc(SDL_GetBlendModeSrcColorFactor(blendMode)),
+                                  GetBlendFunc(SDL_GetBlendModeDstColorFactor(blendMode)));
+            }
+            if (data->GL_OES_blend_equation_separate_supported) {
+                data->glBlendEquationSeparateOES(GetBlendEquation(SDL_GetBlendModeColorOperation(blendMode)),
+                                                 GetBlendEquation(SDL_GetBlendModeAlphaOperation(blendMode)));
+            } else if (data->GL_OES_blend_subtract_supported) {
+                data->glBlendEquationOES(GetBlendEquation(SDL_GetBlendModeColorOperation(blendMode)));
+            }
+        }
+        data->current.blendMode = blendMode;
+    }
+}
+
+static const GLenum modes[] = {
+        GL_POINTS, GL_LINES, GL_LINE_STRIP, GL_TRIANGLES,
+        GL_TRIANGLE_STRIP, GL_TRIANGLE_FAN};
+
+static int
+GLES_RenderCopySpine(SDL_Renderer * renderer, SDL_Texture * texture,unsigned int mode,unsigned int VertexSize,unsigned int firstVertex,unsigned int vertexCount,const char* src_data)
+{
+    GLES_RenderData *data = (GLES_RenderData *) renderer->driverdata;
+    GLES_TextureData *texturedata = (GLES_TextureData *) texture->driverdata;
+
+    GLES_ActivateRenderer(renderer);
+
+    data->glEnable(GL_TEXTURE_2D);
+
+    data->glBindTexture(texturedata->type, texturedata->texture);
+
+    GLES_SetBlendMode(data, texture->blendMode);
+
+    //Enable GL_TEXTURE_COORD_ARRAY
+    GLES_SetTexCoords(data, SDL_TRUE);
+    //Enable GL_COLOR_ARRAY
+    GLES_SetColorArraY(data, SDL_TRUE);
+
+    data->glVertexPointer(2, GL_FLOAT, VertexSize, src_data + 0);
+    data->glColorPointer(4, GL_UNSIGNED_BYTE, VertexSize, src_data + 8);
+    data->glTexCoordPointer(2, GL_FLOAT, VertexSize, src_data + 12);
+
+    data->glDrawArrays(modes[mode], firstVertex, vertexCount);
+
+    data->glDisable(GL_TEXTURE_2D);
+
+    GLES_SetColorArraY(data, SDL_FALSE);
+
+    return 0;
+}
+//spine sdl add end
 
 static int
 GLES_QueueCopy(SDL_Renderer * renderer, SDL_RenderCommand *cmd, SDL_Texture * texture,
@@ -1161,6 +1261,9 @@ GLES_CreateRenderer(SDL_Window * window, Uint32 flags)
     renderer->QueueDrawPoints = GLES_QueueDrawPoints;
     renderer->QueueDrawLines = GLES_QueueDrawPoints;  /* lines and points queue vertices the same way. */
     renderer->QueueFillRects = GLES_QueueFillRects;
+    //spine sdl add begin
+    renderer->RenderCopySpine = GLES_RenderCopySpine;
+    //spine sdl add end
     renderer->QueueCopy = GLES_QueueCopy;
     renderer->QueueCopyEx = GLES_QueueCopyEx;
     renderer->RunCommandQueue = GLES_RunCommandQueue;

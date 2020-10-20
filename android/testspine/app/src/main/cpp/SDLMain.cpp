@@ -1,5 +1,8 @@
 
+#define SPINE_SHORT_NAMES
 #include <SDL.h>
+#include "spine/spine.h"
+#include "spine-sdl/spine-sdl.h"
 
 #if defined(EMSCRIPTEN)
 #include <emscripten.h>
@@ -11,6 +14,10 @@ static SDL_Renderer* renderer = NULL;
 
 static SDL_Texture* texture = NULL;
 
+static spAtlas* g_spAtlas = NULL;
+static spSkeletonData *g_spSkeletonData = NULL;
+static spine::SkeletonDrawable *g_SkeletonDrawable = NULL;
+static spine::RenderStates* g_RenderStates = NULL;
 /*
 On android (in SDL) relative paths point to the root of the assets dir
 On desktop we are assuming that the working dir is the location of the
@@ -66,6 +73,16 @@ int init() {
         return 0;
     }
 
+    g_spAtlas = Atlas_createFromFile("tuzi.atlas", 0);
+    g_spSkeletonData = spine::SkeletonDrawable::readSkeletonJsonData("tuzi.json", g_spAtlas, 1.0f);
+    g_SkeletonDrawable = new spine::SkeletonDrawable(g_spSkeletonData);
+    Skeleton* skeleton = g_SkeletonDrawable->skeleton;
+    skeleton->x = 0;
+    skeleton->y = 0;
+    Skeleton_updateWorldTransform(skeleton);
+    g_SkeletonDrawable->tryAnimation("tuzi",true,false);
+    g_RenderStates = new spine::RenderStates(window, renderer);
+
     SDL_Log("Initialized.");
     return 1;
 }
@@ -88,12 +105,26 @@ void release() {
 
     SDL_Quit();
 }
-
+#if 0
 void renderFrame() {
     SDL_RenderClear(renderer);
     SDL_RenderCopy(renderer, texture, NULL, NULL);
 
     SDL_RenderPresent(renderer);
+}
+#endif
+
+void renderFrame(){
+    float delta=0.01666666f;
+    SDL_SetRenderDrawBlendMode(g_RenderStates->renderer, spine::SkeletonDrawable::sdl_blend_normal);
+    {
+        SDL_SetRenderDrawColor(g_RenderStates->renderer, 255, 255, 255, 255);
+        SDL_RenderFillRect(g_RenderStates->renderer,NULL);
+        g_SkeletonDrawable->update(delta);
+        g_SkeletonDrawable->draw(g_RenderStates);
+        SDL_RenderPresent(g_RenderStates->renderer);
+
+    }
 }
 
 void mainLoop() {
@@ -106,8 +137,11 @@ void mainLoop() {
     }
 
     renderFrame();
-    SDL_Delay(5);
+    float delta=0.01666666f;
+    SDL_Delay(delta*1000);
+    //SDL_Delay(5);
 }
+
 
 int main(int argc, char* argv[]) {
     if (!init()) {

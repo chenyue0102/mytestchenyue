@@ -1,6 +1,7 @@
 /*
  * By GeorgeChong 2018
 */
+#define SPINE_SHORT_NAMES
 #include "spine-sdl.h"
 #include "SDL.h"
 #include "SDL_image.h"
@@ -13,6 +14,7 @@
 
 _SP_ARRAY_IMPLEMENT_TYPE(spColorArray, spColor)
 
+#if 0
 void _AtlasPage_createTexture (AtlasPage* self, const char* path){
     
     SDL_Surface* img=IMG_Load(path);
@@ -49,7 +51,7 @@ char* _Util_readFile (const char* path, int* length){
     return data;
     
 }
-
+#endif
 
 /**/
 namespace spine {

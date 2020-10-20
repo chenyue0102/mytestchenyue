@@ -698,6 +698,8 @@ SDL_DYNAPI_PROC(void,SDL_SetYUVConversionMode,(SDL_YUV_CONVERSION_MODE a),(a),)
 SDL_DYNAPI_PROC(SDL_YUV_CONVERSION_MODE,SDL_GetYUVConversionMode,(void),(),return)
 SDL_DYNAPI_PROC(SDL_YUV_CONVERSION_MODE,SDL_GetYUVConversionModeForResolution,(int a, int b),(a,b),return)
 SDL_DYNAPI_PROC(void*,SDL_RenderGetMetalLayer,(SDL_Renderer *a),(a),return)
+SDL_DYNAPI_PROC(int,SDL_RenderCopySpine,(SDL_Renderer * a, SDL_Texture * b,unsigned int c,unsigned int d,unsigned int e,unsigned int f,const char* g),
+        (a,b,c,d,e,f,g),return)
 SDL_DYNAPI_PROC(void*,SDL_RenderGetMetalCommandEncoder,(SDL_Renderer *a),(a),return)
 #ifdef __WINRT__
 SDL_DYNAPI_PROC(SDL_WinRT_DeviceFamily,SDL_WinRTGetDeviceFamily,(void),(),return)

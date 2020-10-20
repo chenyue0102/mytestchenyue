@@ -105,6 +105,7 @@ HDRS = \
 	SDL_quit.h \
 	SDL_rect.h \
 	SDL_render.h \
+	SDL_render_spine.h \
 	SDL_rwops.h \
 	SDL_scancode.h \
 	SDL_sensor.h \

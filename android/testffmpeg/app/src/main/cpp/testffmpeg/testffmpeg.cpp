@@ -16,6 +16,7 @@
 #include "OpenGLPlay.h"
 #include "FFMPEGTest.h"
 #include "BitBuffer.h"
+#include "freeverb/myexport.h"
 
 #define BUFFER_UPDATE_SIZE (1024*4)
 struct wav_header_t
@@ -546,9 +547,10 @@ void testBitBuffer() {
 	uint8_t numOfPictureParameterSets = bb.get(8);
 	uint16_t pictureParameterSetLength = bb.get(16);
 }
-
+void testfreeverb();
 int main(int argc, char *argv[])
 {
+	testfreeverb();
 	//testBitBuffer();
 	//ff_avc_decode_sps(data + 8, sizeof(data));
 	glutInit(&argc, argv);
@@ -660,3 +662,13 @@ int main(int argc, char *argv[])
     return 0;
 }
 
+void testfreeverb() {
+	float inl[16], inr[16], outl[16], outr[16];
+	for (int i = 0; i < 16; i++) {
+		inl[i] = inr[i] = 0.1f;
+	}
+	my_progenitor_t t = alloc_my_progenitor();
+
+	//processreplace(t, inl, inr, outl, outr, 16);
+	free_my_progenitor(t);
+}

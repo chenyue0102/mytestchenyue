@@ -5,7 +5,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+struct AVFrame;
 typedef struct __sf_reverb_state_st* reverb_state_st;
 reverb_state_st alloc_reverb_state();
 int set_reverb(reverb_state_st rv, const char *preset, int rate);
