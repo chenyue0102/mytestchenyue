@@ -32,6 +32,10 @@
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize">
 
         </activity>
+
+        <activity android:name=".MyActivity">
+
+        </activity>
     </application>
 
 </manifest>

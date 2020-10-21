@@ -81,6 +81,15 @@ typedef struct
 typedef struct
 {
     SDL_GLContext context;
+	//spine sdl add begin
+	struct {
+		Uint32 color;
+		SDL_BlendMode blendMode;
+		SDL_bool tex_coords;
+		SDL_bool col_array;
+		SDL_bool vertex_array;
+	} current;
+	//spine sdl add end
 
     SDL_bool debug_enabled;
     SDL_bool GL_ARB_debug_output_supported;
@@ -111,6 +120,7 @@ typedef struct
     PFNGLFRAMEBUFFERTEXTURE2DEXTPROC glFramebufferTexture2DEXT;
     PFNGLBINDFRAMEBUFFEREXTPROC glBindFramebufferEXT;
     PFNGLCHECKFRAMEBUFFERSTATUSEXTPROC glCheckFramebufferStatusEXT;
+	PFNGLBUFFERDATAPROC glBufferDataEXT;
 
     /* Shader support */
     GL_ShaderContext *shaders;
@@ -870,6 +880,319 @@ GL_QueueFillRects(SDL_Renderer * renderer, SDL_RenderCommand *cmd, const SDL_FRe
     return 0;
 }
 
+//spine sdl add begin
+#include <assert.h>
+inline void CHECKERR(GL_RenderData *data) {
+	int err = 0;
+	if (GL_NO_ERROR != (err = data->glGetError())) {
+		SDL_assert(0);
+	}
+}
+static void
+GL_SetColorArraY(GL_RenderData * data, SDL_bool enabled)
+{
+	if (enabled != data->current.col_array) {
+		if (enabled) {
+			data->glEnableClientState(GL_COLOR_ARRAY); CHECKERR(data);
+		}
+		else {
+			data->glDisableClientState(GL_COLOR_ARRAY); CHECKERR(data);
+		}
+		data->current.col_array = enabled;
+	}
+}
+
+static void
+GL_SetTexCoords(GL_RenderData * data, SDL_bool enabled)
+{
+	if (enabled != data->current.tex_coords) {
+		if (enabled) {
+			data->glEnableClientState(GL_TEXTURE_COORD_ARRAY); CHECKERR(data);
+		}
+		else {
+			data->glDisableClientState(GL_TEXTURE_COORD_ARRAY); CHECKERR(data);
+		}
+		data->current.tex_coords = enabled;
+	}
+}
+
+static void
+GL_SetVertexArray(GL_RenderData * data, SDL_bool enabled)
+{
+	if (enabled != data->current.vertex_array) {
+		if (enabled) {
+			data->glEnableClientState(GL_VERTEX_ARRAY); CHECKERR(data);
+		}
+		else {
+			data->glDisableClientState(GL_VERTEX_ARRAY); CHECKERR(data);
+		}
+		data->current.vertex_array = enabled;
+	}
+}
+
+
+static void
+GL_SetBlendMode(GL_RenderData * data, SDL_BlendMode blendMode)
+{
+	if (blendMode != data->current.blendMode) {
+		if (blendMode == SDL_BLENDMODE_NONE) {
+			data->glDisable(GL_BLEND); CHECKERR(data);
+		}
+		else {
+			data->glEnable(GL_BLEND); CHECKERR(data);
+			data->glBlendFuncSeparate(GetBlendFunc(SDL_GetBlendModeSrcColorFactor(blendMode)),
+				GetBlendFunc(SDL_GetBlendModeDstColorFactor(blendMode)),
+				GetBlendFunc(SDL_GetBlendModeSrcAlphaFactor(blendMode)),
+				GetBlendFunc(SDL_GetBlendModeDstAlphaFactor(blendMode))); CHECKERR(data);
+#if 0
+			if (data->GL_OES_blend_func_separate_supported) {
+				data->glBlendFuncSeparateOES(GetBlendFunc(SDL_GetBlendModeSrcColorFactor(blendMode)),
+					GetBlendFunc(SDL_GetBlendModeDstColorFactor(blendMode)),
+					GetBlendFunc(SDL_GetBlendModeSrcAlphaFactor(blendMode)),
+					GetBlendFunc(SDL_GetBlendModeDstAlphaFactor(blendMode)));
+			}
+			else {
+				data->glBlendFunc(GetBlendFunc(SDL_GetBlendModeSrcColorFactor(blendMode)),
+					GetBlendFunc(SDL_GetBlendModeDstColorFactor(blendMode)));
+			}
+			if (data->GL_OES_blend_equation_separate_supported) {
+				data->glBlendEquationSeparateOES(GetBlendEquation(SDL_GetBlendModeColorOperation(blendMode)),
+					GetBlendEquation(SDL_GetBlendModeAlphaOperation(blendMode)));
+			}
+			else if (data->GL_OES_blend_subtract_supported) {
+				data->glBlendEquationOES(GetBlendEquation(SDL_GetBlendModeColorOperation(blendMode)));
+			}
+#endif
+		}
+		data->current.blendMode = blendMode;
+	}
+}
+#include <stdio.h>
+int SaveBitmap(const char* pFileName, int width, int height, int biBitCount, const void* pBuf, int nBufLen)
+{
+	if (NULL == pFileName
+		|| 0 == width
+		|| 0 == height
+		|| !(biBitCount == 24 || biBitCount == 32 || biBitCount == 16)
+		|| NULL == pBuf
+		|| nBufLen < ((width * height * biBitCount) / 8)
+		)
+	{
+		return -1;
+	}
+	else
+	{
+		BITMAPFILEHEADER bfh = { 0 };
+		bfh.bfType = 'MB';
+		bfh.bfSize = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER) + nBufLen;
+		bfh.bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
+		//FILE* fp = fopen(pFileName, "wb");
+		SDL_RWops *io = SDL_RWFromFile(pFileName, "wb");
+		//fwrite(&bfh, 1, sizeof(bfh), fp);
+		SDL_RWwrite(io, &bfh, 1, sizeof(bfh));
+		BITMAPINFOHEADER bih = { 0 };
+		bih.biSize = sizeof(bih);
+		bih.biWidth = width;
+		bih.biHeight = height;
+		bih.biPlanes = 1;
+		bih.biBitCount = biBitCount;
+		bih.biCompression = BI_RGB;
+		
+		//fwrite(&bih, 1, sizeof(bih), fp);
+		SDL_RWwrite(io, &bih, 1, sizeof(bih));
+		//fwrite(pBuf, 1, nBufLen, fp);
+		SDL_RWwrite(io, pBuf, 1, nBufLen);
+		//fclose(fp);
+		SDL_RWclose(io);
+		return 0;
+	}
+}
+
+void saveTexture(GL_RenderData *data, GLuint texture) {
+	GLint texWidth = 0, texHeight = 0;
+	data->glGetTextureLevelParameteriv(texture, 0, GL_TEXTURE_WIDTH, &texWidth);
+	data->glGetTextureLevelParameteriv(texture, 0, GL_TEXTURE_HEIGHT, &texHeight);
+	void *buf = SDL_malloc(texWidth * texHeight * 4);
+	memset(buf, 0, texWidth * texHeight * 3);
+	data->glGetTexImage(GL_TEXTURE_2D, 0, GL_BGR, GL_UNSIGNED_BYTE, buf); CHECKERR(data);
+	SaveBitmap("d:/sdl.bmp", texWidth, texHeight, 24, buf, texWidth * texHeight * 3);
+	SDL_free(buf);
+}
+
+static const GLenum modes[] = {
+		GL_POINTS, GL_LINES, GL_LINE_STRIP, GL_TRIANGLES,
+		GL_TRIANGLE_STRIP, GL_TRIANGLE_FAN };
+
+#define CHECK_BREAK \
+	if (GL_NO_ERROR != (ret = data->glGetError())) { \
+		SDL_Log("glGetError=%x\n", ret); \
+		SDL_assert(0); \
+		break; \
+	}
+#define MAX_LOG_LENGTH  512
+void outputCompileShader(GL_RenderData *data, GLuint shader)
+{
+	GLint status = 0;
+	data->glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
+	if (GL_FALSE == status)
+	{
+		GLint len = 0;
+		data->glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &len);
+		if (len < MAX_LOG_LENGTH)
+		{
+			GLchar szBuf[MAX_LOG_LENGTH] = { 0 };
+			int len = MAX_LOG_LENGTH;
+			data->glGetShaderInfoLog(shader, MAX_LOG_LENGTH, NULL, szBuf);
+			SDL_Log("%s", szBuf);
+		}
+		else
+		{
+			GLchar *buf = SDL_malloc(len + 1);
+			data->glGetShaderInfoLog(shader, len, NULL, buf);
+			buf[len] = '\0';
+			SDL_Log("%s", buf);
+			SDL_free(buf);
+		}
+		SDL_assert(GL_FALSE != status);
+	}
+}
+
+GLenum attachShader(GL_RenderData *data, GLuint program, GLenum type, const char *source, GLint len) {
+	GLenum ret = GL_NO_ERROR;
+	GLuint shader = 0;
+
+	do
+	{
+		if (0 == (shader = data->glCreateShader(type))) {
+			ret = data->glGetError();
+			SDL_assert(0);
+			break;
+		}
+		GLint lens[] = { len };
+		data->glShaderSource(shader, 1, &source, (len > 0 ? lens : NULL)); CHECK_BREAK;
+		data->glCompileShader(shader);
+		outputCompileShader(data, shader); CHECK_BREAK;
+		data->glAttachShader(program, shader); CHECK_BREAK;
+	} while (0);
+
+	if (0 != shader) {
+		data->glDeleteShader(shader);
+		shader = 0;
+	}
+	return ret;
+}
+
+const char *g_vString = 
+"#version 430 core\n"
+"layout(location=0) in vec2 vPosition;\n"
+"layout(location = 1) in vec2 tPosition;\n"
+"layout(location=2) uniform float width;\n"
+"layout(location=4) uniform float height;\n"
+"out vec2 texCoord;\n"
+"void main(){\n"
+"gl_Position = vec4((vPosition.x / width) * 2 - 1.0f, ((height - vPosition.y) / height) * 2 - 1.0f, 0.0f, 1.0f);\n"
+"texCoord = tPosition;\n"
+"}\n";
+
+const char *g_fString = 
+"#version 430 core\n"
+"layout(location=3) uniform sampler2D tex;\n"
+"in vec2 texCoord;\n"
+"out vec4 fColor;\n"
+"void main(){\n"
+"vec4 texColor = texture2D(tex, texCoord);"
+"fColor = texColor;\n"
+"}\n";
+
+GLuint createProgram(GL_RenderData *data) {
+	GLuint program = data->glCreateProgram();
+	attachShader(data, program, GL_VERTEX_SHADER, g_vString, 0);
+	attachShader(data, program, GL_FRAGMENT_SHADER, g_fString, 0);
+	data->glLinkProgram(program);
+	return program;
+}
+
+static int
+GL_RenderCopySpine(SDL_Renderer * renderer, SDL_Texture * texture, unsigned int mode, int VertexSize, int firstVertex, int vertexCount, const char* src_data)
+{
+	GL_RenderData *data = (GL_RenderData *)renderer->driverdata;
+	GL_TextureData *texturedata = (GL_TextureData *)texture->driverdata;
+	const GLenum textype = data->textype;
+
+	GL_ActivateRenderer(renderer); CHECKERR(data);
+
+#if 1
+	static GLuint program = 0;
+	if (0 == program) {
+		program = createProgram(data); CHECKERR(data);
+	}
+
+	static GLuint buffer = 0, vertex = 0;
+	if (0 == buffer) {
+		data->glGenBuffers(1, &buffer); CHECKERR(data);
+	}
+	if (0 == vertex) {
+		data->glGenVertexArrays(1, &vertex); CHECKERR(data);
+	}
+
+	data->glUseProgram(program); CHECKERR(data);
+
+	data->glBindVertexArray(vertex); CHECKERR(data);
+	data->glBindBuffer(GL_ARRAY_BUFFER, buffer); CHECKERR(data);
+	data->glBufferData(GL_ARRAY_BUFFER, VertexSize * vertexCount, src_data, GL_STATIC_DRAW); CHECKERR(data);
+	
+	data->glEnableVertexAttribArray(0); CHECKERR(data);
+	data->glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, VertexSize, 0); CHECKERR(data);
+
+	data->glEnableVertexAttribArray(1); CHECKERR(data);
+	data->glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, VertexSize, 12); CHECKERR(data);
+
+	float texWidth = 0.f, texHeight = 0.f;
+	GL_BindTexture(renderer, texture, &texWidth, &texHeight); CHECKERR(data);
+	//data->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	//data->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	int screenWidth = 0, screenHeight = 0;
+	renderer->GetOutputSize(renderer, &screenWidth, &screenHeight); CHECKERR(data);
+
+	data->glProgramUniform1f(program, 2, (float)screenWidth); CHECKERR(data);
+	data->glProgramUniform1f(program, 4, (float)screenHeight); CHECKERR(data);
+	
+	data->glDrawArrays(modes[mode], firstVertex, vertexCount); CHECKERR(data);
+
+#else
+
+	data->glEnable(GL_TEXTURE_2D); CHECKERR(data);
+
+	//data->glClientActiveTexture(GL_TEXTURE_2D); CHECKERR(data);
+	data->glBindTexture(GL_TEXTURE_2D, texturedata->texture); CHECKERR(data);
+	data->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	data->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+	GL_SetBlendMode(data, texture->blendMode); CHECKERR(data);
+
+	//Enable GL_TEXTURE_COORD_ARRAY
+	GL_SetTexCoords(data, SDL_TRUE); CHECKERR(data);
+	//Enable GL_COLOR_ARRAY
+	GL_SetColorArraY(data, SDL_TRUE); CHECKERR(data);
+	GL_SetVertexArray(data, SDL_TRUE); CHECKERR(data);
+	
+	data->glVertexPointer(2, GL_FLOAT, VertexSize, src_data + 0); CHECKERR(data);
+	data->glColorPointer(4, GL_UNSIGNED_BYTE, VertexSize, src_data + 8); CHECKERR(data);
+	data->glTexCoordPointer(2, GL_FLOAT, VertexSize, src_data + 12); CHECKERR(data);
+
+
+	data->glDrawArrays(modes[mode], firstVertex, vertexCount); CHECKERR(data);
+
+	data->glDisable(GL_TEXTURE_2D); CHECKERR(data);
+
+	GL_SetColorArraY(data, SDL_FALSE); CHECKERR(data);
+	GL_SetVertexArray(data, SDL_FALSE); CHECKERR(data);
+#endif
+	return 0;
+}
+//spine sdl add end
+
 static int
 GL_QueueCopy(SDL_Renderer * renderer, SDL_RenderCommand *cmd, SDL_Texture * texture,
              const SDL_Rect * srcrect, const SDL_FRect * dstrect)
@@ -1604,6 +1927,9 @@ GL_CreateRenderer(SDL_Window * window, Uint32 flags)
     renderer->QueueDrawPoints = GL_QueueDrawPoints;
     renderer->QueueDrawLines = GL_QueueDrawPoints;  /* lines and points queue vertices the same way. */
     renderer->QueueFillRects = GL_QueueFillRects;
+	//spine sdl add begin
+	renderer->RenderCopySpine = GL_RenderCopySpine;
+	//spine sdl add end
     renderer->QueueCopy = GL_QueueCopy;
     renderer->QueueCopyEx = GL_QueueCopyEx;
     renderer->RunCommandQueue = GL_RunCommandQueue;
@@ -1729,6 +2055,8 @@ GL_CreateRenderer(SDL_Window * window, Uint32 flags)
             SDL_GL_GetProcAddress("glBindFramebufferEXT");
         data->glCheckFramebufferStatusEXT = (PFNGLCHECKFRAMEBUFFERSTATUSEXTPROC)
             SDL_GL_GetProcAddress("glCheckFramebufferStatusEXT");
+		data->glBufferDataEXT = (PFNGLBUFFERDATAPROC)
+			SDL_GL_GetProcAddress("glBufferDataEXT");
         renderer->info.flags |= SDL_RENDERER_TARGETTEXTURE;
     }
     data->framebuffers = NULL;

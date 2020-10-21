@@ -48,5 +48,8 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
+    compile "com.badlogicgames.gdx:gdx:1.9.11"
+    compile "com.badlogicgames.gdx:gdx-box2d:1.9.11"
 
+    compile "com.esotericsoftware.spine:spine-libgdx:3.5.51.1"
 }

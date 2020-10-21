@@ -4,7 +4,7 @@
 #define SPINE_SHORT_NAMES
 #include "spine-sdl.h"
 #include "SDL.h"
-#include "SDL_image.h"
+#include "../SDL2_image/SDL_image.h"
 #include "SDL_opengles.h"
 #include "SDL_render.h"
 
@@ -13,15 +13,14 @@
 #endif
 
 _SP_ARRAY_IMPLEMENT_TYPE(spColorArray, spColor)
+static SDL_Renderer *g_SDL_Renderer = NULL;
 
-#if 0
 void _AtlasPage_createTexture (AtlasPage* self, const char* path){
-    
     SDL_Surface* img=IMG_Load(path);
     if (!img) return;
 
     /* Replace your own SDL_Renderer here! */
-    SDL_Texture* texture=SDL_CreateTextureFromSurface(YOUR_OWN_SDL_Renderer, img);
+    SDL_Texture* texture=SDL_CreateTextureFromSurface(g_SDL_Renderer, img);
 
     self->rendererObject = texture;
     self->width = img->w;
@@ -51,7 +50,6 @@ char* _Util_readFile (const char* path, int* length){
     return data;
     
 }
-#endif
 
 /**/
 namespace spine {
@@ -185,7 +183,7 @@ namespace spine {
         SkeletonBinary_dispose(binary);
         return skeletonData;
     }
-    spTrackEntry* SkeletonDrawable::tryAnimation(char* animation,bool resetdrawstatus,bool repeat)
+    spTrackEntry* SkeletonDrawable::tryAnimation(const char* animation,bool resetdrawstatus,bool repeat)
     {
         spTrackEntry* entry=NULL;
         if(SkeletonData_findAnimation(skeletonData,animation))
@@ -267,12 +265,21 @@ namespace spine {
                 indices = quadIndices;
                 indicesCount = 6;
                 texture = (Texture*)((AtlasRegion*)regionAttachment->rendererObject)->page->rendererObject;
+				if (NULL != texture) {
+					//SDL_RenderCopySpine(states->renderer, texture, 0, 0, 0, 0, 0);
+				}
                 attachmentColor = &regionAttachment->color;
                 
             } else if (attachment->type == ATTACHMENT_MESH) {
                 MeshAttachment* mesh = (MeshAttachment*)attachment;
                 if (mesh->super.worldVerticesLength > SPINE_MESH_VERTEX_COUNT_MAX) continue;
+				AtlasRegion *atlasRegion = (AtlasRegion*)mesh->rendererObject;
                 texture = (Texture*)((AtlasRegion*)mesh->rendererObject)->page->rendererObject;
+//todo 
+				if (NULL != texture) {
+					//SDL_RenderCopySpine(states->renderer, texture, 0, 0, 0, 0, 0);
+				}
+				/////
                 spVertexAttachment_computeWorldVertices(SUPER(mesh), slot, 0, mesh->super.worldVerticesLength, worldVertices, 0, 2);
                 verticesCount = mesh->super.worldVerticesLength >> 1;
                 uvs = mesh->uvs;
@@ -431,7 +438,7 @@ namespace spine {
         }
 
         const char* src_data = reinterpret_cast<const char*>(&m_vertices[0]);
-        
+
         SDL_RenderCopySpine(states->renderer, states->texture, type, sizeof(Vertex), firstVertex, (unsigned int)vertexCount, src_data);
        
     }
@@ -473,4 +480,9 @@ namespace spine {
         
     }
     
+	void setRender(SDL_Renderer * render)
+	{
+		g_SDL_Renderer = render;
+	}
+
 } /* namespace spine */

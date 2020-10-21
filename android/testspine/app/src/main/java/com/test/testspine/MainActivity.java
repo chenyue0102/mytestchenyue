@@ -23,6 +23,7 @@ public class MainActivity extends AppCompatActivity {
         //tv.setText(stringFromJNI());
 
         findViewById(R.id.btn_load).setOnClickListener(v->onLoad());
+        findViewById(R.id.btn_load_java).setOnClickListener(v->onLoadJava());
     }
 
     /**
@@ -33,6 +34,11 @@ public class MainActivity extends AppCompatActivity {
 
     private void onLoad(){
         Intent intent = new Intent(this, MySDLActivity.class);
+        startActivity(intent);
+    }
+
+    private void onLoadJava(){
+        Intent intent = new Intent(this, MyActivity.class);
         startActivity(intent);
     }
 }

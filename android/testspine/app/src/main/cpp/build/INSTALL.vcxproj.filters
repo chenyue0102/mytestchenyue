@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="D:\source\mytestchenyue\android\testspine\app\src\main\cpp\build\CMakeFiles\0c09c8781cf81028ca13234f5ac1e223\INSTALL_force.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{4AFCCBB7-8C3A-3E9E-B700-11D5DD791A6E}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

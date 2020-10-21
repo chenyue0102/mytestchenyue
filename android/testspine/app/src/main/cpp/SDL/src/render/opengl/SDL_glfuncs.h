@@ -86,9 +86,11 @@ SDL_PROC_UNUSED(void, glColorMask,
                 (GLboolean red, GLboolean green, GLboolean blue,
                  GLboolean alpha))
 SDL_PROC_UNUSED(void, glColorMaterial, (GLenum face, GLenum mode))
-SDL_PROC_UNUSED(void, glColorPointer,
+//spine sdl add begin
+SDL_PROC(void, glColorPointer,
                 (GLint size, GLenum type, GLsizei stride,
                  const GLvoid * pointer))
+//spine sdl add end
 SDL_PROC_UNUSED(void, glCopyPixels,
                 (GLint x, GLint y, GLsizei width, GLsizei height,
                  GLenum type))
@@ -111,8 +113,12 @@ SDL_PROC(void, glDepthFunc, (GLenum func))
 SDL_PROC_UNUSED(void, glDepthMask, (GLboolean flag))
 SDL_PROC_UNUSED(void, glDepthRange, (GLclampd zNear, GLclampd zFar))
 SDL_PROC(void, glDisable, (GLenum cap))
-SDL_PROC_UNUSED(void, glDisableClientState, (GLenum array))
-SDL_PROC_UNUSED(void, glDrawArrays, (GLenum mode, GLint first, GLsizei count))
+//spine sdl add begin
+SDL_PROC(void, glDisableClientState, (GLenum array))
+SDL_PROC(void, glDrawArrays, (GLenum mode, GLint first, GLsizei count))
+
+SDL_PROC(void, glGetTextureLevelParameteriv, (GLuint texture, GLint level, GLenum pname, GLint *params))
+//spine sdl add end
 SDL_PROC_UNUSED(void, glDrawBuffer, (GLenum mode))
 SDL_PROC_UNUSED(void, glDrawElements,
                 (GLenum mode, GLsizei count, GLenum type,
@@ -125,7 +131,9 @@ SDL_PROC_UNUSED(void, glEdgeFlagPointer,
                 (GLsizei stride, const GLvoid * pointer))
 SDL_PROC_UNUSED(void, glEdgeFlagv, (const GLboolean * flag))
 SDL_PROC(void, glEnable, (GLenum cap))
-SDL_PROC_UNUSED(void, glEnableClientState, (GLenum array))
+//spine sdl add begin
+SDL_PROC(void, glEnableClientState, (GLenum array))
+//spine sdl add end
 SDL_PROC(void, glEnd, (void))
 SDL_PROC_UNUSED(void, glEndList, (void))
 SDL_PROC_UNUSED(void, glEvalCoord1d, (GLdouble u))
@@ -188,9 +196,11 @@ SDL_PROC_UNUSED(void, glGetTexGenfv,
                 (GLenum coord, GLenum pname, GLfloat * params))
 SDL_PROC_UNUSED(void, glGetTexGeniv,
                 (GLenum coord, GLenum pname, GLint * params))
-SDL_PROC_UNUSED(void, glGetTexImage,
+//spine sdl add begin
+SDL_PROC(void, glGetTexImage,
                 (GLenum target, GLint level, GLenum format, GLenum type,
                  GLvoid * pixels))
+//spine sdl add end
 SDL_PROC_UNUSED(void, glGetTexLevelParameterfv,
                 (GLenum target, GLint level, GLenum pname, GLfloat * params))
 SDL_PROC_UNUSED(void, glGetTexLevelParameteriv,
@@ -216,7 +226,8 @@ SDL_PROC_UNUSED(void, glIndexubv, (const GLubyte * c))
 SDL_PROC_UNUSED(void, glInitNames, (void))
 SDL_PROC_UNUSED(void, glInterleavedArrays,
                 (GLenum format, GLsizei stride, const GLvoid * pointer))
-SDL_PROC_UNUSED(GLboolean, glIsEnabled, (GLenum cap))
+	//todo
+SDL_PROC(GLboolean, glIsEnabled, (GLenum cap))
 SDL_PROC_UNUSED(GLboolean, glIsList, (GLuint list))
 SDL_PROC_UNUSED(GLboolean, glIsTexture, (GLuint texture))
 SDL_PROC_UNUSED(void, glLightModelf, (GLenum pname, GLfloat param))
@@ -401,9 +412,11 @@ SDL_PROC_UNUSED(void, glTexCoord4iv, (const GLint * v))
 SDL_PROC_UNUSED(void, glTexCoord4s,
                 (GLshort s, GLshort t, GLshort r, GLshort q))
 SDL_PROC_UNUSED(void, glTexCoord4sv, (const GLshort * v))
-SDL_PROC_UNUSED(void, glTexCoordPointer,
+//spine sdl add begin
+SDL_PROC(void, glTexCoordPointer,
                 (GLint size, GLenum type, GLsizei stride,
                  const GLvoid * pointer))
+//spine sdl add end
 SDL_PROC(void, glTexEnvf, (GLenum target, GLenum pname, GLfloat param))
 SDL_PROC_UNUSED(void, glTexEnvfv,
                 (GLenum target, GLenum pname, const GLfloat * params))
@@ -470,9 +483,32 @@ SDL_PROC_UNUSED(void, glVertex4iv, (const GLint * v))
 SDL_PROC_UNUSED(void, glVertex4s,
                 (GLshort x, GLshort y, GLshort z, GLshort w))
 SDL_PROC_UNUSED(void, glVertex4sv, (const GLshort * v))
-SDL_PROC_UNUSED(void, glVertexPointer,
+//spine sdl add begin
+SDL_PROC(void, glVertexPointer,
                 (GLint size, GLenum type, GLsizei stride,
                  const GLvoid * pointer))
+SDL_PROC(void,glClientActiveTexture,(GLenum texture))
+SDL_PROC(GLuint, glCreateProgram, (void))
+SDL_PROC(GLuint, glCreateShader, (GLenum type))
+SDL_PROC(void, glShaderSource, (GLuint shader, GLsizei count, const GLchar *const* string, const GLint* length))
+SDL_PROC(void, glCompileShader, (GLuint shader))
+SDL_PROC(void, glAttachShader, (GLuint program, GLuint shader))
+SDL_PROC(void, glLinkProgram, (GLuint program))
+SDL_PROC(void, glGetShaderiv, (GLuint shader, GLenum pname, GLint* param))
+SDL_PROC(void, glGetShaderInfoLog, (GLuint shader, GLsizei bufSize, GLsizei* length, GLchar* infoLog))
+SDL_PROC(void, glDeleteShader, (GLuint shader))
+SDL_PROC(void, glUseProgram, (GLuint program))
+
+SDL_PROC(void, glGenBuffers, (GLsizei n, GLuint* buffers))
+SDL_PROC(void, glBindBuffer, (GLenum target, GLuint buffer))
+SDL_PROC(void, glBufferData, (GLenum target, GLsizeiptr size, const void* data, GLenum usage))
+
+SDL_PROC(void, glGenVertexArrays, (GLsizei n, GLuint* arrays))
+SDL_PROC(void, glBindVertexArray, (GLuint array))
+SDL_PROC(void, glEnableVertexAttribArray, (GLuint index))
+SDL_PROC(void, glVertexAttribPointer, (GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void* pointer))
+SDL_PROC(void, glProgramUniform1f, (GLuint program, GLint location, GLfloat x))
+//spine sdl add end
 SDL_PROC(void, glViewport, (GLint x, GLint y, GLsizei width, GLsizei height))
 
 /* vi: set ts=4 sw=4 expandtab: */

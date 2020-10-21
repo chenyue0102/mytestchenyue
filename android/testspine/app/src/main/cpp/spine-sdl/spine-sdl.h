@@ -13,6 +13,8 @@
 #ifdef __IPHONEOS__
 #include <OpenGLES/ES1/gl.h>
 #include <OpenGLES/ES1/glext.h>
+#elif WIN32
+
 #else
 #include <GLES/gl.h>
 #include <GLES/glext.h>
@@ -156,7 +158,7 @@ namespace spine {
      
             ~SkeletonDrawable ();
      
-            spTrackEntry* tryAnimation(char* animation,bool reset,bool repeat);
+            spTrackEntry* tryAnimation(const char* animation,bool reset,bool repeat);
      
             void update (float deltaTime);
             
@@ -178,7 +180,7 @@ namespace spine {
             spSkeletonClipping* clipper;
             bool usePremultipliedAlpha;
         };
-        
+ void setRender(SDL_Renderer *render);
     } /* namespace spine */
 
 #endif

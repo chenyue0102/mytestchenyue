@@ -8,6 +8,10 @@
 #include <emscripten.h>
 #endif
 
+#ifdef WIN32
+#include <direct.h>
+#endif
+
 static int done = 0;
 static SDL_Window* window = NULL;
 static SDL_Renderer* renderer = NULL;
@@ -30,13 +34,16 @@ executable (bin/<buildtype>). So assests are in ../../assets/.
 #endif
 
 int init() {
-    int width = 640;
-    int height = 480;
+    int width = 800;
+    int height = 600;
     Uint32 flags = 0;
 
 #if defined(__ANDROID__)
     flags |= SDL_WINDOW_FULLSCREEN;
+#elif WIN32
+	flags |= SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
 #endif
+
 
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) < 0) {
         SDL_Log("SDL init failed: %s", SDL_GetError());
@@ -44,21 +51,38 @@ int init() {
         return 0;
     }
 
-    window = SDL_CreateWindow("SimpleSDL", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, flags);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 1);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+	SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengl");// easy to be extended to other drivers,Follow the "How to Extend" section below
+
+
+
+    window = SDL_CreateWindow("SimpleSDL", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
     if (!window) {
         SDL_Log("Creating window failed: %s", SDL_GetError());
         SDL_ClearError();
         return 0;
     }
-
-    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+#ifdef WIN32
+	int index = 2;//使用OPENGL
+#else
+	int index = -1;
+#endif
+    renderer = SDL_CreateRenderer(window, index, SDL_RENDERER_ACCELERATED);
     if (!renderer) {
         SDL_Log("Creating renderer failed: %s", SDL_GetError());
         SDL_ClearError();
         return 0;
     }
-
-    const char* fileName = ASSET_PATH "sdl.bmp";
+#ifdef WIN32
+	char szTmp[256] = { 0 };
+	_getcwd(szTmp, 256);
+	strcat(szTmp, "/../../assets/sdl.bmp");
+    const char* fileName = szTmp;
+#else
+	const char* fileName = ASSET_PATH "sdl.bmp";
+#endif
+#if 0
     SDL_Surface* bitmap = SDL_LoadBMP(fileName);
     if (!bitmap) {
         SDL_Log("Loading bitmap '%s' failed: %s", fileName, SDL_GetError());
@@ -72,17 +96,32 @@ int init() {
         SDL_ClearError();
         return 0;
     }
-
-    g_spAtlas = Atlas_createFromFile("tuzi.atlas", 0);
-    g_spSkeletonData = spine::SkeletonDrawable::readSkeletonJsonData("tuzi.json", g_spAtlas, 1.0f);
-    g_SkeletonDrawable = new spine::SkeletonDrawable(g_spSkeletonData);
+#endif
+#ifdef WIN32
+	_getcwd(szTmp, 256);
+	strcat(szTmp, "/../../assets/tuzi.atlas");
+	const char *spineboy_atlas = szTmp;
+	char szTmp2[256];
+	_getcwd(szTmp2, 256);
+	strcat(szTmp2, "/../../assets/tuzi.json");
+	const char *spineboy_json = szTmp2;
+#else
+	const char *spineboy_atlas = "tuzi.atlas";
+	const char *spineboy_json = "tuzi.json";
+#endif
+	spine::setRender(renderer);
+    g_spAtlas = Atlas_createFromFile(spineboy_atlas, 0);
+    g_spSkeletonData = spine::SkeletonDrawable::readSkeletonJsonData(spineboy_json, g_spAtlas, 0.3f);
+    
+	g_SkeletonDrawable = new spine::SkeletonDrawable(g_spSkeletonData);
     Skeleton* skeleton = g_SkeletonDrawable->skeleton;
-    skeleton->x = 0;
-    skeleton->y = 0;
+    skeleton->x = 500;
+    skeleton->y = 500;
     Skeleton_updateWorldTransform(skeleton);
-    g_SkeletonDrawable->tryAnimation("tuzi",true,false);
+    g_SkeletonDrawable->tryAnimation("animation10",true,true);
     g_RenderStates = new spine::RenderStates(window, renderer);
 
+	SDL_SetRenderDrawBlendMode(g_RenderStates->renderer, spine::SkeletonDrawable::sdl_blend_normal);
     SDL_Log("Initialized.");
     return 1;
 }
@@ -116,14 +155,14 @@ void renderFrame() {
 
 void renderFrame(){
     float delta=0.01666666f;
-    SDL_SetRenderDrawBlendMode(g_RenderStates->renderer, spine::SkeletonDrawable::sdl_blend_normal);
+	SDL_SetRenderDrawBlendMode(g_RenderStates->renderer, spine::SkeletonDrawable::sdl_blend_normal);
+	SDL_RenderClear(renderer);
     {
-        SDL_SetRenderDrawColor(g_RenderStates->renderer, 255, 255, 255, 255);
+        //SDL_SetRenderDrawColor(g_RenderStates->renderer, 255, 255, 255, 255);
         SDL_RenderFillRect(g_RenderStates->renderer,NULL);
         g_SkeletonDrawable->update(delta);
         g_SkeletonDrawable->draw(g_RenderStates);
         SDL_RenderPresent(g_RenderStates->renderer);
-
     }
 }
 

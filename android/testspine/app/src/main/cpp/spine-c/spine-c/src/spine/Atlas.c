@@ -306,20 +306,6 @@ spAtlas* spAtlas_create(const char* begin, int length, const char* dir, void* re
 	return self;
 }
 
-//spine sdl add begin
-void _spAtlasPage_createTexture(spAtlasPage* self, const char* path) {
-	self->rendererObject = 0;
-	self->width = 2048;
-	self->height = 2048;
-}
-
-void _spAtlasPage_disposeTexture(spAtlasPage* self) {
-}
-
-char* _spUtil_readFile(const char* path, int* length) {
-	return _spReadFile(path, length);
-}
-//spine sdl add end
 spAtlas* spAtlas_createFromFile(const char* path, void* rendererObject) {
 	int dirLength;
 	char *dir;
