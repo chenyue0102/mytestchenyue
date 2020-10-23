@@ -12,10 +12,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "testios/ViewController.m"
+            timestampString = "0"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "32"
-            endingLineNumber = "32"
+            startingLineNumber = "52"
+            endingLineNumber = "52"
             landmarkName = "-onClickUnity"
             landmarkType = "7">
          </BreakpointContent>
@@ -28,10 +29,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "testios/ViewController.m"
+            timestampString = "0"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "28"
-            endingLineNumber = "28"
+            startingLineNumber = "40"
+            endingLineNumber = "40"
             landmarkName = "-viewDidLoad"
             landmarkType = "7">
          </BreakpointContent>
@@ -44,11 +46,29 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "testios/ViewController.m"
+            timestampString = "0"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "20"
-            endingLineNumber = "20"
+            startingLineNumber = "32"
+            endingLineNumber = "32"
             landmarkName = "-viewDidLoad"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "08D51869-1867-4B69-9D14-35B75449C4F3"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "testios/ViewController.mm"
+            timestampString = "0"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "71"
+            endingLineNumber = "71"
+            landmarkName = "-initOpenGLES"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>

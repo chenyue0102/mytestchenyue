@@ -7,9 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		DC3906B425416A88009F2C02 /* OpenGLESHelper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DC3906B225416A88009F2C02 /* OpenGLESHelper.cpp */; };
+		DC3906CC25418220009F2C02 /* GLKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DC3906C225417DF5009F2C02 /* GLKit.framework */; };
 		DCC1796B250EF51F00D9F8D4 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = DCC1796A250EF51F00D9F8D4 /* AppDelegate.m */; };
 		DCC1796E250EF51F00D9F8D4 /* SceneDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = DCC1796D250EF51F00D9F8D4 /* SceneDelegate.m */; };
-		DCC17971250EF51F00D9F8D4 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = DCC17970250EF51F00D9F8D4 /* ViewController.m */; };
+		DCC17971250EF51F00D9F8D4 /* ViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = DCC17970250EF51F00D9F8D4 /* ViewController.mm */; };
 		DCC17974250EF51F00D9F8D4 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = DCC17972250EF51F00D9F8D4 /* Main.storyboard */; };
 		DCC17976250EF52000D9F8D4 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DCC17975250EF52000D9F8D4 /* Assets.xcassets */; };
 		DCC17979250EF52000D9F8D4 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = DCC17977250EF52000D9F8D4 /* LaunchScreen.storyboard */; };
@@ -36,13 +38,16 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		DC3906B225416A88009F2C02 /* OpenGLESHelper.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = OpenGLESHelper.cpp; path = TestIOS/OpenGLESHelper.cpp; sourceTree = SOURCE_ROOT; };
+		DC3906B325416A88009F2C02 /* OpenGLESHelper.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = OpenGLESHelper.hpp; path = TestIOS/OpenGLESHelper.hpp; sourceTree = SOURCE_ROOT; };
+		DC3906C225417DF5009F2C02 /* GLKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLKit.framework; path = System/Library/Frameworks/GLKit.framework; sourceTree = SDKROOT; };
 		DCC17966250EF51F00D9F8D4 /* testios.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = testios.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		DCC17969250EF51F00D9F8D4 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		DCC1796A250EF51F00D9F8D4 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
 		DCC1796C250EF51F00D9F8D4 /* SceneDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SceneDelegate.h; sourceTree = "<group>"; };
 		DCC1796D250EF51F00D9F8D4 /* SceneDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SceneDelegate.m; sourceTree = "<group>"; };
 		DCC1796F250EF51F00D9F8D4 /* ViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
-		DCC17970250EF51F00D9F8D4 /* ViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
+		DCC17970250EF51F00D9F8D4 /* ViewController.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = ViewController.mm; sourceTree = "<group>"; };
 		DCC17973250EF51F00D9F8D4 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		DCC17975250EF52000D9F8D4 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		DCC17978250EF52000D9F8D4 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
@@ -61,6 +66,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DC3906CC25418220009F2C02 /* GLKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -81,6 +87,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		DC3906C125417DF5009F2C02 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				DC3906C225417DF5009F2C02 /* GLKit.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		DCC1795D250EF51F00D9F8D4 = {
 			isa = PBXGroup;
 			children = (
@@ -88,6 +102,7 @@
 				DCC17984250EF52100D9F8D4 /* testiosTests */,
 				DCC1798F250EF52100D9F8D4 /* testiosUITests */,
 				DCC17967250EF51F00D9F8D4 /* Products */,
+				DC3906C125417DF5009F2C02 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -109,12 +124,14 @@
 				DCC1796C250EF51F00D9F8D4 /* SceneDelegate.h */,
 				DCC1796D250EF51F00D9F8D4 /* SceneDelegate.m */,
 				DCC1796F250EF51F00D9F8D4 /* ViewController.h */,
-				DCC17970250EF51F00D9F8D4 /* ViewController.m */,
+				DCC17970250EF51F00D9F8D4 /* ViewController.mm */,
 				DCC17972250EF51F00D9F8D4 /* Main.storyboard */,
 				DCC17975250EF52000D9F8D4 /* Assets.xcassets */,
 				DCC17977250EF52000D9F8D4 /* LaunchScreen.storyboard */,
 				DCC1797A250EF52000D9F8D4 /* Info.plist */,
 				DCC1797B250EF52000D9F8D4 /* main.m */,
+				DC3906B225416A88009F2C02 /* OpenGLESHelper.cpp */,
+				DC3906B325416A88009F2C02 /* OpenGLESHelper.hpp */,
 			);
 			path = testios;
 			sourceTree = "<group>";
@@ -215,7 +232,7 @@
 					};
 				};
 			};
-			buildConfigurationList = DCC17961250EF51F00D9F8D4 /* Build configuration list for PBXProject "testios" */;
+			buildConfigurationList = DCC17961250EF51F00D9F8D4 /* Build configuration list for PBXProject "TestIOS" */;
 			compatibilityVersion = "Xcode 9.3";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -267,7 +284,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				DCC17971250EF51F00D9F8D4 /* ViewController.m in Sources */,
+				DC3906B425416A88009F2C02 /* OpenGLESHelper.cpp in Sources */,
+				DCC17971250EF51F00D9F8D4 /* ViewController.mm in Sources */,
 				DCC1796B250EF51F00D9F8D4 /* AppDelegate.m in Sources */,
 				DCC1797C250EF52000D9F8D4 /* main.m in Sources */,
 				DCC1796E250EF51F00D9F8D4 /* SceneDelegate.m in Sources */,
@@ -366,6 +384,7 @@
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
+					"GLES_SILENCE_DEPRECATION=1",
 					"DEBUG=1",
 					"$(inherited)",
 				);
@@ -421,6 +440,7 @@
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = "GLES_SILENCE_DEPRECATION=1";
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
@@ -542,7 +562,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		DCC17961250EF51F00D9F8D4 /* Build configuration list for PBXProject "testios" */ = {
+		DCC17961250EF51F00D9F8D4 /* Build configuration list for PBXProject "TestIOS" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				DCC17993250EF52100D9F8D4 /* Debug */,
