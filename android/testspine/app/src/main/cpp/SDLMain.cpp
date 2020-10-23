@@ -1,8 +1,14 @@
 
-#define SPINE_SHORT_NAMES
 #include <SDL.h>
+#include <assert.h>
+#include <GL/glew.h>
+#include "GL/glut.h"
+#include <GL/freeglut_ext.h>
+//#define SPINE_SHORT_NAMES
 #include "spine/spine.h"
 #include "spine-sdl/spine-sdl.h"
+#include "spine-sdl/SpineOpenGLES.h"
+
 
 #if defined(EMSCRIPTEN)
 #include <emscripten.h>
@@ -22,6 +28,9 @@ static spAtlas* g_spAtlas = NULL;
 static spSkeletonData *g_spSkeletonData = NULL;
 static spine::SkeletonDrawable *g_SkeletonDrawable = NULL;
 static spine::RenderStates* g_RenderStates = NULL;
+
+static spine::SkeletonDrawableOpenGLES *g_SkeletonDrawable2 = NULL;
+static spine::RenderOpenGLES *g_RenderStates2 = NULL;
 /*
 On android (in SDL) relative paths point to the root of the assets dir
 On desktop we are assuming that the working dir is the location of the
@@ -99,29 +108,50 @@ int init() {
 #endif
 #ifdef WIN32
 	_getcwd(szTmp, 256);
-	strcat(szTmp, "/../../assets/tuzi.atlas");
+	strcat(szTmp, "/../../assets/alien.atlas");
 	const char *spineboy_atlas = szTmp;
 	char szTmp2[256];
 	_getcwd(szTmp2, 256);
-	strcat(szTmp2, "/../../assets/tuzi.json");
+	strcat(szTmp2, "/../../assets/alien.json");
 	const char *spineboy_json = szTmp2;
 #else
 	const char *spineboy_atlas = "tuzi.atlas";
 	const char *spineboy_json = "tuzi.json";
 #endif
 	spine::setRender(renderer);
-    g_spAtlas = Atlas_createFromFile(spineboy_atlas, 0);
-    g_spSkeletonData = spine::SkeletonDrawable::readSkeletonJsonData(spineboy_json, g_spAtlas, 0.3f);
+    //g_spAtlas = Atlas_createFromFile(spineboy_atlas, 0);
+    //g_spSkeletonData = spine::SkeletonDrawable::readSkeletonJsonData(spineboy_json, g_spAtlas, 0.6f);
     
-	g_SkeletonDrawable = new spine::SkeletonDrawable(g_spSkeletonData);
-    Skeleton* skeleton = g_SkeletonDrawable->skeleton;
-    skeleton->x = 500;
-    skeleton->y = 500;
-    Skeleton_updateWorldTransform(skeleton);
-    g_SkeletonDrawable->tryAnimation("animation10",true,true);
+	g_SkeletonDrawable = new spine::SkeletonDrawable();
+	g_SkeletonDrawable->create(spineboy_atlas, spineboy_json);
+
+	spSkeleton* skeleton = g_SkeletonDrawable->skeleton;
+	skeleton->x = 500;
+	skeleton->y = 500;
+	spSkeleton_updateWorldTransform(skeleton);
+	g_SkeletonDrawable->tryAnimation("death", true, true);
+
+	//初始化 glew wglMakeCurrent
+	GLenum status = glewInit();
+	assert(GLEW_OK == status);
+
+	g_SkeletonDrawable2 = new spine::SkeletonDrawableOpenGLES();
+	g_SkeletonDrawable2->create(spineboy_atlas, spineboy_json);
+
+	spSkeleton* skeleton2 = g_SkeletonDrawable2->skeleton;
+	skeleton2->x = 500;
+	skeleton2->y = 500;
+	spSkeleton_updateWorldTransform(skeleton2);
+	g_SkeletonDrawable2->tryAnimation("death", true, true);
+
+    
     g_RenderStates = new spine::RenderStates(window, renderer);
 
 	SDL_SetRenderDrawBlendMode(g_RenderStates->renderer, spine::SkeletonDrawable::sdl_blend_normal);
+
+	g_RenderStates2 = new spine::RenderOpenGLES();
+	g_RenderStates2->setViewWidth(800);
+	g_RenderStates2->setViewHeight(600);
     SDL_Log("Initialized.");
     return 1;
 }
@@ -161,7 +191,9 @@ void renderFrame(){
         //SDL_SetRenderDrawColor(g_RenderStates->renderer, 255, 255, 255, 255);
         SDL_RenderFillRect(g_RenderStates->renderer,NULL);
         g_SkeletonDrawable->update(delta);
-        g_SkeletonDrawable->draw(g_RenderStates);
+		g_SkeletonDrawable2->update(delta);
+        //g_SkeletonDrawable->draw(g_RenderStates);
+		g_SkeletonDrawable2->draw(g_RenderStates2);
         SDL_RenderPresent(g_RenderStates->renderer);
     }
 }
@@ -183,12 +215,34 @@ void mainLoop() {
 
 
 int main(int argc, char* argv[]) {
+	glutInit(&argc, argv);
+	//glutInitDisplayMode(GLUT_RGB | GLUT_SINGLE);
+	glutInitDisplayMode(GLUT_RGBA);
+	glutInitWindowPosition(100, 100);
+	glutInitWindowSize(400, 400);
+	glutInitContextVersion(4, 3);
+	glutInitContextProfile(GLUT_CORE_PROFILE);
+	//glutCreateWindow("OpenGL 程序");
+	auto v = glGetString(GL_VERSION);
+	GLint max;
+	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &max);
+	printf("OpenGL Version=%s texturemaxsize=%d\n", v, max);
+
+	/*GLuint tex = -1;
+	glGenTextures(1, &tex);
+	GLuint program = glCreateProgram();
+	GLuint buf = -1;
+	glGenBuffers(1, &buf);
+	GLuint vertex = -1;
+	glGenVertexArrays(1, &vertex);*/
+
     if (!init()) {
         SDL_Log("Initialization failed.");
         release();
         return 1;
     }
 
+	
 #if defined(EMSCRIPTEN)
     emscripten_set_main_loop(mainLoop, 0, 0);
     return 0;

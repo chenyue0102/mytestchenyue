@@ -84,7 +84,10 @@ TextureBase::~TextureBase() {
 
 }
 
-RenderBase::RenderBase() {
+RenderBase::RenderBase() 
+	: mViewWidth()
+	, mViewHeight()
+{
 
 }
 

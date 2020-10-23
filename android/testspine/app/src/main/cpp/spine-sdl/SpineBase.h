@@ -103,8 +103,19 @@ class RenderBase {
 public:
 	RenderBase();
 	virtual ~RenderBase();
+
+public:
+	void setViewWidth(int width) { mViewWidth = width; }
+	int viewWidth()const { return mViewWidth; }
+	void setViewHeight(int height) { mViewHeight = height; }
+	int viewHeight()const { return mViewHeight; }
+
 public:
 	virtual void draw(TextureBase *texture, BlendMode blendMode, PrimitiveType type, const std::vector<Vertex> *vertexArray) = 0;
+
+private:
+	int mViewWidth;
+	int mViewHeight;
 };
 
 class VertexArray

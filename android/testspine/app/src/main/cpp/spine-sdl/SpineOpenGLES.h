@@ -23,11 +23,12 @@ public:
 public:
 	virtual int width()const;
 	virtual int height()const;
+	GLuint getTexture()const { return mTexture; }
+private:
+	void doInit(const char *path);
 
 private:
 	GLuint mTexture;
-	GLuint mBuffer;
-	GLuint mVertex;
 	int mWidth;
 	int mHeight;
 };
@@ -38,6 +39,14 @@ public:
 	virtual ~RenderOpenGLES();
 public:
 	virtual void draw(TextureBase *texture, BlendMode blendMode, PrimitiveType type, const std::vector<Vertex> *vertexArray)override;
+private:
+	void doInit();
+	void doDestroy();
+
+private:
+	GLuint mProgram;
+	GLuint mBuffer;
+	GLuint mVertex;
 };
 
 class SkeletonDrawableOpenGLES : public SkeletonDrawableBase {
