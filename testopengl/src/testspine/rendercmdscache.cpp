@@ -37,7 +37,7 @@
 #include "rendercmdscache.h"
 #include "My/MyTexture.h"
 
-#include "spineitem.h"
+//#include "spineitem.h"
 
 
 

@@ -159,16 +159,23 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="My\BaseTime.cpp" />
     <ClCompile Include="My\MyTexture.cpp" />
     <ClCompile Include="My\OpenGLESHelper.cpp" />
     <ClCompile Include="rendercmdscache.cpp" />
+    <ClCompile Include="spineitem.cpp" />
     <ClCompile Include="testspine.cpp" />
+    <ClCompile Include="texture.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="My\BaseTime.h" />
     <ClInclude Include="My\MyTexture.h" />
     <ClInclude Include="My\OpenGLESHelper.h" />
     <ClInclude Include="My\OpenGLShaderProgram.h" />
     <ClInclude Include="rendercmdscache.h" />
+    <ClInclude Include="spineitem.h" />
+    <ClInclude Include="texture.h" />
+    <ClInclude Include="vmath.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

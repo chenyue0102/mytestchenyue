@@ -33,6 +33,15 @@
     <ClCompile Include="My\OpenGLESHelper.cpp">
       <Filter>My</Filter>
     </ClCompile>
+    <ClCompile Include="texture.cpp">
+      <Filter>Spine</Filter>
+    </ClCompile>
+    <ClCompile Include="spineitem.cpp">
+      <Filter>Spine</Filter>
+    </ClCompile>
+    <ClCompile Include="My\BaseTime.cpp">
+      <Filter>My</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="rendercmdscache.h">
@@ -45,6 +54,18 @@
       <Filter>My</Filter>
     </ClInclude>
     <ClInclude Include="My\OpenGLShaderProgram.h">
+      <Filter>My</Filter>
+    </ClInclude>
+    <ClInclude Include="texture.h">
+      <Filter>Spine</Filter>
+    </ClInclude>
+    <ClInclude Include="vmath.h">
+      <Filter>Spine</Filter>
+    </ClInclude>
+    <ClInclude Include="spineitem.h">
+      <Filter>Spine</Filter>
+    </ClInclude>
+    <ClInclude Include="My\BaseTime.h">
       <Filter>My</Filter>
     </ClInclude>
   </ItemGroup>

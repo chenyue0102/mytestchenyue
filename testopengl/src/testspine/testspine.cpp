@@ -8,24 +8,30 @@
 #include <GL/freeglut_ext.h>
 #include <thread>
 #include "rendercmdscache.h"
-//#include "spineitem.h"
+#include "spineitem.h"
 RenderCmdsCache *g_RenderCmdsCache = 0;
 SpineItem *g_SpineItem = 0;
 
 void init() {
 	g_RenderCmdsCache = new RenderCmdsCache();
-	//g_SpineItem = new SpineItem();
-	//g_SpineItem->setAtlasFile("../../../android/testspine/app/src/main/assets/alien.atlas");
-	//g_SpineItem->setSkeletonFile("../../../android/testspine/app/src/main/assets/alien-ess.json");
+	g_RenderCmdsCache->initShaderProgram();
+
+	g_SpineItem = new SpineItem();
+	g_SpineItem->setAtlasFile("../../../android/testspine/app/src/main/assets/alien.atlas");
+	g_SpineItem->setSkeletonFile("../../../android/testspine/app/src/main/assets/alien-ess.json");
+	g_SpineItem->create();
 }
 
 void testdraw() {
-	//g_SpineItem->render()
+	g_SpineItem->updateSkeletonAnimation();
+	g_SpineItem->batchRenderCmd(g_RenderCmdsCache);
+	g_SpineItem->renderToCache(g_RenderCmdsCache);
+	g_RenderCmdsCache->clearCache();
 }
 
 void myIdle() {
 	testdraw();
-	std::this_thread::sleep_for(std::chrono::microseconds(1));
+	std::this_thread::sleep_for(std::chrono::microseconds(20));
 }
 
 int main(int argc, char *argv[])
