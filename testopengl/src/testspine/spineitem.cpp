@@ -412,9 +412,9 @@ void SpineItem::batchRenderCmd(RenderCmdsCache *render)
 
             tint.set(tint.r * attachmentColor.r, tint.g * attachmentColor.g, tint.b * attachmentColor.b, tint.a * attachmentColor.a);
             texture = getTexture(regionAttachment);
-            batch.vertices.setSize(4, SpineVertex());
+            batch.vertices.resize(4, SpineVertex());
             regionAttachment->computeWorldVertices(slot->getBone(),
-                                                   (float*)batch.vertices.buffer(),
+                                                   (float*)batch.vertices.data(),
                                                    0,
                                                    sizeof (SpineVertex) / sizeof (float));
             for(size_t j = 0, l = 0; j < 4; j++,l+=2) {
@@ -423,19 +423,19 @@ void SpineItem::batchRenderCmd(RenderCmdsCache *render)
                 vertex.u = regionAttachment->getUVs()[l];
                 vertex.v = regionAttachment->getUVs()[l + 1];
             }
-            batch.triangles.setSize(6, 0);
-            memcpy(batch.triangles.buffer(), quadIndices, 6 * sizeof (GLushort));
+            batch.triangles.resize(6);
+            memcpy(batch.triangles.data(), quadIndices, 6 * sizeof (GLushort));
         } else if (attachment->getRTTI().isExactly(spine::MeshAttachment::rtti)) {
             auto mesh = (spine::MeshAttachment*)attachment;
             attachmentColor.set(mesh->getColor());
             tint.set(tint.r * attachmentColor.r, tint.g * attachmentColor.g, tint.b * attachmentColor.b, tint.a * attachmentColor.a);
             size_t numVertices = mesh->getWorldVerticesLength() / 2;
-            batch.vertices.setSize(numVertices, SpineVertex());
+            batch.vertices.resize(numVertices, SpineVertex());
             texture = getTexture(mesh);
             mesh->computeWorldVertices(*slot,
                                        0,
                                        mesh->getWorldVerticesLength(),
-                                       (float*)batch.vertices.buffer(),
+                                       (float*)batch.vertices.data(),
                                        0,
                                        sizeof (SpineVertex) / sizeof (float));
             for (size_t j = 0, l = 0; j < numVertices; j++, l+=2) {
@@ -444,8 +444,8 @@ void SpineItem::batchRenderCmd(RenderCmdsCache *render)
                 vertex.u = mesh->getUVs()[l];
                 vertex.v = mesh->getUVs()[l+1];
             }
-            batch.triangles.setSize(mesh->getTriangles().size(), 0);
-            memcpy(batch.triangles.buffer(), mesh->getTriangles().buffer(), mesh->getTriangles().size() * sizeof (GLushort));
+            batch.triangles.resize(mesh->getTriangles().size(), 0);
+            memcpy(batch.triangles.data(), mesh->getTriangles().buffer(), mesh->getTriangles().size() * sizeof (GLushort));
 
             if (m_vertexEfect) {
                 // todo
@@ -480,7 +480,7 @@ void SpineItem::batchRenderCmd(RenderCmdsCache *render)
                     tmpUvs[i * 2] = batch.vertices[i].u;
                     tmpUvs[i * 2 + 1] = batch.vertices[i].v;
                 }
-                m_clipper->clipTriangles(tmpVertices.buffer(), batch.triangles.buffer(), batch.triangles.size(), tmpUvs.buffer(), sizeof (short));
+                m_clipper->clipTriangles(tmpVertices.buffer(), batch.triangles.data(), batch.triangles.size(), tmpUvs.buffer(), sizeof (short));
                 tmpVertices.setSize(0, 0);
                 tmpUvs.setSize(0, 0);
 
@@ -490,11 +490,11 @@ void SpineItem::batchRenderCmd(RenderCmdsCache *render)
                     m_clipper->clipEnd(*slot);
                     continue;
                 }
-                batch.triangles.setSize(m_clipper->getClippedTriangles().size(), 0);
-                memcpy(batch.triangles.buffer(), m_clipper->getClippedTriangles().buffer(), batch.triangles.size() * sizeof (unsigned short));
+                batch.triangles.resize(m_clipper->getClippedTriangles().size(), 0);
+                memcpy(batch.triangles.data(), m_clipper->getClippedTriangles().buffer(), batch.triangles.size() * sizeof (unsigned short));
                 auto newUvs = m_clipper->getClippedUVs();
                 auto newVertices = m_clipper->getClippedVertices();
-                batch.vertices.setSize(vertCount, SpineVertex());
+                batch.vertices.resize(vertCount, SpineVertex());
                 for(size_t i = 0; i < vertCount; i++) {
                     batch.vertices[i].x = newVertices[i * 2];
                     batch.vertices[i].y = newVertices[i * 2 + 1];

@@ -27,8 +27,8 @@ class Slot;
 }
 
 struct RenderCmdBatch{
-    spine::Vector<SpineVertex> vertices;
-    spine::Vector<GLushort> triangles;
+	std::vector<SpineVertex> vertices;
+	std::vector<GLushort> triangles;
     Texture* texture = nullptr;
     int blendMode;
 };

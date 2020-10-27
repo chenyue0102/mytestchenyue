@@ -106,8 +106,8 @@ public:
     void lineWidth(GLfloat width);
     void pointSize(GLfloat pointSize);
 
-    void drawTriangles(MyTexture *texture, spine::Vector<SpineVertex> vertices,
-                       spine::Vector<GLushort> triangles, const spine::Color& blendColor, const int &blendColorChannel, float light);
+    void drawTriangles(MyTexture *texture, std::vector<SpineVertex> vertices,
+		std::vector<GLushort> triangles, const spine::Color& blendColor, const int &blendColorChannel, float light);
     void drawPoly(const Point* points, int pointCount);
     void drawLine(const Point& origin, const Point& destination);
     void drawPoint(const Point& point);

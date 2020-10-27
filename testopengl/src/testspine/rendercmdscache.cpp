@@ -149,8 +149,8 @@ class DrawTrigngles
 public:
     explicit DrawTrigngles(MyOpenGLShaderProgram* program,
                            MyTexture *texture,
-                           spine::Vector<SpineVertex> vertices,
-                           spine::Vector<GLushort> triangles,
+							std::vector<SpineVertex> vertices,
+							std::vector<GLushort> triangles,
                            spine::Color blendColor,
                            int blendColorChannel,
                            float light)
@@ -161,12 +161,12 @@ public:
         ,m_light(light)
     {
         auto numvertices = vertices.size();
-        if (triangles.size() <= 0 || numvertices <= 0 || !triangles.buffer())
+        if (triangles.size() <= 0 || numvertices <= 0 || !triangles.data())
             return;
-        m_vertices.setSize(numvertices, SpineVertex());
-        memcpy((float*)m_vertices.buffer(), (float*)vertices.buffer(), sizeof (SpineVertex) * numvertices);
-        m_triangles.setSize(triangles.size(), 0);
-        memcpy(m_triangles.buffer(), triangles.buffer(), sizeof(GLushort)*triangles.size());
+        m_vertices.resize(numvertices, SpineVertex());
+        memcpy((float*)m_vertices.data(), (float*)vertices.data(), sizeof (SpineVertex) * numvertices);
+        m_triangles.resize(triangles.size(), 0);
+        memcpy(m_triangles.data(), triangles.data(), sizeof(GLushort)*triangles.size());
     }
 
     virtual ~DrawTrigngles()
@@ -189,13 +189,13 @@ public:
         mShaderProgram->setUniformValue("u_blendColor", m_blendColor.r, m_blendColor.g, m_blendColor.b, m_blendColor.a);
         mShaderProgram->setUniformValue("u_blendColorChannel", m_blendColorChannel);
         mShaderProgram->setUniformValue("u_light", m_light);
-		glDrawElements(GL_TRIANGLES, m_triangles.size(), GL_UNSIGNED_SHORT, m_triangles.buffer());
+		glDrawElements(GL_TRIANGLES, m_triangles.size(), GL_UNSIGNED_SHORT, m_triangles.data());
     }
 
 private:
     MyOpenGLShaderProgram* mShaderProgram;
-    spine::Vector<SpineVertex> m_vertices;
-    spine::Vector<GLushort> m_triangles;
+	std::vector<SpineVertex> m_vertices;
+	std::vector<GLushort> m_triangles;
     MyTexture *mTexture;
     spine::Color m_blendColor = spine::Color(255, 255, 255, 255);
     GLint m_blendColorChannel = -1;
@@ -297,14 +297,14 @@ void RenderCmdsCache::clearCache()
     if (mglFuncs.empty())
         return;
 
-    for (auto &func : mglFuncs)
-		func();
+    /*for (auto &func : mglFuncs)
+		func();*/
 
     mglFuncs.clear();
 }
 
-void RenderCmdsCache::drawTriangles(MyTexture *texture, spine::Vector<SpineVertex> vertices,
-                                    spine::Vector<GLushort> triangles, const spine::Color& blendColor,
+void RenderCmdsCache::drawTriangles(MyTexture *texture, std::vector<SpineVertex> vertices,
+	std::vector<GLushort> triangles, const spine::Color& blendColor,
                                     const int& blendColorChannel, float light)
 {
 	//todo

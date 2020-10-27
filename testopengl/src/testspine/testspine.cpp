@@ -26,7 +26,8 @@ void testdraw() {
 	g_SpineItem->updateSkeletonAnimation();
 	g_SpineItem->batchRenderCmd(g_RenderCmdsCache);
 	g_SpineItem->renderToCache(g_RenderCmdsCache);
-	g_RenderCmdsCache->clearCache();
+	g_RenderCmdsCache->render();
+	glFlush();
 }
 
 void myIdle() {
