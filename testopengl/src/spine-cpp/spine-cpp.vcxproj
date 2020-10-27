@@ -1,0 +1,295 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{4358469A-5B90-3498-A1A7-19E840D11DE9}</ProjectGuid>
+    <RootNamespace>spine-cpp</RootNamespace>
+    <Keyword>QtVS_v303</Keyword>
+    <WindowsTargetPlatformVersion>10.0.18362.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformMinVersion>10.0.18362.0</WindowsTargetPlatformMinVersion>
+    <QtMsBuild Condition="'$(QtMsBuild)'=='' or !Exists('$(QtMsBuild)\qt.targets')">$(MSBuildProjectDirectory)\QtMsBuild</QtMsBuild>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <PlatformToolset>v120</PlatformToolset>
+    <OutputDirectory>release\</OutputDirectory>
+    <ATLMinimizesCRunTimeLibraryUsage>false</ATLMinimizesCRunTimeLibraryUsage>
+    <CharacterSet>NotSet</CharacterSet>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <IntermediateDirectory>release\</IntermediateDirectory>
+    <PrimaryOutput>spine-cpp</PrimaryOutput>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <PlatformToolset>v141</PlatformToolset>
+    <OutputDirectory>debug\</OutputDirectory>
+    <ATLMinimizesCRunTimeLibraryUsage>false</ATLMinimizesCRunTimeLibraryUsage>
+    <CharacterSet>NotSet</CharacterSet>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <IntermediateDirectory>debug\</IntermediateDirectory>
+    <PrimaryOutput>spine-cpp</PrimaryOutput>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <Target Name="QtMsBuildNotFound" BeforeTargets="CustomBuild;ClCompile" Condition="!Exists('$(QtMsBuild)\qt.targets') or !Exists('$(QtMsBuild)\qt.props')">
+    <Message Importance="High" Text="QtMsBuild: could not locate qt.targets, qt.props; project may not build correctly." />
+  </Target>
+  <ImportGroup Label="ExtensionSettings" />
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <ImportGroup Condition="Exists('$(QtMsBuild)\qt_defaults.props')">
+    <Import Project="$(QtMsBuild)\qt_defaults.props" />
+  </ImportGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>debug\</OutDir>
+    <IntDir>debug\</IntDir>
+    <TargetName>spine-cpp</TargetName>
+    <IgnoreImportLibrary>true</IgnoreImportLibrary>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>release\</OutDir>
+    <IntDir>release\</IntDir>
+    <TargetName>spine-cpp</TargetName>
+    <IgnoreImportLibrary>true</IgnoreImportLibrary>
+  </PropertyGroup>
+  <PropertyGroup Label="QtSettings" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <QtInstall>msvc2017</QtInstall>
+    <QtModules>
+    </QtModules>
+  </PropertyGroup>
+  <PropertyGroup Label="QtSettings" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <QtInstall>msvc2017</QtInstall>
+    <QtModules>
+    </QtModules>
+  </PropertyGroup>
+  <ImportGroup Condition="Exists('$(QtMsBuild)\qt.props')">
+    <Import Project="$(QtMsBuild)\qt.props" />
+  </ImportGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>.\GeneratedFiles\$(ConfigurationName);.\GeneratedFiles;.;include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>-Zc:rvalueCast -Zc:inline -Zc:strictStrings -w34100 -w34189 -w44996 %(AdditionalOptions)</AdditionalOptions>
+      <AssemblerListingLocation>release\</AssemblerListingLocation>
+      <BrowseInformation>false</BrowseInformation>
+      <DebugInformationFormat>None</DebugInformationFormat>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <ObjectFileName>release\</ObjectFileName>
+      <Optimization>MaxSpeed</Optimization>
+      <PreprocessorDefinitions>_WINDOWS;UNICODE;_UNICODE;WIN32;_ENABLE_EXTENDED_ALIGNED_STORAGE;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessToFile>false</PreprocessToFile>
+      <ProgramDataBaseFileName>
+      </ProgramDataBaseFileName>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
+      <WarningLevel>Level3</WarningLevel>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <Lib>
+      <OutputFile>$(OutDir)\spine-cpp.lib</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+    </Lib>
+    <Midl>
+      <DefaultCharType>Unsigned</DefaultCharType>
+      <EnableErrorChecks>None</EnableErrorChecks>
+      <WarningLevel>0</WarningLevel>
+    </Midl>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_WINDOWS;UNICODE;_UNICODE;WIN32;_ENABLE_EXTENDED_ALIGNED_STORAGE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>.\GeneratedFiles\$(ConfigurationName);.\GeneratedFiles;.;include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>-Zc:rvalueCast -Zc:inline -w34100 -w34189 -w44996 %(AdditionalOptions)</AdditionalOptions>
+      <AssemblerListingLocation>debug\</AssemblerListingLocation>
+      <BrowseInformation>false</BrowseInformation>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <ObjectFileName>debug\</ObjectFileName>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>_WINDOWS;UNICODE;_UNICODE;WIN32;_ENABLE_EXTENDED_ALIGNED_STORAGE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessToFile>false</PreprocessToFile>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
+      <WarningLevel>Level3</WarningLevel>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <Lib>
+      <OutputFile>$(OutDir)\spine-cpp.lib</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+    </Lib>
+    <Midl>
+      <DefaultCharType>Unsigned</DefaultCharType>
+      <EnableErrorChecks>None</EnableErrorChecks>
+      <WarningLevel>0</WarningLevel>
+    </Midl>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_WINDOWS;UNICODE;_UNICODE;WIN32;_ENABLE_EXTENDED_ALIGNED_STORAGE;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="src\spine\Animation.cpp" />
+    <ClCompile Include="src\spine\AnimationState.cpp" />
+    <ClCompile Include="src\spine\AnimationStateData.cpp" />
+    <ClCompile Include="src\spine\Atlas.cpp" />
+    <ClCompile Include="src\spine\AtlasAttachmentLoader.cpp" />
+    <ClCompile Include="src\spine\Attachment.cpp" />
+    <ClCompile Include="src\spine\AttachmentLoader.cpp" />
+    <ClCompile Include="src\spine\AttachmentTimeline.cpp" />
+    <ClCompile Include="src\spine\Bone.cpp" />
+    <ClCompile Include="src\spine\BoneData.cpp" />
+    <ClCompile Include="src\spine\BoundingBoxAttachment.cpp" />
+    <ClCompile Include="src\spine\ClippingAttachment.cpp" />
+    <ClCompile Include="src\spine\ColorTimeline.cpp" />
+    <ClCompile Include="src\spine\ConstraintData.cpp" />
+    <ClCompile Include="src\spine\CurveTimeline.cpp" />
+    <ClCompile Include="src\spine\DeformTimeline.cpp" />
+    <ClCompile Include="src\spine\DrawOrderTimeline.cpp" />
+    <ClCompile Include="src\spine\Event.cpp" />
+    <ClCompile Include="src\spine\EventData.cpp" />
+    <ClCompile Include="src\spine\EventTimeline.cpp" />
+    <ClCompile Include="src\spine\Extension.cpp" />
+    <ClCompile Include="src\spine\IkConstraint.cpp" />
+    <ClCompile Include="src\spine\IkConstraintData.cpp" />
+    <ClCompile Include="src\spine\IkConstraintTimeline.cpp" />
+    <ClCompile Include="src\spine\Json.cpp" />
+    <ClCompile Include="src\spine\LinkedMesh.cpp" />
+    <ClCompile Include="src\spine\MathUtil.cpp" />
+    <ClCompile Include="src\spine\MeshAttachment.cpp" />
+    <ClCompile Include="src\spine\PathAttachment.cpp" />
+    <ClCompile Include="src\spine\PathConstraint.cpp" />
+    <ClCompile Include="src\spine\PathConstraintData.cpp" />
+    <ClCompile Include="src\spine\PathConstraintMixTimeline.cpp" />
+    <ClCompile Include="src\spine\PathConstraintPositionTimeline.cpp" />
+    <ClCompile Include="src\spine\PathConstraintSpacingTimeline.cpp" />
+    <ClCompile Include="src\spine\PointAttachment.cpp" />
+    <ClCompile Include="src\spine\RTTI.cpp" />
+    <ClCompile Include="src\spine\RegionAttachment.cpp" />
+    <ClCompile Include="src\spine\RotateTimeline.cpp" />
+    <ClCompile Include="src\spine\ScaleTimeline.cpp" />
+    <ClCompile Include="src\spine\ShearTimeline.cpp" />
+    <ClCompile Include="src\spine\Skeleton.cpp" />
+    <ClCompile Include="src\spine\SkeletonBinary.cpp" />
+    <ClCompile Include="src\spine\SkeletonBounds.cpp" />
+    <ClCompile Include="src\spine\SkeletonClipping.cpp" />
+    <ClCompile Include="src\spine\SkeletonData.cpp" />
+    <ClCompile Include="src\spine\SkeletonJson.cpp" />
+    <ClCompile Include="src\spine\Skin.cpp" />
+    <ClCompile Include="src\spine\Slot.cpp" />
+    <ClCompile Include="src\spine\SlotData.cpp" />
+    <ClCompile Include="src\spine\SpineObject.cpp" />
+    <ClCompile Include="src\spine\TextureLoader.cpp" />
+    <ClCompile Include="src\spine\Timeline.cpp" />
+    <ClCompile Include="src\spine\TransformConstraint.cpp" />
+    <ClCompile Include="src\spine\TransformConstraintData.cpp" />
+    <ClCompile Include="src\spine\TransformConstraintTimeline.cpp" />
+    <ClCompile Include="src\spine\TranslateTimeline.cpp" />
+    <ClCompile Include="src\spine\Triangulator.cpp" />
+    <ClCompile Include="src\spine\TwoColorTimeline.cpp" />
+    <ClCompile Include="src\spine\Updatable.cpp" />
+    <ClCompile Include="src\spine\VertexAttachment.cpp" />
+    <ClCompile Include="src\spine\VertexEffect.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\spine\Animation.h" />
+    <ClInclude Include="include\spine\AnimationState.h" />
+    <ClInclude Include="include\spine\AnimationStateData.h" />
+    <ClInclude Include="include\spine\Atlas.h" />
+    <ClInclude Include="include\spine\AtlasAttachmentLoader.h" />
+    <ClInclude Include="include\spine\Attachment.h" />
+    <ClInclude Include="include\spine\AttachmentLoader.h" />
+    <ClInclude Include="include\spine\AttachmentTimeline.h" />
+    <ClInclude Include="include\spine\AttachmentType.h" />
+    <ClInclude Include="include\spine\BlendMode.h" />
+    <ClInclude Include="include\spine\Bone.h" />
+    <ClInclude Include="include\spine\BoneData.h" />
+    <ClInclude Include="include\spine\BoundingBoxAttachment.h" />
+    <ClInclude Include="include\spine\ClippingAttachment.h" />
+    <ClInclude Include="include\spine\Color.h" />
+    <ClInclude Include="include\spine\ColorTimeline.h" />
+    <ClInclude Include="include\spine\ConstraintData.h" />
+    <ClInclude Include="include\spine\ContainerUtil.h" />
+    <ClInclude Include="include\spine\CurveTimeline.h" />
+    <ClInclude Include="include\spine\Debug.h" />
+    <ClInclude Include="include\spine\DeformTimeline.h" />
+    <ClInclude Include="include\spine\DrawOrderTimeline.h" />
+    <ClInclude Include="include\spine\Event.h" />
+    <ClInclude Include="include\spine\EventData.h" />
+    <ClInclude Include="include\spine\EventTimeline.h" />
+    <ClInclude Include="include\spine\Extension.h" />
+    <ClInclude Include="include\spine\HasRendererObject.h" />
+    <ClInclude Include="include\spine\HashMap.h" />
+    <ClInclude Include="include\spine\IkConstraint.h" />
+    <ClInclude Include="include\spine\IkConstraintData.h" />
+    <ClInclude Include="include\spine\IkConstraintTimeline.h" />
+    <ClInclude Include="include\spine\Json.h" />
+    <ClInclude Include="include\spine\LinkedMesh.h" />
+    <ClInclude Include="include\spine\MathUtil.h" />
+    <ClInclude Include="include\spine\MeshAttachment.h" />
+    <ClInclude Include="include\spine\MixBlend.h" />
+    <ClInclude Include="include\spine\MixDirection.h" />
+    <ClInclude Include="include\spine\PathAttachment.h" />
+    <ClInclude Include="include\spine\PathConstraint.h" />
+    <ClInclude Include="include\spine\PathConstraintData.h" />
+    <ClInclude Include="include\spine\PathConstraintMixTimeline.h" />
+    <ClInclude Include="include\spine\PathConstraintPositionTimeline.h" />
+    <ClInclude Include="include\spine\PathConstraintSpacingTimeline.h" />
+    <ClInclude Include="include\spine\PointAttachment.h" />
+    <ClInclude Include="include\spine\Pool.h" />
+    <ClInclude Include="include\spine\PositionMode.h" />
+    <ClInclude Include="include\spine\RTTI.h" />
+    <ClInclude Include="include\spine\RegionAttachment.h" />
+    <ClInclude Include="include\spine\RotateMode.h" />
+    <ClInclude Include="include\spine\RotateTimeline.h" />
+    <ClInclude Include="include\spine\ScaleTimeline.h" />
+    <ClInclude Include="include\spine\ShearTimeline.h" />
+    <ClInclude Include="include\spine\Skeleton.h" />
+    <ClInclude Include="include\spine\SkeletonBinary.h" />
+    <ClInclude Include="include\spine\SkeletonBounds.h" />
+    <ClInclude Include="include\spine\SkeletonClipping.h" />
+    <ClInclude Include="include\spine\SkeletonData.h" />
+    <ClInclude Include="include\spine\SkeletonJson.h" />
+    <ClInclude Include="include\spine\Skin.h" />
+    <ClInclude Include="include\spine\Slot.h" />
+    <ClInclude Include="include\spine\SlotData.h" />
+    <ClInclude Include="include\spine\SpacingMode.h" />
+    <ClInclude Include="include\spine\SpineObject.h" />
+    <ClInclude Include="include\spine\SpineString.h" />
+    <ClInclude Include="include\spine\TextureLoader.h" />
+    <ClInclude Include="include\spine\Timeline.h" />
+    <ClInclude Include="include\spine\TimelineType.h" />
+    <ClInclude Include="include\spine\TransformConstraint.h" />
+    <ClInclude Include="include\spine\TransformConstraintData.h" />
+    <ClInclude Include="include\spine\TransformConstraintTimeline.h" />
+    <ClInclude Include="include\spine\TransformMode.h" />
+    <ClInclude Include="include\spine\TranslateTimeline.h" />
+    <ClInclude Include="include\spine\Triangulator.h" />
+    <ClInclude Include="include\spine\TwoColorTimeline.h" />
+    <ClInclude Include="include\spine\Updatable.h" />
+    <ClInclude Include="include\spine\Vector.h" />
+    <ClInclude Include="include\spine\VertexAttachment.h" />
+    <ClInclude Include="include\spine\VertexEffect.h" />
+    <ClInclude Include="include\spine\Vertices.h" />
+    <ClInclude Include="include\spine\dll.h" />
+    <ClInclude Include="include\spine\spine.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">
+    <Import Project="$(QtMsBuild)\qt.targets" />
+  </ImportGroup>
+  <ImportGroup Label="ExtensionTargets" />
+</Project>

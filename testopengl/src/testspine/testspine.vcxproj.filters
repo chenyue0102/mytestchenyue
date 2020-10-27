@@ -1,0 +1,72 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="My">
+      <UniqueIdentifier>{dc203255-c941-4180-90ea-68c997c53af7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Spine">
+      <UniqueIdentifier>{3df73d6b-8aab-4b33-9f17-d9368d2849f9}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="testspine.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="rendercmdscache.cpp">
+      <Filter>Spine</Filter>
+    </ClCompile>
+    <ClCompile Include="My\MyTexture.cpp">
+      <Filter>My</Filter>
+    </ClCompile>
+    <ClCompile Include="My\OpenGLESHelper.cpp">
+      <Filter>My</Filter>
+    </ClCompile>
+    <ClCompile Include="texture.cpp">
+      <Filter>Spine</Filter>
+    </ClCompile>
+    <ClCompile Include="spineitem.cpp">
+      <Filter>Spine</Filter>
+    </ClCompile>
+    <ClCompile Include="My\BaseTime.cpp">
+      <Filter>My</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="rendercmdscache.h">
+      <Filter>Spine</Filter>
+    </ClInclude>
+    <ClInclude Include="My\MyTexture.h">
+      <Filter>My</Filter>
+    </ClInclude>
+    <ClInclude Include="My\OpenGLESHelper.h">
+      <Filter>My</Filter>
+    </ClInclude>
+    <ClInclude Include="My\OpenGLShaderProgram.h">
+      <Filter>My</Filter>
+    </ClInclude>
+    <ClInclude Include="texture.h">
+      <Filter>Spine</Filter>
+    </ClInclude>
+    <ClInclude Include="vmath.h">
+      <Filter>Spine</Filter>
+    </ClInclude>
+    <ClInclude Include="spineitem.h">
+      <Filter>Spine</Filter>
+    </ClInclude>
+    <ClInclude Include="My\BaseTime.h">
+      <Filter>My</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
