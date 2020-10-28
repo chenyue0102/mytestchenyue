@@ -53,7 +53,7 @@ bool SaveBitmap(const char* pFileName, int width, int height, int biBitCount, co
 		return true;
 	}
 }
-void MyTexture::bind(GLuint program) {
+void MyTexture::bind() {
 	if (0 == mTexture) {
 		int width = 0, height = 0, channel = 0;
 		stbi_uc *buffer = stbi_load(mFileName.c_str(), &width, &height, &channel, 0);

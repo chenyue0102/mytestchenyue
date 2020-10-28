@@ -67,7 +67,7 @@ void AimyTextureLoader::load(spine::AtlasPage &page, const spine::String &path)
         return;
     }
 	std::shared_ptr<Texture> tex = std::shared_ptr<Texture>(new Texture(filePath));
-	MyTexture *myTexture = new MyTexture(filePath.c_str());
+	std::shared_ptr<MyTexture> myTexture(new MyTexture(filePath.c_str()));
 	m_glTextureHash.insert(std::make_pair(tex->name, myTexture));
 
     page.setRendererObject(tex.get());
@@ -86,22 +86,14 @@ MyTexture* AimyTextureLoader::getGLTexture(Texture *texture)
     }
 
 	if (m_glTextureHash.find(texture->name) != m_glTextureHash.end())
-		return m_glTextureHash[texture->name];
+		return m_glTextureHash[texture->name].get();
 	else
 		return nullptr;
 }
 
 void AimyTextureLoader::releaseTextures()
 {
-    if (m_glTextureHash.empty())
-        return;
-
-    
-	for (auto &item : m_glTextureHash) {
-		delete item.second;
-	}
-
-    m_glTextureHash.clear();
+	m_glTextureHash.clear();
 }
 
 AimyExtension::AimyExtension(): spine::DefaultSpineExtension()

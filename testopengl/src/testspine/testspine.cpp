@@ -9,27 +9,34 @@
 #include <thread>
 #include "rendercmdscache.h"
 #include "spineitem.h"
+#include "BaseTime.h"
 RenderCmdsCache *g_RenderCmdsCache = 0;
 SpineItem *g_SpineItem = 0;
 
 void init() {
+	//glViewport(0, 0, 200, 200);
+	spine::Bone::setYDown(true);
 	g_RenderCmdsCache = new RenderCmdsCache();
 	g_RenderCmdsCache->initShaderProgram();
 
 	g_SpineItem = new SpineItem();
 	g_SpineItem->setAtlasFile("../../../android/testspine/app/src/main/assets/alien.atlas");
 	g_SpineItem->setSkeletonFile("../../../android/testspine/app/src/main/assets/alien-ess.json");
+	g_SpineItem->setSkeletonScale(0.003f);
 	g_SpineItem->create();
-	g_SpineItem->setAnimation(0, "death", false);
+	g_SpineItem->setAnimation(0, "run", true);
 	g_SpineItem->setSkin("default");
+	
 }
-
+BaseTime g_BaseTime;
 void testdraw() {
-	g_SpineItem->updateSkeletonAnimation();
+	static uint64_t lastTime = g_BaseTime.getCurrentTimeMs();
+	uint64_t curTime = g_BaseTime.getCurrentTimeMs();
+	g_SpineItem->updateSkeletonAnimation(float(curTime - lastTime) / 1000.f);
 	g_SpineItem->batchRenderCmd(g_RenderCmdsCache);
 	g_SpineItem->renderToCache(g_RenderCmdsCache);
 	g_RenderCmdsCache->render();
-	glFlush();
+	lastTime = curTime;
 }
 
 void myIdle() {
@@ -50,7 +57,7 @@ int main(int argc, char *argv[])
 	//glutInitDisplayMode(GLUT_RGB | GLUT_SINGLE);
 	glutInitDisplayMode(GLUT_RGBA);
 	glutInitWindowPosition(100, 100);
-	glutInitWindowSize(400, 400);
+	glutInitWindowSize(800, 600);
 	glutInitContextVersion(4, 3);
 	glutInitContextProfile(GLUT_CORE_PROFILE);
 
@@ -61,7 +68,7 @@ int main(int argc, char *argv[])
 	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &max);
 	printf("OpenGL Version=%s texturemaxsize=%d\n", v, max);
 
-	glEnable(GL_DEBUG_OUTPUT);
+	//glEnable(GL_DEBUG_OUTPUT);
 	
 
 	GLint flags;
@@ -76,7 +83,7 @@ int main(int argc, char *argv[])
 	assert(GLEW_OK == status);
     std::cout << "Hello World!\n";
 
-	glDebugMessageCallback(&DEBUGPROC, 0);
+	//glDebugMessageCallback(&DEBUGPROC, 0);
 
 	
 

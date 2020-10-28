@@ -42,14 +42,14 @@ static bool SaveBitmap(const char* pFileName, int width, int height, int biBitCo
 class MyFrameBuffer {
 public:
 	MyFrameBuffer() {
-		glGenTextures(1, &mTexture); CHECKERR;
-		glBindTexture(GL_TEXTURE_2D, mTexture); CHECKERR;
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 400, 400, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0); CHECKERR;
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); CHECKERR;
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); CHECKERR;
-		glGenRenderbuffers(1, &mRenderBuffer); CHECKERR;
-		glBindRenderbuffer(GL_RENDERBUFFER, mRenderBuffer); CHECKERR;
-		glGenFramebuffers(1, &mFrameBuffer); CHECKERR;
+		glGenTextures(1, &mTexture); CHECKERR();
+		glBindTexture(GL_TEXTURE_2D, mTexture); CHECKERR();
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 400, 400, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0); CHECKERR();
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); CHECKERR();
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); CHECKERR();
+		glGenRenderbuffers(1, &mRenderBuffer); CHECKERR();
+		glBindRenderbuffer(GL_RENDERBUFFER, mRenderBuffer); CHECKERR();
+		glGenFramebuffers(1, &mFrameBuffer); CHECKERR();
 	}
 	~MyFrameBuffer() {
 
@@ -57,10 +57,10 @@ public:
 
 public:
 	void bind() {
-		glBindFramebuffer(GL_FRAMEBUFFER, mFrameBuffer); CHECKERR;
-		glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, mTexture, 0); CHECKERR;
+		glBindFramebuffer(GL_FRAMEBUFFER, mFrameBuffer); CHECKERR();
+		glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, mTexture, 0); CHECKERR();
 		GLenum buffers[] = { GL_COLOR_ATTACHMENT0 };
-		glDrawBuffers(1, buffers); CHECKERR;
+		glDrawBuffers(1, buffers); CHECKERR();
 	}
 
 	void save() {

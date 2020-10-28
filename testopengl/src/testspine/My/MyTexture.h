@@ -9,7 +9,7 @@ public:
 	virtual ~MyTexture();
 
 public:
-	void bind(GLuint program);
+	void bind();
 private:
 	std::string mFileName;
 	GLuint mTexture;

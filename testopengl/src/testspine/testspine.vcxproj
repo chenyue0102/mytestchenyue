@@ -93,7 +93,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;FREEGLUT_STATIC;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>../../include;../spine-cpp/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../include;../spine-cpp/include;./My;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -111,6 +111,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>./My</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -162,6 +163,7 @@
     <ClCompile Include="My\BaseTime.cpp" />
     <ClCompile Include="My\MyTexture.cpp" />
     <ClCompile Include="My\OpenGLESHelper.cpp" />
+    <ClCompile Include="My\StructDefine.cpp" />
     <ClCompile Include="rendercmdscache.cpp" />
     <ClCompile Include="spineitem.cpp" />
     <ClCompile Include="testspine.cpp" />
@@ -173,6 +175,7 @@
     <ClInclude Include="My\OpenGLESHelper.h" />
     <ClInclude Include="My\OpenGLShaderProgram.h" />
     <ClInclude Include="My\stb_image.h" />
+    <ClInclude Include="My\StructDefine.h" />
     <ClInclude Include="My\TransformFeedback.h" />
     <ClInclude Include="rendercmdscache.h" />
     <ClInclude Include="spineitem.h" />

@@ -60,7 +60,7 @@ public:
 
 private:
     std::map<std::string, std::shared_ptr<Texture>> m_textureHash;
-	std::map<std::string, MyTexture*> m_glTextureHash;
+	std::map<std::string, std::shared_ptr<MyTexture>> m_glTextureHash;
     std::mutex m_mutex;
 };
 

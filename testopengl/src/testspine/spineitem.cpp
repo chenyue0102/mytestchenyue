@@ -6,10 +6,27 @@
 #include "rendercmdscache.h"
 #include "texture.h"
 
+#ifndef max
 #define max(a,b) (((a) > (b)) ? (a) : (b))
 #define min(a,b) (((a) < (b)) ? (a) : (b))
-#define qMin min
-#define qMax max
+#endif
+
+bool contains(std::vector<std::string> &array, const std::string &text) {
+	for (auto &s : array) {
+		if (s == text) {
+			return true;
+		}
+	}
+	return false;
+}
+
+spine::String convert(const MyString &str) {
+	return spine::String(str.c_str());
+}
+
+MyColor convert(const spine::Color &clr) {
+	return MyColor(clr.r, clr.g, clr.b, clr.a);
+}
 
 void animationSateListioner(spine::AnimationState* state, spine::EventType type, spine::TrackEntry* entry, spine::Event* event) {
     auto spItem = static_cast<SpineItem*>(state->getRendererObject());
@@ -48,12 +65,9 @@ void animationSateListioner(spine::AnimationState* state, spine::EventType type,
 }
 
 SpineItem::SpineItem() :
-    m_skeletonScale(1.0),
-    m_clipper(new spine::SkeletonClipping),
-    m_spWorker(new SpineItemWorker(this))
+    m_clipper(new spine::SkeletonClipping)
 {
     m_blendColor = MyColor(255, 255, 255, 255);
-    m_worldVertices = new float[2000];
 }
 
 SpineItem::~SpineItem()
@@ -61,15 +75,12 @@ SpineItem::~SpineItem()
     if(m_animationState)
         m_animationState->clearTracks();
     m_requestDestroy = true;
-    m_spWorker.reset();
     releaseSkeletonRelatedData();
-    delete [] m_worldVertices;
 }
 
 void SpineItem::setAtlasFile(const std::string &atlasPath)
 {
 	m_atlasFile = atlasPath;
-	atlasFileChanged(atlasPath);
 }
 
 void SpineItem::setSkeletonFile(const std::string &skeletonPath)
@@ -94,11 +105,13 @@ bool SpineItem::create() {
 
 	if (m_atlasFile.empty()) {
 		resourceLoadFailed();
+		assert(false);
 		return false;
 	}
 
 	if (m_skeletonFile.empty()) {
 		resourceLoadFailed();
+		assert(false);
 		return false;
 	}
 
@@ -107,6 +120,7 @@ bool SpineItem::create() {
 
 	if (m_atlas->getPages().size() == 0) {
 		resourceLoadFailed();
+		assert(false);
 		return false;
 	}
 
@@ -115,6 +129,7 @@ bool SpineItem::create() {
 	m_skeletonData.reset(json.readSkeletonDataFile(m_skeletonFile.c_str()));
 	if (!m_skeletonData) {
 		resourceLoadFailed();
+		assert(false);
 		return false;
 	}
 
@@ -131,14 +146,14 @@ bool SpineItem::create() {
 	m_isLoading = false;
 
 	auto animations = m_skeletonData->getAnimations();
-	for (int i = 0; i < animations.size(); i++) {
+	for (size_t i = 0; i < animations.size(); i++) {
 		auto aniName = std::string(animations[i]->getName().buffer());
 		m_animations.push_back(aniName);
 	}
 	animationsChanged(m_animations);
 
 	auto skins = m_skeletonData->getSkins();
-	for (int i = 0; i < skins.size(); i++) {
+	for (size_t i = 0; i < skins.size(); i++) {
 		auto skinName = std::string(skins[i]->getName().buffer());
 		m_skins.push_back(skinName);
 	}
@@ -160,92 +175,106 @@ bool SpineItem::create() {
 
 void SpineItem::setToSetupPose()
 {
-    if(m_spWorker)
-        m_spWorker->setToSetupPose();
+	if (!isSkeletonReady()) {
+		return;
+	}
+	m_skeleton->setToSetupPose();
+	m_animationState->apply(*m_skeleton.get());
+	m_skeleton->updateWorldTransform();
 }
 
 void SpineItem::setBonesToSetupPose()
 {
-    if(m_spWorker)
-        m_spWorker->setBonesToSetupPose();
+	if (!isSkeletonReady()) {
+		return;
+	}
+	m_skeleton->setBonesToSetupPose();
 }
 
 void SpineItem::setSlotsToSetupPose()
 {
-    if(m_spWorker)
-        m_spWorker->setSlotsToSetupPose();
+	if (!isSkeletonReady()) {
+		return;
+	}
+	m_skeleton->setSlotsToSetupPose();
 }
 
 bool SpineItem::setAttachment(const MyString &slotName, const MyString &attachmentName)
 {
-    if(m_spWorker)
-        m_spWorker->setAttachment(slotName, attachmentName);
-    return true;
+	if (!isSkeletonReady()) {
+		return false;
+	}
+	m_skeleton->setAttachment(convert(slotName), convert(attachmentName));
+	return true;
 }
 
 void SpineItem::setMix(const MyString &fromAnimation, const MyString &toAnimation, float duration)
 {
-    if(m_spWorker)
-        m_spWorker->setMix(fromAnimation, toAnimation, duration);
+	if (!isSkeletonReady()) {
+		return;
+	}
+	m_animationStateData->setMix(convert(fromAnimation),
+		convert(toAnimation),
+		duration);
 }
 
 void SpineItem::setAnimation(int trackIndex, const MyString &name, bool loop)
 {
-    if(m_spWorker)
-        m_spWorker->setAnimation(trackIndex, name, loop);
+	if (!isSkeletonReady()) {
+		return;
+	}
+	if (!contains(m_animations, name)) {
+		return;
+	}
+	m_animationState->setAnimation(size_t(trackIndex), convert(name), loop);
 }
 
 void SpineItem::addAnimation(int trackIndex, const MyString &name, bool loop, float delay)
 {
-    if(m_spWorker)
-        m_spWorker->addAnimation(trackIndex, name, loop, delay);
+	if (!isSkeletonReady()) {
+		return;
+	}
+	if (!contains(m_animations, name)) {
+		return;
+	}
+	m_animationState->addAnimation(size_t(trackIndex), convert(name), loop, delay);
 }
 
 void SpineItem::setSkin(const MyString &skinName)
 {
-    if(m_spWorker)
-        m_spWorker->setSkin(skinName);
+	if (!isSkeletonReady()) {
+		return;
+	}
+	if (!contains(m_skins, skinName)) {
+	}
+	m_skeleton->setSkin(convert(skinName));
 }
 
 void SpineItem::clearTracks()
 {
-    if(m_spWorker)
-        m_spWorker->clearTracks();
+	if (!isSkeletonReady()) {
+		return;
+	}
+	m_animationState->clearTracks();
+	m_animating = false;
 }
 
 void SpineItem::clearTrack(int trackIndex)
 {
-    if(m_spWorker)
-        m_spWorker->clearTrack(trackIndex);
+	if (!isSkeletonReady()) {
+		return;
+	}
+	m_animationState->clearTrack(size_t(trackIndex));
+	if (m_animationState->getTracks().size() <= 0)
+		m_animating = false;
 }
 
-void SpineItem::updateSkeletonAnimation()
+void SpineItem::updateSkeletonAnimation(float deltaTime)
 {
 	if (!isSkeletonReady()) {
 		return;
 	}
 
-	/*if(!m_spItem->m_tickCounter.isValid())
-		m_spItem->m_tickCounter.restart();
-	else{
-		auto sleepCount = 1000.0 / m_spItem->m_fps - m_spItem->m_tickCounter.elapsed();
-		if(sleepCount > 0)
-			QThread::msleep(sleepCount);
-	}
-	m_spItem->m_tickCounter.restart();*/
-
-	/*if (m_animationState->getTracks().size() <= 0 || !isVisible()) {
-		if (m_fadecounter > 0)
-			m_fadecounter--;
-		else
-			return;
-	}
-	else
-		m_fadecounter = 1;*/
-
-	qint64 msecs = m_timer.getCurrentTimeMs();
-	float deltaTime = msecs / 1000.0 * m_timeScale;
-	//deltaTime = 0.01666666f;
 	m_skeleton->update(deltaTime);
 	m_animationState->update(deltaTime);
 	m_animationState->apply(*m_skeleton.get());
@@ -254,16 +283,21 @@ void SpineItem::updateSkeletonAnimation()
 	m_boundingRect = computeBoundingRect();
 	//m_spItem->batchRenderCmd();
 	animationUpdated();
-	m_timer.setBaseTimeMs(0);
 }
 
-RectF SpineItem::computeBoundingRect()
+void makeVectorSize(spine::Vector<float> &vt, size_t minSize) {
+	if (vt.size() < minSize) {
+		vt.setSize(minSize, 0.0f);
+	}
+}
+
+MyRect SpineItem::computeBoundingRect()
 {
     if(!isSkeletonReady())
-        return RectF();
+        return MyRect();
     float minX = FLT_MAX, minY = FLT_MAX, maxX = -FLT_MAX, maxY = -FLT_MAX;
     float vminX = FLT_MAX, vminY = FLT_MAX, vmaxX = -FLT_MAX, vmaxY = -FLT_MAX;
-    for(int i = 0; i < m_skeleton->getSlots().size(); i++) {
+    for(size_t i = 0; i < m_skeleton->getSlots().size(); i++) {
         auto slot = m_skeleton->getSlots()[i];
         if(!slot->getAttachment())
             continue;
@@ -271,48 +305,50 @@ RectF SpineItem::computeBoundingRect()
         auto* attachment = slot->getAttachment();
         if(attachment->getRTTI().isExactly(spine::RegionAttachment::rtti)) {
             auto* regionAttachment = static_cast<spine::RegionAttachment*>(slot->getAttachment());
-            regionAttachment->computeWorldVertices(slot->getBone(), m_worldVertices, 0, 2);
+			makeVectorSize(m_MyWorldVertices, 0 + 8);
+            regionAttachment->computeWorldVertices(slot->getBone(), m_MyWorldVertices, 0, 2);
             verticesCount = 8;
             // handle viewport mode
 			std::string tmp = std::string(attachment->getName().buffer());
             if(tmp.rfind("viewport") == (tmp.size() - strlen("viewport"))) {
                 m_hasViewPort = true;
                 for (int ii = 0; ii < verticesCount; ii+=2) {
-                    float x = m_worldVertices[ii], y = m_worldVertices[ii + 1];
-                    vminX = qMin(vminX, x);
-                    vminY = qMin(vminY, y);
-                    vmaxX = qMax(vmaxX, x);
-                    vmaxY = qMax(vmaxY, y);
+                    float x = m_MyWorldVertices[ii], y = m_MyWorldVertices[ii + 1];
+                    vminX = min(vminX, x);
+                    vminY = min(vminY, y);
+                    vmaxX = max(vmaxX, x);
+                    vmaxY = max(vmaxY, y);
                 }
-                m_viewPortRect = RectF(vminX, vminY, vmaxX - vminX, vmaxY - vminY);
+                m_viewPortRect = MyRect(vminX, vminY, vmaxX - vminX, vmaxY - vminY);
             }
         } else if(attachment->getRTTI().isExactly(spine::MeshAttachment::rtti)) {
             auto* meshAttachment = static_cast<spine::MeshAttachment*>(slot->getAttachment());
             verticesCount = meshAttachment->getWorldVerticesLength();
-            meshAttachment->computeWorldVertices(*slot, m_worldVertices);
+			makeVectorSize(m_MyWorldVertices, verticesCount);
+            meshAttachment->computeWorldVertices(*slot, m_MyWorldVertices);
 			std::string tmp = std::string(attachment->getName().buffer());
             if(tmp.rfind("viewport") == (tmp.size() - strlen("viewport"))) {
                 m_hasViewPort = true;
                 for (int ii = 0; ii < verticesCount; ii+=2) {
-                    float x = m_worldVertices[ii], y = m_worldVertices[ii + 1];
-                    vminX = qMin(vminX, x);
-                    vminY = qMin(vminY, y);
-                    vmaxX = qMax(vmaxX, x);
-                    vmaxY = qMax(vmaxY, y);
+                    float x = m_MyWorldVertices[ii], y = m_MyWorldVertices[ii + 1];
+                    vminX = min(vminX, x);
+                    vminY = min(vminY, y);
+                    vmaxX = max(vmaxX, x);
+                    vmaxY = max(vmaxY, y);
                 }
-                m_viewPortRect = RectF(vminX, vminY, vmaxX - vminX, vmaxY - vminY);
+                m_viewPortRect = MyRect(vminX, vminY, vmaxX - vminX, vmaxY - vminY);
             }
         } else
             continue;
         for (int ii = 0; ii < verticesCount; ii+=2) {
-            float x = m_worldVertices[ii], y = m_worldVertices[ii + 1];
-            minX = qMin(minX, x);
-            minY = qMin(minY, y);
-            maxX = qMax(maxX, x);
-            maxY = qMax(maxY, y);
+            float x = m_MyWorldVertices[ii], y = m_MyWorldVertices[ii + 1];
+            minX = min(minX, x);
+            minY = min(minY, y);
+            maxX = max(maxX, x);
+            maxY = max(maxY, y);
         }
     }
-    return RectF(minX, minY, maxX - minX, maxY - minY);
+    return MyRect(minX, minY, maxX - minX, maxY - minY);
 }
 
 Texture *SpineItem::getTexture(spine::Attachment *attachment) const
@@ -396,8 +432,8 @@ void SpineItem::batchRenderCmd(RenderCmdsCache *render)
 
         auto skeletonColor = m_skeleton->getColor();
         auto slotColor = slot->getColor();
-        spine::Color attachmentColor(0, 0, 0, 0);
-        spine::Color tint(skeletonColor.r * slotColor.r,
+        MyColor attachmentColor(0, 0, 0, 0);
+		MyColor tint(skeletonColor.r * slotColor.r,
                           skeletonColor.g * slotColor.g,
                           skeletonColor.b * slotColor.b,
                           skeletonColor.a * slotColor.a);
@@ -415,7 +451,7 @@ void SpineItem::batchRenderCmd(RenderCmdsCache *render)
 //        darkColor.a = 0;
         if(attachment->getRTTI().isExactly(spine::RegionAttachment::rtti)) {
             auto regionAttachment = (spine::RegionAttachment*)attachment;
-            attachmentColor.set(regionAttachment->getColor());
+            attachmentColor.set(convert(regionAttachment->getColor()));
 
             tint.set(tint.r * attachmentColor.r, tint.g * attachmentColor.g, tint.b * attachmentColor.b, tint.a * attachmentColor.a);
             texture = getTexture(regionAttachment);
@@ -434,7 +470,7 @@ void SpineItem::batchRenderCmd(RenderCmdsCache *render)
             memcpy(batch.triangles.data(), quadIndices, 6 * sizeof (GLushort));
         } else if (attachment->getRTTI().isExactly(spine::MeshAttachment::rtti)) {
             auto mesh = (spine::MeshAttachment*)attachment;
-            attachmentColor.set(mesh->getColor());
+            attachmentColor.set(convert(mesh->getColor()));
             tint.set(tint.r * attachmentColor.r, tint.g * attachmentColor.g, tint.b * attachmentColor.b, tint.a * attachmentColor.a);
             size_t numVertices = mesh->getWorldVerticesLength() / 2;
             batch.vertices.resize(numVertices, SpineVertex());
@@ -571,7 +607,8 @@ void SpineItem::renderToCache(RenderCmdsCache *render)
                     m_blendColorChannel,
                     m_light);
         hasBlend = true;
-#if 0
+
+#ifdef _DEBUG
         // debug drawing
         if(m_debugBones || m_debugSlots || m_debugMesh) {
             m_renderCache->bindShader(RenderCmdsCache::ShaderColor);
@@ -580,23 +617,24 @@ void SpineItem::renderToCache(RenderCmdsCache *render)
             if(m_debugSlots) {
                 m_renderCache->drawColor(200, 40, 150, 255);
                 m_renderCache->lineWidth(1);
-                Point points[4];
+                MyPoint points[4];
                 for (size_t i = 0, n = m_skeleton->getSlots().size(); i < n; i++) {
                     auto slot = m_skeleton->getSlots()[i];
                     if(!slot->getAttachment() || !slot->getAttachment()->getRTTI().isExactly(spine::RegionAttachment::rtti))
                         continue;
                     auto* regionAttachment = (spine::RegionAttachment*)slot->getAttachment();
-                    regionAttachment->computeWorldVertices(slot->getBone(), m_worldVertices, 0, 2);
-                    points[0] = Point(m_worldVertices[0], m_worldVertices[1]);
-                    points[1] = Point(m_worldVertices[2], m_worldVertices[3]);
-                    points[2] = Point(m_worldVertices[4], m_worldVertices[5]);
-                    points[3] = Point(m_worldVertices[6], m_worldVertices[7]);
+					makeVectorSize(m_MyWorldVertices, 0 + 8);
+                    regionAttachment->computeWorldVertices(slot->getBone(), m_MyWorldVertices, 0, 2);
+                    points[0] = MyPoint(m_MyWorldVertices[0], m_MyWorldVertices[1]);
+                    points[1] = MyPoint(m_MyWorldVertices[2], m_MyWorldVertices[3]);
+                    points[2] = MyPoint(m_MyWorldVertices[4], m_MyWorldVertices[5]);
+                    points[3] = MyPoint(m_MyWorldVertices[6], m_MyWorldVertices[7]);
                     m_renderCache->drawPoly(points, 4);
                 }
             }
 
             if(m_debugMesh) {
-                spine::Vector<Point> points;
+                std::vector<MyPoint> points;
                 m_renderCache->drawColor(40, 150, 200, 255);
                 for (size_t i = 0, n = m_skeleton->getSlots().size(); i < n; i++) {
                     auto slot = m_skeleton->getSlots()[i];
@@ -604,14 +642,14 @@ void SpineItem::renderToCache(RenderCmdsCache *render)
                         continue;
                     auto* mesh = (spine::MeshAttachment*)slot->getAttachment();
                     size_t numVertices = mesh->getWorldVerticesLength() / 2;
-                    points.setSize(numVertices, Point());
+                    points.resize(numVertices);
                     mesh->computeWorldVertices(*slot,
                                                0,
                                                mesh->getWorldVerticesLength(),
-                                               (float*)points.buffer(),
+                                               (float*)points.data(),
                                                0,
-                                               sizeof (Point) / sizeof (float));
-                    m_renderCache->drawPoly(points.buffer(), points.size());
+                                               sizeof (MyPoint) / sizeof (float));
+                    m_renderCache->drawPoly(points.data(), points.size());
                 }
             }
 
@@ -624,15 +662,15 @@ void SpineItem::renderToCache(RenderCmdsCache *render)
                     if(!bone->isActive()) continue;
                     float x = bone->getData().getLength() * bone->getA() + bone->getWorldX();
                     float y = bone->getData().getLength() * bone->getC() + bone->getWorldY();
-                    Point p0(bone->getWorldX(), bone->getWorldY());
-                    Point p1(x, y);
+                    MyPoint p0(bone->getWorldX(), bone->getWorldY());
+					MyPoint p1(x, y);
                     m_renderCache->drawLine(p0, p1);
                 }
     //            cache->drawColor(0, 0, 255, 255);
                 m_renderCache->pointSize(4.0);
                 for(int i = 0, n = m_skeleton->getBones().size(); i < n; i++) {
                     auto bone = m_skeleton->getBones()[i];
-                    m_renderCache->drawPoint(Point(bone->getWorldX(), bone->getWorldY()));
+                    m_renderCache->drawPoint(MyPoint(bone->getWorldX(), bone->getWorldY()));
                     if(i == 0) m_renderCache->drawColor(0, 255, 0,255);
                 }
             }
@@ -697,12 +735,12 @@ void SpineItem::setBlendColor(const MyColor &color)
 //    emit vertexEfectChanged();
 //}
 
-qreal SpineItem::scaleY() const
+float SpineItem::scaleY() const
 {
     return m_scaleY;
 }
 
-void SpineItem::setScaleY(const qreal &value)
+void SpineItem::setScaleY(const float &value)
 {
     m_scaleY = value;
     if(isSkeletonReady())
@@ -710,12 +748,12 @@ void SpineItem::setScaleY(const qreal &value)
     scaleYChanged(m_scaleY);
 }
 
-qreal SpineItem::scaleX() const
+float SpineItem::scaleX() const
 {
     return m_scaleX;
 }
 
-void SpineItem::setScaleX(const qreal &value)
+void SpineItem::setScaleX(const float &value)
 {
     m_scaleX = value;
     if(isSkeletonReady())
@@ -723,42 +761,26 @@ void SpineItem::setScaleX(const qreal &value)
     scaleXChanged(m_scaleX);
 }
 
-qreal SpineItem::defaultMix() const
+float SpineItem::defaultMix() const
 {
     return m_defaultMix;
 }
 
-void SpineItem::setDefaultMix(const qreal &defaultMix)
+void SpineItem::setDefaultMix(const float &defaultMix)
 {
     m_defaultMix = defaultMix;
     defaultMixChanged(m_defaultMix);
     if(isSkeletonReady()) {
         m_animationStateData->setDefaultMix(m_defaultMix);
-        return;
-    }
-    else{
-        //m_lazyLoadTimer->stop();
-        //m_lazyLoadTimer->start();
     }
 }
 
-qreal SpineItem::timeScale() const
-{
-    return m_timeScale;
-}
-
-void SpineItem::setTimeScale(const qreal &timeScale)
-{
-    m_timeScale = timeScale;
-    timeScaleChanged(m_timeScale);
-}
-
-qreal SpineItem::skeletonScale() const
+float SpineItem::skeletonScale() const
 {
     return m_skeletonScale;
 }
 
-void SpineItem::setSkeletonScale(const qreal &skeletonScale)
+void SpineItem::setSkeletonScale(const float &skeletonScale)
 {
     if(m_isLoading)
         return;
@@ -770,12 +792,12 @@ void SpineItem::setSkeletonScale(const qreal &skeletonScale)
     skeletonScaleChanged(m_skeletonScale);
 }
 
-QStringList SpineItem::animations() const
+std::vector<std::string> SpineItem::animations() const
 {
     return m_animations;
 }
 
-QStringList SpineItem::skins() const
+std::vector<std::string> SpineItem::skins() const
 {
     return m_skins;
 }
@@ -821,142 +843,9 @@ void SpineItem::setSourceSize(const MySize &sourceSize)
 void SpineItem::updateBoundingRect()
 {
     setSourceSize(MySize(m_boundingRect.width(), m_boundingRect.height()));
-    /*if(m_hasViewPort)
-        setImplicitSize(m_viewPortRect.width(), m_viewPortRect.height());
-    else
-        setImplicitSize(m_boundingRect.width(), m_boundingRect.height());*/
-}
-
-void SpineItem::onCacheRendered()
-{
-    if(m_requestDestroy)
-        return;
-    updateSkeletonAnimation();
-}
-
-void SpineItem::onVisibleChanged()
-{
-    if(isSkeletonReady() && isVisible())
-        animationUpdated();
 }
 
 bool SpineItem::isSkeletonReady() const
 {
     return m_loaded && m_atlas && m_skeleton && m_animationState;
-}
-
-SpineItemWorker::SpineItemWorker(SpineItem *spItem) :
-    m_spItem(spItem)
-{
-
-}
-
-bool contains(std::vector<std::string> &array, const std::string &text) {
-	for (auto &s : array) {
-		if (s == text) {
-			return true;
-		}
-	}
-	return false;
-}
-
-spine::String convert(const MyString &str) {
-	return spine::String(str.c_str());
-}
-
-void SpineItemWorker::setAnimation(int trackIndex, const MyString &name, bool loop)
-{
-    if(!m_spItem->isSkeletonReady()) {
-        return;
-    }
-    if(!contains(m_spItem->m_animations, name)) {
-        return;
-    }
-    m_spItem->m_animationState->setAnimation(size_t(trackIndex), convert(name), loop);
-    m_spItem->m_timer.setBaseTime(0);
-}
-
-void SpineItemWorker::addAnimation(int trackIndex, const MyString &name, bool loop, float delay)
-{
-    if(!m_spItem->isSkeletonReady()) {
-        return;
-    }
-    if(!contains(m_spItem->m_animations, name)) {
-        return;
-    }
-    m_spItem->m_animationState->addAnimation(size_t(trackIndex), convert(name), loop, delay);
-	m_spItem->m_timer.setBaseTime(0);
-}
-
-void SpineItemWorker::setToSetupPose()
-{
-    if(!m_spItem->isSkeletonReady()) {
-        return;
-    }
-    m_spItem->m_skeleton->setToSetupPose();
-    m_spItem->m_animationState->apply(*m_spItem->m_skeleton.get());
-    m_spItem->m_skeleton->updateWorldTransform();
-}
-
-void SpineItemWorker::setBonesToSetupPose()
-{
-    if(!m_spItem->isSkeletonReady()) {
-        return;
-    }
-    m_spItem->m_skeleton->setBonesToSetupPose();
-}
-
-void SpineItemWorker::setSlotsToSetupPose()
-{
-    if(!m_spItem->isSkeletonReady()) {
-        return;
-    }
-    m_spItem->m_skeleton->setSlotsToSetupPose();
-}
-
-void SpineItemWorker::setAttachment(const MyString &slotName, const MyString &attachmentName)
-{
-    if(!m_spItem->isSkeletonReady()) {
-        return;
-    }
-    m_spItem->m_skeleton->setAttachment(convert(slotName), convert(attachmentName));
-}
-
-void SpineItemWorker::setMix(const MyString &fromAnimation, const MyString &toAnimation, float duration)
-{
-    if(!m_spItem->isSkeletonReady()) {
-        return;
-    }
-    m_spItem->m_animationStateData->setMix(convert(fromAnimation),
-								convert(toAnimation),
-                                 duration);
-}
-
-void SpineItemWorker::setSkin(const MyString &skinName)
-{
-    if(!m_spItem->isSkeletonReady()) {
-        return;
-    }
-    if(!contains(m_spItem->m_skins, skinName)) {
-    }
-    m_spItem->m_skeleton->setSkin(convert(skinName));
-}
-
-void SpineItemWorker::clearTracks()
-{
-    if(!m_spItem->isSkeletonReady()) {
-        return;
-    }
-    m_spItem->m_animationState->clearTracks();
-    m_spItem->m_animating = false;
-}
-
-void SpineItemWorker::clearTrack(int trackIndex)
-{
-    if(!m_spItem->isSkeletonReady()) {
-        return;
-    }
-    m_spItem->m_animationState->clearTrack(size_t(trackIndex));
-    if(m_spItem->m_animationState->getTracks().size() <= 0)
-        m_spItem->m_animating = false;
 }

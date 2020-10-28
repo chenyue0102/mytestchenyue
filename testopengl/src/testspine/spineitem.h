@@ -2,17 +2,13 @@
 #define SPINEITEM_H
 #include <memory>
 #include <functional>
-
+#include <spine/MathUtil.h>
 #include "rendercmdscache.h"
-#include "My/BaseTime.h"
 
-class SpineItemWorker;
 
 class RenderCmdsCache;
-class AimyTextureLoader;
-class Texture;
+struct Texture;
 class SpineVertexEffect;
-class SkeletonRenderer;
 
 namespace spine {
 class Atlas;
@@ -33,26 +29,6 @@ struct RenderCmdBatch{
     int blendMode;
 };
 
-struct Size {
-	Size(int _w, int _h) :w(_w), h(_h) {
-
-	}
-	Size() :w(), h() {
-
-	}
-
-	int w, h;
-};
-
-
-typedef spine::Color MyColor;
-typedef std::string MyString;
-typedef Size MySize;
-#define qreal float
-#define QStringList std::vector<std::string>
-typedef long long qint64;
-
-
 class SpineItem
 {
 public:
@@ -62,7 +38,6 @@ public:
 	void setAtlasFile(const std::string &atlasPath);
 	void setSkeletonFile(const std::string &skeletonPath);
 	bool create();
-
 
 	bool isVisible() { return true; }
 
@@ -123,12 +98,7 @@ public:
      */
     void clearTrack(int trackIndex = 0);
 
-    friend class SpineItemWorker;
-    friend class SkeletonRenderer;
-
     friend void animationSateListioner(spine::AnimationState* state, spine::EventType type, spine::TrackEntry* entry, spine::Event* event);
-
-    
 
     bool isSkeletonReady() const;
 
@@ -143,29 +113,23 @@ public:
     bool debugSlots() const;
     void setDebugSlots(bool debugSlots);
 
-    QStringList vailableAnimations() const;
-	QStringList vailableSkins() const;
+	std::vector<std::string> vailableAnimations() const;
+	std::vector<std::string> vailableSkins() const;
 
-	QStringList animations() const;
-	QStringList skins() const;
+	std::vector<std::string> animations() const;
+	std::vector<std::string> skins() const;
 
-    qreal skeletonScale() const;
-    void setSkeletonScale(const qreal &skeletonScale);
+    float skeletonScale() const;
+    void setSkeletonScale(const float &skeletonScale);
 
-    int fps() const;
-    void setFps(int fps);
+    float defaultMix() const;
+    void setDefaultMix(const float &defaultMix);
 
-    qreal timeScale() const;
-    void setTimeScale(const qreal &timeScale);
+    float scaleX() const;
+    void setScaleX(const float &value);
 
-    qreal defaultMix() const;
-    void setDefaultMix(const qreal &defaultMix);
-
-    qreal scaleX() const;
-    void setScaleX(const qreal &value);
-
-    qreal scaleY() const;
-    void setScaleY(const qreal &value);
+    float scaleY() const;
+    void setScaleY(const float &value);
 
     /*QObject *vertexEfect() const;
     void setVertexEfect(QObject *vertexEfect);*/
@@ -185,9 +149,6 @@ public:
     float light() const;
     void setLight(float light);
 
-    bool asynchronous() const;
-    void setAsynchronous(bool asynchronous);
-
 public://signals:
 
     // property signals
@@ -200,16 +161,15 @@ public://signals:
     void debugBonesChanged(const bool& ret) {};
     void debugSlotsChanged(const bool& ret) {};
     void debugMeshChanged(const bool& ret) {};
-    void animationsChanged(const QStringList& animations) {};
-    void skinsChanged(const QStringList& skins) {};
-    void skeletonScaleChanged(const qreal& scale) {};
+    void animationsChanged(const std::vector<std::string>& animations) {};
+    void skinsChanged(const std::vector<std::string>& skins) {};
+    void skeletonScaleChanged(const float& scale) {};
     void fpsChanged(const int& fps) {};
-    void timeScaleChanged(const qreal& timesCale) {};
-    void defaultMixChanged(const qreal& defaultMix) {};
-    void scaleXChanged(const qreal& scaleX) {};
-    void scaleYChanged(const qreal& scaleY) {};
+    void defaultMixChanged(const float& defaultMix) {};
+    void scaleXChanged(const float& scaleX) {};
+    void scaleYChanged(const float& scaleY) {};
     void vertexEfectChanged() {};
-    void animationUpdated() {};
+	void animationUpdated() { updateBoundingRect(); };
     void blendColorChanged(const MyColor& color) {};
     void resourceLoadFailed() {};
     void blendColorChannelChanged(const int& channel) {};
@@ -226,12 +186,10 @@ public://signals:
 
 private:
     void updateBoundingRect();
-    void onCacheRendered();
-    void onVisibleChanged();
 
 public:
-    void updateSkeletonAnimation();
-    RectF computeBoundingRect();
+    void updateSkeletonAnimation(float deltaTime);
+    MyRect computeBoundingRect();
     Texture* getTexture(spine::Attachment* attachment) const;
     void releaseSkeletonRelatedData();
     bool nothingToDraw(spine::Slot& slot);
@@ -250,20 +208,18 @@ private:
     bool m_isLoading = false;
     bool m_hasViewPort = false;
     bool m_animating = false;
-    qreal m_scaleX = 1.0;
-    qreal m_scaleY = 1.0;
-    qreal m_timeScale = 1.0;
-    float m_light = 1.0;
-    qreal m_defaultMix = 0.1;
+    float m_scaleX = 1.0f;
+    float m_scaleY = 1.0f;
+    float m_light = 1.0f;
+    float m_defaultMix = 0.1f;
     MySize m_sourceSize;
-    float* m_worldVertices;
+    spine::Vector<float> m_MyWorldVertices;
     bool m_shouldReleaseCacheTexture = false;
-    qreal m_skeletonScale;
-	QStringList m_animations;
-	QStringList m_skins;
-    RectF m_boundingRect;
-    RectF m_viewPortRect;
-    BaseTime m_timer;
+    float m_skeletonScale = 1.0f;
+	std::vector<std::string> m_animations;
+	std::vector<std::string> m_skins;
+	MyRect m_boundingRect;
+	MyRect m_viewPortRect;
 	std::shared_ptr<spine::Atlas> m_atlas;
 	std::shared_ptr<spine::SkeletonData> m_skeletonData;
 	std::shared_ptr<spine::AnimationStateData> m_animationStateData;
@@ -271,33 +227,12 @@ private:
 	std::shared_ptr<spine::Skeleton> m_skeleton;
 	std::shared_ptr<spine::SkeletonClipping> m_clipper;
     SpineVertexEffect* m_vertexEfect = nullptr;
-	std::shared_ptr<SpineItemWorker> m_spWorker;
 	MyColor m_blendColor;
     int m_blendColorChannel = -1;
     bool m_requestDestroy = false;
     std::vector<RenderCmdBatch> m_batches;
     bool m_requestRender = false;
 	int m_fadecounter = 1; // make sure last state textue has been render.
-};
-
-class SpineItemWorker{
-public:
-    SpineItemWorker(SpineItem* spItem = nullptr);
-
-public:
-    void setAnimation (int trackIndex, const MyString& name, bool loop);
-    void addAnimation (int trackIndex, const MyString& name, bool loop, float delay = 0);
-    void setToSetupPose();
-    void setBonesToSetupPose();
-    void setSlotsToSetupPose();
-    void setAttachment(const MyString& slotName, const MyString& attachmentName);
-    void setMix(const MyString& fromAnimation, const MyString& toAnimation, float duration);
-    void setSkin(const MyString& skinName);
-    void clearTracks ();
-    void clearTrack(int trackIndex = 0);
-
-private:
-    SpineItem* m_spItem = nullptr;
 };
 
 #endif // SPINEITEM_H

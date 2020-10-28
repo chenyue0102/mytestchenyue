@@ -30,77 +30,45 @@
 
 #ifndef POLYGONBATCH_H
 #define POLYGONBATCH_H
-#include "My/OpenGLShaderProgram.h"
+
 #include <vector>
 #include <memory>
 #include <functional>
 
 #include <spine/spine.h>
-#include "My/TransformFeedback.h"
+#include "StructDefine.h"
+#include "OpenGLShaderProgram.h"
+#define USE_TRANSFORM_FEEDBACK
+#ifdef USE_TRANSFORM_FEEDBACK
+#include "TransformFeedback.h"
+#endif
 
 class SpineItem;
-
-
-struct Point
-{
-    Point(float _x, float _y) :x(_x), y(_y) {}
-    Point(): x(0.0f), y(0.0f) {}
-    GLfloat x;
-    GLfloat y;
-};
-
-struct SpineVertex{
-    float x, y;
-
-    float u, v;
-
-    spine::Color color;
-};
-
-struct RectF {
-	RectF(float _x, float _y, float _w, float _h)
-		: x(_x)
-		, y(_y)
-		, w(_w)
-		, h(_h)
-	{
-
-	}
-	RectF() {
-		x = y = w = h = 1.0f;
-	}
-	float x, y, w, h;
-	float left() { return x; }
-	float right() { return x + w; }
-	float top() { return y; }
-	float bottom() { return y + h; }
-	float width() { return w; }
-	float height() { return h; }
-};
-
 class MyTexture;
-
-#define USE_VERTEX
-//#define USE_QT_PROGRAM
-
-#ifdef USE_QT_PROGRAM
-#include <QOpenGLShaderProgram>
-typedef QOpenGLShaderProgram MyOpenGLShaderProgram;
-#else
 typedef OpenGLShaderProgram MyOpenGLShaderProgram;
-#endif
 class RenderCmdsCache
 {
 public:
-    explicit RenderCmdsCache(SpineItem* spItem = nullptr);
+    RenderCmdsCache();
     ~RenderCmdsCache();
+
+public:
+	void setSkeletonRect(const MyRect &rect);
+
+	//初始化Shader
+	void initShaderProgram();
+
+	bool isValid();
+
+	//绘制到窗口
+	void render();
+
+	void clearCache();
 
     enum ShaderType {
         ShaderTexture,
         ShaderColor
     };
-
-    void clearCache();
 
     void blendFunc(GLenum sfactor, GLenum dfactor);
     void bindShader(ShaderType);
@@ -109,30 +77,21 @@ public:
     void pointSize(GLfloat pointSize);
 
     void drawTriangles(MyTexture *texture, std::vector<SpineVertex> vertices,
-		std::vector<GLushort> triangles, const spine::Color& blendColor, const int &blendColorChannel, float light);
-    void drawPoly(const Point* points, int pointCount);
-    void drawLine(const Point& origin, const Point& destination);
-    void drawPoint(const Point& point);
-
-    void render();
-    void setSkeletonRect(const RectF& rect);
-
-    void initShaderProgram();
-
-    bool isValid();
-
-public:
-	std::function<void()> cacheRendered;
+		std::vector<GLushort> triangles, const MyColor& blendColor, const int &blendColorChannel, float light);
+    void drawPoly(const MyPoint* points, int pointCount);
+    void drawLine(const MyPoint& origin, const MyPoint& destination);
+    void drawPoint(const MyPoint& point);
 
 private:
     std::vector<std::function<void()> > mglFuncs;
-    RectF mRect;
+	MyRect mRect;
 
     MyOpenGLShaderProgram* mTextureShaderProgram = nullptr;
     MyOpenGLShaderProgram* mColorShaderProgram = nullptr;
+#ifdef USE_TRANSFORM_FEEDBACK
 	TransformFeedback *mTransformFeedback = nullptr;
+#endif
     bool m_shaderInited = false;
-    SpineItem* m_spItem = nullptr;
 };
 
 #endif // POLYGONBATCH_H

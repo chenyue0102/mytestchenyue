@@ -42,6 +42,9 @@
     <ClCompile Include="My\BaseTime.cpp">
       <Filter>My</Filter>
     </ClCompile>
+    <ClCompile Include="My\StructDefine.cpp">
+      <Filter>My</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="rendercmdscache.h">
@@ -72,6 +75,9 @@
       <Filter>My</Filter>
     </ClInclude>
     <ClInclude Include="My\TransformFeedback.h">
+      <Filter>My</Filter>
+    </ClInclude>
+    <ClInclude Include="My\StructDefine.h">
       <Filter>My</Filter>
     </ClInclude>
   </ItemGroup>

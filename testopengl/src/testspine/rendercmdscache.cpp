@@ -66,16 +66,11 @@ private:
 class BindShader
 {
 public:
-    explicit BindShader(MyOpenGLShaderProgram* program, const RectF& rect):mShaderProgram(program), mRect(rect){}
+    explicit BindShader(MyOpenGLShaderProgram* program, const MyRect& rect):mShaderProgram(program), mRect(rect){}
     virtual ~BindShader(){}
 
     virtual void invoke(){
-#ifdef USE_QT_PROGRAM
-		QMatrix4x4 matrix;
-		matrix.ortho(mRect.left(), mRect.right(), mRect.bottom(), mRect.top(), -1, 1);
-#else
 		vmath::mat4 matrix = vmath::ortho(mRect.left(), mRect.right(), mRect.bottom(), mRect.top(), -1, 1);
-#endif
         mShaderProgram->bind();
         mShaderProgram->setUniformValue("u_matrix", matrix);
 
@@ -91,7 +86,7 @@ public:
 
 private:
 	MyOpenGLShaderProgram* mShaderProgram;
-    RectF  mRect;
+	MyRect  mRect;
 };
 
 class DrawColor
@@ -150,7 +145,7 @@ public:
                            MyTexture *texture,
 							std::vector<SpineVertex> vertices,
 							std::vector<GLushort> triangles,
-                           spine::Color blendColor,
+							MyColor blendColor,
                            int blendColorChannel,
                            float light)
         :mShaderProgram(program)
@@ -175,22 +170,12 @@ public:
     virtual void invoke()
     {
 		if (0 != mTexture) {
-#ifdef USE_QT_PROGRAM
-			mTexture->bind(mShaderProgram->programId());
-#else
-			mTexture->bind(mShaderProgram->programId());
-#endif
+			mTexture->bind();
 		}
-#ifdef USE_VERTEX
 		mShaderProgram->setVertexArrayBufferData(m_vertices.data(), m_vertices.size() * sizeof(SpineVertex));
 		mShaderProgram->setAttributeArray("a_position", 2, GL_FLOAT, GL_FALSE, sizeof(SpineVertex), offsetof(SpineVertex, x));
-		mShaderProgram->setAttributeArray("a_color", 4, GL_FLOAT, GL_FALSE, sizeof(SpineVertex), offsetof(SpineVertex, color) + offsetof(spine::Color, r));
+		mShaderProgram->setAttributeArray("a_color", 4, GL_FLOAT, GL_FALSE, sizeof(SpineVertex), offsetof(SpineVertex, color));
 		mShaderProgram->setAttributeArray("a_texCoord", 2, GL_FLOAT, GL_FALSE, sizeof(SpineVertex), offsetof(SpineVertex, u));
-#else
-		mShaderProgram->setAttributeArray("a_position", GL_FLOAT, &m_vertices[0].x, 2, sizeof(SpineVertex));
-		mShaderProgram->setAttributeArray("a_color", GL_FLOAT, &m_vertices[0].color.r, 4, sizeof(SpineVertex));
-		mShaderProgram->setAttributeArray("a_texCoord", GL_FLOAT, &m_vertices[0].u, 2, sizeof(SpineVertex));
-#endif
         mShaderProgram->setUniformValue("u_blendColor", m_blendColor.r, m_blendColor.g, m_blendColor.b, m_blendColor.a);
         mShaderProgram->setUniformValue("u_blendColorChannel", m_blendColorChannel);
         mShaderProgram->setUniformValue("u_light", m_light);
@@ -202,7 +187,7 @@ private:
 	std::vector<SpineVertex> m_vertices;
 	std::vector<GLushort> m_triangles;
     MyTexture *mTexture;
-    spine::Color m_blendColor = spine::Color(255, 255, 255, 255);
+	MyColor m_blendColor = MyColor(255.0f, 255.0f, 255.0f, 255.0f);
     GLint m_blendColorChannel = -1;
     float m_light = 1.0;
 };
@@ -210,42 +195,37 @@ private:
 class DrawPolygon
 {
 public:
-    explicit DrawPolygon(MyOpenGLShaderProgram* program, const Point* points, int pointsCount)
+    explicit DrawPolygon(MyOpenGLShaderProgram* program, const MyPoint* points, int pointsCount)
         :mShaderProgram(program)
     {
         if (pointsCount <= 0 || !points)
             return;
 
-        m_points.setSize(pointsCount, Point());
-        memcpy(m_points.buffer(), points, sizeof(Point)*pointsCount);
+        m_points.resize(pointsCount);
+        memcpy(m_points.data(), points, sizeof(MyPoint)*pointsCount);
     }
 
     virtual ~DrawPolygon()
     {
-        if(m_points.size() > 0)
-            m_points.setSize(0, Point());
+		
     }
 
     virtual void invoke()
     {
-#ifdef USE_VERTEX
-		mShaderProgram->setVertexArrayBufferData(m_points.buffer(), m_points.size() * sizeof(Point));
-		mShaderProgram->setAttributeArray("a_position", 2, GL_FLOAT, GL_FALSE, sizeof(Point), 0);
-#else
-		mShaderProgram->setAttributeArray("a_position", GL_FLOAT, m_points.buffer(), 2, sizeof(Point));
-#endif
+		mShaderProgram->setVertexArrayBufferData(m_points.data(), m_points.size() * sizeof(MyPoint));
+		mShaderProgram->setAttributeArray("a_position", 2, GL_FLOAT, GL_FALSE, sizeof(MyPoint), 0);
         glDrawArrays(GL_LINE_LOOP, 0, (GLsizei) m_points.size());
     }
 
 private:
     MyOpenGLShaderProgram* mShaderProgram;
-    spine::Vector<Point> m_points;
+    std::vector<MyPoint> m_points;
 };
 
 class DrawLine
 {
 public:
-    explicit DrawLine(MyOpenGLShaderProgram* program, const Point& origin, const Point& destination)
+    explicit DrawLine(MyOpenGLShaderProgram* program, const MyPoint& origin, const MyPoint& destination)
         :mShaderProgram(program)
     {
         mPoints[0] = origin;
@@ -256,24 +236,20 @@ public:
 
     virtual void invoke()
     {
-#ifdef USE_VERTEX
 		mShaderProgram->setVertexArrayBufferData(mPoints, sizeof(mPoints));
-		mShaderProgram->setAttributeArray("a_position", 2, GL_FLOAT, GL_FALSE, sizeof(Point), 0);
-#else
-		mShaderProgram->setAttributeArray("a_position", GL_FLOAT, mPoints, 2, sizeof(Point));
-#endif
+		mShaderProgram->setAttributeArray("a_position", 2, GL_FLOAT, GL_FALSE, sizeof(MyPoint), 0);
         glDrawArrays(GL_LINES, 0, 2);
     }
 
 private:
     MyOpenGLShaderProgram* mShaderProgram;
-    Point mPoints[2];
+    MyPoint mPoints[2];
 };
 
 class DrawPoint
 {
 public:
-    explicit DrawPoint(MyOpenGLShaderProgram* program, const Point& point)
+    explicit DrawPoint(MyOpenGLShaderProgram* program, const MyPoint& point)
         :mShaderProgram(program)
         ,mPoint(point)
     {}
@@ -282,22 +258,17 @@ public:
 
     virtual void invoke()
     {
-#ifdef USE_VERTEX
 		mShaderProgram->setVertexArrayBufferData(&mPoint, sizeof(mPoint));
-		mShaderProgram->setAttributeArray("a_position", 2, GL_FLOAT, GL_FALSE, sizeof(Point), 0);
-#else
-		mShaderProgram->setAttributeArray("a_position", GL_FLOAT, &mPoint, 2, sizeof(Point));
-#endif
+		mShaderProgram->setAttributeArray("a_position", 2, GL_FLOAT, GL_FALSE, sizeof(MyPoint), 0);
         glDrawArrays(GL_POINTS, 0, 1);
     }
 
 private:
     MyOpenGLShaderProgram* mShaderProgram;
-    Point mPoint;
+	MyPoint mPoint;
 };
 
-RenderCmdsCache::RenderCmdsCache(SpineItem* spItem)
-    : m_spItem(spItem)
+RenderCmdsCache::RenderCmdsCache()
 {
 }
 
@@ -312,28 +283,91 @@ RenderCmdsCache::~RenderCmdsCache()
     mColorShaderProgram = nullptr;
 }
 
+void RenderCmdsCache::setSkeletonRect(const MyRect &rect) {
+	mRect = rect;
+}
+
+void RenderCmdsCache::initShaderProgram()
+{
+	if (m_shaderInited)
+		return;
+#ifdef USE_TRANSFORM_FEEDBACK
+	mTransformFeedback = new TransformFeedback();
+#endif
+
+	mTextureShaderProgram = new MyOpenGLShaderProgram();
+	int vertexShader = GL_VERTEX_SHADER, fragmentShader = GL_FRAGMENT_SHADER;
+
+	bool res = mTextureShaderProgram->addShaderFromSourceFile(vertexShader, "./shader/texture.vert");
+	assert(res);
+	res = mTextureShaderProgram->addShaderFromSourceFile(fragmentShader, "./shader/texture.frag");
+	assert(res);
+#ifdef USE_TRANSFORM_FEEDBACK
+	const char *paramNames[] = { "gl_Position", "v_color", "v_texCoord", };
+	res = mTransformFeedback->init(mTextureShaderProgram->programId(), paramNames, sizeof(paramNames) / sizeof(paramNames[0]));
+	assert(res);
+#endif
+	res = mTextureShaderProgram->link();
+	assert(res);
+#ifdef USE_TRANSFORM_FEEDBACK
+	res = mTransformFeedback->initBuffer((4 + 2 + 4) * sizeof(float) * 6);
+	assert(res);
+#endif
+
+	mColorShaderProgram = new MyOpenGLShaderProgram();
+	res = mColorShaderProgram->addShaderFromSourceFile(vertexShader, "./shader/color.vert");
+	assert(res);
+
+	res = mColorShaderProgram->addShaderFromSourceFile(fragmentShader, "./shader/color.frag");
+	assert(res);
+	res = mColorShaderProgram->link();
+	assert(res);
+	m_shaderInited = true;
+}
+
+bool RenderCmdsCache::isValid()
+{
+	return m_shaderInited;
+}
+
+void RenderCmdsCache::render()
+{
+	if (!mTextureShaderProgram || !mColorShaderProgram)
+		return;
+	if (mglFuncs.empty()) {
+		return;
+	}
+
+	glDisable(GL_DEPTH_TEST);
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	for (auto &func : mglFuncs)
+		func();
+	clearCache();
+
+	glFlush();
+}
+
 void RenderCmdsCache::clearCache()
 {
-    if (mglFuncs.empty())
-        return;
-
-    for (auto &func : mglFuncs)
-		func();
-
     mglFuncs.clear();
 }
 
 void RenderCmdsCache::drawTriangles(MyTexture *texture, std::vector<SpineVertex> vertices,
-	std::vector<GLushort> triangles, const spine::Color& blendColor,
+	std::vector<GLushort> triangles, const MyColor& blendColor,
                                     const int& blendColorChannel, float light)
 {
 	//todo
 	auto fun = [texture, this, vertices, triangles, blendColor, blendColorChannel, light]() {
+#ifdef USE_TRANSFORM_FEEDBACK
 		mTransformFeedback->beginFeedback(GL_TRIANGLES);
+#endif
 		DrawTrigngles draw(mTextureShaderProgram, texture,
 			vertices, triangles, blendColor,
 			blendColorChannel, light);
 		draw.invoke();
+#ifdef USE_TRANSFORM_FEEDBACK
 		mTransformFeedback->endFeedBack();
 		int size = 0;
 		const uint8_t *data = mTransformFeedback->getTransformFeedback(&size);
@@ -341,6 +375,7 @@ void RenderCmdsCache::drawTriangles(MyTexture *texture, std::vector<SpineVertex>
 		vf.resize(size / sizeof(float));
 		memcpy(vf.data(), data, size);
 		assert(!vf.empty());
+#endif
 	};
     mglFuncs.push_back(fun);
 }
@@ -375,7 +410,7 @@ void RenderCmdsCache::drawColor(GLubyte r, GLubyte g, GLubyte b, GLubyte a)
 		DrawColor draw(mColorShaderProgram, spine::Color(r, g, b, a));
 		draw.invoke();
 	};
-    //mglFuncs.push_back(fun);
+    mglFuncs.push_back(fun);
 }
 
 void RenderCmdsCache::lineWidth(GLfloat width)
@@ -384,7 +419,7 @@ void RenderCmdsCache::lineWidth(GLfloat width)
 		LineWidth draw(width);
 		draw.invoke();
 	};
-    //mglFuncs.push_back(fun);
+    mglFuncs.push_back(fun);
 }
 
 void RenderCmdsCache::pointSize(GLfloat pointSize)
@@ -393,108 +428,33 @@ void RenderCmdsCache::pointSize(GLfloat pointSize)
 		PointSize draw(pointSize);
 		draw.invoke();
 	};
-    //mglFuncs.push_back(fun);
+    mglFuncs.push_back(fun);
 }
 
-void RenderCmdsCache::drawPoly(const Point *points, int pointCount)
+void RenderCmdsCache::drawPoly(const MyPoint *points, int pointCount)
 {
 	auto fun = [this, points, pointCount]() {
 		DrawPolygon draw(mColorShaderProgram, points, pointCount);
 		draw.invoke();
 	};
-    //mglFuncs.push_back(fun);
+    mglFuncs.push_back(fun);
 }
 
-void RenderCmdsCache::drawLine(const Point &origin, const Point &destination)
+void RenderCmdsCache::drawLine(const MyPoint &origin, const MyPoint &destination)
 {
 	auto fun = [this, origin, destination]() {
 		DrawLine draw(mColorShaderProgram, origin, destination);
 		draw.invoke();
 	};
-    //mglFuncs.push_back(fun);
+    mglFuncs.push_back(fun);
 }
 
-void RenderCmdsCache::drawPoint(const Point &point)
+void RenderCmdsCache::drawPoint(const MyPoint &point)
 {
 	auto fun = [this, point]() {
 		DrawPoint draw(mColorShaderProgram, point);
 		draw.invoke();
 	};
-    //mglFuncs.push_back(fun);
+	mglFuncs.push_back(fun);
 }
 
-#include "My/MyFrameBuffer.h"
-
-MyFrameBuffer *g_MyFrameBuffer = 0;
-
-void RenderCmdsCache::render()
-{
-	if (0 == g_MyFrameBuffer) {
-		g_MyFrameBuffer = new MyFrameBuffer();
-	}
-	static bool  use = false;
-	if (use)
-		g_MyFrameBuffer->bind();
-    if(!mTextureShaderProgram || !mColorShaderProgram)
-        return;
-    if (mglFuncs.empty()) {
-        if (cacheRendered)cacheRendered();
-        return;
-    }
-
-    glDisable(GL_DEPTH_TEST);
-    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    for (auto &func : mglFuncs)
-        func();
-    clearCache();
-    if (cacheRendered)cacheRendered();
-	if (use)
-		g_MyFrameBuffer->save();
-}
-
-void RenderCmdsCache::setSkeletonRect(const RectF &rect)
-{
-    mRect = rect;
-}
-
-void RenderCmdsCache::initShaderProgram()
-{
-    if(m_shaderInited)
-        return;
-	mTransformFeedback = new TransformFeedback();
-
-    mTextureShaderProgram = new MyOpenGLShaderProgram();
-#ifdef USE_QT_PROGRAM
-	QOpenGLShader::ShaderType vertexShader = QOpenGLShader::Vertex, fragmentShader = QOpenGLShader::Fragment;
-#else
-	int vertexShader = GL_VERTEX_SHADER, fragmentShader = GL_FRAGMENT_SHADER;
-#endif
-    bool res = mTextureShaderProgram->addShaderFromSourceFile(vertexShader, "./shader/texture.vert");
-	assert(res);
-    res = mTextureShaderProgram->addShaderFromSourceFile(fragmentShader, "./shader/texture.frag");
-	assert(res);
-	const char *paramNames[] = { "v_color", "v_texCoord" };
-	res = mTransformFeedback->init(mTextureShaderProgram->programId(), paramNames, sizeof(paramNames) / sizeof(paramNames[0]));
-	assert(res);
-    res = mTextureShaderProgram->link();
-	assert(res);
-	res = mTransformFeedback->initBuffer((4 + 2) * sizeof(float) * 6);
-	assert(res);
-
-    mColorShaderProgram = new MyOpenGLShaderProgram();
-    res = mColorShaderProgram->addShaderFromSourceFile(vertexShader, "./shader/color.vert");
-	assert(res);
-
-    res = mColorShaderProgram->addShaderFromSourceFile(fragmentShader, "./shader/color.frag");
-	assert(res);
-    res = mColorShaderProgram->link();
-	assert(res);
-    m_shaderInited = true;
-}
-
-bool RenderCmdsCache::isValid()
-{
-    return m_shaderInited;
-}
