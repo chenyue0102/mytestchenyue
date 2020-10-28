@@ -23,7 +23,7 @@
     <ProjectGuid>{D4AA4549-CAB1-44F6-8913-2FEEBEFC9F68}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>testspine</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.18362.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -172,6 +172,8 @@
     <ClInclude Include="My\MyTexture.h" />
     <ClInclude Include="My\OpenGLESHelper.h" />
     <ClInclude Include="My\OpenGLShaderProgram.h" />
+    <ClInclude Include="My\stb_image.h" />
+    <ClInclude Include="My\TransformFeedback.h" />
     <ClInclude Include="rendercmdscache.h" />
     <ClInclude Include="spineitem.h" />
     <ClInclude Include="texture.h" />

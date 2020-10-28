@@ -234,25 +234,27 @@ void SpineItem::updateSkeletonAnimation()
 	}
 	m_spItem->m_tickCounter.restart();*/
 
-	if (m_animationState->getTracks().size() <= 0 || !isVisible()) {
+	/*if (m_animationState->getTracks().size() <= 0 || !isVisible()) {
 		if (m_fadecounter > 0)
 			m_fadecounter--;
 		else
 			return;
 	}
 	else
-		m_fadecounter = 1;
+		m_fadecounter = 1;*/
 
 	qint64 msecs = m_timer.getCurrentTimeMs();
-	m_timer.setBaseTimeMs(0);
-	const float deltaTime = msecs / 1000.0 * m_timeScale;
+	float deltaTime = msecs / 1000.0 * m_timeScale;
+	//deltaTime = 0.01666666f;
+	m_skeleton->update(deltaTime);
 	m_animationState->update(deltaTime);
 	m_animationState->apply(*m_skeleton.get());
 	m_skeleton->updateWorldTransform();
 
 	m_boundingRect = computeBoundingRect();
 	//m_spItem->batchRenderCmd();
-	emit animationUpdated();
+	animationUpdated();
+	m_timer.setBaseTimeMs(0);
 }
 
 RectF SpineItem::computeBoundingRect()
@@ -357,11 +359,16 @@ static unsigned short quadIndices[] = {0, 1, 2, 2, 3, 0};
 void SpineItem::batchRenderCmd(RenderCmdsCache *render)
 {
 	auto m_renderCache = render;
-    if(m_requestRender)
-        return;
+	if (m_requestRender) {
+		assert(false);
+		return;
+	}
     m_requestRender = true;
-    if(!m_renderCache || !m_renderCache->isValid())
-        return;
+	if (!m_renderCache || !m_renderCache->isValid()) {
+		assert(false);
+		return;
+	}
+        
 
     m_batches.clear();
 
@@ -643,7 +650,7 @@ float SpineItem::light() const
 void SpineItem::setLight(float light)
 {
     m_light = light;
-    emit lightChanged(m_light);
+    lightChanged(m_light);
 }
 
 bool SpineItem::debugMesh() const
@@ -654,7 +661,7 @@ bool SpineItem::debugMesh() const
 void SpineItem::setDebugMesh(bool debugMesh)
 {
     m_debugMesh = debugMesh;
-    emit debugMeshChanged(m_debugMesh);
+    debugMeshChanged(m_debugMesh);
 }
 
 int SpineItem::blendColorChannel() const
@@ -665,7 +672,7 @@ int SpineItem::blendColorChannel() const
 void SpineItem::setBlendColorChannel(int blendColorChannel)
 {
     m_blendColorChannel = blendColorChannel;
-    emit blendColorChannelChanged(m_blendColorChannel);
+    blendColorChannelChanged(m_blendColorChannel);
 }
 
 MyColor SpineItem::blendColor() const
@@ -676,7 +683,7 @@ MyColor SpineItem::blendColor() const
 void SpineItem::setBlendColor(const MyColor &color)
 {
     m_blendColor = color;
-    emit blendColorChanged(color);
+    blendColorChanged(color);
 }
 
 //QObject *SpineItem::vertexEfect() const
@@ -700,7 +707,7 @@ void SpineItem::setScaleY(const qreal &value)
     m_scaleY = value;
     if(isSkeletonReady())
         m_skeleton->setScaleY(m_scaleY * m_skeletonScale);
-    emit scaleYChanged(m_scaleY);
+    scaleYChanged(m_scaleY);
 }
 
 qreal SpineItem::scaleX() const
@@ -713,7 +720,7 @@ void SpineItem::setScaleX(const qreal &value)
     m_scaleX = value;
     if(isSkeletonReady())
         m_skeleton->setScaleX(m_scaleX * m_skeletonScale);
-    emit scaleXChanged(m_scaleX);
+    scaleXChanged(m_scaleX);
 }
 
 qreal SpineItem::defaultMix() const
@@ -724,7 +731,7 @@ qreal SpineItem::defaultMix() const
 void SpineItem::setDefaultMix(const qreal &defaultMix)
 {
     m_defaultMix = defaultMix;
-    emit defaultMixChanged(m_defaultMix);
+    defaultMixChanged(m_defaultMix);
     if(isSkeletonReady()) {
         m_animationStateData->setDefaultMix(m_defaultMix);
         return;
@@ -743,7 +750,7 @@ qreal SpineItem::timeScale() const
 void SpineItem::setTimeScale(const qreal &timeScale)
 {
     m_timeScale = timeScale;
-    emit timeScaleChanged(m_timeScale);
+    timeScaleChanged(m_timeScale);
 }
 
 qreal SpineItem::skeletonScale() const
@@ -760,7 +767,7 @@ void SpineItem::setSkeletonScale(const qreal &skeletonScale)
         m_skeleton->setScaleX(m_scaleX * m_skeletonScale);
         m_skeleton->setScaleY(m_scaleY * m_skeletonScale);
     }
-    emit skeletonScaleChanged(m_skeletonScale);
+    skeletonScaleChanged(m_skeletonScale);
 }
 
 QStringList SpineItem::animations() const
@@ -781,7 +788,7 @@ bool SpineItem::debugSlots() const
 void SpineItem::setDebugSlots(bool debugSlots)
 {
     m_debugSlots = debugSlots;
-    emit debugSlotsChanged(m_debugSlots);
+    debugSlotsChanged(m_debugSlots);
 }
 
 bool SpineItem::debugBones() const
@@ -792,7 +799,7 @@ bool SpineItem::debugBones() const
 void SpineItem::setDebugBones(bool debugBones)
 {
     m_debugBones = debugBones;
-    emit debugBonesChanged(m_debugBones);
+    debugBonesChanged(m_debugBones);
 }
 
 bool SpineItem::loaded() const
@@ -800,20 +807,20 @@ bool SpineItem::loaded() const
     return m_loaded;
 }
 
-QSize SpineItem::sourceSize() const
+MySize SpineItem::sourceSize() const
 {
     return m_sourceSize;
 }
 
-void SpineItem::setSourceSize(const QSize &sourceSize)
+void SpineItem::setSourceSize(const MySize &sourceSize)
 {
     m_sourceSize = sourceSize;
-    emit sourceSizeChanged(m_sourceSize);
+    sourceSizeChanged(m_sourceSize);
 }
 
 void SpineItem::updateBoundingRect()
 {
-    setSourceSize(QSize(m_boundingRect.width(), m_boundingRect.height()));
+    setSourceSize(MySize(m_boundingRect.width(), m_boundingRect.height()));
     /*if(m_hasViewPort)
         setImplicitSize(m_viewPortRect.width(), m_viewPortRect.height());
     else
@@ -830,7 +837,7 @@ void SpineItem::onCacheRendered()
 void SpineItem::onVisibleChanged()
 {
     if(isSkeletonReady() && isVisible())
-        emit animationUpdated();
+        animationUpdated();
 }
 
 bool SpineItem::isSkeletonReady() const

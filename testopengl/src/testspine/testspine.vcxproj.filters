@@ -68,5 +68,11 @@
     <ClInclude Include="My\BaseTime.h">
       <Filter>My</Filter>
     </ClInclude>
+    <ClInclude Include="My\stb_image.h">
+      <Filter>My</Filter>
+    </ClInclude>
+    <ClInclude Include="My\TransformFeedback.h">
+      <Filter>My</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

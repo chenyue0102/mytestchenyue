@@ -36,6 +36,7 @@
 #include <functional>
 
 #include <spine/spine.h>
+#include "My/TransformFeedback.h"
 
 class SpineItem;
 
@@ -79,6 +80,7 @@ struct RectF {
 
 class MyTexture;
 
+#define USE_VERTEX
 //#define USE_QT_PROGRAM
 
 #ifdef USE_QT_PROGRAM
@@ -128,6 +130,7 @@ private:
 
     MyOpenGLShaderProgram* mTextureShaderProgram = nullptr;
     MyOpenGLShaderProgram* mColorShaderProgram = nullptr;
+	TransformFeedback *mTransformFeedback = nullptr;
     bool m_shaderInited = false;
     SpineItem* m_spItem = nullptr;
 };

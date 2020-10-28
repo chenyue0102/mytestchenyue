@@ -14,12 +14,31 @@ class OpenGLShaderProgram {
 public:
 	OpenGLShaderProgram() 
 		: mProgram(0)
+		, mVertexArray(0)
+		, mVertexBuffer(0)
 	{
-		mProgram = glCreateProgram();
+		mProgram = glCreateProgram(); CHECKERR();
 	}
 	virtual ~OpenGLShaderProgram() {
-		glDeleteProgram(mProgram);
+		glDeleteProgram(mProgram); CHECKERR();
 		mProgram = 0;
+		destroyVertex();
+	}
+
+	void initVertex() {
+		glGenVertexArrays(1, &mVertexArray); CHECKERR();
+		glGenBuffers(1, &mVertexBuffer); CHECKERR();
+	}
+
+	void destroyVertex() {
+		if (0 != mVertexArray) {
+			glDeleteVertexArrays(1, &mVertexArray);
+			mVertexArray = 0;
+		}
+		if (0 != mVertexBuffer) {
+			glDeleteBuffers(1, &mVertexBuffer);
+			mVertexBuffer = 0;
+		}
 	}
 
 public:
@@ -63,12 +82,16 @@ public:
 	}
 
 	bool bind() {
-		glUseProgram(mProgram);
+		glUseProgram(mProgram); CHECKERR();
+		destroyVertex();
+		initVertex();
+		glBindVertexArray(mVertexArray); CHECKERR();
+		glBindBuffer(GL_ARRAY_BUFFER, mVertexBuffer); CHECKERR();
 		return true;
 	}
 
 	bool link() {
-		glLinkProgram(mProgram);
+		glLinkProgram(mProgram); CHECKERR();
 		return glGetError() == GL_NO_ERROR;
 	}
 
@@ -78,13 +101,29 @@ public:
 	}
 
 	void enableAttributeArray(const GLchar* name) {
-		glEnableVertexAttribArray(attributeLocation(name));
+		glEnableVertexAttribArray(attributeLocation(name)); CHECKERR();
 	}
 
-	void setAttributeArray(const GLchar *name, GLenum type, const void *values, int tupleSize, int stride = 0) {
+	void setVertexArrayBufferData(const void *data, int len) {
+		glBindVertexArray(mVertexArray); CHECKERR();
+		glBindBuffer(GL_ARRAY_BUFFER, mVertexBuffer); CHECKERR();
+		glBufferData(GL_ARRAY_BUFFER, len, data, GL_STATIC_DRAW); CHECKERR();
+	}
+
+	void setAttributeArray(const char *name, GLenum type, const void *values, int tupleSize, int stride) {
 		GLint location = attributeLocation(name);
 		if (-1 != location) {
-			glVertexAttribPointer(location, tupleSize, type, GL_TRUE, stride, values);
+			glVertexAttribPointer(location, tupleSize, type, GL_TRUE, stride, values); CHECKERR();
+		}
+		else {
+			assert(false);
+		}
+	}
+
+	void setAttributeArray(const GLchar *name, GLint size, GLenum type, GLboolean normalized, GLsizei stride, GLsizei offset) {
+		GLint location = attributeLocation(name);
+		if (-1 != location) {
+			glVertexAttribPointer(location, size, type, normalized, stride, (const void*)offset); CHECKERR();
 		}
 		else {
 			assert(false);
@@ -92,13 +131,13 @@ public:
 	}
 
 	GLint uniformLocation(const GLchar* name) {
-		return glGetUniformLocation(mProgram, name);
+		return glGetUniformLocation(mProgram, name); 
 	}
 
 	void setUniformValue(const GLchar* name, vmath::mat4 mat) {
 		GLint location = uniformLocation(name);
 		if (-1 != location) {
-			glProgramUniformMatrix4fv(mProgram, location, 1, GL_FALSE, mat);
+			glProgramUniformMatrix4fv(mProgram, location, 1, GL_FALSE, mat); CHECKERR();
 		}
 		else {
 			assert(false);
@@ -106,9 +145,9 @@ public:
 	}
 
 	void setUniformValue(const GLchar *name, GLfloat r, GLfloat g, GLfloat b, GLfloat a) {
-		GLint location = uniformLocation(name);
+		GLint location = uniformLocation(name); CHECKERR();
 		if (-1 != location) {
-			glProgramUniform4f(mProgram, location, r, g, b, a);
+			glProgramUniform4f(mProgram, location, r, g, b, a); CHECKERR();
 		}
 		else {
 			assert(false);
@@ -116,9 +155,9 @@ public:
 	}
 
 	void setUniformValue(const GLchar* name, GLint i) {
-		GLint location = uniformLocation(name);
+		GLint location = uniformLocation(name); CHECKERR();
 		if (-1 != location) {
-			glProgramUniform1i(mProgram, location, i);
+			glProgramUniform1i(mProgram, location, i); CHECKERR();
 		}
 		else {
 			assert(false);
@@ -126,9 +165,9 @@ public:
 	}
 
 	void setUniformValue(const GLchar* name, GLfloat f) {
-		GLint location = uniformLocation(name);
+		GLint location = uniformLocation(name); CHECKERR();
 		if (-1 != location) {
-			glProgramUniform1f(mProgram, location, f);
+			glProgramUniform1f(mProgram, location, f); CHECKERR();
 		}
 		else {
 			assert(false);
@@ -141,6 +180,9 @@ public:
 
 private:
 	GLuint mProgram;
+public:
+	GLuint mVertexArray;
+	GLuint mVertexBuffer;
 };
 
 #endif

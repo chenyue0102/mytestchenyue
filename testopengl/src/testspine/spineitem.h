@@ -32,26 +32,26 @@ struct RenderCmdBatch{
     Texture* texture = nullptr;
     int blendMode;
 };
-#define MyColor spine::Color
-#define MyString std::string
-#define QUrl std::string
-#define qreal float
-#define QStringList std::vector<std::string>
-#define Q_INVOKABLE
-#define emit
-#define slots
-typedef long long qint64;
+
 struct Size {
-	Size(int _w, int _h):w(_w), h(_h) {
+	Size(int _w, int _h) :w(_w), h(_h) {
 
 	}
-	Size() :w(), h(){
+	Size() :w(), h() {
 
 	}
 
 	int w, h;
 };
-#define QSize Size
+
+
+typedef spine::Color MyColor;
+typedef std::string MyString;
+typedef Size MySize;
+#define qreal float
+#define QStringList std::vector<std::string>
+typedef long long qint64;
+
 
 class SpineItem
 {
@@ -132,8 +132,8 @@ public:
 
     bool isSkeletonReady() const;
 
-    QSize sourceSize() const;
-    void setSourceSize(const QSize &sourceSize);
+	MySize sourceSize() const;
+    void setSourceSize(const MySize &sourceSize);
 
     bool loaded() const;
 
@@ -191,10 +191,10 @@ public:
 public://signals:
 
     // property signals
-	void atlasFileChanged(const QUrl& path) {};
-    void skeletonFileChanged(const QUrl& path) {};
+	void atlasFileChanged(const MyString& path) {};
+    void skeletonFileChanged(const MyString& path) {};
     void isSkeletonReadyChanged(const bool& ready) {};
-    void sourceSizeChanged(const QSize& size) {};
+    void sourceSizeChanged(const MySize& size) {};
     void loadedChanged(const bool& loaded) {};
     void premultipliedAlphaChanged(const bool& ret) {};
     void debugBonesChanged(const bool& ret) {};
@@ -224,7 +224,7 @@ public://signals:
     void cacheRendered() {};
     void resourceReady() {};
 
-private slots:
+private:
     void updateBoundingRect();
     void onCacheRendered();
     void onVisibleChanged();
@@ -255,7 +255,7 @@ private:
     qreal m_timeScale = 1.0;
     float m_light = 1.0;
     qreal m_defaultMix = 0.1;
-    QSize m_sourceSize;
+    MySize m_sourceSize;
     float* m_worldVertices;
     bool m_shouldReleaseCacheTexture = false;
     qreal m_skeletonScale;
