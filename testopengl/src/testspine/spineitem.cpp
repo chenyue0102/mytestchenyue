@@ -173,6 +173,11 @@ bool SpineItem::create() {
 	return true;
 }
 
+spine::Skeleton* SpineItem::getSkeleton()const{
+    assert(m_skeleton);
+    return m_skeleton.get();
+}
+
 void SpineItem::setToSetupPose()
 {
 	if (!isSkeletonReady()) {

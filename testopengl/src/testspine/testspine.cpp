@@ -15,15 +15,20 @@ SpineItem *g_SpineItem = 0;
 
 void init() {
 	//glViewport(0, 0, 200, 200);
-	spine::Bone::setYDown(true);
+	spine::Bone::setYDown(false);
 	g_RenderCmdsCache = new RenderCmdsCache();
 	g_RenderCmdsCache->initShaderProgram();
 
 	g_SpineItem = new SpineItem();
 	g_SpineItem->setAtlasFile("../../../android/testspine/app/src/main/assets/alien.atlas");
 	g_SpineItem->setSkeletonFile("../../../android/testspine/app/src/main/assets/alien-ess.json");
-	g_SpineItem->setSkeletonScale(0.003f);
+	//g_SpineItem->setSkeletonScale(0.3f);
 	g_SpineItem->create();
+	auto skeleton = g_SpineItem->getSkeleton();
+	skeleton->setPosition(100.f, 100.f);
+	skeleton->setScaleX(0.3f);
+	skeleton->setScaleY(0.3f);
+	skeleton->updateWorldTransform();
 	g_SpineItem->setAnimation(0, "run", true);
 	g_SpineItem->setSkin("default");
 	

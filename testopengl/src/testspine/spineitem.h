@@ -38,6 +38,8 @@ public:
 	void setAtlasFile(const std::string &atlasPath);
 	void setSkeletonFile(const std::string &skeletonPath);
 	bool create();
+    
+    spine::Skeleton* getSkeleton()const;
 
 	bool isVisible() { return true; }
 

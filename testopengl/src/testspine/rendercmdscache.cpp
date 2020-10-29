@@ -70,9 +70,11 @@ public:
     virtual ~BindShader(){}
 
     virtual void invoke(){
-		vmath::mat4 matrix = vmath::ortho(mRect.left(), mRect.right(), mRect.bottom(), mRect.top(), -1, 1);
+		//vmath::mat4 matrix = vmath::ortho(mRect.left(), mRect.right(), mRect.bottom(), mRect.top(), -1, 1);
+		vmath::mat4 scale = vmath::scale(1.0f / 800.f, 1.0f / 600.f, 1.0f);
         mShaderProgram->bind();
-        mShaderProgram->setUniformValue("u_matrix", matrix);
+        mShaderProgram->setUniformValue("u_matrix", scale);
+		//mShaderProgram->setUniformValue("model", scale);
 
         if (mShaderProgram->attributeLocation("a_position") != -1)
             mShaderProgram->enableAttributeArray("a_position");
@@ -171,6 +173,9 @@ public:
     {
 		if (0 != mTexture) {
 			mTexture->bind();
+		}
+		for (auto &v : m_vertices) {
+			printf("x:%f y:%f\n", v.x, v.y);
 		}
 		mShaderProgram->setVertexArrayBufferData(m_vertices.data(), m_vertices.size() * sizeof(SpineVertex));
 		mShaderProgram->setAttributeArray("a_position", 2, GL_FLOAT, GL_FALSE, sizeof(SpineVertex), offsetof(SpineVertex, x));
@@ -374,6 +379,16 @@ void RenderCmdsCache::drawTriangles(MyTexture *texture, std::vector<SpineVertex>
 		std::vector<float> vf;
 		vf.resize(size / sizeof(float));
 		memcpy(vf.data(), data, size);
+
+		struct TMP {
+			float x, y, z, w;
+			float tx, ty;
+			float r, g, b, a;
+		};
+		TMP *p = (TMP*)vf.data();
+		for (int i = 0; i < size / sizeof(TMP); i++) {
+			//printf("x:%f y:%f z:%f\n", p[i].x, p[i].y, p[i].z, p[i].w);
+		}
 		assert(!vf.empty());
 #endif
 	};
