@@ -60,17 +60,17 @@ bool OpenSLESHelper::createEngine() {
     do{
         destroy();
         if ((result = slCreateEngine(&slEngineObject, 0, nullptr, 0, nullptr, nullptr)) != SL_RESULT_SUCCESS){
-            SC(Log).e("OpenSLESHelper::createEngine slCreateEngine failed result:%x", result);
+            mylog_e("OpenSLESHelper::createEngine slCreateEngine failed result:%x", result);
             assert(false);
             break;
         }
         if ((result = (*slEngineObject)->Realize(slEngineObject, SL_BOOLEAN_FALSE)) != SL_RESULT_SUCCESS){
-            SC(Log).e("OpenSLESHelper::createEngine Realize failed result:%x", result);
+            mylog_e("OpenSLESHelper::createEngine Realize failed result:%x", result);
             assert(false);
             break;
         }
         if ((result = (*slEngineObject)->GetInterface(slEngineObject, SL_IID_ENGINE, &slEngine)) != SL_RESULT_SUCCESS){
-            SC(Log).e("OpenSLESHelper::createEngine GetInterface failed result:%x", result);
+            mylog_e("OpenSLESHelper::createEngine GetInterface failed result:%x", result);
             assert(false);
             break;
         }
@@ -105,24 +105,24 @@ bool OpenSLESHelper::createOutputMix() {
     do{
         destroyOutputMix();
         if (nullptr == slEngine){
-            SC(Log).e("OpenSLESHelper::createOutputMix failed nullptr == slEngine");
+            mylog_e("OpenSLESHelper::createOutputMix failed nullptr == slEngine");
             assert(false);
             break;
         }
         const SLInterfaceID ids[] = {SL_IID_ENVIRONMENTALREVERB};
         const SLboolean req[] = {SL_BOOLEAN_FALSE};
         if ((result = (*slEngine)->CreateOutputMix(slEngine, &slOutputMixObject, 1, ids, req)) != SL_RESULT_SUCCESS){
-            SC(Log).e("OpenSLESHelper::createOutputMix CreateOutputMix failed result:%x", result);
+            mylog_e("OpenSLESHelper::createOutputMix CreateOutputMix failed result:%x", result);
             assert(false);
             break;
         }
         if ((result = (*slOutputMixObject)->Realize(slOutputMixObject, SL_BOOLEAN_FALSE)) != SL_RESULT_SUCCESS){
-            SC(Log).e("OpenSLESHelper::createOutputMix Realize failed result:%x", result);
+            mylog_e("OpenSLESHelper::createOutputMix Realize failed result:%x", result);
             assert(false);
             break;
         }
         if ((result = (*slOutputMixObject)->GetInterface(slOutputMixObject, SL_IID_ENVIRONMENTALREVERB, &slEnvironmentalReverb)) != SL_RESULT_SUCCESS){
-            SC(Log).e("OpenSLESHelper::createOutputMix GetInterface failed result:%x", result);
+            mylog_e("OpenSLESHelper::createOutputMix GetInterface failed result:%x", result);
             assert(false);
             break;
         }
@@ -152,12 +152,12 @@ bool OpenSLESHelper::setEnvironmentalReverbProperties(const SLEnvironmentalRever
 
     do{
         if (nullptr == slEnvironmentalReverb){
-            SC(Log).e("OpenSLESHelper::setEnvironmentalReverbProperties failed nullptr == slEnvironmentalReverb");
+            mylog_e("OpenSLESHelper::setEnvironmentalReverbProperties failed nullptr == slEnvironmentalReverb");
             assert(false);
             break;
         }
         if ((result = (*slEnvironmentalReverb)->SetEnvironmentalReverbProperties(slEnvironmentalReverb, &reverbSettings)) != SL_RESULT_SUCCESS){
-            SC(Log).e("OpenSLESHelper::setEnvironmentalReverbProperties SetEnvironmentalReverbProperties failed result:%x", result);
+            mylog_e("OpenSLESHelper::setEnvironmentalReverbProperties SetEnvironmentalReverbProperties failed result:%x", result);
             assert(false);
             break;
         }
@@ -175,30 +175,30 @@ bool OpenSLESHelper::createPlayer(SLDataSource &slDataSource, SLDataSink &slData
     do{
         destroyPlayer();
         if (nullptr == slEngine){
-            SC(Log).e("OpenSLESHelper::createPlayer failed nullptr == slEngine");
+            mylog_e("OpenSLESHelper::createPlayer failed nullptr == slEngine");
             assert(false);
             break;
         }
         if ((result = (*slEngine)->CreateAudioPlayer(slEngine, &slPlayerObject, &slDataSource, &slDataSink, numInterfaces, ids, req)) != SL_RESULT_SUCCESS){
-            SC(Log).e("OpenSLESHelper::createPlayer CreateAudioPlayer failed result:%x", result);
+            mylog_e("OpenSLESHelper::createPlayer CreateAudioPlayer failed result:%x", result);
             assert(false);
             break;
         }
         if ((result = (*slPlayerObject)->Realize(slPlayerObject, SL_BOOLEAN_FALSE)) != SL_RESULT_SUCCESS){
-            SC(Log).e("OpenSLESHelper::createPlayer Realize failed result:%x", result);
+            mylog_e("OpenSLESHelper::createPlayer Realize failed result:%x", result);
             assert(false);
             break;
         }
         if ((result = (*slPlayerObject)->GetInterface(slPlayerObject, SL_IID_PLAY, &slPlay)) != SL_RESULT_SUCCESS){
-            SC(Log).e("OpenSLESHelper::createPlayer GetInterface SL_IID_PLAY failed result:%x", result);
+            mylog_e("OpenSLESHelper::createPlayer GetInterface SL_IID_PLAY failed result:%x", result);
             assert(false);
             break;
         }
         if ((result = (*slPlayerObject)->GetInterface(slPlayerObject, SL_IID_BUFFERQUEUE, &slPlayBufferQueue)) != SL_RESULT_SUCCESS){
-            SC(Log).e("OpenSLESHelper::createPlayer GetInterface SL_IID_BUFFERQUEUE failed result:%x", result);
+            mylog_e("OpenSLESHelper::createPlayer GetInterface SL_IID_BUFFERQUEUE failed result:%x", result);
         }
         if ((result = (*slPlayerObject)->GetInterface(slPlayerObject, SL_IID_VOLUME, &slVolume)) != SL_RESULT_SUCCESS){
-            SC(Log).e("OpenSLESHelper::createPlayer GetInterface SL_IID_VOLUME failed result:%x", result);
+            mylog_e("OpenSLESHelper::createPlayer GetInterface SL_IID_VOLUME failed result:%x", result);
         }
         ret = true;
     }while(false);
@@ -229,17 +229,17 @@ bool OpenSLESHelper::registerPlayBufferQueueCallback(slAndroidSimpleBufferQueueC
 
     do{
         if (nullptr == callback){
-            SC(Log).e("OpenSLESHelper::registerPlayBufferQueueCallback failed nullptr == callback");
+            mylog_e("OpenSLESHelper::registerPlayBufferQueueCallback failed nullptr == callback");
             assert(false);
             break;
         }
         if (nullptr == slPlayBufferQueue){
-            SC(Log).e("OpenSLESHelper::registerPlayBufferQueueCallback failed nullptr == slPlayBufferQueue");
+            mylog_e("OpenSLESHelper::registerPlayBufferQueueCallback failed nullptr == slPlayBufferQueue");
             assert(false);
             break;
         }
         if ((result = (*slPlayBufferQueue)->RegisterCallback(slPlayBufferQueue, callback, pContext)) != SL_RESULT_SUCCESS){
-            SC(Log).e("OpenSLESHelper::registerPlayBufferQueueCallback RegisterCallback failed result:%x", result);
+            mylog_e("OpenSLESHelper::registerPlayBufferQueueCallback RegisterCallback failed result:%x", result);
             assert(false);
             break;
         }
@@ -255,12 +255,12 @@ bool OpenSLESHelper::setPlayState(SLuint32 playState) {
 
     do{
         if (nullptr == slPlay){
-            SC(Log).e("OpenSLESHelper::setPlayState failed nullptr == slPlay");
+            mylog_e("OpenSLESHelper::setPlayState failed nullptr == slPlay");
             assert(false);
             break;
         }
         if ((result = (*slPlay)->SetPlayState(slPlay, playState)) != SL_RESULT_SUCCESS){
-            SC(Log).e("OpenSLESHelper::setPlayState SetPlayState failed result:%x", result);
+            mylog_e("OpenSLESHelper::setPlayState SetPlayState failed result:%x", result);
             assert(false);
             break;
         }
@@ -277,7 +277,7 @@ bool OpenSLESHelper::createRecord(slRecordCallback callback, void *pRecordContex
 
     do{
         if (nullptr == slEngine){
-            SC(Log).e("OpenSLESHelper::createRecord nullptr == slEngine");
+            mylog_e("OpenSLESHelper::createRecord nullptr == slEngine");
             assert(false);
             break;
         }
@@ -305,48 +305,48 @@ bool OpenSLESHelper::createRecord(slRecordCallback callback, void *pRecordContex
         SLInterfaceID iids[] = {SL_IID_ANDROIDSIMPLEBUFFERQUEUE/*, SL_IID_ANDROIDCONFIGURATION*/};
         SLboolean required[] = {SL_BOOLEAN_TRUE/*, SL_BOOLEAN_TRUE*/};
         if ((result = (*slEngine)->CreateAudioRecorder(slEngine, &slRecorderObject, &recSource, &dataSink, 1, iids, required)) != SL_RESULT_SUCCESS){
-            SC(Log).e("OpenSLESHelper::createRecord CreateAudioRecorder failed result:%x", result);
+            mylog_e("OpenSLESHelper::createRecord CreateAudioRecorder failed result:%x", result);
             assert(false);
             break;
         }
         if ((result = (*slRecorderObject)->Realize(slRecorderObject, SL_BOOLEAN_FALSE)) != SL_RESULT_SUCCESS){
-            SC(Log).e("OpenSLESHelper::createRecord Realize failed result:%x", result);
+            mylog_e("OpenSLESHelper::createRecord Realize failed result:%x", result);
             assert(false);
             break;
         }
         if ((result = (*slRecorderObject)->GetInterface(slRecorderObject, SL_IID_ANDROIDSIMPLEBUFFERQUEUE, &slRecordBufferQueue)) != SL_RESULT_SUCCESS){
-            SC(Log).e("OpenSLESHelper::createRecord GetInterface SL_IID_ANDROIDSIMPLEBUFFERQUEUE failed result:%x", result);
+            mylog_e("OpenSLESHelper::createRecord GetInterface SL_IID_ANDROIDSIMPLEBUFFERQUEUE failed result:%x", result);
             assert(false);
             break;
         }
         if ((result = (*slRecorderObject)->GetInterface(slRecorderObject, SL_IID_RECORD, &slRecord)) != SL_RESULT_SUCCESS){
-            SC(Log).e("OpenSLESHelper::createRecord GetInterface SL_IID_RECORD failed result:%x", result);
+            mylog_e("OpenSLESHelper::createRecord GetInterface SL_IID_RECORD failed result:%x", result);
             assert(false);
             break;
         }
         //设置
 //        if ((result = (*slRecord)->SetMarkerPosition(slRecord, 2000)) != SL_RESULT_SUCCESS){
-//            SC(Log).e("OpenSLESHelper::createRecord SetMarkerPosition failed result:%x", result);
+//            mylog_e("OpenSLESHelper::createRecord SetMarkerPosition failed result:%x", result);
 //            assert(false);
 //            break;
 //        }
 //        if ((result = (*slRecord)->SetPositionUpdatePeriod(slRecord, 500)) != SL_RESULT_SUCCESS){
-//            SC(Log).e("OpenSLESHelper::createRecord SetPositionUpdatePeriod failed result:%x", result);
+//            mylog_e("OpenSLESHelper::createRecord SetPositionUpdatePeriod failed result:%x", result);
 //            assert(false);
 //            break;
 //        }
 //        if ((result = (*slRecord)->SetCallbackEventsMask(slRecord, SL_RECORDEVENT_HEADATMARKER | SL_RECORDEVENT_HEADATNEWPOS)) != SL_RESULT_SUCCESS){
-//            SC(Log).e("OpenSLESHelper::createRecord SetCallbackEventsMask failed result:%x", result);
+//            mylog_e("OpenSLESHelper::createRecord SetCallbackEventsMask failed result:%x", result);
 //            assert(false);
 //            break;
 //        }
 //        if ((result = (*slRecord)->RegisterCallback(slRecord, callback, pRecordContext)) != SL_RESULT_SUCCESS){
-//            SC(Log).e("OpenSLESHelper::createRecord RegisterCallback failed result:%x", result);
+//            mylog_e("OpenSLESHelper::createRecord RegisterCallback failed result:%x", result);
 //            assert(false);
 //            break;
 //        }
         if ((result = (*slRecordBufferQueue)->RegisterCallback(slRecordBufferQueue, recorderBufferQueueCallback, pBufferQueueContext)) != SL_RESULT_SUCCESS){
-            SC(Log).e("OpenSLESHelper::createRecord RegisterCallback BufferQueue failed result:%x", result);
+            mylog_e("OpenSLESHelper::createRecord RegisterCallback BufferQueue failed result:%x", result);
             assert(false);
             break;
         }
@@ -377,12 +377,12 @@ bool OpenSLESHelper::enqueueRecord(void *buffer, size_t size){
 
     do{
         if (nullptr == slRecordBufferQueue){
-            SC(Log).e("OpenSLESHelper::enqueueRecord nullptr == slRecordBufferQueue");
+            mylog_e("OpenSLESHelper::enqueueRecord nullptr == slRecordBufferQueue");
             assert(false);
             break;
         }
         if ((result = (*slRecordBufferQueue)->Enqueue(slRecordBufferQueue, buffer, size)) != SL_RESULT_SUCCESS){
-            SC(Log).e("OpenSLESHelper::enqueueRecord Enqueue failed result:%x", result);
+            mylog_e("OpenSLESHelper::enqueueRecord Enqueue failed result:%x", result);
             assert(false);
             break;
         }
@@ -398,12 +398,12 @@ bool OpenSLESHelper::setRecordState(int state){
 
     do{
         if (nullptr == slRecord){
-            SC(Log).e("OpenSLESHelper::setRecordState nullptr == slRecord");
+            mylog_e("OpenSLESHelper::setRecordState nullptr == slRecord");
             assert(false);
             break;
         }
         if ((result = (*slRecord)->SetRecordState(slRecord, state)) != SL_RESULT_SUCCESS){
-            SC(Log).e("OpenSLESHelper::setRecordState SetRecordState failed result:%x", result);
+            mylog_e("OpenSLESHelper::setRecordState SetRecordState failed result:%x", result);
             assert(false);
             break;
         }

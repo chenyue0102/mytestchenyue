@@ -21,7 +21,7 @@ add_library(CommonLib
         OpenGLPlay.cpp
         OpenSLPlay.cpp
         ClockTime.cpp
-        Log.cpp
+        Log.c
         OpenSLESHelper.cpp
         RingQueue.cpp
         BaseTime.cpp

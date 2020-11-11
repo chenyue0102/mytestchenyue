@@ -4,31 +4,21 @@
 
 #ifndef TESTMEDIA_LOG_H
 #define TESTMEDIA_LOG_H
-#include <string>
 
+#include <stdarg.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
 //日志
-class Log {
-public:
-    Log();
-    ~Log();
+int mylog_d(const char *fmt, ...);
+int mylog_i(const char *fmt, ...);
+int mylog_w(const char *fmt, ...);
+int mylog_e(const char *fmt, ...);
 
-public:
-    void setTag(const char *tag);
-    const char* getTag();
+int mylog(int prio, const char *tag, const char *fmt, ...);
+int mylogv(int prio, const char *tag, const char *fmt, va_list ap);
 
-public:
-    int d(const char* fmt, ...);
-    int i(const char* fmt, ...);
-    int w(const char* fmt, ...);
-    int e(const char* fmt, ...);
-
-public:
-    int log(int prio, const char* tag, const char* fmt, ...);
-    int log(int prio, const char* tag, const char* fmt, va_list ap);
-
-private:
-    std::string mTag;
-};
-
-
+#ifdef __cplusplus
+}
+#endif
 #endif //TESTMEDIA_LOG_H

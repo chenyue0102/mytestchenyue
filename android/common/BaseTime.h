@@ -1,6 +1,8 @@
-/*
+﻿/*
 服务器时间计时器
 */
+#ifndef BASETIME_H_
+#define BASETIME_H_
 #pragma once
 #include <chrono>
 #include <stdint.h>
@@ -36,3 +38,4 @@ private:
 	//服务器基准时间点
 	int64_t m_baseTimeUs;
 };
+#endif

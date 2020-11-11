@@ -3,7 +3,7 @@
 #include <assert.h>
 #include <string.h>
 #include "libavformat/avformat.h"
-#include "reverb.h"
+#include "reverb2.h"
 
 extern sf_sample_st earlyref_step(sf_rv_earlyref_st *earlyref, sf_sample_st input);
 extern float delay_step(sf_rv_delay_st *delay, float v);

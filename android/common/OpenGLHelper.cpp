@@ -22,14 +22,14 @@ void outputCompileShader(GLuint shader)
 			GLchar szBuf[MAX_LOG_LENGTH] = { 0 };
 			int len = MAX_LOG_LENGTH;
 			glGetShaderInfoLog(shader, MAX_LOG_LENGTH, nullptr, szBuf);
-			SC(Log).e("%s", szBuf);
+			mylog_e("%s", szBuf);
 		}
 		else
 		{
 			GLchar *szBuf = new GLchar[len + 1];
 			glGetShaderInfoLog(shader, len, nullptr, szBuf);
 			szBuf[len] = '\0';
-			SC(Log).e("%s", szBuf);
+			mylog_e("%s", szBuf);
 			delete[]szBuf;
 		}
 		assert(GL_FALSE != status);
@@ -49,14 +49,14 @@ void outputProgramLog(GLuint program)
 		{
 			GLchar szBuf[MAX_LOG_LENGTH] = { 0 };
 			glGetProgramInfoLog(program, MAX_LOG_LENGTH, nullptr, szBuf);
-			SC(Log).e("%s", szBuf);
+			mylog_e("%s", szBuf);
 		}
 		else
 		{
 			GLchar *szBuf = new GLchar[len + 1];
 			glGetProgramInfoLog(program, len, nullptr, szBuf);
 			szBuf[len] = '\0';
-			SC(Log).e("%s", szBuf);
+			mylog_e("%s", szBuf);
 			delete[]szBuf;
 		}
 		assert(false);

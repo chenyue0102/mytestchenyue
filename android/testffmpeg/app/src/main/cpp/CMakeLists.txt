@@ -39,6 +39,8 @@ add_library( # Sets the name of the library.
         Demuxer.cpp
         reverdhelper.c
         reverb.c
+        reverb2.c
+        sox_i.cpp
 
         ${COMMON}/BitBuffer.cpp
         ${COMMON}/OpenGLHelper.cpp
@@ -46,7 +48,7 @@ add_library( # Sets the name of the library.
         ${COMMON}/OpenGLPlay.cpp
         ${COMMON}/OpenSLPlay.cpp
         ${COMMON}/ClockTime.cpp
-        ${COMMON}/Log.cpp
+        ${COMMON}/Log.c
         ${COMMON}/OpenSLESHelper.cpp
         ${COMMON}/RingQueue.cpp
         ${COMMON}/BaseTime.cpp

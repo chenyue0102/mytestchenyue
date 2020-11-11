@@ -197,7 +197,7 @@ void createPlayer(){
     (*slBufferQueue)->Enqueue(slBufferQueue, szBuffer, 8);
     SLAndroidSimpleBufferQueueState state = {0};
     (*slBufferQueue)->GetState(slBufferQueue, &state);
-    SC(Log).e("%d %d", state.count, state.index);
+    mylog_e("%d %d", state.count, state.index);
 }
 
 PlayManager g_PlayManager;

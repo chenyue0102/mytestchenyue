@@ -1,4 +1,4 @@
-//
+﻿//
 // Created by chenyue on 2020/8/26.
 //
 
@@ -108,7 +108,7 @@ void writeThread(WriteThreadInfo *pInfo){
                 LOGAVERROR(err);
                 assert(false);
             }
-			SC(Log).d("write frame stream:%d dts:%lld", pkt->stream_index, pkt->dts);
+			mylog_d("write frame stream:%d dts:%lld", pkt->stream_index, pkt->dts);
             av_packet_unref(pkt);
             av_packet_free(&pkt);
         }
@@ -293,7 +293,7 @@ void encodeThread(EncodeHelper::EncodeThreadInfo *pInfo) {
 		thread.join();
     }
     avformat_close_input(&pInfo->formatContext);
-	SC(Log).d("write packet finished");
+	mylog_d("write packet finished");
     return;
 }
 

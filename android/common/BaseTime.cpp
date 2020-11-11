@@ -1,4 +1,4 @@
-#include "BaseTime.h"
+﻿#include "BaseTime.h"
 
 BaseTime::BaseTime()
 	: m_timePoint()

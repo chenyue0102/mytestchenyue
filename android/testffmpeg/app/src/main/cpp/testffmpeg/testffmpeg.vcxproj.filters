@@ -81,9 +81,6 @@
     <ClInclude Include="..\..\..\..\..\..\common\EnumDefine.h">
       <Filter>common</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\..\..\common\BaseTime.h">
-      <Filter>common</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\..\..\..\common\SDLAudioHelper.h">
       <Filter>common</Filter>
     </ClInclude>
@@ -108,10 +105,22 @@
     <ClInclude Include="..\..\..\..\..\..\common\BitBuffer.h">
       <Filter>common</Filter>
     </ClInclude>
+    <ClInclude Include="..\reverdhelper.h">
+      <Filter>player</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\common\BaseTime.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\reverb2.h">
+      <Filter>player</Filter>
+    </ClInclude>
     <ClInclude Include="..\reverb.h">
       <Filter>player</Filter>
     </ClInclude>
-    <ClInclude Include="..\reverdhelper.h">
+    <ClInclude Include="..\fifo.h">
+      <Filter>player</Filter>
+    </ClInclude>
+    <ClInclude Include="..\sox_i.h">
       <Filter>player</Filter>
     </ClInclude>
   </ItemGroup>
@@ -121,9 +130,6 @@
     </ClCompile>
     <ClCompile Include="testffmpeg.cpp">
       <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\..\..\common\Log.cpp">
-      <Filter>common</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\..\..\..\common\RingQueue.cpp">
       <Filter>common</Filter>
@@ -142,9 +148,6 @@
     </ClCompile>
     <ClCompile Include="DirectSoundHelper.cpp">
       <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\..\..\common\BaseTime.cpp">
-      <Filter>common</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\..\..\..\common\SDLAudioHelper.cpp">
       <Filter>common</Filter>
@@ -170,10 +173,22 @@
     <ClCompile Include="..\..\..\..\..\..\common\BitBuffer.cpp">
       <Filter>common</Filter>
     </ClCompile>
+    <ClCompile Include="..\reverdhelper.c">
+      <Filter>player</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\..\common\BaseTime.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\reverb2.c">
+      <Filter>player</Filter>
+    </ClCompile>
     <ClCompile Include="..\reverb.c">
       <Filter>player</Filter>
     </ClCompile>
-    <ClCompile Include="..\reverdhelper.c">
+    <ClCompile Include="..\..\..\..\..\..\common\Log.c">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\sox_i.cpp">
       <Filter>player</Filter>
     </ClCompile>
   </ItemGroup>

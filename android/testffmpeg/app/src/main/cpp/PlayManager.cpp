@@ -28,7 +28,9 @@ extern "C"{
 #include "OpenGLPlay.h"
 #include "reverdhelper.h"
 #include "BaseTime.h"
-#include "freeverb/myexport.h"
+#include "sox.h"
+#include "reverb.h"
+//#include "freeverb/myexport.h"
 
 #define MAX_AUDIO_DIFF_MS 5000
 #define AUDIO_BITS 16
@@ -56,7 +58,7 @@ void LogAvError(int err) {
 		char szBuf[BUF_SIZE] = { 0 };
 		av_make_error_string(szBuf, BUF_SIZE, err);
 		szBuf[BUF_SIZE - 1] = '\0';
-		SC(Log).e("%s", szBuf);
+		mylog_e("%s", szBuf);
 	}
 }
 //second = ts * num / den
@@ -202,7 +204,32 @@ static void sendPacket(MediaInfo &info) {
 void my_reverb_frame(reverb_state_st rv, AVFrame *frame) {
 	BaseTime bastTime;
 	reverb_frame(rv, frame);
-    SC(Log).i("reverb_frame %lld", bastTime.getCurrentTimeUs());
+    mylog_i("reverb_frame %lld", bastTime.getCurrentTimeUs());
+}
+
+#define REVERB_BUF_LEN 4096
+
+void my_reverb_frame(struct _my_reverb_t *reverb, AVFrame *frame) {
+	BaseTime bastTime;
+	if (frame->format == AV_SAMPLE_FMT_FLTP) {
+		int bytes = frame->nb_samples * sizeof(float);
+		float *tmp[10];
+		int offset = 0;
+		while (bytes > 0)
+		{
+			for (int c = 0; c < frame->channels; c++) {
+				tmp[c] = (float*)(frame->data[c] + offset);
+			}
+			int len = bytes > REVERB_BUF_LEN ? REVERB_BUF_LEN : bytes;
+			process_reverb(reverb, tmp, tmp, len / sizeof(float));
+			offset += len;
+			bytes -= len;
+		}
+	}
+	else {
+		assert(false);
+	}
+	mylog_i("reverb_frame2 %lld sampleCount:%d", bastTime.getCurrentTimeUs(), frame->nb_samples);
 }
 
 static void audioThread(MediaInfo *pInfo, std::function<void()> notifyReadFrame) {
@@ -221,6 +248,17 @@ static void audioThread(MediaInfo *pInfo, std::function<void()> notifyReadFrame)
 	char szBufArg[128] = { 0 };
 	AVRational time_base = pInfo->stream->time_base;
 	AVCodecContext *dec_ctx = pInfo->codecContext;
+	
+	double sample_rate_Hz = pInfo->codecContext->sample_rate;
+	double wet_gain_dB = 0.;
+	double room_scale = 85.;
+	double reverberance = 50.;
+	double hf_damping = 50.;
+	double pre_delay_ms = 50.;
+	double stereo_depth = 100.;
+	double buffer_size = REVERB_BUF_LEN;
+	struct _my_reverb_t *reverb = create_reverb(pInfo->codecContext->channels, sample_rate_Hz, wet_gain_dB, room_scale, reverberance, hf_damping, pre_delay_ms, stereo_depth, buffer_size);
+
 	//my_progenitor_t progenitor = alloc_my_progenitor();
 #ifdef _WIN32
 	if (!dec_ctx->channel_layout)
@@ -257,7 +295,7 @@ static void audioThread(MediaInfo *pInfo, std::function<void()> notifyReadFrame)
 #endif
 	
 	reverb_state_st rv = alloc_reverb_state();
-	set_reverb(rv, "largehall1", pInfo->codecContext->sample_rate);
+	set_reverb(rv, "longreverb1", pInfo->codecContext->sample_rate);
 
 	for (;;) {
 		std::unique_lock<std::mutex> lk(info.mtx);
@@ -318,7 +356,8 @@ static void audioThread(MediaInfo *pInfo, std::function<void()> notifyReadFrame)
 #endif
 #if 1
 			info.receivedFrame = true;
-			my_reverb_frame(rv, frame);
+			//my_reverb_frame(rv, frame);
+			my_reverb_frame(reverb, frame);
 			AVFrame *tmpFrame = av_frame_alloc();
 			av_frame_move_ref(tmpFrame, frame);
 			info.frames.push_back(tmpFrame);
@@ -355,6 +394,7 @@ static void audioThread(MediaInfo *pInfo, std::function<void()> notifyReadFrame)
 #endif
 	free_reverb_state(rv);
 	//free_my_progenitor(progenitor);
+	delete_reverb(reverb);
 }
 
 static void videoThread(MediaInfo *pInfo, std::function<void()> notifyReadFrame) {
