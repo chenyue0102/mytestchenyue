@@ -232,6 +232,19 @@ void my_reverb_frame(struct _my_reverb_t *reverb, AVFrame *frame) {
 	mylog_i("reverb_frame2 %lld sampleCount:%d", bastTime.getCurrentTimeUs(), frame->nb_samples);
 }
 
+struct ReverbConfig {
+	double room_scale;
+	double pre_delay_ms;
+	double reverbe_rance;
+	double hf_damping;
+	double tone_low;
+	double tone_high;
+	double wet_gain_dB;
+	double dry_gain_dB;
+	double stereo_depth;
+	int wet_only;
+};
+
 static void audioThread(MediaInfo *pInfo, std::function<void()> notifyReadFrame) {
 	auto &info = *pInfo;
 	auto &mtx = info.mtx;
@@ -248,17 +261,30 @@ static void audioThread(MediaInfo *pInfo, std::function<void()> notifyReadFrame)
 	char szBufArg[128] = { 0 };
 	AVRational time_base = pInfo->stream->time_base;
 	AVCodecContext *dec_ctx = pInfo->codecContext;
-	
-	double sample_rate_Hz = pInfo->codecContext->sample_rate;
-	double wet_gain_dB = 0.;
-	double room_scale = 85.;
-	double reverberance = 50.;
-	double hf_damping = 50.;
-	double pre_delay_ms = 50.;
-	double stereo_depth = 100.;
-	double buffer_size = REVERB_BUF_LEN;
-	struct _my_reverb_t *reverb = create_reverb(pInfo->codecContext->channels, sample_rate_Hz, wet_gain_dB, room_scale, reverberance, hf_damping, pre_delay_ms, stereo_depth, buffer_size);
 
+	ReverbConfig reverbConfigs[] = {
+		{ 70,   20,    40,     99,      100, 50,   -12,  0,    70,    false },//Vocal I
+		{ 16,   8,     80,     0,       0,   100,  -6,   0,    100,   false },//Bathroom
+		{ 85,   10,    40,     50,      100, 80,    0,   -6,   90,    false },//Large Room
+		{ 90,   32,    60,     50,      100, 50,    0,   -12,  100,   false } ,//Church Hall
+		{ 60,   0,    40,     90,      50, 100,    1,   0,  80,   false }
+	};
+	int reverbConfigIndex = 4;
+	double sample_rate_Hz = pInfo->codecContext->sample_rate;
+	double wet_gain_dB = reverbConfigs[reverbConfigIndex].wet_gain_dB;//湿增益（dB）：对混合物中的混响（“湿”）分量应用音量调整。相对于“干增益”（如下）增加该值，可以增加混响的强度。
+	double dry_gain_dB = reverbConfigs[reverbConfigIndex].dry_gain_dB;//干增益（dB）：对混音中的原始（“干”）音频应用音量调整。相对于“湿增益”（如上）增加该值会降低混响的强度。如果“湿增益”和“干增益”值相同，则要输出到音轨的湿效果和干音频的混合将通过此值变得更大或更柔和（假设未选中下面的“仅限湿”选项）。
+	double room_scale = reverbConfigs[reverbConfigIndex].room_scale; /* % *///房间大小（%）：设置模拟房间的大小。0%像壁橱，100%像大教堂或大礼堂。高值将模拟大房间的混响效果，低值将模拟小房间的效果。
+	double reverberance = reverbConfigs[reverbConfigIndex].reverbe_rance;///* % *///混响（%）：设置混响尾部的长度。这决定了在原始声音被混响结束后，混响持续多久，从而模拟房间声学的“活跃”。对于任何给定的混响值，对于较大的房间尺寸，尾部将更大。
+	double hf_damping = reverbConfigs[reverbConfigIndex].hf_damping;/* % *///阻尼（%）：增加阻尼会产生更“静音”的效果。混响没有建立太多，高频衰减比低频快。模拟混响中高频的吸收。
+	double pre_delay_ms = reverbConfigs[reverbConfigIndex].pre_delay_ms;//预延迟（ms）：在初始输入开始后，将混响的开始延迟设定的时间。也延迟了混响的开始。最大预延迟为200毫秒。仔细调整此参数可以提高结果的清晰度。
+	double stereo_depth = reverbConfigs[reverbConfigIndex].stereo_depth;// 立体声宽度（%）：仅为立体声音轨设置混响效果的明显“宽度”。增加此值会在左右声道之间应用更多变化，从而产生更“宽敞”的效果。设置为零时，效果将独立应用于左侧和右侧通道。
+	double tone_low = reverbConfigs[reverbConfigIndex].tone_low;//音调低（%）：将此控件设置为低于100%会降低混响的低频分量，从而产生较少的“隆隆”效果。
+	double tone_high = reverbConfigs[reverbConfigIndex].tone_high;//音调高（%）：将此控件设置为低于100%会降低混响的高频分量，从而产生不太“明亮”的效果。
+	int wet_only = reverbConfigs[reverbConfigIndex].wet_only;//仅湿式：当选中此控件时，结果输出中将只有湿信号（增加混响），并且原始音频将被删除。这在预览效果时很有用，但在大多数情况下，应用效果时应取消选中此选项。
+	double buffer_size = REVERB_BUF_LEN;
+	struct _my_reverb_t *reverb = create_reverb(pInfo->codecContext->channels, sample_rate_Hz, wet_gain_dB, dry_gain_dB, room_scale, reverberance, hf_damping, pre_delay_ms, stereo_depth, tone_low, tone_high, wet_only, buffer_size);
+
+	//set_wet_only(reverb, 1);
 	//my_progenitor_t progenitor = alloc_my_progenitor();
 #ifdef _WIN32
 	if (!dec_ctx->channel_layout)
@@ -657,6 +683,9 @@ void readThread(PlayManagerData *mediaInfo) {
 		
 		mediaInfo->clockTime.setTimeMs(0);
 		mediaInfo->clockTime.resume();
+
+		mediaInfo->seeking = true;
+		mediaInfo->seekMs = 26800;
 
 		lThread = std::thread(&loopThread, mediaInfo);
 		auto &cv = mediaInfo->cv;

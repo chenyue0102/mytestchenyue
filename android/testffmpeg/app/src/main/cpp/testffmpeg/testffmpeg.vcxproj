@@ -73,6 +73,7 @@
     <LinkIncremental>true</LinkIncremental>
     <OutDir>../../../../../../../testffmpeg/bin/</OutDir>
     <TargetName>$(ProjectName)D</TargetName>
+    <IncludePath>$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
@@ -171,6 +172,7 @@
     <ClInclude Include="..\..\..\..\..\..\common\Log.h" />
     <ClInclude Include="..\..\..\..\..\..\common\MacroDefine.h" />
     <ClInclude Include="..\..\..\..\..\..\common\MyLock.h" />
+    <ClInclude Include="..\..\..\..\..\..\common\my_dlist.h" />
     <ClInclude Include="..\..\..\..\..\..\common\ObjectPool.h" />
     <ClInclude Include="..\..\..\..\..\..\common\OpenGLHelper.h" />
     <ClInclude Include="..\..\..\..\..\..\common\OpenGLPlay.h" />
@@ -182,11 +184,15 @@
     <ClInclude Include="..\..\..\..\..\..\common\WAVDefine.h" />
     <ClInclude Include="..\Demuxer.h" />
     <ClInclude Include="..\EncodeHelper.h" />
+    <ClInclude Include="..\equalizer.h" />
     <ClInclude Include="..\FFMPEGTest.h" />
+    <ClInclude Include="..\fft_param.h" />
     <ClInclude Include="..\fifo.h" />
     <ClInclude Include="..\FrameReceive.h" />
     <ClInclude Include="..\InterfaceDefine.h" />
+    <ClInclude Include="..\my_mutex.h" />
     <ClInclude Include="..\PlayManager.h" />
+    <ClInclude Include="..\real_fft.h" />
     <ClInclude Include="..\reverb.h" />
     <ClInclude Include="..\reverb2.h" />
     <ClInclude Include="..\reverdhelper.h" />
@@ -200,6 +206,7 @@
     <ClCompile Include="..\..\..\..\..\..\common\BitBuffer.cpp" />
     <ClCompile Include="..\..\..\..\..\..\common\ClockTime.cpp" />
     <ClCompile Include="..\..\..\..\..\..\common\Log.c" />
+    <ClCompile Include="..\..\..\..\..\..\common\my_dlist.c" />
     <ClCompile Include="..\..\..\..\..\..\common\OpenGLHelper.cpp" />
     <ClCompile Include="..\..\..\..\..\..\common\OpenGLPlay.cpp" />
     <ClCompile Include="..\..\..\..\..\..\common\RenderYUV420P.cpp" />
@@ -208,9 +215,13 @@
     <ClCompile Include="..\..\..\..\..\..\common\TaskPool.cpp" />
     <ClCompile Include="..\Demuxer.cpp" />
     <ClCompile Include="..\EncodeHelper.cpp" />
+    <ClCompile Include="..\equalizer.c" />
     <ClCompile Include="..\FFMPEGTest.cpp" />
+    <ClCompile Include="..\fft_param.c" />
     <ClCompile Include="..\FrameReceive.cpp" />
+    <ClCompile Include="..\my_mutex.c" />
     <ClCompile Include="..\PlayManager.cpp" />
+    <ClCompile Include="..\real_fft.c" />
     <ClCompile Include="..\reverb.c" />
     <ClCompile Include="..\reverb2.c" />
     <ClCompile Include="..\reverdhelper.c" />

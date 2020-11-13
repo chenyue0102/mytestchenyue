@@ -9,11 +9,15 @@ struct _my_reverb_t* create_reverb(
 	size_t channels,
 	double sample_rate_Hz,
 	double wet_gain_dB,
+	double dry_gain_dB,
 	double room_scale,     /* % */
 	double reverberance,   /* % */
 	double hf_damping,     /* % */
 	double pre_delay_ms,
 	double stereo_depth,
+	double tone_low,       /* % */
+	double tone_high,      /* % */
+	int wet_only,
 	size_t buffer_size);
 
 void delete_reverb(struct _my_reverb_t *reverb);
