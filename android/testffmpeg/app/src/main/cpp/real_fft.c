@@ -1,7 +1,40 @@
 #include "real_fft.h"
-#include "fft_param.h"
+#include <malloc.h>
+#include <math.h>
 
-typedef float fft_type;
+void init_fft(size_t fftlen, FFTParam *h) {
+	int temp;
+	h->Points = fftlen / 2;
+	h->SinTable = malloc(2 * h->Points * sizeof(fft_type));
+	h->BitReversed = malloc(h->Points * sizeof(int));
+
+	for (size_t i = 0; i < h->Points; i++) {
+		temp = 0;
+		for (size_t mask = h->Points / 2; mask > 0; mask >>= 1) {
+			temp = (temp >> 1) + (i & mask ? h->Points : 0);
+		}
+		h->BitReversed[i] = temp;
+	}
+
+	for (size_t i = 0; i < h->Points; i++) {
+		h->SinTable[h->BitReversed[i]] = (fft_type)-sin(2 * M_PI * i / (2 * h->Points));
+		h->SinTable[h->BitReversed[i] + 1] = (fft_type)-cos(2 * M_PI * i / (2 * h->Points));
+	}
+}
+
+FFTParam* fftparam_alloc(size_t fftlen) {
+	FFTParam *p = malloc(sizeof(FFTParam));
+	init_fft(fftlen, p);
+	return p;
+}
+
+void fftparam_free(FFTParam* p) {
+	if (NULL != p) {
+		free(p->BitReversed);
+		free(p->SinTable);
+		free(p);
+	}
+}
 
 /*
 *  Forward FFT routine.  Must call GetFFT(fftlen) first!
@@ -103,9 +136,8 @@ void RealFFTf(fft_type *buffer, const FFTParam *h)
 	buffer[1] = v1;
 }
 
-void RealFFT(size_t NumSamples, const float *RealIn, float *RealOut, float *ImagOut, float *tmpBuffer) {
+void RealFFT(size_t NumSamples, FFTParam *hFFT, const float *RealIn, float *RealOut, float *ImagOut, float *tmpBuffer) {
 	//auto hFFT = GetFFT(NumSamples);
-	FFTParam *hFFT = get_fft_param(NumSamples);
 	//Floats pFFT{ NumSamples };
 	float* pFFT = tmpBuffer;
 	// Copy the data into the processing buffer
@@ -254,11 +286,10 @@ void ReorderToTime(const FFTParam *hFFT, const fft_type *buffer, fft_type *TimeO
  *
  * This is merely a wrapper of InverseRealFFTf() from RealFFTf.h.
  */
-void InverseRealFFT(size_t NumSamples, const float *RealIn, const float *ImagIn,
+void InverseRealFFT(size_t NumSamples, FFTParam *hFFT, const float *RealIn, const float *ImagIn,
 	float *RealOut, float *tmpBuffer)
 {
 	//auto hFFT = GetFFT(NumSamples);
-	FFTParam *hFFT = get_fft_param(NumSamples);
 	//Floats pFFT{ NumSamples };
 	float *pFFT = tmpBuffer;
 	// Copy the data into the processing buffer

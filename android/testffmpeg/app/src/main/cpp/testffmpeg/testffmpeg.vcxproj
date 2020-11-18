@@ -173,6 +173,7 @@
     <ClInclude Include="..\..\..\..\..\..\common\MacroDefine.h" />
     <ClInclude Include="..\..\..\..\..\..\common\MyLock.h" />
     <ClInclude Include="..\..\..\..\..\..\common\my_dlist.h" />
+    <ClInclude Include="..\..\..\..\..\..\common\my_vector.h" />
     <ClInclude Include="..\..\..\..\..\..\common\ObjectPool.h" />
     <ClInclude Include="..\..\..\..\..\..\common\OpenGLHelper.h" />
     <ClInclude Include="..\..\..\..\..\..\common\OpenGLPlay.h" />
@@ -186,10 +187,10 @@
     <ClInclude Include="..\EncodeHelper.h" />
     <ClInclude Include="..\equalizer.h" />
     <ClInclude Include="..\FFMPEGTest.h" />
-    <ClInclude Include="..\fft_param.h" />
     <ClInclude Include="..\fifo.h" />
     <ClInclude Include="..\FrameReceive.h" />
     <ClInclude Include="..\InterfaceDefine.h" />
+    <ClInclude Include="..\my_envelope.h" />
     <ClInclude Include="..\my_mutex.h" />
     <ClInclude Include="..\PlayManager.h" />
     <ClInclude Include="..\real_fft.h" />
@@ -207,6 +208,7 @@
     <ClCompile Include="..\..\..\..\..\..\common\ClockTime.cpp" />
     <ClCompile Include="..\..\..\..\..\..\common\Log.c" />
     <ClCompile Include="..\..\..\..\..\..\common\my_dlist.c" />
+    <ClCompile Include="..\..\..\..\..\..\common\my_vector.c" />
     <ClCompile Include="..\..\..\..\..\..\common\OpenGLHelper.cpp" />
     <ClCompile Include="..\..\..\..\..\..\common\OpenGLPlay.cpp" />
     <ClCompile Include="..\..\..\..\..\..\common\RenderYUV420P.cpp" />
@@ -217,8 +219,8 @@
     <ClCompile Include="..\EncodeHelper.cpp" />
     <ClCompile Include="..\equalizer.c" />
     <ClCompile Include="..\FFMPEGTest.cpp" />
-    <ClCompile Include="..\fft_param.c" />
     <ClCompile Include="..\FrameReceive.cpp" />
+    <ClCompile Include="..\my_envelope.c" />
     <ClCompile Include="..\my_mutex.c" />
     <ClCompile Include="..\PlayManager.cpp" />
     <ClCompile Include="..\real_fft.c" />

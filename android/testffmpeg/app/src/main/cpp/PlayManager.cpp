@@ -30,6 +30,7 @@ extern "C"{
 #include "BaseTime.h"
 #include "sox.h"
 #include "reverb.h"
+#include "equalizer.h"
 //#include "freeverb/myexport.h"
 
 #define MAX_AUDIO_DIFF_MS 5000
@@ -231,6 +232,24 @@ void my_reverb_frame(struct _my_reverb_t *reverb, AVFrame *frame) {
 	}
 	mylog_i("reverb_frame2 %lld sampleCount:%d", bastTime.getCurrentTimeUs(), frame->nb_samples);
 }
+#define EQ_BUFFER_SIZE 2048
+std::vector<float> g_buffer;
+void my_equalizer_frame(struct _equalizer_t* p, AVFrame *frame) {
+	BaseTime bastTime;
+	if (frame->format == AV_SAMPLE_FMT_FLTP) {
+		g_buffer.resize(EQ_BUFFER_SIZE, 0.0f);
+		assert(g_buffer.size() > frame->nb_samples);
+		for (int i = 0; i < frame->channels; i++) {
+			memcpy(g_buffer.data(), frame->data[i], frame->nb_samples * sizeof(float));
+			process_equalizer(p, g_buffer.data(), g_buffer.size());
+			memcpy(frame->data[i], g_buffer.data(), frame->nb_samples * sizeof(float));
+		}
+	}
+	else {
+		assert(false);
+	}
+	mylog_i("equalizer_frame %lld sampleCount:%d", bastTime.getCurrentTimeUs(), frame->nb_samples);
+}
 
 struct ReverbConfig {
 	double room_scale;
@@ -283,6 +302,12 @@ static void audioThread(MediaInfo *pInfo, std::function<void()> notifyReadFrame)
 	int wet_only = reverbConfigs[reverbConfigIndex].wet_only;//仅湿式：当选中此控件时，结果输出中将只有湿信号（增加混响），并且原始音频将被删除。这在预览效果时很有用，但在大多数情况下，应用效果时应取消选中此选项。
 	double buffer_size = REVERB_BUF_LEN;
 	struct _my_reverb_t *reverb = create_reverb(pInfo->codecContext->channels, sample_rate_Hz, wet_gain_dB, dry_gain_dB, room_scale, reverberance, hf_damping, pre_delay_ms, stereo_depth, tone_low, tone_high, wet_only, buffer_size);
+
+	//double hz[] = { 31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000 };
+	double hz[] = { 20, 25, 31, 40, 50, 63, 80, 100, 125, 160, 200, 250, 315, 400, 500, 630, 800, 1000, 1250, 1600, 2000, 2500, 3150, 4000, 5000, 6300, 8000, 10000, 12500, 16000, 20000 };
+	struct _equalizer_t *eq = create_equalizer(sample_rate_Hz, EQ_BUFFER_SIZE, hz, _countof(hz));
+	double eqs[_countof(hz)] = { 0., 0, 0., 0., 0., 0., 0., -0., -0., -0. };
+	set_equalizer_eq(eq, eqs, _countof(eqs));
 
 	//set_wet_only(reverb, 1);
 	//my_progenitor_t progenitor = alloc_my_progenitor();
@@ -383,7 +408,8 @@ static void audioThread(MediaInfo *pInfo, std::function<void()> notifyReadFrame)
 #if 1
 			info.receivedFrame = true;
 			//my_reverb_frame(rv, frame);
-			my_reverb_frame(reverb, frame);
+			//my_reverb_frame(reverb, frame);
+			my_equalizer_frame(eq, frame);
 			AVFrame *tmpFrame = av_frame_alloc();
 			av_frame_move_ref(tmpFrame, frame);
 			info.frames.push_back(tmpFrame);
@@ -421,6 +447,7 @@ static void audioThread(MediaInfo *pInfo, std::function<void()> notifyReadFrame)
 	free_reverb_state(rv);
 	//free_my_progenitor(progenitor);
 	delete_reverb(reverb);
+	delete_equalizer(eq);
 }
 
 static void videoThread(MediaInfo *pInfo, std::function<void()> notifyReadFrame) {

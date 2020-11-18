@@ -126,9 +126,6 @@
     <ClInclude Include="..\equalizer.h">
       <Filter>player</Filter>
     </ClInclude>
-    <ClInclude Include="..\fft_param.h">
-      <Filter>player</Filter>
-    </ClInclude>
     <ClInclude Include="..\my_mutex.h">
       <Filter>player</Filter>
     </ClInclude>
@@ -136,6 +133,12 @@
       <Filter>common</Filter>
     </ClInclude>
     <ClInclude Include="..\real_fft.h">
+      <Filter>player</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\common\my_vector.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\my_envelope.h">
       <Filter>player</Filter>
     </ClInclude>
   </ItemGroup>
@@ -209,9 +212,6 @@
     <ClCompile Include="..\equalizer.c">
       <Filter>player</Filter>
     </ClCompile>
-    <ClCompile Include="..\fft_param.c">
-      <Filter>player</Filter>
-    </ClCompile>
     <ClCompile Include="..\my_mutex.c">
       <Filter>player</Filter>
     </ClCompile>
@@ -219,6 +219,12 @@
       <Filter>common</Filter>
     </ClCompile>
     <ClCompile Include="..\real_fft.c">
+      <Filter>player</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\..\common\my_vector.c">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\my_envelope.c">
       <Filter>player</Filter>
     </ClCompile>
   </ItemGroup>
