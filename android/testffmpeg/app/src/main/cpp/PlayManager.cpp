@@ -237,12 +237,13 @@ std::vector<float> g_buffer;
 void my_equalizer_frame(struct _equalizer_t* p, AVFrame *frame) {
 	BaseTime bastTime;
 	if (frame->format == AV_SAMPLE_FMT_FLTP) {
-		g_buffer.resize(EQ_BUFFER_SIZE, 0.0f);
-		assert(g_buffer.size() > frame->nb_samples);
+		g_buffer.resize(EQ_BUFFER_SIZE);
+		memset(g_buffer.data(), 0, sizeof(float)*EQ_BUFFER_SIZE);
+		
 		for (int i = 0; i < frame->channels; i++) {
-			memcpy(g_buffer.data(), frame->data[i], frame->nb_samples * sizeof(float));
+			memcpy(g_buffer.data(), frame->data[i], min(frame->nb_samples, EQ_BUFFER_SIZE) * sizeof(float));
 			process_equalizer(p, g_buffer.data(), g_buffer.size());
-			memcpy(frame->data[i], g_buffer.data(), frame->nb_samples * sizeof(float));
+			memcpy(frame->data[i], g_buffer.data(), min(frame->nb_samples, EQ_BUFFER_SIZE) * sizeof(float));
 		}
 	}
 	else {
@@ -409,7 +410,7 @@ static void audioThread(MediaInfo *pInfo, std::function<void()> notifyReadFrame)
 			info.receivedFrame = true;
 			//my_reverb_frame(rv, frame);
 			//my_reverb_frame(reverb, frame);
-			my_equalizer_frame(eq, frame);
+			//my_equalizer_frame(eq, frame);
 			AVFrame *tmpFrame = av_frame_alloc();
 			av_frame_move_ref(tmpFrame, frame);
 			info.frames.push_back(tmpFrame);
@@ -537,6 +538,15 @@ static void loopThread(PlayManagerData *mediaInfo){
     auto &videoPlayHelper = mediaInfo->mVideoPlayHelper;
     int64_t lastPts = -1;
 
+	//double hz[] = { 31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000 };
+	double hz[] = { 20, 25, 31, 40, 50, 63, 80, 100, 125, 160, 200, 250, 315, 400, 500, 630, 800, 1000, 1250, 1600, 2000, 2500, 3150, 4000, 5000, 6300, 8000, 10000, 12500, 16000, 20000 };
+	struct _equalizer_t *eq = 0; 
+
+	std::vector<float> cacheBuffer[2];
+	int fftcount = 0;
+	float tmpBuf[EQ_BUFFER_SIZE] = { 0.0f };
+	float tmpBuf2[EQ_BUFFER_SIZE] = { 0.0f };
+
     for (;;) {
 		{
 			std::lock_guard<std::mutex> lk(mediaInfo->mtx);
@@ -548,30 +558,57 @@ static void loopThread(PlayManagerData *mediaInfo){
         {
             std::lock_guard<std::mutex> lk(aMediaInfo.mtx);
             if (aMediaInfo.streamIndex >= 0){
+				int channel = 0;
                 while (playHelper.getQueuedAudioSize() < AUDIO_BUFFER_SIZE && !aMediaInfo.frames.empty()) {
                     AVFrame *frame = aMediaInfo.frames.front();
-                    aMediaInfo.frames.pop_front();
-
+					for (int i = 0; i < frame->channels; i++) {
+						cacheBuffer[i].insert(cacheBuffer[i].end(), (float*)frame->data[i], ((float*)frame->data[i]) + frame->nb_samples);
+					}
+					if (nullptr == swrContext || sample_rate != frame->sample_rate) {
+						if (nullptr != swrContext) {
+							swr_close(swrContext);
+							swr_free(&swrContext);
+						}
+						swrContext = initSwrContext(frame);
+						bytePerSecond = frame->channels * 44100 * 2;
+						sample_rate = frame->sample_rate;
+					}
+					channel = frame->channels;
 					lastPts = frame->pts;
-                    if (nullptr == swrContext || sample_rate != frame->sample_rate){
-                        if (nullptr != swrContext){
-                            swr_close(swrContext);
-                            swr_free(&swrContext);
-                        }
-                        swrContext = initSwrContext(frame);
-                        bytePerSecond = frame->channels * 44100 * 2;
-                    }
-                    int putSize = frame->nb_samples * 2 * 16 / 8;
-                    swrBuffer.resize(putSize);
-                    uint8_t *buffers[] = { swrBuffer.data() };
-                    uint32_t outputSamplePerChanel = frame->nb_samples;
-                    int retNumSamplePerChannel = swr_convert(swrContext, buffers, outputSamplePerChanel, (const uint8_t **)frame->extended_data, frame->nb_samples);
-                    assert(retNumSamplePerChannel > 0);
-                    playHelper.putData(swrBuffer.data(), putSize);
-
-                    av_frame_unref(frame);
-                    av_frame_free(&frame);
+                    aMediaInfo.frames.pop_front();
+					av_frame_unref(frame);
+					av_frame_free(&frame);
                 }
+				size_t L = EQ_BUFFER_SIZE - (EQ_BUFFER_SIZE / 2 - 1 - 1);
+				for (size_t i = fftcount; i + L <= cacheBuffer[0].size(); i += L){
+					if (0 == eq) {
+						eq = create_equalizer(sample_rate, EQ_BUFFER_SIZE, hz, _countof(hz));
+						double eqs[_countof(hz)] = { 0., 0, 0., 0., 0., 0., 0., -0., -0., -0. };
+						set_equalizer_eq(eq, eqs, _countof(eqs));
+					}
+					for (int i = 0; i < channel; i++) {
+						memset(tmpBuf, 0, sizeof(tmpBuf));
+						memcpy(tmpBuf, cacheBuffer[i].data() + fftcount, L);
+						process_equalizer(eq, tmpBuf, EQ_BUFFER_SIZE);
+						memcpy(cacheBuffer[i].data() + fftcount, tmpBuf, L);
+					}
+					fftcount += L;
+				}
+
+				while (playHelper.getQueuedAudioSize() < AUDIO_BUFFER_SIZE && fftcount > 0) {
+					int putSize = fftcount * 2 * 16 / 8;
+					swrBuffer.resize(putSize);
+					uint8_t *buffers[] = { swrBuffer.data() };
+					uint32_t outputSamplePerChanel = fftcount;
+					const uint8_t *extended_data[2] = { (uint8_t*)cacheBuffer[0].data(), (uint8_t*)cacheBuffer[1].data() };
+					int retNumSamplePerChannel = swr_convert(swrContext, buffers, outputSamplePerChanel, (const uint8_t **)extended_data, fftcount);
+					assert(retNumSamplePerChannel > 0);
+					playHelper.putData(swrBuffer.data(), putSize);
+					cacheBuffer[0].erase(cacheBuffer[0].begin(), cacheBuffer[0].begin() + fftcount);
+					cacheBuffer[1].erase(cacheBuffer[1].begin(), cacheBuffer[1].begin() + fftcount);
+					fftcount = 0;
+				}
+
                 if (-1 != lastPts){
                     ms = ts2ms(aMediaInfo.stream->time_base, lastPts);
                     ms -= (int64_t)playHelper.getQueuedAudioSize() * 1000 / bytePerSecond;

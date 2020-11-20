@@ -1,8 +1,11 @@
 #include "real_fft.h"
 #include <malloc.h>
+#ifdef _WIN32
+#define _USE_MATH_DEFINES
+#endif
 #include <math.h>
 
-void init_fft(size_t fftlen, FFTParam *h) {
+void my_init_fft(size_t fftlen, FFTParam *h) {
 	int temp;
 	h->Points = fftlen / 2;
 	h->SinTable = malloc(2 * h->Points * sizeof(fft_type));
@@ -24,7 +27,7 @@ void init_fft(size_t fftlen, FFTParam *h) {
 
 FFTParam* fftparam_alloc(size_t fftlen) {
 	FFTParam *p = malloc(sizeof(FFTParam));
-	init_fft(fftlen, p);
+	my_init_fft(fftlen, p);
 	return p;
 }
 

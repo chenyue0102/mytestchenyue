@@ -263,14 +263,14 @@ void GetValuesRelative(struct _my_envelope_t* p, double *buffer, int bufferLen, 
 
 		// IF before envelope THEN first value
 		if (leftLimit ? tplus <= get_env_t(p->mEnv, 0) : tplus < get_env_t(p->mEnv, 0)) {
-			buffer[b] = get_env_t(p->mEnv, 0);
+			buffer[b] = get_env_v(p->mEnv, 0);
 			t += tstep;
 			continue;
 		}
 		// IF after envelope THEN last value
 		if (leftLimit
 			? tplus > get_env_t(p->mEnv, len - 1) : tplus >= get_env_t(p->mEnv, len - 1)) {
-			buffer[b] = get_env_t(p->mEnv, len - 1);
+			buffer[b] = get_env_v(p->mEnv, len - 1);
 			t += tstep;
 			continue;
 		}
@@ -411,6 +411,5 @@ double my_envelope_get_value(struct _my_envelope_t* p, double t, double sampleDu
 	double temp;
 
 	GetValues(p, &temp, 1, t, sampleDur);
-	assert(temp <= 1.0);
 	return temp;
 }

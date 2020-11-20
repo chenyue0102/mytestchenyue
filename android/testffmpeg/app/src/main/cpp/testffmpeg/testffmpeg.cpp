@@ -694,23 +694,26 @@ int main(int argc, char *argv[])
 //	free_my_progenitor(t);
 //}
 
-#define EQ_SIZE 16
+#define EQ_SIZE 1024
 
 void testequalizer() {
+	std::vector<float> f = std::vector<float>(EQ_SIZE, 0.0f);
+	for (int i = 0; i < f.size(); i++) {
+		f[i] = (float)i / (f.size() - 1);
+	}
+
 	FFTParam *tmp = fftparam_alloc(32);
 	std::vector<float> tmp2(tmp->SinTable, tmp->SinTable + 2 * tmp->Points);
 	std::vector<int> tmp3(tmp->BitReversed, tmp->BitReversed + tmp->Points);
 	//double hz[] = { 31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000 };
 	double hz[] = { 20, 25, 31, 40, 50, 63, 80, 100, 125, 160, 200, 250, 315, 400, 500, 630, 800, 1000, 1250, 1600, 2000, 2500, 3150, 4000, 5000, 6300, 8000, 10000, 12500, 16000, 20000};
 	struct _equalizer_t *p = create_equalizer(44100, EQ_SIZE, hz, sizeof(hz) / sizeof(hz[0]));
-	double eq[_countof(hz)] = { 0., 0., 0., 0., 0., 0., 0., 0., 0., 0. };
+	double eq[_countof(hz)] = { 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 
+	0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 
+	0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 
+	0.0,};
 	static_assert(_countof(hz) == _countof(eq), "");
 	set_equalizer_eq(p, eq, _countof(eq));
-
-	std::vector<float> f = std::vector<float>(EQ_SIZE, 0.0f);
-	for (int i = 0; i < f.size(); i++) {
-		f[i] = (float)i / (f.size() - 1);
-	}
 	BaseTime time;
 	int64_t t1 = time.getBaseTimeUs();
 	process_equalizer(p, f.data(), f.size());

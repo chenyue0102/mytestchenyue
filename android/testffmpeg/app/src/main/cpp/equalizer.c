@@ -1,5 +1,8 @@
 ﻿#include "equalizer.h"
 #include <assert.h>
+#ifdef _WIN32
+#define _USE_MATH_DEFINES
+#endif
 #include <math.h>
 #include <malloc.h>
 #include <memory.h>
@@ -7,6 +10,13 @@
 #include "my_envelope.h"
 #include "real_fft.h"
 
+inline void* mymalloc(size_t size) {
+	void *data = malloc(size);
+	if (NULL != data) {
+		memset(data, 0, size);
+	}
+	return data;
+}
 
 // Low frequency of the FFT.  20Hz is the
  // low range of human hearing
@@ -31,14 +41,13 @@ typedef struct _equalizer_t {
 
 equalizer_t* create_equalizer(double sample_rate, size_t window_size, double *hz, size_t count) {
 	assert((window_size & (window_size - 1)) == 0);
-	equalizer_t *p = malloc(sizeof(equalizer_t));
-	memset(p, 0, sizeof(equalizer_t));
+	equalizer_t *p = mymalloc(sizeof(equalizer_t));
 	p->mWindowSize = window_size;
 	p->mHiFreq = sample_rate / 2.;
 	p->mLoFreq = loFreqI;
 	p->NUMBER_OF_BANDS = count;
 	p->mLogEnvelope = my_envelope_alloc(-120.0, 60.0, 0.0);
-	p->mM = window_size + 2;
+	p->mM = window_size / 2 - 1;
 	p->hFFT = fftparam_alloc(window_size);
 
 	for (int i = 0; i < NUM_PTS - 1; i++) {
@@ -46,8 +55,8 @@ equalizer_t* create_equalizer(double sample_rate, size_t window_size, double *hz
 	}
 	p->mWhens[NUM_PTS - 1] = 1.;
 
-	p->mWhenSliders = malloc(sizeof(double) * (p->NUMBER_OF_BANDS + 1));
-	p->mEQVals = malloc(sizeof(double) * (p->NUMBER_OF_BANDS + 1));
+	p->mWhenSliders = mymalloc(sizeof(double) * (p->NUMBER_OF_BANDS + 1));
+	p->mEQVals = mymalloc(sizeof(double) * (p->NUMBER_OF_BANDS + 1));
 
 	{
 		double loLog = log10(p->mLoFreq);
@@ -65,20 +74,21 @@ equalizer_t* create_equalizer(double sample_rate, size_t window_size, double *hz
 	}
 
 
-	p->mFilterFuncR = malloc(window_size * sizeof(float));
-	p->mFilterFuncI = malloc(window_size * sizeof(float));
-	p->mFFTBuffer = malloc(window_size * sizeof(float));
+	p->mFilterFuncR = mymalloc(window_size * sizeof(float));
+	p->mFilterFuncI = mymalloc(window_size * sizeof(float));
+	p->mFFTBuffer = mymalloc(window_size * sizeof(float));
 
 	return p;
 }
 
 static void GraphicEQ(struct _equalizer_t* p, struct _my_envelope_t *env) {
-	double value = 0.0;
-	double dist, span, s;
 	double *mWhenSliders = p->mWhenSliders;
 	double *mWhens = p->mWhens;
 	double *mEQVals = p->mEQVals;
 	size_t mBandsInUse = p->NUMBER_OF_BANDS;
+
+	double value = 0.0;
+	double dist, span, s;
 
 	my_envelope_flatten(env, 0.);
 	my_envelope_set_track_len(env, 1.0, 0.0);
@@ -140,31 +150,38 @@ static void GraphicEQ(struct _equalizer_t* p, struct _my_envelope_t *env) {
 			}
 		}
 		if (mWhens[i] <= 0.)
-			my_envelope_reassign(env, 0., value);
-		my_envelope_insert(env, mWhens[i], value);
+			my_envelope_reassign(p->mLogEnvelope, 0., value);
+		my_envelope_insert(p->mLogEnvelope, mWhens[i], value);
 	}
-	my_envelope_reassign(env, 1., value);
+	my_envelope_reassign(p->mLogEnvelope, 1., value);
 }
 
-void CalcFilter(struct _equalizer_t* p)
-{
-	float mFilterFuncR[16];
+void CalcFilter(struct _equalizer_t* p){
+	const double mLoFreq = p->mLoFreq;
+	const double mHiFreq = p->mHiFreq;
+	const size_t mWindowSize = p->mWindowSize;
+	float *const mFilterFuncR = p->mFilterFuncR;
+	float *const mFilterFuncI = p->mFilterFuncI;
+	const size_t mM = p->mM;
+	FFTParam *hFFT = p->hFFT;
 
-	double loLog = log10(p->mLoFreq);
-	double hiLog = log10(p->mHiFreq);
+
+	double loLog = log10(mLoFreq);
+	double hiLog = log10(mHiFreq);
 	double denom = hiLog - loLog;
 
-	double delta = p->mHiFreq / ((double)(p->mWindowSize / 2.));
+	double delta = mHiFreq / ((double)(mWindowSize / 2.));
 	double val0;
 	double val1;
 
+	
 	val0 = my_envelope_get_value(p->mLogEnvelope, 0.0, 0.0);   //no scaling required - saved as dB
 	val1 = my_envelope_get_value(p->mLogEnvelope, 1.0, 0.0);
-	
+
 	mFilterFuncR[0] = val0;
 	double freq = delta;
 
-	for (size_t i = 1; i <= p->mWindowSize / 2; i++)
+	for (size_t i = 1; i <= mWindowSize / 2; i++)
 	{
 		double when = (log10(freq) - loLog) / denom;
 		if (when < 0.)
@@ -181,74 +198,74 @@ void CalcFilter(struct _equalizer_t* p)
 		}
 		freq += delta;
 	}
-	mFilterFuncR[p->mWindowSize / 2] = val1;
+	mFilterFuncR[mWindowSize / 2] = val1;
 
 	mFilterFuncR[0] = DB_TO_LINEAR(mFilterFuncR[0]);
-	
+
 	{
 		size_t i = 1;
-		for (; i < p->mWindowSize / 2; i++)
+		for (; i < mWindowSize / 2; i++)
 		{
 			mFilterFuncR[i] = DB_TO_LINEAR(mFilterFuncR[i]);
-			mFilterFuncR[p->mWindowSize - i] = mFilterFuncR[i];   //Fill entire array
+			mFilterFuncR[mWindowSize - i] = mFilterFuncR[i];   //Fill entire array
 		}
 		mFilterFuncR[i] = DB_TO_LINEAR(mFilterFuncR[i]);   //do last one
 	}
-	
+
 	//transfer to time domain to do the padding and windowing
-	float *outr = malloc(sizeof(float) * max(p->mWindowSize, p->mM));
-	float *outi = malloc(sizeof(float) * max(p->mWindowSize, p->mM));
-	float *tmpBuffer = malloc(sizeof(float) * max(p->mWindowSize, p->mM));
-	InverseRealFFT(p->mWindowSize, p->hFFT, mFilterFuncR, NULL, outr, tmpBuffer); // To time domain
+	float *outr = mymalloc(mWindowSize * sizeof(float));
+	float *outi = mymalloc(mWindowSize * sizeof(float));
+	float *tmpBuffer = mymalloc(mWindowSize * sizeof(float));
+	InverseRealFFT(mWindowSize, hFFT, mFilterFuncR, NULL, outr, tmpBuffer); // To time domain
 
 	{
 		size_t i = 0;
-		for (; i <= (p->mM - 1) / 2; i++)
+		for (; i <= (mM - 1) / 2; i++)
 		{  //Windowing - could give a choice, fixed for now - MJS
 		   //      double mult=0.54-0.46*cos(2*M_PI*(i+(mM-1)/2.0)/(mM-1));   //Hamming
 		   //Blackman
 			double mult =
 				0.42 -
-				0.5 * cos(2 * M_PI * (i + (p->mM - 1) / 2.0) / (p->mM - 1)) +
-				.08 * cos(4 * M_PI * (i + (p->mM - 1) / 2.0) / (p->mM - 1));
+				0.5 * cos(2 * M_PI * (i + (mM - 1) / 2.0) / (mM - 1)) +
+				.08 * cos(4 * M_PI * (i + (mM - 1) / 2.0) / (mM - 1));
 			outr[i] *= mult;
 			if (i != 0) {
-				outr[p->mWindowSize - i] *= mult;
+				outr[mWindowSize - i] *= mult;
 			}
 		}
-		for (; i <= p->mWindowSize / 2; i++)
+		for (; i <= mWindowSize / 2; i++)
 		{   //Padding
 			outr[i] = 0;
-			outr[p->mWindowSize - i] = 0;
+			outr[mWindowSize - i] = 0;
 		}
 	}
-	float *tempr = malloc(sizeof(float) * max(p->mWindowSize, p->mM));
+	float *tempr = mymalloc(mM * sizeof(float));
 	{
 		size_t i = 0;
-		for (; i < (p->mM - 1) / 2; i++)
+		for (; i < (mM - 1) / 2; i++)
 		{   //shift so that padding on right
-			tempr[(p->mM - 1) / 2 + i] = outr[i];
-			tempr[i] = outr[p->mWindowSize - (p->mM - 1) / 2 + i];
+			tempr[(mM - 1) / 2 + i] = outr[i];
+			tempr[i] = outr[mWindowSize - (mM - 1) / 2 + i];
 		}
-		tempr[(p->mM - 1) / 2 + i] = outr[i];
+		tempr[(mM - 1) / 2 + i] = outr[i];
 	}
 
-	for (size_t i = 0; i < p->mM; i++)
+	for (size_t i = 0; i < mM; i++)
 	{   //and copy useful values back
 		outr[i] = tempr[i];
 	}
-	for (size_t i = p->mM; i < p->mWindowSize; i++)
+	for (size_t i = mM; i < mWindowSize; i++)
 	{   //rest is padding
 		outr[i] = 0.;
 	}
 
 	//Back to the frequency domain so we can use it
-	RealFFT(p->mWindowSize, p->hFFT, outr, mFilterFuncR, p->mFilterFuncI, tmpBuffer);
+	RealFFT(mWindowSize, hFFT, outr, mFilterFuncR, mFilterFuncI, tmpBuffer);
 
-	free(tmpBuffer);
-	free(tempr);
 	free(outr);
 	free(outi);
+	free(tmpBuffer);
+	free(tempr);
 }
 
 void set_equalizer_eq(struct _equalizer_t* p, double *eq, size_t count) {
