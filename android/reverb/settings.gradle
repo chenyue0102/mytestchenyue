@@ -1,2 +1,7 @@
+include ':fileexplorer'
 include ':app'
+include ':ijkplayer'
+include ':fileexplorer'
+include ':ijkplayer-java'
+include ':ijkplayer-exo'
 rootProject.name = "reverb"
