@@ -1,0 +1,15 @@
+# For more information about using CMake with Android Studio, read the
+# documentation: https://d.android.com/studio/projects/add-native-code.html
+
+# Sets the minimum version of CMake required to build the native library.
+cmake_minimum_required(VERSION 3.4.1)
+
+set(ijkyuvDir ${CMAKE_CURRENT_SOURCE_DIR}/ijkyuv)
+set(ijksoundtouchDir ${CMAKE_CURRENT_SOURCE_DIR}/ijksoundtouch)
+
+
+add_subdirectory(${ijkyuvDir})
+add_subdirectory(${ijksoundtouchDir})
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ijkj4a)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ijksdl)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ijkplayer)
