@@ -23,13 +23,21 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+
+    splits {
+        abi{
+            enable true
+            reset()
+            include('armeabi-v7a')
+            universalApk false
+        }
+    }
 }
 
 dependencies {
     implementation fileTree(dir: "libs", include: ["*.jar"])
     implementation 'com.android.support:support-annotations:23.0.1'
 
-    implementation 'com.google.android.material:material:1.2.1'
     implementation project(':fileexplorer')
     implementation project(':ijkplayer')
 }

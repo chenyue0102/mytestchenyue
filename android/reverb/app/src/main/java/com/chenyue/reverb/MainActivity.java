@@ -8,13 +8,19 @@ import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.widget.TableLayout;
 
 import com.lamerman.FileDialog;
 import com.lamerman.SelectionMode;
 
+import tv.danmaku.ijk.media.example.widget.media.IjkVideoView;
+import tv.danmaku.ijk.media.player.IjkMediaPlayer;
+
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "reverb";
+    private IjkVideoView mVideoView;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -22,6 +28,8 @@ public class MainActivity extends AppCompatActivity {
 
         findViewById(R.id.btn_open).setOnClickListener(v->onOpen());
 
+        IjkMediaPlayer.loadLibrariesOnce(null);
+        IjkMediaPlayer.native_profileBegin("libijkplayer.so");
 
         String []permissions = new String[]{
                 Manifest.permission.READ_EXTERNAL_STORAGE,
@@ -31,6 +39,10 @@ public class MainActivity extends AppCompatActivity {
         if (null != requestPermissons){
             ActivityCompat.requestPermissions(this, requestPermissons, 1);
         }
+
+        TableLayout mHudView = (TableLayout) findViewById(R.id.hud_view);
+        mVideoView = (IjkVideoView)findViewById(R.id.video_view);
+        mVideoView.setHudView(mHudView);
     }
 
     private static final int REQUEST_OPEN = 9999;
@@ -55,7 +67,15 @@ public class MainActivity extends AppCompatActivity {
             if (requestCode == REQUEST_OPEN){
                 String filePath = data.getStringExtra(FileDialog.RESULT_PATH);
                 Log.i(TAG, filePath);
+                mVideoView.setVideoPath(filePath);
+                mVideoView.start();
             }
         }
+    }
+
+    @Override
+    protected void onDestroy(){
+        super.onDestroy();
+        IjkMediaPlayer.native_profileEnd();
     }
 }
