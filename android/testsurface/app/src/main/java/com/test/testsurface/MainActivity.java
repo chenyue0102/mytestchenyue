@@ -10,6 +10,7 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.ImageFormat;
+import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
@@ -19,12 +20,17 @@ import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.params.StreamConfigurationMap;
+import android.media.AudioFormat;
+import android.media.AudioRecord;
 import android.media.Image;
 import android.media.ImageReader;
+import android.media.MediaRecorder;
+import android.media.MediaSyncEvent;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.util.Size;
 import android.view.Surface;
@@ -34,9 +40,16 @@ import android.view.TextureView;
 import android.widget.Button;
 import android.widget.TextView;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.security.PublicKey;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.PrimitiveIterator;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
@@ -46,7 +59,7 @@ public class MainActivity extends AppCompatActivity {
 
     // Used to load the 'native-lib' library on application startup.
     static {
-        System.loadLibrary("native-lib");
+        //System.loadLibrary("native-lib");
     }
     private static final int PERMISSION_REQUEST_CODE_CAMERA = 1;
     private SurfaceView surfaceView;
@@ -54,6 +67,12 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        requestPermissions(new String[]{
+                Manifest.permission.CAMERA,
+                Manifest.permission.RECORD_AUDIO,
+                Manifest.permission.READ_EXTERNAL_STORAGE,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE}, 100);
 
         mHandlerThread = new HandlerThread("camera");
         mHandlerThread.start();
@@ -68,6 +87,8 @@ public class MainActivity extends AppCompatActivity {
             }
             openCamera();
         });
+        findViewById(R.id.btn_audio).setOnClickListener(v->openAudio());
+        findViewById(R.id.btn_exit).setOnClickListener(v->mExit = true);
 
         if (requestCamera(Manifest.permission.CAMERA, PERMISSION_REQUEST_CODE_CAMERA)) {
             if (!isCamera2Device()) {
@@ -95,6 +116,8 @@ public class MainActivity extends AppCompatActivity {
             if (isAllPermissionsGranted(grantResults)){
                 if (!isCamera2Device()){
                     Log.i("tag", "not support");
+                }else{
+                    Log.i("tag", "support");
                 }
             }
         }
@@ -133,8 +156,17 @@ public class MainActivity extends AppCompatActivity {
     private CaptureRequest.Builder mCaptureRequestBuilder;
     private CameraCaptureSession.CaptureCallback mCaptureCallback;
     private ImageReader mImageReader;
+    private AudioRecord mAudioRecord;
+    private static final int IMAGE_FORMAT = ImageFormat.YUV_420_888;
+    private boolean mFirst = true;
+    private boolean mExit = false;
 
-    private void createCameraPreviewSession(){
+    /**
+     * captureType CameraDevice.TEMPLATE_PREVIEW
+     * @param captureType
+     * @param surfaces
+     */
+    private void createCameraPreviewSession(int captureType, Surface[]surfaces){
         try{
             mCaptureCallback = new CameraCaptureSession.CaptureCallback(){
 
@@ -152,13 +184,16 @@ public class MainActivity extends AppCompatActivity {
                 }
             };
 
-            mCaptureRequestBuilder = mCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
-            SurfaceHolder surfaceHolder = surfaceView.getHolder();
-            Surface surface = surfaceHolder.getSurface();
+            mCaptureRequestBuilder = mCameraDevice.createCaptureRequest(captureType);
+//            SurfaceHolder surfaceHolder = surfaceView.getHolder();
+//            Surface surface = surfaceHolder.getSurface();
+            for (Surface surface : surfaces){
+                mCaptureRequestBuilder.addTarget(surface);
+            }
+            //mCaptureRequestBuilder.addTarget(mSurface);
             //mCaptureRequestBuilder.addTarget(mImageReader.getSurface());
-            mCaptureRequestBuilder.addTarget(mSurface);
 
-            mCameraDevice.createCaptureSession(Arrays.asList(mSurface), new CameraCaptureSession.StateCallback() {
+            mCameraDevice.createCaptureSession(Arrays.asList(/*mSurface, mImageReader.getSurface()*/surfaces), new CameraCaptureSession.StateCallback() {
                 @Override
                 public void onConfigured(@NonNull CameraCaptureSession session) {
                     mCameraCaptureSession = session;
@@ -184,7 +219,7 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
     }
-
+    
     private void unlockFocus(){
         try{
             mCaptureRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER, CameraMetadata.CONTROL_AF_TRIGGER_CANCEL);
@@ -223,16 +258,35 @@ public class MainActivity extends AppCompatActivity {
                 }
                 cameraId = tmpCameraId;
                 StreamConfigurationMap map = cameraCharacteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
-                Size[]sizes = map.getOutputSizes(ImageFormat.RAW_SENSOR);
+                Size[]sizes = map.getOutputSizes(IMAGE_FORMAT);
                 Size largestRaw = Collections.max(Arrays.asList(sizes), new CompareSizesByArea());
-                mImageReader = ImageReader.newInstance(largestRaw.getWidth(), largestRaw.getHeight(), ImageFormat.RAW_SENSOR, 5);
-                mImageReader.setOnImageAvailableListener(new ImageReader.OnImageAvailableListener(){
-                    @Override
-                    public void onImageAvailable(ImageReader reader) {
-                        try{
-                            Image image = mImageReader.acquireNextImage();
-                        }catch (Exception e){
-                            e.printStackTrace();
+                mImageReader = ImageReader.newInstance(largestRaw.getWidth(), largestRaw.getHeight(), IMAGE_FORMAT, 5);
+                mImageReader.setOnImageAvailableListener(reader -> {
+                    Image image = null;
+                    try{
+                        image = mImageReader.acquireNextImage();
+                        Image.Plane[] planes = image.getPlanes();
+                        Log.i(TAG, "planes count:" + planes.length);
+//                        if (mFirst){
+//                            mFirst = false;
+//                            File file = new File("/storage/emulated/0/text.yuv");
+//                            if (!file.exists()){
+//                                file.createNewFile();
+//                            }
+//                            RandomAccessFile raf = new RandomAccessFile(file, "rwd");
+//                            for (Image.Plane plane : planes){
+//                                ByteBuffer byteBuffer = plane.getBuffer();
+//                                byte []bytes = new byte[byteBuffer.remaining()];
+//                                byteBuffer.get(bytes);
+//                                raf.write(bytes);
+//                            }
+//                            raf.close();
+//                        }
+                    }catch (Exception e){
+                        e.printStackTrace();
+                    }finally {
+                        if (null != image){
+                            image.close();
                         }
                     }
                 }, mHandler);
@@ -243,7 +297,7 @@ public class MainActivity extends AppCompatActivity {
                 public void onOpened(@NonNull CameraDevice camera) {
                     Log.i(TAG, "onOpened");
                     mCameraDevice = camera;
-                    createCameraPreviewSession();
+                    createCameraPreviewSession(CameraDevice.TEMPLATE_RECORD, new Surface[]{mSurface, mImageReader.getSurface()});
                 }
 
                 @Override
@@ -269,6 +323,174 @@ public class MainActivity extends AppCompatActivity {
         }catch (Exception e){
             e.printStackTrace();
         }
+    }
+
+    private void printAudioRecord(){
+        int audioSource = MediaRecorder.AudioSource.MIC;
+        int []sampleRates = new int[]{8000, 11025, 22050, 44100};
+        int []audioFormats = new int[]{AudioFormat.ENCODING_PCM_8BIT, AudioFormat.ENCODING_PCM_16BIT, AudioFormat.ENCODING_PCM_FLOAT};
+        int []channelConfigs = new int[]{AudioFormat.CHANNEL_IN_MONO, AudioFormat.CHANNEL_IN_STEREO };
+        for (int sampleRate : sampleRates){
+            for (int audioFormat : audioFormats){
+                for (int channelConfig : channelConfigs){
+                    int bufferSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat);
+                    AudioRecord audioRecord = new AudioRecord(audioSource, sampleRate, channelConfig, audioFormat, bufferSize);
+                    if (audioRecord.getState() == AudioRecord.STATE_INITIALIZED){
+                        String strFormat = "";
+                        switch (audioFormat){
+                            case AudioFormat.ENCODING_PCM_8BIT:
+                                strFormat = "8bit";
+                                break;
+                            case AudioFormat.ENCODING_PCM_16BIT:
+                                strFormat = "16bit";
+                                break;
+                            case AudioFormat.ENCODING_PCM_FLOAT:
+                                strFormat = "float";
+                                break;
+                        }
+                        Log.i(TAG, "printAudioRecord sampleRates:" + sampleRate + " audioFormats:" + strFormat + " channelConfig:" +
+                                (channelConfig == AudioFormat.CHANNEL_IN_MONO ? "mono" : "stereo"));
+                    }
+                }
+            }
+        }
+    }
+
+    /*
+    //http://www-mmsp.ece.mcgill.ca/Documents/AudioFormats/WAVE/WAVE.html
+    struct wav_header_t
+    {
+        char chunkID[4]; //"RIFF" = 0x46464952
+        uint32_t chunkSize; //文件长度-8
+        char format[4]; //"WAVE" = 0x45564157
+        char subchunk1ID[4]; //"fmt " = 0x20746D66
+        uint32_t subchunk1Size; //16 18 40 [+ sizeof(wExtraFormatBytes) + wExtraFormatBytes]
+        uint16_t audioFormat;//数据类型,"01 00"表示 PCM
+        uint16_t numChannels;//通道数
+        uint32_t sampleRate;//采样率，比如""表示44100采样率
+        uint32_t byteRate;//码率： 采样率x位深度x通道数/8 比如双通道的44.1K 16位采样的码率为176400
+        uint16_t blockAlign;//采样一次，占内存大小 ： 位深度x通道数/8
+        uint16_t bitsPerSample;//采样深度
+
+        uint16_t cbSize;//Size of the extension (0 or 22)
+
+        uint16_t wValidBitsPerSample;//Number of valid bits
+        uint32_t dwChannelMask;//Speaker position mask
+        uint8_t SubFormat[16];//GUID including the data format code
+    };
+    struct chunk_t
+    {
+        char ID[4]; //"data" = 0x61746164
+        unsigned long size;  //Chunk data bytes
+    };
+    //All (compressed) non-PCM formats must have a fact chunk (Rev. 3 documentation). The chunk contains at least one value, the number of samples in the file.
+    struct fact_chunk_t {
+        char ckID[4];//"fact"
+        uint32_t cksize;//Chunk size: minimum 4
+        uint32_t dwSampleLength;//Number of samples (per channel)
+    };
+     */
+
+    private static final int WAV_MIN_FACT_CHUNK_LENGTH = 4 + 4 + 4;
+    private static final int WAV_CHUNK_HEADER_LENGTH = 4 + 4;
+    private static final int WAV_MIN_HEADER_LENGTH = 36 + 8;
+    private static final int SAMPLE_FORMAT_PCM_8BIT = 1;
+    private static final int SAMPLE_FORMAT_PCM_16BIT = 2;
+    private static final int SAMPLE_FORMAT_PCM_FLOAT = 3;
+    private int getHeaderLength(int sampleFormat){
+        return sampleFormat == SAMPLE_FORMAT_PCM_FLOAT ? WAV_MIN_HEADER_LENGTH + 12 : WAV_MIN_HEADER_LENGTH;
+    }
+
+    private byte[] getWavHeader(int wavDataBytes, int numChannels, int sampleRate, int sampleFormat){
+        int bitsPerSample = 0, audioFormat = 0;
+        switch (sampleFormat){
+            case SAMPLE_FORMAT_PCM_8BIT:
+                audioFormat = 1;//WAVE_FORMAT_PCM
+                bitsPerSample = 8;
+                break;
+            case SAMPLE_FORMAT_PCM_16BIT:
+                audioFormat = 1;//WAVE_FORMAT_PCM
+                bitsPerSample = 16;
+                break;
+            case SAMPLE_FORMAT_PCM_FLOAT:
+                audioFormat = 3;//WAVE_FORMAT_IEEE_FLOAT
+                bitsPerSample = 32;
+                break;
+        }
+        int headerLen = getHeaderLength(sampleFormat);
+
+        byte []data = new byte[headerLen];
+        ByteBuffer byteBuffer = ByteBuffer.wrap(data);
+        byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
+        //wav header
+        byteBuffer.putInt(0x46464952);//chunkID
+        byteBuffer.putInt(wavDataBytes + headerLen - 8);//chunkSize
+        byteBuffer.putInt(0x45564157);//format
+        byteBuffer.putInt(0x20746D66);//subchunk1ID
+        byteBuffer.putInt(sampleFormat == SAMPLE_FORMAT_PCM_FLOAT ? 40 : 16);//subchunk1Size
+        byteBuffer.putShort((short) audioFormat);//audioFormat
+        byteBuffer.putShort((short) numChannels);//numChannels
+        byteBuffer.putInt(sampleRate);//sampleRate
+        byteBuffer.putInt(sampleRate * numChannels * bitsPerSample / 8);//byteRate
+        byteBuffer.putShort((short)(bitsPerSample * numChannels / 8));//blockAlign
+        byteBuffer.putShort((short) bitsPerSample);//bitsPerSample
+
+        if (audioFormat != 1){
+            //not WAVE_FORMAT_PCM
+            byteBuffer.putInt(0x74636166);//fact
+            byteBuffer.putInt(4);//cksize
+            int dwSampleLength = wavDataBytes / numChannels / bitsPerSample * 8;//Number of samples (per channel)
+            byteBuffer.putInt(dwSampleLength);
+        }
+
+        //chunk
+        byteBuffer.putInt(0x61746164);
+        byteBuffer.putInt(wavDataBytes);
+        byteBuffer.flip();
+        return data;
+    }
+
+
+
+    private void openAudio(){
+        int audioSource = MediaRecorder.AudioSource.MIC;
+        int sampleRateInHz = 44100;
+        int channelConfig = AudioFormat.CHANNEL_IN_STEREO ;
+        int audioFormat = AudioFormat.ENCODING_PCM_FLOAT;
+        int bufferSizeInBytes = AudioRecord.getMinBufferSize(sampleRateInHz, channelConfig, audioFormat);
+        mAudioRecord = new AudioRecord(audioSource, sampleRateInHz, channelConfig, audioFormat, bufferSizeInBytes);
+        if (mAudioRecord.getState() != AudioRecord.STATE_INITIALIZED){
+            Log.i(TAG, "AudioRecord failed");
+            return;
+        }
+        mAudioRecord.startRecording();
+        new Thread(() -> {
+            File file = new File("/storage/emulated/0/test.wav");
+            try{
+                if (!file.exists()){
+                    file.createNewFile();
+                }
+                RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rwd");
+                randomAccessFile.seek(getHeaderLength(SAMPLE_FORMAT_PCM_FLOAT));
+
+                int totalWriteFloatCount = 0;
+                float []buffer = new float[bufferSizeInBytes / 4];
+                while(!mExit){
+                    int len = mAudioRecord.read(buffer, 0, bufferSizeInBytes / 4, AudioRecord.READ_BLOCKING);
+                    for (int i = 0;i < len; i++){
+                        randomAccessFile.writeFloat(buffer[i]);
+                        totalWriteFloatCount++;
+                    }
+                }
+                byte []header = getWavHeader(totalWriteFloatCount * 4, 2, sampleRateInHz, SAMPLE_FORMAT_PCM_FLOAT);
+                randomAccessFile.seek(0);
+                randomAccessFile.write(header);
+                randomAccessFile.close();
+                Log.i(TAG, "record audio exit");
+            }catch (IOException e){
+                e.printStackTrace();
+            }
+        }).start();
     }
 
     /**
