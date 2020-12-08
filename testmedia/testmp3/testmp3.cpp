@@ -805,19 +805,32 @@ bool seekToFrameHeader(FILE *file) {
 	return false;
 }
 
+/*
+0x0001 	WAVE_FORMAT_PCM 	PCM
+0x0003 	WAVE_FORMAT_IEEE_FLOAT 	IEEE float
+0x0006 	WAVE_FORMAT_ALAW 	8 - bit ITU - T G.711 A - law
+0x0007 	WAVE_FORMAT_MULAW 	8 - bit ITU - T G.711 µ - law
+0xFFFE 	WAVE_FORMAT_EXTENSIBLE 	Determined by SubFormat
+*/
 struct wav_header_t
 {
 	char chunkID[4]; //"RIFF" = 0x46464952
 	uint32_t chunkSize; //文件长度-8
 	char format[4]; //"WAVE" = 0x45564157
 	char subchunk1ID[4]; //"fmt " = 0x20746D66
-	uint32_t subchunk1Size; //16 [+ sizeof(wExtraFormatBytes) + wExtraFormatBytes]
+	uint32_t subchunk1Size; //16 18 40[+ sizeof(wExtraFormatBytes) + wExtraFormatBytes]
 	uint16_t audioFormat;//数据类型,"01 00"表示 PCM
 	uint16_t numChannels;//通道数
 	uint32_t sampleRate;//采样率，比如""表示44100采样率
 	uint32_t byteRate;//码率： 采样率x位深度x通道数/8 比如双通道的44.1K 16位采样的码率为176400
 	uint16_t blockAlign;//采样一次，占内存大小 ： 位深度x通道数/8
 	uint16_t bitsPerSample;//采样深度
+
+	//uint16_t cbSize;//Size of the extension (0 or 22)
+
+	//uint16_t wValidBitsPerSample;//Number of valid bits
+	//uint32_t dwChannelMask;//Speaker position mask
+	//uint8_t SubFormat[16];//GUID including the data format code
 };
 
 //Chunks
@@ -826,18 +839,73 @@ struct chunk_t
 	char ID[4]; //"data" = 0x61746164
 	unsigned long size;  //Chunk data bytes
 };
+//http://www-mmsp.ece.mcgill.ca/Documents/AudioFormats/WAVE/WAVE.html
+//All (compressed) non-PCM formats must have a fact chunk (Rev. 3 documentation). The chunk contains at least one value, the number of samples in the file.
+struct fact_chunk_t {
+	char ckID[4];//"fact" 0x74636166
+	uint32_t cksize;//Chunk size: minimum 4
+	uint32_t dwSampleLength;//Number of samples (per channel)
+};
+#pragma pack(push)
+#pragma pack(1)
+struct sub_list_chunk_t {
+	char ckID[4];//"ISFT"
+	uint32_t cksize;//Chunk size
+	uint8_t data[14];//
+};
 
+struct list_chunk_t {
+	char ckID[4];//"LIST"
+	uint32_t cksize;//Chunk size
+	char type[4];//"INFO"
+	sub_list_chunk_t subChunk;
+};
+#pragma pack(pop)
 void testwav() {
-	FILE *f = fopen("d:/out.wav", "rb");
+	FILE *f = fopen("d:/float.wav", "rb");
 	wav_header_t wav;
+	int i = sizeof(wav);
+	int i2 = sizeof(chunk_t);
 	chunk_t chunk;
 	fread(&wav, 1, sizeof(wav), f);
+
+	uint16_t cbSize = 0;
+	uint16_t wValidBitsPerSample;//Number of valid bits
+	uint32_t dwChannelMask;//Speaker position mask
+	uint8_t SubFormat[16];//GUID including the data format code
+	if (wav.subchunk1Size == 18) {
+		fread(&cbSize, 1, sizeof(cbSize), f);
+	}
+	else if (wav.subchunk1Size == 40) {
+		fread(&cbSize, 1, sizeof(cbSize), f);
+		fread(&wValidBitsPerSample, 1, sizeof(wValidBitsPerSample), f);
+		fread(&dwChannelMask, 1, sizeof(dwChannelMask), f);
+		fread(&SubFormat, 1, sizeof(SubFormat), f);
+	}
+	uint8_t *buffer = new uint8_t[32];
 	do
 	{
-		fread(&chunk, 1, sizeof(chunk), f);
-		std::string s(chunk.ID, 4);
-		printf("chunk:%s size%d\n", s.c_str(), chunk.size);
-		fseek(f, chunk.size, SEEK_CUR);
+		chunk_t *tmp = (chunk_t*)buffer;
+		fread(buffer, 1, sizeof(chunk_t), f);
+		std::string s(tmp->ID, 4);
+		printf("chunk:%s size%d\n", s.c_str(), tmp->size);
+		if (s == "fact") {
+			assert(tmp->size + sizeof(chunk_t) <= 32);
+			fact_chunk_t *face = (fact_chunk_t*)buffer;
+			unsigned int i = 0;
+			memcpy(&i, tmp->ID, sizeof(i));
+			fread(buffer + sizeof(chunk_t), 1, tmp->size, f);
+			printf("fact dwSampleLength:%d \n", face->dwSampleLength);
+		}
+		else if (s == "LIST") {
+			assert(sizeof(list_chunk_t) == tmp->size + 8);
+			list_chunk_t *list = (list_chunk_t*)buffer;
+			fread(buffer + sizeof(chunk_t), 1, list->cksize, f);
+			printf("list \n");
+		}
+		else {
+			fseek(f, chunk.size, SEEK_CUR);
+		}
 	} while (0 != strncmp(chunk.ID, "data", 4));
 
 	fclose(f);
@@ -845,6 +913,7 @@ void testwav() {
 
 int main()
 {
+	testwav();
 	Mp3DataFrameHeader tmpHeader;
 	char cc[4] = { 0xFF, 0xFB, 0xb4, 0x40 };
 	memcpy(&tmpHeader, cc, sizeof(tmpHeader));
