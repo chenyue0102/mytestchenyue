@@ -1,3 +1,4 @@
-[submodule "android/testsurface/oboe"]
-	path = android/testsurface/oboe
+
+[submodule "android/testsurface/app/src/main/cpp/oboe"]
+	path = android/testsurface/app/src/main/cpp/oboe
 	url = https://github.com/google/oboe.git
