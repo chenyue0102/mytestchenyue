@@ -1,6 +1,7 @@
 package com.test.testsurface;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.annotation.RequiresPermission;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -20,7 +21,9 @@ import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.params.StreamConfigurationMap;
+import android.media.AudioDeviceInfo;
 import android.media.AudioFormat;
+import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.media.Image;
 import android.media.ImageReader;
@@ -28,8 +31,10 @@ import android.media.MediaRecorder;
 import android.media.MediaSyncEvent;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.storage.StorageManager;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.util.Size;
@@ -59,7 +64,7 @@ public class MainActivity extends AppCompatActivity {
 
     // Used to load the 'native-lib' library on application startup.
     static {
-        //System.loadLibrary("native-lib");
+        System.loadLibrary("native-lib");
     }
     private static final int PERMISSION_REQUEST_CODE_CAMERA = 1;
     private SurfaceView surfaceView;
@@ -68,7 +73,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        requestPermissions(new String[]{
+        ActivityCompat.requestPermissions(this, new String[]{
                 Manifest.permission.CAMERA,
                 Manifest.permission.RECORD_AUDIO,
                 Manifest.permission.READ_EXTERNAL_STORAGE,
@@ -89,6 +94,8 @@ public class MainActivity extends AppCompatActivity {
         });
         findViewById(R.id.btn_audio).setOnClickListener(v->openAudio());
         findViewById(R.id.btn_exit).setOnClickListener(v->mExit = true);
+        findViewById(R.id.btn_record_audio).setOnClickListener(v->onRecordAudio());
+        findViewById(R.id.btn_stop_record_audio).setOnClickListener(v->onStopRecordAudio());
 
         if (requestCamera(Manifest.permission.CAMERA, PERMISSION_REQUEST_CODE_CAMERA)) {
             if (!isCamera2Device()) {
@@ -500,4 +507,24 @@ public class MainActivity extends AppCompatActivity {
     public native String stringFromJNI();
 
     private native void createCamera();
+
+    private void onRecordAudio(){
+        int deviceId = 6;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
+            AudioManager audioManager = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
+            AudioDeviceInfo[]deviceInfos = audioManager.getDevices(AudioManager.GET_DEVICES_INPUTS);
+            deviceId = deviceInfos[0].getId();
+        }
+        File file = Environment.getExternalStorageDirectory();
+        String filePath = file.toString() + "/test.pcm";
+        recordAudio(deviceId, filePath);
+    }
+
+    private native void recordAudio(int deviceId, String fileName);
+
+    private void onStopRecordAudio(){
+        stopRecordAudio();
+    }
+
+    private native void stopRecordAudio();
 }

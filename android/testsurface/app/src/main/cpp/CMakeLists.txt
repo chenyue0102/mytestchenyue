@@ -4,6 +4,12 @@
 # Sets the minimum version of CMake required to build the native library.
 
 cmake_minimum_required(VERSION 3.4.1)
+set(oboeDir ${CMAKE_CURRENT_SOURCE_DIR}/oboe)
+add_subdirectory(${oboeDir})
+
+include_directories(
+        ${oboeDir}/include
+)
 
 # Creates and names a library, sets it as either STATIC
 # or SHARED, and provides the relative paths to its source code.
@@ -44,5 +50,6 @@ target_link_libraries( # Specifies the target library.
                        # Links the target library to the log library
                        # included in the NDK.
                         GLESv3
-        camera2ndk
+        #camera2ndk
+        oboe
                        ${log-lib} )

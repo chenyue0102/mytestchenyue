@@ -19,6 +19,32 @@
                 android:layout_height="wrap_content"
                 android:text="create"
                 android:id="@+id/btn_create"/>
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="audio"
+                android:id="@+id/btn_audio"/>
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="exit"
+                android:id="@+id/btn_exit"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="record audio"
+                android:id="@+id/btn_record_audio"/>
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="stop record"
+                android:id="@+id/btn_stop_record_audio"/>
         </LinearLayout>
 
         <com.test.testsurface.MySurfaceView

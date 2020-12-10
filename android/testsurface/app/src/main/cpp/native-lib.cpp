@@ -87,6 +87,7 @@ Java_com_test_testsurface_MyNDKGLRender_drawFrame(JNIEnv *env, jobject thiz) {
     glBindVertexArray(0);
     glUseProgram(0);
 }
+#if 0
 ACameraManager *g_cameraManager = nullptr;
 ACameraIdList *g_ACameraIdList = nullptr;
 std::string g_cameraId;
@@ -124,10 +125,81 @@ static void EnumerateCamera(){
     ACameraManager_deleteCameraIdList(g_ACameraIdList);
     g_ACameraIdList = nullptr;
 }
-
+#endif
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_test_testsurface_MainActivity_createCamera(JNIEnv *env, jobject thiz) {
-    g_cameraManager = ACameraManager_create();
-    ACameraManager_openCamera(g_cameraManager, )
+    //g_cameraManager = ACameraManager_create();
+    //ACameraManager_openCamera(g_cameraManager, )
+}
+
+#include <memory>
+#include <oboe/Oboe.h>
+FILE *g_file = 0;
+
+class MyAudioStreamCallback : public oboe::AudioStreamCallback{
+public:
+    oboe::DataCallbackResult
+    onAudioReady(oboe::AudioStream *audioStream, void *audioData, int32_t numFrames) override {
+        fwrite(audioData, 1, numFrames * audioStream->getChannelCount() * sizeof(int16_t), g_file);
+        return oboe::DataCallbackResult::Continue;
+    }
+};
+
+MyAudioStreamCallback *g_MyAudioStreamCallback = new MyAudioStreamCallback();
+std::shared_ptr<oboe::AudioStream> g_AudioStream;
+
+static void recordAudio(JNIEnv *env, jobject thiz, jint devicdeId, jstring str){
+    jboolean isCopy = false;
+    const char *filePath = env->GetStringUTFChars(str, &isCopy);
+    g_file = fopen(filePath, "wb+");
+
+    oboe::AudioStreamBuilder builder;
+    builder.setAudioApi(oboe::AudioApi::Unspecified)
+        //->setFormat(oboe::AudioFormat::Float)//float need sdk >= 23
+            ->setFormat(oboe::AudioFormat::I16)
+        ->setSharingMode(oboe::SharingMode::Exclusive)
+        ->setPerformanceMode(oboe::PerformanceMode::LowLatency)
+        ->setDeviceId(devicdeId)
+        ->setDirection(oboe::Direction::Input)
+        ->setChannelCount(2)
+        ->setSampleRate(44100)
+        ->setCallback(g_MyAudioStreamCallback);
+
+    oboe::Result result = builder.openStream(g_AudioStream);
+    assert(oboe::Result::OK == result);
+    result = g_AudioStream->requestStart();
+    assert(oboe::Result::OK == result);
+
+    return;
+}
+
+static void stopRecordAudio(JNIEnv *env, jobject thiz){
+    if (g_AudioStream){
+        g_AudioStream->stop(0);
+        g_AudioStream->close();
+        g_AudioStream.reset();
+    }
+    fclose(g_file);
+    g_file = 0;
+}
+
+JNINativeMethod g_methods[] = {
+        {"recordAudio", "(ILjava/lang/String;)V", (void*)&recordAudio},
+        {"stopRecordAudio", "()V", (void*)&stopRecordAudio},
+};
+
+JavaVM *g_vm = 0;
+JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *reserved){
+    g_vm = vm;
+
+    JNIEnv *env = 0;
+    if (JNI_OK == (vm->GetEnv((void**)&env, JNI_VERSION_1_4))){
+        jclass clazz = (*env).FindClass("com/test/testsurface/MainActivity");
+        if (JNI_OK != (*env).RegisterNatives(clazz, g_methods, sizeof(g_methods) / sizeof(g_methods[0]))){
+            assert(false);
+        }
+    }
+
+    return JNI_VERSION_1_4;
 }
