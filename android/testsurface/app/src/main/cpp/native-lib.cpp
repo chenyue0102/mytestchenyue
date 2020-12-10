@@ -152,7 +152,8 @@ std::shared_ptr<oboe::AudioStream> g_AudioStream;
 static void recordAudio(JNIEnv *env, jobject thiz, jint devicdeId, jstring str){
     jboolean isCopy = false;
     const char *filePath = env->GetStringUTFChars(str, &isCopy);
-    g_file = fopen(filePath, "wb+");
+    g_file = fopen(filePath, "wb");
+    env->ReleaseStringUTFChars(str, filePath);
 
     oboe::AudioStreamBuilder builder;
     builder.setAudioApi(oboe::AudioApi::Unspecified)
@@ -180,13 +181,73 @@ static void stopRecordAudio(JNIEnv *env, jobject thiz){
         g_AudioStream->close();
         g_AudioStream.reset();
     }
-    fclose(g_file);
-    g_file = 0;
+    if (0 != g_file){
+        fclose(g_file);
+        g_file = 0;
+    }
+}
+class MyOutputAudioStreamCallback : public oboe::AudioStreamCallback{
+
+public:
+    oboe::DataCallbackResult
+    onAudioReady(oboe::AudioStream *audioStream, void *audioData, int32_t numFrames) override {
+        memset(audioData, 0, numFrames * sizeof(int16_t));
+
+        int readCount = numFrames * sizeof(int16_t) * audioStream->getChannelCount();
+        int size = fread(audioData, 1, readCount, g_file);
+        if (size < readCount){
+            audioStream->requestStop();
+            return oboe::DataCallbackResult::Stop;
+        }else{
+            return oboe::DataCallbackResult::Continue;
+        }
+    }
+};
+
+MyOutputAudioStreamCallback *g_MyOutputAudioStreamCallback = new MyOutputAudioStreamCallback();
+std::shared_ptr<oboe::AudioStream> g_outputstream;
+static void playAudio(JNIEnv *env, jobject thiz, jint devideId, jstring str){
+    jboolean isCopy = false;
+    const char *filePath = env->GetStringUTFChars(str, &isCopy);
+    g_file = fopen(filePath, "rb");
+    env->ReleaseStringUTFChars(str, filePath);
+
+    oboe::AudioStreamBuilder builder;
+    builder.setAudioApi(oboe::AudioApi::Unspecified)
+        ->setFormat(oboe::AudioFormat::I16)
+        ->setSharingMode(oboe::SharingMode::Exclusive)
+        ->setPerformanceMode(oboe::PerformanceMode::LowLatency)
+        ->setDeviceId(devideId)
+        ->setDirection(oboe::Direction::Output)
+        ->setSampleRate(44100)
+        ->setChannelCount(2)
+        ->setCallback(g_MyOutputAudioStreamCallback);
+
+    oboe::Result result = builder.openStream(g_outputstream);
+    assert(result == oboe::Result::OK);
+    int32_t framesPerBurst = g_outputstream->getFramesPerBurst();
+    g_outputstream->setBufferSizeInFrames(framesPerBurst);
+    result = g_outputstream->requestStart();
+    assert(result == oboe::Result::OK);
+}
+
+static void stopPlayAudio(JNIEnv *env, jobject thiz){
+    if (g_outputstream){
+        g_outputstream->stop(0);
+        g_outputstream->close();
+        g_outputstream.reset();
+    }
+    if (0 != g_file){
+        fclose(g_file);
+        g_file = 0;
+    }
 }
 
 JNINativeMethod g_methods[] = {
         {"recordAudio", "(ILjava/lang/String;)V", (void*)&recordAudio},
         {"stopRecordAudio", "()V", (void*)&stopRecordAudio},
+        {"playAudio", "(ILjava/lang/String;)V", (void*)&playAudio},
+        {"stopPlayAudio", "()V", (void*)&stopPlayAudio},
 };
 
 JavaVM *g_vm = 0;

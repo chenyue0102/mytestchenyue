@@ -47,6 +47,22 @@
                 android:id="@+id/btn_stop_record_audio"/>
         </LinearLayout>
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="play audio"
+                android:id="@+id/btn_play_audio"/>
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="stop play"
+                android:id="@+id/btn_stop_play_audio"/>
+        </LinearLayout>
+
         <com.test.testsurface.MySurfaceView
             android:id="@+id/surfaceView"
             android:layout_width="match_parent"

@@ -96,6 +96,8 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.btn_exit).setOnClickListener(v->mExit = true);
         findViewById(R.id.btn_record_audio).setOnClickListener(v->onRecordAudio());
         findViewById(R.id.btn_stop_record_audio).setOnClickListener(v->onStopRecordAudio());
+        findViewById(R.id.btn_play_audio).setOnClickListener(v->onPlayAudio());
+        findViewById(R.id.btn_stop_play_audio).setOnClickListener(v->onStopPlayAudio());
 
         if (requestCamera(Manifest.permission.CAMERA, PERMISSION_REQUEST_CODE_CAMERA)) {
             if (!isCamera2Device()) {
@@ -527,4 +529,23 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private native void stopRecordAudio();
+
+    private void onPlayAudio(){
+        int deviceId = 6;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
+            AudioManager audioManager = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
+            AudioDeviceInfo[]deviceInfos = audioManager.getDevices(AudioManager.GET_DEVICES_INPUTS);
+            deviceId = deviceInfos[0].getId();
+        }
+        File file = Environment.getExternalStorageDirectory();
+        String filePath = file.toString() + "/test.pcm";
+        playAudio(deviceId, filePath);
+    }
+
+    private native void playAudio(int deviceId, String filePath);
+
+    private void onStopPlayAudio(){
+        stopPlayAudio();
+    }
+    private native void stopPlayAudio();
 }
