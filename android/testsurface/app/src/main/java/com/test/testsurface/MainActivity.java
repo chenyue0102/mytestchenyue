@@ -98,16 +98,18 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.btn_stop_record_audio).setOnClickListener(v->onStopRecordAudio());
         findViewById(R.id.btn_play_audio).setOnClickListener(v->onPlayAudio());
         findViewById(R.id.btn_stop_play_audio).setOnClickListener(v->onStopPlayAudio());
+        findViewById(R.id.btn_record_video).setOnClickListener(v->onRecordVideo());
+        findViewById(R.id.btn_stop_record_video).setOnClickListener(v->onStopRecordVideo());
 
-        if (requestCamera(Manifest.permission.CAMERA, PERMISSION_REQUEST_CODE_CAMERA)) {
-            if (!isCamera2Device()) {
-                Log.i("tag", "not support");
-            }
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-                return;
-            }
+        //if (requestCamera(Manifest.permission.CAMERA, PERMISSION_REQUEST_CODE_CAMERA)) {
+//            if (!isCamera2Device()) {
+//                Log.i("tag", "not support");
+//            }
+//            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+//                return;
+//            }
             //openCamera();
-        }
+       // }
     }
 
     private boolean isAllPermissionsGranted(int []grantResults){
@@ -548,4 +550,23 @@ public class MainActivity extends AppCompatActivity {
         stopPlayAudio();
     }
     private native void stopPlayAudio();
+
+    private void onRecordVideo(){
+        try{
+            File file = Environment.getExternalStorageDirectory();
+            String filePath = file.toString() + "/test.yuv";
+            //CameraManager cameraManager = (CameraManager)getSystemService(Context.CAMERA_SERVICE);
+            //String []cameraIdList = cameraManager.getCameraIdList();
+            recordVideo("0", 0, filePath);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    private native void recordVideo(String cameraId, int templateId, String filePath);
+
+    private void onStopRecordVideo(){
+        stopRecordVideo();
+    }
+    private native void stopRecordVideo();
 }

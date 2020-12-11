@@ -6,7 +6,7 @@ android {
 
     defaultConfig {
         applicationId "com.test.testsurface"
-        minSdkVersion 22
+        minSdkVersion 24        //NDK camera2 接口开始24， java接口开始21
         targetSdkVersion 28
         versionCode 1
         versionName "1.0"
@@ -16,6 +16,7 @@ android {
         externalNativeBuild {
             cmake {
                 cppFlags "-std=c++14"
+                arguments "-DANDROID_PLATFORM=android-24"
             }
         }
     }

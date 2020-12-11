@@ -149,7 +149,7 @@ public:
 MyAudioStreamCallback *g_MyAudioStreamCallback = new MyAudioStreamCallback();
 std::shared_ptr<oboe::AudioStream> g_AudioStream;
 
-static void recordAudio(JNIEnv *env, jobject thiz, jint devicdeId, jstring str){
+static void JNICALL recordAudio(JNIEnv *env, jobject thiz, jint devicdeId, jstring str){
     jboolean isCopy = false;
     const char *filePath = env->GetStringUTFChars(str, &isCopy);
     g_file = fopen(filePath, "wb");
@@ -175,7 +175,7 @@ static void recordAudio(JNIEnv *env, jobject thiz, jint devicdeId, jstring str){
     return;
 }
 
-static void stopRecordAudio(JNIEnv *env, jobject thiz){
+static void JNICALL stopRecordAudio(JNIEnv *env, jobject thiz){
     if (g_AudioStream){
         g_AudioStream->stop(0);
         g_AudioStream->close();
@@ -206,7 +206,7 @@ public:
 
 MyOutputAudioStreamCallback *g_MyOutputAudioStreamCallback = new MyOutputAudioStreamCallback();
 std::shared_ptr<oboe::AudioStream> g_outputstream;
-static void playAudio(JNIEnv *env, jobject thiz, jint devideId, jstring str){
+static void JNICALL playAudio(JNIEnv *env, jobject thiz, jint devideId, jstring str){
     jboolean isCopy = false;
     const char *filePath = env->GetStringUTFChars(str, &isCopy);
     g_file = fopen(filePath, "rb");
@@ -231,7 +231,7 @@ static void playAudio(JNIEnv *env, jobject thiz, jint devideId, jstring str){
     assert(result == oboe::Result::OK);
 }
 
-static void stopPlayAudio(JNIEnv *env, jobject thiz){
+static void JNICALL stopPlayAudio(JNIEnv *env, jobject thiz){
     if (g_outputstream){
         g_outputstream->stop(0);
         g_outputstream->close();
@@ -242,12 +242,111 @@ static void stopPlayAudio(JNIEnv *env, jobject thiz){
         g_file = 0;
     }
 }
+ACameraDevice_StateCallbacks g_stateCallbacks;
+ACameraDevice *g_ACameraDevice = 0;
+ACaptureRequest *g_ACaptureRequest = 0;
+ACaptureSessionOutputContainer *g_ACaptureSessionOutputContainer = 0;
+ACameraCaptureSession_stateCallbacks g_ACameraCaptureSession_stateCallbacks;
+void my_ACameraDevice_StateCallback(void* context, ACameraDevice* device){
+
+}
+
+void my_ACameraDevice_ErrorStateCallback(void* context, ACameraDevice* device, int error){
+
+}
+
+void my_ACameraCaptureSession_stateCallback_onReady(void* context, ACameraCaptureSession *session){
+
+}
+
+void my_ACameraCaptureSession_stateCallback_onActive(void* context, ACameraCaptureSession *session){
+
+}
+void my_ACameraCaptureSession_stateCallback_onClosed(void* context, ACameraCaptureSession *session){
+
+}
+
+#include "Camera2.h"
+#include "ImageReaderHelper.h"
+#include "Log.h"
+
+Camera2 *g_Camera2 = 0;
+
+
+class MyImageReaderHelper : public ImageReaderHelper{
+public:
+    MyImageReaderHelper(const char *filePath){
+        file = fopen(filePath, "wb");
+        assert(0 != file);
+    }
+    ~MyImageReaderHelper(){
+        fclose(file);
+    }
+protected:
+    virtual void onImageCallback(int format, int32_t width, int32_t height, ImageData *images, int imageCount)override{
+        fwrite(images[0].data, 1, width * height, file);
+        u.resize(width * height /4);
+        v.resize(width * height / 4);
+        for (int i = 0;i < width * height / 4; i++){
+            u[i] = images[1].data[i * 2];
+        }
+        for (int i = 0;i < width * height / 4; i++){
+            v[i] = images[2].data[i * 2];
+        }
+        fwrite(u.data(), 1, u.size(), file);
+        fwrite(v.data(), 1, v.size(), file);
+    }
+private:
+    FILE *file;
+    std::vector<uint8_t> u, v;
+};
+MyImageReaderHelper *g_ImageReaderHelper = 0;
+static void JNICALL recordVideo(JNIEnv *env, jobject thiz, jstring jstring_cameraId, jint templateId, jstring jstring_save_file_path){
+    jboolean isCopy = 0;
+    const char *cameraId = env->GetStringUTFChars(jstring_cameraId, &isCopy);
+    const char *filePath = env->GetStringUTFChars(jstring_save_file_path, &isCopy);
+
+    //bool isSupport = Camera2::isSupportCamera2();
+    //Log::e("recordVideo %s camera2", isSupport ? "support" : "not support");
+
+    //CameraConfig cameraConfig = Camera2::getCameraConfig();
+
+    //640 480
+    g_Camera2 = new Camera2();
+    g_Camera2->openCamera(cameraId);
+
+    g_ImageReaderHelper = new MyImageReaderHelper(filePath);
+    g_ImageReaderHelper->setSize(640, 480);
+    g_ImageReaderHelper->setFormat(AIMAGE_FORMAT_YUV_420_888);
+    g_ImageReaderHelper->create();
+
+    g_Camera2->addSurface(TEMPLATE_PREVIEW, g_ImageReaderHelper->getNativeWindow());
+    g_Camera2->start();
+
+    env->ReleaseStringUTFChars(jstring_cameraId, cameraId);
+    env->ReleaseStringUTFChars(jstring_save_file_path, filePath);
+}
+
+static void JNICALL startPreview(JNIEnv *env, jobject thiz){
+
+}
+
+static void JNICALL stopRecordVideo(JNIEnv *env, jobject thiz){
+    g_Camera2->closeCamera();
+    delete g_Camera2;
+    g_Camera2 = 0;
+    g_ImageReaderHelper->destroy();
+    delete g_ImageReaderHelper;
+    g_ImageReaderHelper = 0;
+}
 
 JNINativeMethod g_methods[] = {
         {"recordAudio", "(ILjava/lang/String;)V", (void*)&recordAudio},
         {"stopRecordAudio", "()V", (void*)&stopRecordAudio},
         {"playAudio", "(ILjava/lang/String;)V", (void*)&playAudio},
         {"stopPlayAudio", "()V", (void*)&stopPlayAudio},
+        {"recordVideo", "(Ljava/lang/String;ILjava/lang/String;)V", (void*)&recordVideo},
+        {"stopRecordVideo", "()V", (void*)&stopRecordVideo},
 };
 
 JavaVM *g_vm = 0;

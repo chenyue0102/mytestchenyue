@@ -24,6 +24,9 @@ add_library( # Sets the name of the library.
 
              # Provides a relative path to your source file(s).
              native-lib.cpp
+            Camera2.cpp
+            ImageReaderHelper.cpp
+            Log.cpp
             OpenGLHelper.cpp
         )
 
@@ -50,6 +53,7 @@ target_link_libraries( # Specifies the target library.
                        # Links the target library to the log library
                        # included in the NDK.
                         GLESv3
-        #camera2ndk
+        camera2ndk
+        mediandk
         oboe
                        ${log-lib} )
