@@ -11,6 +11,7 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.ImageFormat;
+import android.hardware.Camera;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
@@ -54,6 +55,7 @@ import java.security.PublicKey;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 import java.util.PrimitiveIterator;
 
 public class MainActivity extends AppCompatActivity {
@@ -100,6 +102,7 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.btn_stop_play_audio).setOnClickListener(v->onStopPlayAudio());
         findViewById(R.id.btn_record_video).setOnClickListener(v->onRecordVideo());
         findViewById(R.id.btn_stop_record_video).setOnClickListener(v->onStopRecordVideo());
+        findViewById(R.id.btn_open_camera1).setOnClickListener(v->openCamear1());
 
         //if (requestCamera(Manifest.permission.CAMERA, PERMISSION_REQUEST_CODE_CAMERA)) {
 //            if (!isCamera2Device()) {
@@ -569,4 +572,12 @@ public class MainActivity extends AppCompatActivity {
         stopRecordVideo();
     }
     private native void stopRecordVideo();
+
+    private Camera mCamear;
+    private void openCamear1(){
+        mCamear = Camera.open(Camera.CameraInfo.CAMERA_FACING_BACK);
+        Camera.Parameters parameters = mCamear.getParameters();
+        parameters.setPreviewFormat(ImageFormat.NV21);
+        List<Camera.Size> sizes = parameters.getSupportedVideoSizes();
+    }
 }

@@ -78,6 +78,21 @@
                 android:text="stop record"
                 android:id="@+id/btn_stop_record_video"/>
         </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="open"
+                android:id="@+id/btn_open_camera1"/>
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="close"
+                android:id="@+id/btn_close_camera1"/>
+        </LinearLayout>
         <com.test.testsurface.MySurfaceView
             android:id="@+id/surfaceView"
             android:layout_width="match_parent"
