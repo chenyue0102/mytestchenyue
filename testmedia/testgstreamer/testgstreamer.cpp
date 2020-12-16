@@ -93,9 +93,7 @@ gboolean handle_keyboard(GIOChannel *source, GIOCondition cond, CustomData *data
 	g_free(str);
 }
 
-int main()
-{
- 	gst_init(NULL, NULL);
+int test() {
 	GstElementFactory *source_factory = gst_element_factory_find("uridecodebin");
 	GstElement *source = gst_element_factory_create(source_factory, "source");
 
@@ -108,7 +106,7 @@ int main()
 	GstElement *filter_audio = gst_element_factory_make("audioconvert", "convert");
 	GstElement *filter_resample = gst_element_factory_make("audioresample", "resample");
 	GstElement *sink_audio = gst_element_factory_make("autoaudiosink", "sink_audio");
-	
+
 	GstElement *queue_audio_display = gst_element_factory_make("queue", NULL);
 	GstElement *filter_audio2 = gst_element_factory_make("audioconvert", NULL);
 	GstElement *wav_scope = gst_element_factory_make("wavescope", NULL);
@@ -122,9 +120,9 @@ int main()
 	GstElement *pipeline = gst_pipeline_new("test-pipeline");
 	g_print("test\n");
 
-	gst_bin_add_many(GST_BIN(pipeline), 
-		source, 
-		filter, sink, 
+	gst_bin_add_many(GST_BIN(pipeline),
+		source,
+		filter, sink,
 		tee,
 		queue_audio, filter_audio, filter_resample, sink_audio,
 		queue_audio_display, filter_audio2, wav_scope, videoconvert, audio_display_sink,
@@ -242,7 +240,8 @@ int main()
 				break;
 			}
 			gst_message_unref(msg);
-		}else{
+		}
+		else {
 			if (!gst_element_query_position(source, GST_FORMAT_TIME, &current)) {
 				assert(false);
 			}
@@ -265,5 +264,239 @@ int main()
 	gst_element_set_state(pipeline, GST_STATE_NULL);
 	gst_object_unref(pipeline);
 	gst_object_unref(source_factory);
+}
+
+#include <gst/audio/audio.h>
+typedef struct _CustomData2 {
+	GstElement *appsrc;
+	guint sourceid;
+	guint64 num_samples = 0;
+	gfloat a=0, b=1, c=0, d=1;     /* For waveform generation */
+}CustomData2;
+gboolean push_data(CustomData2 *data) {
+	const int BUFFER_BYTE_LENGTH = 1024;
+	const int NUM_SAMPLES = BUFFER_BYTE_LENGTH / 2;
+	GstBuffer *buffer = gst_buffer_new_and_alloc(BUFFER_BYTE_LENGTH);
+	GST_BUFFER_TIMESTAMP(buffer) = gst_util_uint64_scale(data->num_samples, GST_SECOND, 44100);
+	GST_BUFFER_DURATION(buffer) = gst_util_uint64_scale(NUM_SAMPLES, GST_SECOND, 44100);
+
+	GstMapInfo info;
+	gboolean ret = gst_buffer_map(buffer, &info, GST_MAP_WRITE); assert(ret);
+	gint16 *raw = (gint16*)info.data;
+	data->c += data->d;
+	data->d -= data->c / 1000;
+	gfloat freq = 1100 + 1000 * data->d;
+	for (int i = 0; i < NUM_SAMPLES; i++) {
+		data->a += data->b;
+		data->b -= data->a / freq;
+		raw[i] = (gint16)(500 * data->a);
+	}
+	gst_buffer_unmap(buffer, &info);
+	data->num_samples += NUM_SAMPLES;
+
+	GstFlowReturn gstret;
+	g_signal_emit_by_name(data->appsrc, "push-buffer", buffer, &gstret);
+	gst_buffer_unref(buffer);
+	return gstret == GST_FLOW_OK;
+}
+void need_data(GstElement* object, guint size, CustomData2 *data) {
+	if (data->sourceid == 0) {
+		data->sourceid = g_idle_add((GSourceFunc)&push_data, data);
+	}
+}
+
+void enough_data(GstElement* object, CustomData2 *data) {
+	if (data->sourceid != 0) {
+		g_source_remove(data->sourceid);
+		data->sourceid = 0;
+	}
+}
+
+GstFlowReturn new_sample(GstElement* object, CustomData2 *data) {
+	//收到sample
+	GstSample *sample = 0;
+	g_signal_emit_by_name(object, "pull-sample", &sample);
+	if (sample) {
+		g_print("*");
+		GstBuffer *buffer = gst_sample_get_buffer(sample);
+		GstSegment *segment = gst_sample_get_segment(sample);
+		const GstStructure *structure = gst_sample_get_info(sample);
+		GstMapInfo info;
+		gboolean b = gst_buffer_map(buffer, &info, GST_MAP_READ); assert(b);
+		gst_buffer_unmap(buffer, &info);
+		gst_sample_unref(sample);
+		return GST_FLOW_OK;
+	}
+	else {
+		return GST_FLOW_ERROR;
+	}
+}
+
+static void cb_message(GstBus *bus, GstMessage *msg, CustomData *data) {
+	switch (GST_MESSAGE_TYPE(msg)) {
+	case GST_MESSAGE_ERROR:
+		g_print("GST_MESSAGE_ERROR \n");
+		break;
+	case GST_MESSAGE_EOS:
+		g_print("GST_MESSAGE_EOS \n");
+		break;
+	case GST_MESSAGE_BUFFERING:
+		g_print("GST_MESSAGE_BUFFERING \n");
+		break;
+	case GST_MESSAGE_CLOCK_LOST:
+		g_print("GST_MESSAGE_CLOCK_LOST \n");
+		break;
+	default:
+		//g_print("GST_MESSAGE %d \n", GST_MESSAGE_TYPE(msg));
+		break;
+	}
+}
+
+void test2() {
+	/*
+		apppsrc->tee->queue->audioconvert->audioresample->autoaudiosink
+		            ->queue->audioconvert->wavescope->videoconvert->autovideosink
+					->queue->appsink
+	*/
+	GstElement *appsrc = gst_element_factory_make("appsrc", 0);
+	GstElement *tee = gst_element_factory_make("tee", 0);
+
+	GstElement *queue1 = gst_element_factory_make("queue", 0);
+	GstElement *audioconvert = gst_element_factory_make("audioconvert", 0);
+	GstElement *audioresample = gst_element_factory_make("audioresample", 0);
+	GstElement *autoaudiosink = gst_element_factory_make("autoaudiosink", 0);
+
+	GstElement *queue2 = gst_element_factory_make("queue", 0);
+	GstElement *audioconvert2 = gst_element_factory_make("audioconvert", 0);
+	GstElement *wavescope = gst_element_factory_make("wavescope", 0);
+	GstElement *videoconvert = gst_element_factory_make("videoconvert", 0);
+	GstElement *autovideosink = gst_element_factory_make("autovideosink", 0);
+
+	GstElement *queue3 = gst_element_factory_make("queue", 0);
+	GstElement *appsink = gst_element_factory_make("appsink", 0);
+
+	GstElement *pipeline = gst_pipeline_new("test-pipeline");
+
+	CustomData2 data;
+	data.appsrc = appsrc;
+	data.sourceid = 0;
+
+	GstAudioInfo info;
+	gst_audio_info_set_format(&info, GST_AUDIO_FORMAT_S16, 44100, 2, NULL);
+	GstCaps *audio_caps = gst_audio_info_to_caps(&info);
+	g_object_set(appsrc, "caps", audio_caps, "format", GST_FORMAT_TIME, NULL);
+	g_signal_connect(appsrc, "need-data", G_CALLBACK(&need_data), &data);
+	g_signal_connect(appsrc, "enough-data", G_CALLBACK(&enough_data), &data);
+
+	g_object_set(appsink, "emit-signals", TRUE, "caps", audio_caps, NULL);
+	g_signal_connect(appsink, "new-sample", G_CALLBACK(&new_sample), &data);
+	gst_caps_unref(audio_caps);
+
+	gst_bin_add_many(GST_BIN(pipeline), appsrc, tee,
+		queue1, audioconvert, audioresample, autoaudiosink,
+		queue2, audioconvert2, wavescope, videoconvert, autovideosink,
+		queue3, appsink, NULL);
+	gboolean ret = gst_element_link_many(appsrc, tee, NULL); assert(ret);
+	ret = gst_element_link_many(queue1, audioconvert, audioresample, autoaudiosink, NULL); assert(ret);
+	ret = gst_element_link_many(queue2, audioconvert2, wavescope, videoconvert, autovideosink, NULL); assert(ret);
+	ret = gst_element_link_many(queue3, appsink, NULL); assert(ret);
+
+	GstPad *tee_audio_pad = gst_element_get_request_pad(tee, "src_%u");
+	GstPad *queue_audio_pad = gst_element_get_static_pad(queue1, "sink");
+	GstPadLinkReturn pad_return = gst_pad_link(tee_audio_pad, queue_audio_pad); assert(pad_return == GST_PAD_LINK_OK);
+
+	GstPad *tee_audio_pad2 = gst_element_get_request_pad(tee, "src_%u");
+	GstPad *queue_audio_pad2 = gst_element_get_static_pad(queue2, "sink");
+	pad_return = gst_pad_link(tee_audio_pad2, queue_audio_pad2); assert(pad_return == GST_PAD_LINK_OK);
+
+	GstPad *tee_audio_pad3 = gst_element_get_request_pad(tee, "src_%u");
+	GstPad *queue_audio_pad3 = gst_element_get_static_pad(queue3, "sink");
+	pad_return = gst_pad_link(tee_audio_pad3, queue_audio_pad3); assert(pad_return == GST_PAD_LINK_OK);
+	gst_object_unref(queue_audio_pad); gst_object_unref(queue_audio_pad2); gst_object_unref(queue_audio_pad3);
+
+	gst_element_set_state(pipeline, GST_STATE_PLAYING);
+
+	GstBus *bus = gst_element_get_bus(pipeline);
+	gst_bus_add_signal_watch(bus);
+	g_signal_connect(bus, "message", G_CALLBACK(&cb_message), &data);
+
+	GMainLoop *loop = g_main_loop_new(NULL, FALSE);
+	g_main_loop_run(loop);
+
+	gst_element_release_request_pad(tee, tee_audio_pad);
+	gst_element_release_request_pad(tee, tee_audio_pad2);
+	gst_element_release_request_pad(tee, tee_audio_pad3);
+	gst_object_unref(tee_audio_pad);
+	gst_object_unref(tee_audio_pad2);
+	gst_object_unref(tee_audio_pad3);
+
+	gst_element_set_state(pipeline, GST_STATE_NULL);
+	gst_object_unref(pipeline);
+}
+struct CustomData3 {
+	GstElement *pipeline;
+	GMainLoop *loop;
+};
+static void cb_message3(GstBus *bus, GstMessage *msg, CustomData3 *data) {
+	switch (GST_MESSAGE_TYPE(msg)) {
+	case GST_MESSAGE_ERROR:
+		g_print("GST_MESSAGE_ERROR \n");
+		gst_element_set_state(data->pipeline, GST_STATE_READY);
+		g_main_loop_quit(data->loop);
+		break;
+	case GST_MESSAGE_EOS:
+		g_print("GST_MESSAGE_EOS \n");
+		gst_element_set_state(data->pipeline, GST_STATE_READY);
+		g_main_loop_quit(data->loop);
+		break;
+	case GST_MESSAGE_BUFFERING:{
+		g_print("GST_MESSAGE_BUFFERING \n");
+		gint percent = 0;
+		gst_message_parse_buffering(msg, &percent);
+		if (percent < 100) {
+			gst_element_set_state(data->pipeline, GST_STATE_PAUSED);
+		}
+		else {
+			gst_element_set_state(data->pipeline, GST_STATE_PLAYING);
+		}
+	}break;
+	case GST_MESSAGE_CLOCK_LOST:
+		g_print("GST_MESSAGE_CLOCK_LOST \n");
+		gst_element_set_state(data->pipeline, GST_STATE_PAUSED);
+		gst_element_set_state(data->pipeline, GST_STATE_PLAYING);
+		break;
+	default:
+		//g_print("GST_MESSAGE %d \n", GST_MESSAGE_TYPE(msg));
+		break;
+	}
+}
+void test3() {
+	GstElement *pipeline = gst_parse_launch("playbin uri=https://www.freedesktop.org/software/gstreamer-sdk/data/media/sintel_trailer-480p.webm", NULL);
+	GstBus *bus = gst_element_get_bus(pipeline);
+	GstStateChangeReturn ret = gst_element_set_state(pipeline, GST_STATE_PLAYING); 
+	bool islive = ret == GST_STATE_CHANGE_NO_PREROLL;
+
+	GMainLoop *loop = g_main_loop_new(NULL, FALSE);
+	CustomData3 data;
+	data.pipeline = pipeline;
+	data.loop = loop;
+	
+	gst_bus_add_signal_watch(bus);
+	g_signal_connect(bus, "message", G_CALLBACK(&cb_message3), &data);
+	g_main_loop_run(loop);
+
+	g_main_loop_unref(loop);
+	gst_object_unref(bus);
+	gst_element_set_state(pipeline, GST_STATE_NULL);
+	gst_object_unref(pipeline);
+}
+
+int main()
+{
+ 	gst_init(NULL, NULL);
+	//test();
+	//test2();
+	test3();
+	gst_deinit();
 	return 0;
 }
