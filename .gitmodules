@@ -2,3 +2,6 @@
 [submodule "android/testsurface/app/src/main/cpp/oboe"]
 	path = android/testsurface/app/src/main/cpp/oboe
 	url = https://github.com/google/oboe.git
+[submodule "gstreamer/gst-template"]
+	path = gstreamer/gst-template
+	url = https://gitlab.freedesktop.org/gstreamer/gst-template
