@@ -5,3 +5,6 @@
 [submodule "gstreamer/gst-template"]
 	path = gstreamer/gst-template
 	url = https://gitlab.freedesktop.org/gstreamer/gst-template
+[submodule "gstreamer/gstreamer-gst-template"]
+	path = gstreamer/gstreamer-gst-template
+	url = https://github.com/freedesktop/gstreamer-gst-template.git
