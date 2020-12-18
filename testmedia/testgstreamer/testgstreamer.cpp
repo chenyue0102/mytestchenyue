@@ -471,7 +471,11 @@ static void cb_message3(GstBus *bus, GstMessage *msg, CustomData3 *data) {
 	}
 }
 void test3() {
-	GstElement *pipeline = gst_parse_launch("playbin uri=https://www.freedesktop.org/software/gstreamer-sdk/data/media/sintel_trailer-480p.webm", NULL);
+	GstElement *pipeline = gst_parse_launch("uridecodebin uri=file:///d:/test.mp3  name=decodebin ! audioconvert name=covert  ! audioresample  ! autoaudiosink", NULL);
+	//GstElement *pipeline = gst_parse_launch("playbin name=abcd uri=https://www.freedesktop.org/software/gstreamer-sdk/data/media/sintel_trailer-480p.webm", NULL);
+	GstElement *element = gst_bin_get_by_name(GST_BIN(pipeline), "decodebin");
+	gst_object_unref(element);
+
 	GstBus *bus = gst_element_get_bus(pipeline);
 	GstStateChangeReturn ret = gst_element_set_state(pipeline, GST_STATE_PLAYING); 
 	bool islive = ret == GST_STATE_CHANGE_NO_PREROLL;
