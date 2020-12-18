@@ -4,6 +4,7 @@
 #include <iostream>
 #include <assert.h>
 #include "gst/gst.h"
+#include"gst/video/videooverlay.h"
 typedef struct _CustomData {
 	GstElement *pipeline;
 	GstElement *source;
@@ -471,9 +472,12 @@ static void cb_message3(GstBus *bus, GstMessage *msg, CustomData3 *data) {
 	}
 }
 void test3() {
-	GstElement *pipeline = gst_parse_launch("uridecodebin uri=file:///d:/test.mp3  name=decodebin ! audioconvert name=covert  ! audioresample  ! autoaudiosink", NULL);
+	GstElement *pipeline = gst_parse_launch("uridecodebin uri=file:///d:/v1080.mp4 name=demux ! queue !glimagesink name=videosink demux. !queue !audioconvert !audioresample !autoaudiosink name=audiosink", NULL);
 	//GstElement *pipeline = gst_parse_launch("playbin name=abcd uri=https://www.freedesktop.org/software/gstreamer-sdk/data/media/sintel_trailer-480p.webm", NULL);
-	GstElement *element = gst_bin_get_by_name(GST_BIN(pipeline), "decodebin");
+	GstElement *element = gst_bin_get_by_name(GST_BIN(pipeline), "videosink");
+	auto f = GST_IS_VIDEO_OVERLAY(element);
+	GstVideoOverlay*overlay= GST_VIDEO_OVERLAY(element);
+	auto fe = GST_IS_VIDEO_OVERLAY(overlay);
 	gst_object_unref(element);
 
 	GstBus *bus = gst_element_get_bus(pipeline);
