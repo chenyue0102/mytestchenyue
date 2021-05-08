@@ -6,6 +6,7 @@ import android.view.View;
 public class MouseMoveListener implements View.OnTouchListener{
     public interface IMouseMoveCallback{
         void onMouseMove(int offsetx, int offsety);
+        void onMouseMoveStop();
     }
 
 
@@ -20,31 +21,32 @@ public class MouseMoveListener implements View.OnTouchListener{
 
     @Override
     public boolean onTouch(View v, MotionEvent event) {
-        switch (event.getAction()){
-            case MotionEvent.ACTION_MOVE:
-                int actionIndex = event.getActionIndex();
-                float x = event.getX(actionIndex);
-                float y = event.getY(actionIndex);
-                int dx = Math.round(x);
-                int dy = Math.round(y);
-                if (mMoving){
-                    int diffx = dx - mLastX;
-                    int diffy = dy - mLastY;
-                    if (null != mIMouseMoveCallback){
+        if (null != mIMouseMoveCallback){
+            switch (event.getAction()){
+                case MotionEvent.ACTION_MOVE:
+                    int actionIndex = event.getActionIndex();
+                    float x = event.getX(actionIndex);
+                    float y = event.getY(actionIndex);
+                    int dx = Math.round(x);
+                    int dy = Math.round(y);
+                    if (mMoving){
+                        int diffx = dx - mLastX;
+                        int diffy = dy - mLastY;
                         mIMouseMoveCallback.onMouseMove(diffx, diffy);
+                    }else{
+                        mMoving = true;
                     }
-                }else{
-                    mMoving = true;
-                }
-                mLastX = dx;
-                mLastY = dy;
-                break;
-            case MotionEvent.ACTION_UP://最后一个手指抬起
-                mMoving = false;
-                mLastX = mLastY = 0;
-                break;
-            default:
-                break;
+                    mLastX = dx;
+                    mLastY = dy;
+                    break;
+                case MotionEvent.ACTION_UP://最后一个手指抬起
+                    mMoving = false;
+                    mLastX = mLastY = 0;
+                    mIMouseMoveCallback.onMouseMoveStop();
+                    break;
+                default:
+                    break;
+            }
         }
         return true;
     }

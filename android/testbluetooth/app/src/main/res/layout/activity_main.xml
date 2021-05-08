@@ -17,45 +17,197 @@
             android:layout_height="wrap_content"
             android:text="test"
             android:id="@+id/btn_test"/>
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="mouse"
+            android:id="@+id/btn_mouse"/>
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="keyboard"
+            android:id="@+id/btn_keyboard"/>
     </LinearLayout>
 
-    <TextView
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:id="@+id/view_mouse_move"
-        android:text="touch"
-        android:gravity="center"
+        android:orientation="vertical"
+        android:id="@+id/container_mouse"
         app:layout_constraintTop_toBottomOf="@id/container_top"
-        app:layout_constraintBottom_toTopOf="@id/container_bottom"
-        />
-    <LinearLayout
-        android:id="@+id/container_bottom"
-        android:layout_width="match_parent"
-        android:layout_height="150dp"
-        android:orientation="horizontal"
         app:layout_constraintBottom_toBottomOf="parent"
-        android:background="#9f9f9f">
-        <TextView
-            android:layout_width="100dp"
-            android:layout_height="match_parent"
-            android:text="left button"
-            android:gravity="center"
-            android:background="@drawable/border"
-            android:id="@+id/textview_left_button"/>
-        <TextView
-            android:layout_width="100dp"
-            android:layout_height="match_parent"
-            android:text="right button"
-            android:gravity="center"
-            android:background="@drawable/border"
-            android:id="@+id/textview_right_button"/>
+        android:visibility="gone"
+        >
         <TextView
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:text="Scroll"
+            android:layout_height="0dp"
+            android:id="@+id/view_mouse_move"
+            android:text="touch"
             android:gravity="center"
-            android:background="@drawable/border"
-            android:id="@+id/textview_scroll"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toTopOf="@id/container_bottom"
             />
+        <LinearLayout
+            android:id="@+id/container_bottom"
+            android:layout_width="match_parent"
+            android:layout_height="150dp"
+            app:layout_constraintTop_toBottomOf="@id/view_mouse_move"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:orientation="horizontal"
+            android:background="#9f9f9f">
+            <TextView
+                android:layout_width="100dp"
+                android:layout_height="match_parent"
+                android:text="left button"
+                android:gravity="center"
+                android:background="@drawable/border"
+                android:id="@+id/textview_left_button"/>
+            <TextView
+                android:layout_width="100dp"
+                android:layout_height="match_parent"
+                android:text="right button"
+                android:gravity="center"
+                android:background="@drawable/border"
+                android:id="@+id/textview_right_button"/>
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:text="Scroll"
+                android:gravity="center"
+                android:background="@drawable/border"
+                android:id="@+id/textview_scroll"
+                />
+        </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <LinearLayout
+        android:id="@+id/container_keyboard"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/container_top"
+        app:layout_constraintVertical_bias="1.0"
+        tools:layout_editor_absoluteX="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <com.test.myapplication.KeyboardView
+                android:id="@+id/tv_a"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:gravity="center"
+                android:text="A"
+                android:keycode="KEYCODE_A"
+                android:background="@drawable/border"
+                />
+
+            <com.test.myapplication.KeyboardView
+                android:id="@+id/tv_b"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:gravity="center"
+                android:background="@drawable/border"
+                android:keycode="KEYCODE_B"
+                android:text="B" />
+
+            <com.test.myapplication.KeyboardView
+                android:id="@+id/tv_1"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:gravity="center"
+                android:background="@drawable/border"
+                android:keycode="KEYCODE_1"
+                android:text="1" />
+            <com.test.myapplication.KeyboardView
+                android:id="@+id/tv_space"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:gravity="center"
+                android:background="@drawable/border"
+                android:keycode="KEYCODE_SPACE"
+                android:text="space" />
+            <com.test.myapplication.KeyboardView
+                android:id="@+id/tv_back"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:gravity="center"
+                android:background="@drawable/border"
+                android:keycode="KEYCODE_DEL"
+                android:text="del" />
+            <com.test.myapplication.KeyboardView
+                android:id="@+id/tv_dpadleft"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:gravity="center"
+                android:background="@drawable/border"
+                android:keycode="KEYCODE_DPAD_LEFT"
+                android:text="dpadleft" />
+            <com.test.myapplication.KeyboardView
+                android:id="@+id/tv_dpadright"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:gravity="center"
+                android:background="@drawable/border"
+                android:keycode="KEYCODE_DPAD_RIGHT"
+                android:text="dpadright" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <com.test.myapplication.KeyboardView
+                android:id="@+id/tv_left_ctrl"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:gravity="center"
+                android:background="@drawable/border"
+                android:text="lctrl"
+                android:keycode="KEYCODE_CTRL_LEFT"
+                />
+
+            <com.test.myapplication.KeyboardView
+                android:id="@+id/tv_left_shift"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:gravity="center"
+                android:background="@drawable/border"
+                android:text="lshift"
+                android:keycode="KEYCODE_SHIFT_LEFT"
+                />
+
+            <com.test.myapplication.KeyboardView
+                android:id="@+id/tv_left_alt"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:gravity="center"
+                android:background="@drawable/border"
+                android:keycode="KEYCODE_ALT_LEFT"
+                android:text="lalt" />
+
+            <com.test.myapplication.KeyboardView
+                android:id="@+id/tv_caps"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:gravity="center"
+                android:background="@drawable/border"
+                android:visibility="gone"
+                android:text="Caps Lock" />
+
+            <com.test.myapplication.KeyboardView
+                android:id="@+id/tv_enter"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:gravity="center"
+                android:background="@drawable/border"
+                android:keycode="KEYCODE_ENTER"
+                android:text="enter" />
+        </LinearLayout>
     </LinearLayout>
+
 </androidx.constraintlayout.widget.ConstraintLayout>

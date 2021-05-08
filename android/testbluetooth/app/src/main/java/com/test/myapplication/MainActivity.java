@@ -11,8 +11,12 @@ import android.bluetooth.BluetoothHidDeviceAppSdpSettings;
 import android.bluetooth.BluetoothProfile;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
@@ -21,8 +25,10 @@ import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadPoolExecutor;
 
-public class MainActivity extends AppCompatActivity implements BluetoothProfile.ServiceListener, MouseMoveListener.IMouseMoveCallback{
+public class MainActivity extends AppCompatActivity implements BluetoothProfile.ServiceListener{
     private static final String TAG = "tag";
+    private View mViewMouse;
+    private View mViewKeyboard;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,8 +39,40 @@ public class MainActivity extends AppCompatActivity implements BluetoothProfile.
                 Manifest.permission.WAKE_LOCK, Manifest.permission.FOREGROUND_SERVICE}, 0);
 
         findViewById(R.id.btn_test).setOnClickListener(v->onTest());
+        findViewById(R.id.btn_mouse).setOnClickListener(v->showPage(0));
+        findViewById(R.id.btn_keyboard).setOnClickListener(v->showPage(1));
+        LinearLayout contarinerKeyboard = findViewById(R.id.container_keyboard);
+        int count = contarinerKeyboard.getChildCount();
+        for (int i = 0;i < count; i++){
+            ViewGroup viewGroup = (ViewGroup)contarinerKeyboard.getChildAt(i);
+            setKeyboardTouchListener(viewGroup);
+        }
+        mViewMouse = findViewById(R.id.container_mouse);
+        mViewKeyboard = findViewById(R.id.container_keyboard);
         View viewMouseMove = findViewById(R.id.view_mouse_move);
-        MouseMoveListener mouseMoveListener = new MouseMoveListener(this);
+
+        //mouse move
+        MouseMoveListener.IMouseMoveCallback moveCallback = new MouseMoveListener.IMouseMoveCallback(){
+            @Override
+            public void onMouseMove(int offsetx, int offsety) {
+                mScrollableTrackpadMouseReport.dxMsb =  getHighByte((short) offsetx);
+                mScrollableTrackpadMouseReport.dxLsb =  getLowByte((short) offsetx);
+
+                mScrollableTrackpadMouseReport.dyMsb =  getHighByte((short) offsety);
+                mScrollableTrackpadMouseReport.dyLsb =  getLowByte((short) offsety);
+                sendMouseEvent();
+            }
+
+            @Override
+            public void onMouseMoveStop() {
+                mScrollableTrackpadMouseReport.dxMsb =  0;
+                mScrollableTrackpadMouseReport.dxLsb =  0;
+
+                mScrollableTrackpadMouseReport.dyMsb =  0;
+                mScrollableTrackpadMouseReport.dyLsb =  0;
+            }
+        };
+        MouseMoveListener mouseMoveListener = new MouseMoveListener(moveCallback);
         viewMouseMove.setOnTouchListener(new View.OnTouchListener(){
             @Override
             public boolean onTouch(View v, MotionEvent event) {
@@ -42,6 +80,7 @@ public class MainActivity extends AppCompatActivity implements BluetoothProfile.
             }
         });
 
+        //left button
         MouseClickListener.IMouseClickCallback leftMouseClick = new MouseClickListener.IMouseClickCallback(){
             @Override
             public void onMouseDown() {
@@ -64,6 +103,7 @@ public class MainActivity extends AppCompatActivity implements BluetoothProfile.
         View viewLeftMouse = findViewById(R.id.textview_left_button);
         viewLeftMouse.setOnTouchListener(leftMouseClickListener);
 
+        //right button
         MouseClickListener.IMouseClickCallback rightMouseClick = new MouseClickListener.IMouseClickCallback(){
             @Override
             public void onMouseDown() {
@@ -85,6 +125,27 @@ public class MainActivity extends AppCompatActivity implements BluetoothProfile.
         MouseClickListener rightMouseClickListener = new MouseClickListener(rightMouseClick);
         View viewRightMouse = findViewById(R.id.textview_right_button);
         viewRightMouse.setOnTouchListener(rightMouseClickListener);
+
+        //scroll
+        MouseMoveListener.IMouseMoveCallback scrollCallback = new MouseMoveListener.IMouseMoveCallback(){
+            @Override
+            public void onMouseMove(int offsetx, int offsety) {
+                mScrollableTrackpadMouseReport.hScroll = (byte)offsetx;
+                mScrollableTrackpadMouseReport.vScroll = (byte)offsety;
+                sendMouseEvent();
+            }
+
+            @Override
+            public void onMouseMoveStop() {
+                mScrollableTrackpadMouseReport.hScroll = 0;
+                mScrollableTrackpadMouseReport.vScroll = 0;
+            }
+        };
+        MouseMoveListener scrollMoveListener = new MouseMoveListener(scrollCallback);
+        View viewScroll = findViewById(R.id.textview_scroll);
+        viewScroll.setOnTouchListener((v, event) -> scrollMoveListener.onTouch(v, event));
+
+        showPage(0);
     }
 
     BluetoothAdapter mBluetoothAdapter = null;
@@ -115,19 +176,15 @@ public class MainActivity extends AppCompatActivity implements BluetoothProfile.
         return (byte)(n & 0x00FF);
     }
 
-    @Override
-    public void onMouseMove(int offsetx, int offsety) {
-        mScrollableTrackpadMouseReport.dxMsb =  getHighByte((short) offsetx);
-        mScrollableTrackpadMouseReport.dxLsb =  getLowByte((short) offsetx);
-
-        mScrollableTrackpadMouseReport.dyMsb =  getHighByte((short) offsety);
-        mScrollableTrackpadMouseReport.dyLsb =  getLowByte((short) offsety);
-        sendMouseEvent();
-    }
-
     void sendMouseEvent(){
         if (null != mBluetoothHidDevice && null != mOtherDevice){
             mBluetoothHidDevice.sendReport(mOtherDevice, ScrollableTrackpadMouseReport.ID, mScrollableTrackpadMouseReport.packByte());
+            Log.e(TAG, "sendMouseEvent leftButton:" + mScrollableTrackpadMouseReport.leftButton
+                    + " rightButton:" + mScrollableTrackpadMouseReport.rightButton
+                    + " lx:" + mScrollableTrackpadMouseReport.dxLsb + " hx:" + mScrollableTrackpadMouseReport.dxMsb
+                    + " ly:" + mScrollableTrackpadMouseReport.dyLsb + " hy:" + mScrollableTrackpadMouseReport.dyMsb
+                    + " hs" + mScrollableTrackpadMouseReport.hScroll + " vs:" + mScrollableTrackpadMouseReport.vScroll
+            );
         }
     }
 
@@ -137,6 +194,101 @@ public class MainActivity extends AppCompatActivity implements BluetoothProfile.
         //int profile = BluetoothProfile.HEADSET;
         boolean result = mBluetoothAdapter.getProfileProxy(this, this, profile);
         Log.e(TAG, "onTest :" + result);
+    }
+
+    KeyboardReport mKeyboardReport = new KeyboardReport();
+
+    private static final int []attrs = {android.R.attr.keycode};
+    private void setKeyboardTouchListener(ViewGroup viewGroup){
+        int count = viewGroup.getChildCount();
+        for (int i = 0; i < count; i++){
+            KeyboardView view = (KeyboardView)viewGroup.getChildAt(i);
+            final int keycode = view.getKeyCode();
+            view.setOnTouchListener(new View.OnTouchListener() {
+                @Override
+                public boolean onTouch(View v, MotionEvent event) {
+                    switch (event.getAction()){
+                        case MotionEvent.ACTION_DOWN:
+                            if (KeyboardReport.isCtrlKey(keycode)){
+                                mKeyboardReport.setCtrlKey(keycode, true);
+                                sendKeyboardEvent();
+                            }else{
+                                mKeyboardReport.key1 = keycode;
+                                sendKeyboardEvent();
+                            }
+                            break;
+                        case MotionEvent.ACTION_UP:
+                            if (KeyboardReport.isCtrlKey(keycode)){
+                                mKeyboardReport.setCtrlKey(keycode, false);
+                                sendKeyboardEvent();
+                            }else{
+                                mKeyboardReport.reset();
+                                sendKeyboardEvent();//send null
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+                    return true;
+                }
+            });
+        }
+    }
+
+    void sendKeyboardEvent(){
+        if (null != mBluetoothHidDevice && null != mOtherDevice){
+            mBluetoothHidDevice.sendReport(mOtherDevice, KeyboardReport.ID, mKeyboardReport.packByte());
+            Log.e(TAG, "sendKeyboardEvent leftControl:" + mKeyboardReport.leftControl
+                    + " leftShift:" + mKeyboardReport.leftShift
+                    + " leftAlt:" + mKeyboardReport.leftAlt
+                    + " leftGui:" + mKeyboardReport.leftGui
+                    + " rightControl:" + mKeyboardReport.rightControl
+                    + " rightShift:" + mKeyboardReport.rightShift
+                    + " rightAlt:" + mKeyboardReport.rightAlt
+                    + " rightGui:" + mKeyboardReport.rightGui
+                    + " key1:" + mKeyboardReport.key1
+            );
+        }
+    }
+
+    int getShift(int keyCode){
+        int shift = 0;
+        switch (keyCode){
+            case KeyEvent.KEYCODE_CTRL_LEFT:
+                shift = 0;
+                break;
+            case KeyEvent.KEYCODE_SHIFT_LEFT:
+                shift = 1;
+                break;
+            case KeyEvent.KEYCODE_ALT_LEFT:
+                shift = 2;
+                break;
+            case KeyEvent.KEYCODE_WINDOW:
+                shift = 3;
+                break;
+            case KeyEvent.KEYCODE_CTRL_RIGHT:
+                shift = 4;
+                break;
+            case KeyEvent.KEYCODE_SHIFT_RIGHT:
+                shift = 5;
+                break;
+            case KeyEvent.KEYCODE_ALT_RIGHT:
+                shift = 6;
+                break;
+            case KeyEvent.KEYCODE_MENU:
+                shift = 7;
+                break;
+            default:
+                break;
+        }
+        return shift;
+    }
+
+
+
+    private void showPage(int page){
+        mViewMouse.setVisibility(0 == page ? View.VISIBLE : View.GONE);
+        mViewKeyboard.setVisibility(0 == page ? View.GONE : View.VISIBLE);
     }
 
     @Override
@@ -167,17 +319,23 @@ public class MainActivity extends AppCompatActivity implements BluetoothProfile.
                         List<BluetoothDevice> pairedDevices = mBluetoothHidDevice.getDevicesMatchingConnectionStates(new int []{BluetoothProfile.STATE_CONNECTING,BluetoothProfile.STATE_CONNECTED,BluetoothProfile.STATE_DISCONNECTED,BluetoothProfile.STATE_DISCONNECTING});
                         mOtherDevice = pluggedDevice;
 
-                        if (null != mOtherDevice && mBluetoothHidDevice.getConnectionState(mOtherDevice) == BluetoothProfile.STATE_DISCONNECTED){
+                        if (false&&null != mOtherDevice && mBluetoothHidDevice.getConnectionState(mOtherDevice) == BluetoothProfile.STATE_DISCONNECTED){
                             mBluetoothHidDevice.connect(mOtherDevice);
+                            Log.e(TAG, "connect:" + mOtherDevice.getName());
                         }else{
                             Set<BluetoothDevice> bluetoothDeviceSet = mBluetoothAdapter.getBondedDevices();
                             if (!bluetoothDeviceSet.isEmpty()){
-                                BluetoothDevice bluetoothDevice = bluetoothDeviceSet.iterator().next();
-                                int status = mBluetoothHidDevice.getConnectionState(bluetoothDevice);
-                                Log.e(TAG, "status:" + status);
-                                if (BluetoothProfile.STATE_DISCONNECTED == status){
-                                    if (!mBluetoothHidDevice.connect(bluetoothDevice)){
-                                        Log.e(TAG, "connect false");
+                                for (BluetoothDevice bluetoothDevice : bluetoothDeviceSet){
+                                    if ("chenyue".equals(bluetoothDevice.getName())){
+                                        int status = mBluetoothHidDevice.getConnectionState(bluetoothDevice);
+                                        Log.e(TAG, "status:" + status);
+                                        if (BluetoothProfile.STATE_DISCONNECTED == status){
+                                            if (!mBluetoothHidDevice.connect(bluetoothDevice)){
+                                                Log.e(TAG, "connect false");
+                                            }else{
+                                                Log.e(TAG, "connect:" + bluetoothDevice.getName());
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -190,8 +348,29 @@ public class MainActivity extends AppCompatActivity implements BluetoothProfile.
                     super.onConnectionStateChanged(device, state);
                     if (state == BluetoothProfile.STATE_CONNECTED){
                         mOtherDevice = device;
-
+                    }else if (state == BluetoothProfile.STATE_CONNECTING){
+                        byte []data = new byte[]{(byte)63};
+                        mBluetoothHidDevice.sendReport(device, 32, data);
                     }
+                    String strStatus;
+                    switch (state){
+                        case BluetoothProfile.STATE_DISCONNECTED:
+                            strStatus = "STATE_DISCONNECTED";
+                            break;
+                        case BluetoothProfile.STATE_CONNECTING:
+                            strStatus = "STATE_CONNECTING";
+                            break;
+                        case BluetoothProfile.STATE_CONNECTED:
+                            strStatus = "STATE_CONNECTED";
+                            break;
+                        case BluetoothProfile.STATE_DISCONNECTING:
+                            strStatus = "STATE_DISCONNECTING";
+                            break;
+                        default:
+                            strStatus = "STATE_UNKNOWN";
+                            break;
+                    }
+                    Log.e(TAG, "onConnectionStateChanged " + strStatus);
                 }
 
                 @Override
