@@ -24,6 +24,11 @@
             <Button
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:id="@+id/btn_le_discovery"
+                android:text="le查找"/>
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:id="@+id/btn_stop_discovery"
                 android:text="停止"/>
             <Button
@@ -47,6 +52,12 @@
                 android:layout_height="wrap_content"
                 android:id="@+id/btn_connect"
                 android:text="连接"/>
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/btn_le_connect"
+                android:text="le连接"/>
         </LinearLayout>
     </LinearLayout>
     <LinearLayout

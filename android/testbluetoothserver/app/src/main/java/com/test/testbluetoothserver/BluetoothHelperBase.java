@@ -91,39 +91,67 @@ public class BluetoothHelperBase {
             return;
         }
         mBluetoothLeAdvertiser = mBluetoothManager.getAdapter().getBluetoothLeAdvertiser();
-        final AdvertiseSettings settings = new AdvertiseSettings.Builder()
-                .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_BALANCED)
-                .setConnectable(true)
-                .setTimeout(0)
-                .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_MEDIUM)
-                .build();
+        if (false){
+            final AdvertiseSettings settings = new AdvertiseSettings.Builder()
+                    .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_BALANCED)
+                    .setConnectable(true)
+                    .setTimeout(0)
+                    .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_MEDIUM)
+                    .build();
 
-        final AdvertiseData data = new AdvertiseData.Builder()
-                .setIncludeTxPowerLevel(false)
-                .setIncludeDeviceName(true)
-                .addServiceUuid(ParcelUuid.fromString(SERVICE_DEVICE_INFORMATION.toString()))
-                .addServiceUuid(ParcelUuid.fromString(SERVICE_BLE_HID.toString()))
-                .addServiceUuid(ParcelUuid.fromString(SERVICE_BATTERY.toString()))
-                .build();
+            final AdvertiseData data = new AdvertiseData.Builder()
+                    .setIncludeTxPowerLevel(false)
+                    .setIncludeDeviceName(true)
+                    .addServiceUuid(ParcelUuid.fromString(SERVICE_DEVICE_INFORMATION.toString()))
+                    .addServiceUuid(ParcelUuid.fromString(SERVICE_BLE_HID.toString()))
+                    .addServiceUuid(ParcelUuid.fromString(SERVICE_BATTERY.toString()))
+                    .build();
 
-        final AdvertiseData scan = new AdvertiseData.Builder()
-                .addServiceUuid(ParcelUuid.fromString(SERVICE_DEVICE_INFORMATION.toString()))
-                .addServiceUuid(ParcelUuid.fromString(SERVICE_BLE_HID.toString()))
-                .addServiceUuid(ParcelUuid.fromString(SERVICE_BATTERY.toString()))
-                .build();
-        mBluetoothLeAdvertiser.startAdvertising(settings, data, scan, new AdvertiseCallback(){
-            @Override
-            public void onStartSuccess(AdvertiseSettings settingsInEffect) {
-                super.onStartSuccess(settingsInEffect);
-                BluetoothHelperBase.this.onStartSuccess(settingsInEffect);
-            }
+            final AdvertiseData scan = new AdvertiseData.Builder()
+                    .addServiceUuid(ParcelUuid.fromString(SERVICE_DEVICE_INFORMATION.toString()))
+                    .addServiceUuid(ParcelUuid.fromString(SERVICE_BLE_HID.toString()))
+                    .addServiceUuid(ParcelUuid.fromString(SERVICE_BATTERY.toString()))
+                    .build();
+            mBluetoothLeAdvertiser.startAdvertising(settings, data, scan, new AdvertiseCallback(){
+                @Override
+                public void onStartSuccess(AdvertiseSettings settingsInEffect) {
+                    super.onStartSuccess(settingsInEffect);
+                    BluetoothHelperBase.this.onStartSuccess(settingsInEffect);
+                }
 
-            @Override
-            public void onStartFailure(int errorCode) {
-                super.onStartFailure(errorCode);
-                BluetoothHelperBase.this.onStartFailure(errorCode);
-            }
-        });
+                @Override
+                public void onStartFailure(int errorCode) {
+                    super.onStartFailure(errorCode);
+                    BluetoothHelperBase.this.onStartFailure(errorCode);
+                }
+            });
+        }else{
+            final AdvertiseSettings settings = new AdvertiseSettings.Builder()
+                    .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_BALANCED)
+                    .setConnectable(true)
+                    .setTimeout(0)
+                    .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_MEDIUM)
+                    .build();
+
+            final AdvertiseData data = new AdvertiseData.Builder()
+                    .setIncludeTxPowerLevel(false)
+                    .setIncludeDeviceName(true)
+                    .addServiceUuid(ParcelUuid.fromString(TIME_SERVICE.toString()))
+                    .build();
+            mBluetoothLeAdvertiser.startAdvertising(settings, data, new AdvertiseCallback(){
+                @Override
+                public void onStartSuccess(AdvertiseSettings settingsInEffect) {
+                    super.onStartSuccess(settingsInEffect);
+                    BluetoothHelperBase.this.onStartSuccess(settingsInEffect);
+                }
+
+                @Override
+                public void onStartFailure(int errorCode) {
+                    super.onStartFailure(errorCode);
+                    BluetoothHelperBase.this.onStartFailure(errorCode);
+                }
+            });
+        }
     }
 
     private HashSet<BluetoothDevice> mConnectedDevices = new HashSet<>();
