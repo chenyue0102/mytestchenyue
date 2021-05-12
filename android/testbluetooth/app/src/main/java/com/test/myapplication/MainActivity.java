@@ -1,6 +1,10 @@
 package com.test.myapplication;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.app.Person;
 
 import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
@@ -9,39 +13,73 @@ import android.bluetooth.BluetoothHidDevice;
 import android.bluetooth.BluetoothHidDeviceAppQosSettings;
 import android.bluetooth.BluetoothHidDeviceAppSdpSettings;
 import android.bluetooth.BluetoothProfile;
+import android.bluetooth.BluetoothSocket;
+import android.content.ComponentName;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.os.ParcelUuid;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Adapter;
+import android.widget.ArrayAdapter;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.TextView;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadPoolExecutor;
 
-public class MainActivity extends AppCompatActivity implements BluetoothProfile.ServiceListener{
+public class MainActivity extends AppCompatActivity{
     private static final String TAG = "tag";
     private View mViewMouse;
     private View mViewKeyboard;
+    private View mViewBluetooth;
+    private View mViewHID;
+    private TextView mTip;
+    private ListView mLVDeives;
+    private ArrayAdapter<String> mAdapter = null;
+    private int mSelectItem = -1;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.BLUETOOTH, Manifest.permission.BLUETOOTH_ADMIN,
+        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.BLUETOOTH, Manifest.permission.BLUETOOTH_ADMIN,
                 Manifest.permission.WAKE_LOCK, Manifest.permission.FOREGROUND_SERVICE}, 0);
 
-        findViewById(R.id.btn_test).setOnClickListener(v->onTest());
+        findViewById(R.id.btn_hid).setOnClickListener(v->showPage(3));
         findViewById(R.id.btn_mouse).setOnClickListener(v->showPage(0));
         findViewById(R.id.btn_keyboard).setOnClickListener(v->showPage(1));
+        findViewById(R.id.btn_bluetooth).setOnClickListener(v->{
+            Intent intent = new Intent(this, BluetoothHelperActivity.class);
+            startActivity(intent);
+        });
+        findViewById(R.id.btn_discovery_hid).setOnClickListener(v->searchHid());
+        findViewById(R.id.btn_connect).setOnClickListener(v->connectHid());
+        findViewById(R.id.btn_disconnect).setOnClickListener(v->disconnectHid());
+        mTip = findViewById(R.id.tv_tip);
+        //findViewById(R.id.btn_discovery).setOnClickListener(v->onDiscovery());
         LinearLayout contarinerKeyboard = findViewById(R.id.container_keyboard);
+
         int count = contarinerKeyboard.getChildCount();
         for (int i = 0;i < count; i++){
             ViewGroup viewGroup = (ViewGroup)contarinerKeyboard.getChildAt(i);
@@ -49,6 +87,31 @@ public class MainActivity extends AppCompatActivity implements BluetoothProfile.
         }
         mViewMouse = findViewById(R.id.container_mouse);
         mViewKeyboard = findViewById(R.id.container_keyboard);
+        mViewBluetooth = findViewById(R.id.container_bluetooth);
+        mViewHID = findViewById(R.id.container_hid);
+
+        mLVDeives = findViewById(R.id.lv_devices_hid);
+        mAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1){
+            @NonNull
+            @Override
+            public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
+                View view = super.getView(position, convertView, parent);
+                if (position == mSelectItem){
+                    view.setBackgroundColor(Color.GREEN);
+                }else{
+                    view.setBackgroundColor(Color.WHITE);
+                }
+                return view;
+            }
+        };
+        mAdapter.setNotifyOnChange(true);
+        mLVDeives.setAdapter(mAdapter);
+        mLVDeives.setOnItemClickListener((parent, view, position, id) -> {
+            mSelectItem = position;
+            mAdapter.notifyDataSetChanged();
+        });
+
+
         View viewMouseMove = findViewById(R.id.view_mouse_move);
 
         //mouse move
@@ -145,27 +208,19 @@ public class MainActivity extends AppCompatActivity implements BluetoothProfile.
         View viewScroll = findViewById(R.id.textview_scroll);
         viewScroll.setOnTouchListener((v, event) -> scrollMoveListener.onTouch(v, event));
 
-        showPage(0);
+        showPage(2);
+
+        PackageManager pm = getPackageManager();
+        ComponentName cn = new ComponentName("com.android.bluetooth","com.android.bluetooth.hid.HidDevService");
+        int cs = pm.getComponentEnabledSetting(cn);
+        Log.i(TAG, "HID service state" + cs);
+        initReceive();
     }
 
     BluetoothAdapter mBluetoothAdapter = null;
     BluetoothHidDevice mBluetoothHidDevice = null;
     BluetoothDevice mOtherDevice = null;
 
-    private boolean setScanMode(int mode, long durationMillis){
-        boolean success = false;
-        try {
-            Class clazz = mBluetoothAdapter.getClass();
-            Method method = clazz.getMethod("setScanMode", int.class, int.class);
-            Object object = method.invoke(mBluetoothAdapter, mode, (int)durationMillis);
-            if (object instanceof Boolean){
-                success = (Boolean)object;
-            }
-        }catch (Exception e){
-            e.printStackTrace();
-        }
-        return success;
-    }
     ScrollableTrackpadMouseReport mScrollableTrackpadMouseReport = new ScrollableTrackpadMouseReport();
 
     public byte getHighByte(short n){
@@ -188,12 +243,129 @@ public class MainActivity extends AppCompatActivity implements BluetoothProfile.
         }
     }
 
-    private void onTest(){
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull @NotNull String[] permissions, @NonNull @NotNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
+
+    BluetoothHelper.BluetoothReceiver mBluetoothReceiver = null;
+
+    private void testg(){
+        Type superClass = Student.class.getGenericSuperclass();
+        String s1 = ((ParameterizedType)superClass).getActualTypeArguments()[0].getTypeName();
+        String s2 = ((ParameterizedType)superClass).getActualTypeArguments()[1].getTypeName();
+        Log.e(TAG, "" + superClass.getTypeName() + s1 + s2);
+    }
+    private void searchHid(){
+        testg();
+        initReceive();
+        mAdapter.clear();
+        mBluetoothDeviceFound.clear();
+        mHashAddress.clear();
+        mSelectItem = -1;
+
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        mBluetoothAdapter.cancelDiscovery();
+
+        mBluetoothAdapter.startDiscovery();
+
         int profile = BluetoothProfile.HID_DEVICE;
-        //int profile = BluetoothProfile.HEADSET;
-        boolean result = mBluetoothAdapter.getProfileProxy(this, this, profile);
+        boolean result = mBluetoothAdapter.getProfileProxy(this, new BluetoothProfile.ServiceListener(){
+            @Override
+            public void onServiceConnected(int profile, BluetoothProfile proxy) {
+                doServiceConnected(profile, proxy);
+            }
+
+            @Override
+            public void onServiceDisconnected(int profile) {
+                doServiceDisconnected(profile);
+            }
+        }, profile);
         Log.e(TAG, "onTest :" + result);
+
+    }
+
+    private boolean mNeedConnect =false;
+
+    private void initReceive(){
+        if (null != mBluetoothReceiver){
+            return;
+        }
+        mBluetoothReceiver = new BluetoothHelper.BluetoothReceiver(new BluetoothHelper.BluetoothHelperCallback() {
+            @Override
+            public void onDiscoveryStarted() {
+                mTip.setText("查找开始");
+            }
+
+            @Override
+            public void onDiscoveryFinished() {
+                mTip.setText("查找结束");
+            }
+
+            @Override
+            public void onBluetoothDeviceFound(BluetoothDevice device) {
+                if (!TextUtils.isEmpty(device.getName())){
+                    if (!mHashAddress.contains(device.getAddress())){
+                        mBluetoothDeviceFound.add(device);
+                        mHashAddress.add(device.getAddress());
+                        mAdapter.add(device.getName() + "   (" + device.getAddress() +  ")");
+                    }
+                }
+            }
+
+            @Override
+            public void onBluetoothDeviceUUIDResult(BluetoothDevice device, ParcelUuid[] uuids) {
+
+            }
+
+            @Override
+            public void onBluetoothDeviceConnect(BluetoothDevice device, BluetoothSocket bluetoothSocket) {
+
+            }
+
+            @Override
+            public void onBluetoothDeviceBondStateChanged(BluetoothDevice device, int bondState, int previousBondState, int reason) {
+                Log.e(TAG, "onBluetoothDeviceBondStateChanged：" + " bondState:" + bondState);
+                if (bondState == BluetoothDevice.BOND_BONDED){
+                    if (mNeedConnect){
+                        mNeedConnect = false;
+                        if (null != mBluetoothHidDevice && null != device){
+                            boolean s = mBluetoothHidDevice.connect(device);
+                            mTip.setText("准备连接：" + device.getName() + " result:" + s);
+                        }
+                    }
+                }
+            }
+        });
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(BluetoothDevice.ACTION_FOUND);
+        intentFilter.addAction(BluetoothDevice.ACTION_UUID);
+        intentFilter.addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
+        intentFilter.addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED);
+        intentFilter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
+        registerReceiver(mBluetoothReceiver, intentFilter);
+    }
+
+    private void connectHid(){
+        mNeedConnect = false;
+        if (-1 != mSelectItem && null != mBluetoothHidDevice){
+            mBluetoothAdapter.cancelDiscovery();
+            BluetoothDevice bluetoothDevice = mBluetoothDeviceFound.get(mSelectItem);
+            if (BluetoothDevice.BOND_NONE == bluetoothDevice.getBondState()){
+                boolean s = bluetoothDevice.createBond();
+                mTip.setText("准备配对：" + bluetoothDevice.getName() + " result:" + s);
+                mNeedConnect = true;
+            }else{
+                boolean s = mBluetoothHidDevice.connect(bluetoothDevice);
+                mTip.setText("准备连接：" + bluetoothDevice.getName() + " result:" + s);
+            }
+        }
+    }
+
+    private void disconnectHid(){
+        if (null != mBluetoothHidDevice && null != mOtherDevice){
+            mBluetoothHidDevice.disconnect(mOtherDevice);
+        }
     }
 
     KeyboardReport mKeyboardReport = new KeyboardReport();
@@ -284,18 +456,30 @@ public class MainActivity extends AppCompatActivity implements BluetoothProfile.
         return shift;
     }
 
+    public class Person<T,V>{
+
+    }
+
+    public class Student extends Person<String, Integer>{
+
+    }
 
 
     private void showPage(int page){
         mViewMouse.setVisibility(0 == page ? View.VISIBLE : View.GONE);
-        mViewKeyboard.setVisibility(0 == page ? View.GONE : View.VISIBLE);
+        mViewKeyboard.setVisibility(1 == page ? View.VISIBLE : View.GONE);
+        mViewBluetooth.setVisibility(2 == page ? View.VISIBLE : View.GONE);
+        mViewHID.setVisibility(3 == page ? View.VISIBLE : View.GONE);
     }
 
-    @Override
-    public void onServiceConnected(int profile, BluetoothProfile proxy) {
+    private ArrayList<BluetoothDevice> mBluetoothDeviceFound = new ArrayList<>();
+    private Set<String> mHashAddress = new HashSet<>();
+
+
+    public void doServiceConnected(int profile, BluetoothProfile proxy) {
         Log.e(TAG, "onServiceConnected profile:" + profile);
-        if (proxy instanceof BluetoothHidDevice){
-            mBluetoothHidDevice = (BluetoothHidDevice)proxy;
+        if (proxy instanceof BluetoothHidDevice) {
+            mBluetoothHidDevice = (BluetoothHidDevice) proxy;
             BluetoothHidDeviceAppSdpSettings spdRecord = new BluetoothHidDeviceAppSdpSettings("Pixel HID1", "Mobile BController", "test",
                     BluetoothHidDevice.SUBCLASS1_COMBO,
                     MOUSE_KEYBOARD_COMBO);
@@ -305,39 +489,34 @@ public class MainActivity extends AppCompatActivity implements BluetoothProfile.
                     0,
                     11250,
                     BluetoothHidDeviceAppQosSettings.MAX);
-            Executor executor = new Executor(){
+            Executor executor = new Executor() {
                 @Override
                 public void execute(Runnable command) {
                     command.run();
                 }
             };
-            BluetoothHidDevice.Callback callback = new BluetoothHidDevice.Callback(){
+            BluetoothHidDevice.Callback callback = new BluetoothHidDevice.Callback() {
                 @Override
                 public void onAppStatusChanged(BluetoothDevice pluggedDevice, boolean registered) {
                     super.onAppStatusChanged(pluggedDevice, registered);
-                    if (registered){
-                        List<BluetoothDevice> pairedDevices = mBluetoothHidDevice.getDevicesMatchingConnectionStates(new int []{BluetoothProfile.STATE_CONNECTING,BluetoothProfile.STATE_CONNECTED,BluetoothProfile.STATE_DISCONNECTED,BluetoothProfile.STATE_DISCONNECTING});
-                        mOtherDevice = pluggedDevice;
-
-                        if (false&&null != mOtherDevice && mBluetoothHidDevice.getConnectionState(mOtherDevice) == BluetoothProfile.STATE_DISCONNECTED){
-                            mBluetoothHidDevice.connect(mOtherDevice);
-                            Log.e(TAG, "connect:" + mOtherDevice.getName());
-                        }else{
-                            Set<BluetoothDevice> bluetoothDeviceSet = mBluetoothAdapter.getBondedDevices();
-                            if (!bluetoothDeviceSet.isEmpty()){
-                                for (BluetoothDevice bluetoothDevice : bluetoothDeviceSet){
-                                    if ("chenyue".equals(bluetoothDevice.getName())){
-                                        int status = mBluetoothHidDevice.getConnectionState(bluetoothDevice);
-                                        Log.e(TAG, "status:" + status);
-                                        if (BluetoothProfile.STATE_DISCONNECTED == status){
-                                            if (!mBluetoothHidDevice.connect(bluetoothDevice)){
-                                                Log.e(TAG, "connect false");
-                                            }else{
-                                                Log.e(TAG, "connect:" + bluetoothDevice.getName());
-                                            }
-                                        }
-                                    }
-                                }
+                    if (registered) {
+                        if (null != pluggedDevice){
+                            //mBluetoothDeviceFound.add(pluggedDevice);
+                            //mAdapter.add(pluggedDevice.getName());
+                            Log.e(TAG, "onAppStatusChanged:" + pluggedDevice.getName());
+                        }
+                        List<BluetoothDevice> pairedDevices = mBluetoothHidDevice.getDevicesMatchingConnectionStates(new int[]{BluetoothProfile.STATE_CONNECTING, BluetoothProfile.STATE_CONNECTED, BluetoothProfile.STATE_DISCONNECTED, BluetoothProfile.STATE_DISCONNECTING});
+                        if (!pairedDevices.isEmpty()) {
+                            for (BluetoothDevice bluetoothDevice : pairedDevices) {
+                                int status = mBluetoothHidDevice.getConnectionState(bluetoothDevice);
+                                Log.e(TAG, "onAppStatusChanged:" + bluetoothDevice.getName() + " status:" + status);
+//                                if (BluetoothProfile.STATE_DISCONNECTED == status) {
+//                                    if (!mBluetoothHidDevice.connect(bluetoothDevice)) {
+//                                        Log.e(TAG, "connect false");
+//                                    } else {
+//                                        Log.e(TAG, "connect:" + bluetoothDevice.getName());
+//                                    }
+//                                }
                             }
                         }
                     }
@@ -346,25 +525,29 @@ public class MainActivity extends AppCompatActivity implements BluetoothProfile.
                 @Override
                 public void onConnectionStateChanged(BluetoothDevice device, int state) {
                     super.onConnectionStateChanged(device, state);
-                    if (state == BluetoothProfile.STATE_CONNECTED){
+                    if (state == BluetoothProfile.STATE_CONNECTED) {
                         mOtherDevice = device;
-                    }else if (state == BluetoothProfile.STATE_CONNECTING){
-                        byte []data = new byte[]{(byte)63};
+                    } else if (state == BluetoothProfile.STATE_CONNECTING) {
+                        byte[] data = new byte[]{(byte) 63};
                         mBluetoothHidDevice.sendReport(device, 32, data);
                     }
                     String strStatus;
-                    switch (state){
+                    switch (state) {
                         case BluetoothProfile.STATE_DISCONNECTED:
                             strStatus = "STATE_DISCONNECTED";
+                            mTip.setText("断开连接:" + device.getName());
                             break;
                         case BluetoothProfile.STATE_CONNECTING:
                             strStatus = "STATE_CONNECTING";
+                            mTip.setText("连接中:" + device.getName());
                             break;
                         case BluetoothProfile.STATE_CONNECTED:
                             strStatus = "STATE_CONNECTED";
+                            mTip.setText("连接成功:" + device.getName());
                             break;
                         case BluetoothProfile.STATE_DISCONNECTING:
                             strStatus = "STATE_DISCONNECTING";
+                            mTip.setText("断开中:" + device.getName());
                             break;
                         default:
                             strStatus = "STATE_UNKNOWN";
@@ -399,12 +582,11 @@ public class MainActivity extends AppCompatActivity implements BluetoothProfile.
                 }
             };
             mBluetoothHidDevice.registerApp(spdRecord, null, qosOut, executor, callback);
-            setScanMode(BluetoothAdapter.SCAN_MODE_CONNECTABLE_DISCOVERABLE, 300000);
+            BluetoothHelper.setScanMode(mBluetoothAdapter, BluetoothAdapter.SCAN_MODE_CONNECTABLE_DISCOVERABLE, 300000);
         }
     }
 
-    @Override
-    public void onServiceDisconnected(int profile) {
+    public void doServiceDisconnected(int profile) {
         Log.e(TAG, "onServiceDisconnected profile:" + profile);
     }
 
