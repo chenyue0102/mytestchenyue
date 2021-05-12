@@ -7,6 +7,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.app.Person;
 
 import android.Manifest;
+import android.app.Instrumentation;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothHidDevice;
@@ -21,6 +22,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.ParcelUuid;
+import android.os.SystemClock;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -64,7 +66,7 @@ public class MainActivity extends AppCompatActivity{
         setContentView(R.layout.activity_main);
 
         ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.BLUETOOTH, Manifest.permission.BLUETOOTH_ADMIN,
-                Manifest.permission.WAKE_LOCK, Manifest.permission.FOREGROUND_SERVICE}, 0);
+                Manifest.permission.WAKE_LOCK, Manifest.permission.FOREGROUND_SERVICE, "android.permission.INJECT_EVENTS"}, 0);
 
         findViewById(R.id.btn_hid).setOnClickListener(v->showPage(3));
         findViewById(R.id.btn_mouse).setOnClickListener(v->showPage(0));
@@ -115,7 +117,7 @@ public class MainActivity extends AppCompatActivity{
         View viewMouseMove = findViewById(R.id.view_mouse_move);
 
         //mouse move
-        MouseMoveListener.IMouseMoveCallback moveCallback = new MouseMoveListener.IMouseMoveCallback(){
+        MouseMoveClickListener.IMouseMoveCallback moveCallback = new MouseMoveClickListener.IMouseMoveCallback(){
             @Override
             public void onMouseMove(int offsetx, int offsety) {
                 mScrollableTrackpadMouseReport.dxMsb =  getHighByte((short) offsetx);
@@ -134,8 +136,16 @@ public class MainActivity extends AppCompatActivity{
                 mScrollableTrackpadMouseReport.dyMsb =  0;
                 mScrollableTrackpadMouseReport.dyLsb =  0;
             }
+
+            @Override
+            public void onMouseClick() {
+                mScrollableTrackpadMouseReport.leftButton = true;
+                sendMouseEvent();
+                mScrollableTrackpadMouseReport.leftButton = false;
+                sendMouseEvent();
+            }
         };
-        MouseMoveListener mouseMoveListener = new MouseMoveListener(moveCallback);
+        MouseMoveClickListener mouseMoveListener = new MouseMoveClickListener(moveCallback);
         viewMouseMove.setOnTouchListener(new View.OnTouchListener(){
             @Override
             public boolean onTouch(View v, MotionEvent event) {
@@ -208,7 +218,7 @@ public class MainActivity extends AppCompatActivity{
         View viewScroll = findViewById(R.id.textview_scroll);
         viewScroll.setOnTouchListener((v, event) -> scrollMoveListener.onTouch(v, event));
 
-        showPage(2);
+        showPage(3);
 
         PackageManager pm = getPackageManager();
         ComponentName cn = new ComponentName("com.android.bluetooth","com.android.bluetooth.hid.HidDevService");
@@ -258,6 +268,7 @@ public class MainActivity extends AppCompatActivity{
     }
     private void searchHid(){
         testg();
+        testsend();
         initReceive();
         mAdapter.clear();
         mBluetoothDeviceFound.clear();
@@ -286,6 +297,21 @@ public class MainActivity extends AppCompatActivity{
     }
 
     private boolean mNeedConnect =false;
+
+    private void testsend(){
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try{
+                    Instrumentation inst=new Instrumentation();
+                    inst.sendPointerSync(MotionEvent.obtain(SystemClock.uptimeMillis(),SystemClock.uptimeMillis(), MotionEvent.ACTION_DOWN, 10, 10, 0));
+                    inst.sendPointerSync(MotionEvent.obtain(SystemClock.uptimeMillis(),SystemClock.uptimeMillis(), MotionEvent.ACTION_UP, 10, 10, 0));
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+    }
 
     private void initReceive(){
         if (null != mBluetoothReceiver){

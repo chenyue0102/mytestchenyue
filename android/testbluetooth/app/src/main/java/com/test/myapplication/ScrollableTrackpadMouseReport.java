@@ -37,6 +37,7 @@ public class ScrollableTrackpadMouseReport {
 
         bytes[5] = vScroll;
         bytes[6] = hScroll;
+
         return bytes;
     }
 }

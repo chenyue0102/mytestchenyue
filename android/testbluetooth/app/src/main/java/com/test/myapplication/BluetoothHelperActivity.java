@@ -185,6 +185,20 @@ public class BluetoothHelperActivity extends AppCompatActivity {
                                 });
                                 for (BleGattDescriptor bleGattDescriptor : bleGattCharacter.getDescriptors()){
                                     Log.e(TAG, "    BleGattDescriptor:" + bleGattDescriptor.getmUuid());
+                                    mClient.readDescriptor(device.getAddress(),
+                                            bleGattService.getUUID(),
+                                            bleGattCharacter.getUuid(),
+                                            bleGattDescriptor.getmUuid().getUuid(),
+                                            new BleReadResponse() {
+                                                @Override
+                                                public void onResponse(int code, byte[] data) {
+                                                    if (null != data){
+                                                        Log.e(TAG, "onResponse " + "byte:" + data[0]);
+                                                    }else{
+                                                        Log.e(TAG, "onResponse data null");
+                                                    }
+                                                }
+                                            });
                                 }
                             }
                         }
