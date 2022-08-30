@@ -225,6 +225,9 @@ void EXTI1_IRQHandler(void)
 			GPIO_WriteBit(GPIOA, GPIO_Pin_0, Bit_RESET);
 		}
 		EXTI_ClearITPendingBit(EXTI_Line1);
+		
+		USART_SendData(USART1, 'x');
+		while(USART_GetFlagStatus(USART1, USART_FLAG_TXE) == Bit_RESET);
 	}
 }
 
@@ -267,6 +270,78 @@ void TIM2_IRQHandler(void)
 	}
 	GPIO_WriteBit(GPIOA, GPIO_Pin_0, timLedFlag);
 }
+
+void USARTInit(void)
+{
+	//启用USART1时钟,RCC_APB2Periph_AFIO端口复用
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE);
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
+	
+	GPIO_InitTypeDef GPIO_InitStructure;
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_9;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
+	GPIO_Init(GPIOA, &GPIO_InitStructure);
+	
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_10;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+	GPIO_Init(GPIOA, &GPIO_InitStructure);
+	
+	USART_InitTypeDef USART_InitStructure;
+	USART_InitStructure.USART_BaudRate = 9600;
+	USART_InitStructure.USART_WordLength = USART_WordLength_8b;
+	USART_InitStructure.USART_StopBits = USART_StopBits_1;
+	USART_InitStructure.USART_Parity = USART_Parity_No;
+	USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
+	USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;
+	USART_Init(USART1, &USART_InitStructure);
+	
+	//enable usart1
+	USART_Cmd(USART1, ENABLE);
+	
+	//使能中断
+	USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);
+	
+	//清理USARTx的标记
+	USART_ClearFlag(USART1, USART_FLAG_TC);
+	
+	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_1);
+	//设置中断
+	NVIC_InitTypeDef NVIC_InitStructure;
+	NVIC_InitStructure.NVIC_IRQChannel = USART1_IRQn;
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;	//抢占优先级
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;				//相应优先级
+	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+	NVIC_Init(&NVIC_InitStructure);
+}
+
+void USART1SendData(uint16_t c)
+{
+	USART_ClearFlag(USART1, USART_FLAG_TC);
+	USART_SendData(USART1, c);
+	while(USART_GetFlagStatus(USART1, USART_FLAG_TC) == Bit_RESET);
+	USART_ClearFlag(USART1, USART_FLAG_TC);
+}
+
+void USART1_IRQHandler(void)
+{
+	uint16_t r = USART_ReceiveData(USART1);
+	USART_ClearITPendingBit(USART1, USART_IT_RXNE);
+	
+	if ('0' == r)
+	{
+		timLedFlag = Bit_SET;
+	}
+	else
+	{
+		timLedFlag = Bit_RESET;
+	}
+	GPIO_WriteBit(GPIOA, GPIO_Pin_0, timLedFlag);
+	
+	USART1SendData(r);
+}
 /**
   * @brief  Main program.
   * @param  None
@@ -288,7 +363,8 @@ int main(void)
 	//KeyInit();
 	//EXTIKeyInit();
 	//DigitalInit();
-	TIMInit();
+	//TIMInit();
+	USARTInit();
 	
 	int num = 0;
 	bool oldValue = false;
@@ -297,6 +373,7 @@ int main(void)
 		//GPIO_WriteBit(GPIOA, GPIO_Pin_0, Bit_SET);
 		//GPIO_WriteBit(GPIOA, GPIO_Pin_1, Bit_RESET);
 		delayMs(50);
+		//USART1SendData('a');
 		//GPIO_WriteBit(GPIOA, GPIO_Pin_0, Bit_RESET);
 		//GPIO_WriteBit(GPIOA, GPIO_Pin_1, Bit_SET);
 		//delayMs(50);

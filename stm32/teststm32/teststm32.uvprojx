@@ -493,6 +493,16 @@
               <FileType>5</FileType>
               <FilePath>.\driver\misc.h</FilePath>
             </File>
+            <File>
+              <FileName>stm32f10x_usart.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\driver\stm32f10x_usart.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f10x_usart.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\driver\stm32f10x_usart.h</FilePath>
+            </File>
           </Files>
         </Group>
       </Groups>
