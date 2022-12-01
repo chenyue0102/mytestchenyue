@@ -4,7 +4,8 @@
 #include <linux/cdev.h>
 #include <linux/slab.h>
 #include <linux/uaccess.h>
-
+//mknod /dev/globalmem0 c 230 0
+//mknod /dev/globalmem1 c 230 1
 #define GLOBALMEM_MAGIC 'g'
 #define  GLOBALMEM_SIZE 0x1000
 #define MEM_CLEAR _IO(GLOBALMEM_MAGIC, 0)
@@ -39,7 +40,7 @@ static ssize_t globalmem_read(struct file *filp, char __user *buf, size_t size, 
         *ppos += count;
         ret = count;
 
-        printk(KERN_INFO "read %u from lu%lu\n", count, p);
+        printk(KERN_INFO "read %u from %lu\n", count, p);
     }
     return ret;
 }
@@ -48,7 +49,7 @@ static ssize_t globalmem_write(struct file *filep, const char __user *buf, size_
 {
     unsigned long p = *ppos;
     unsigned int count = size;
-    int ret = 0;
+    int ret = 0, i;
     struct globalmem_dev *dev = filep->private_data;
 
     if (p >= GLOBALMEM_SIZE)
@@ -63,6 +64,12 @@ static ssize_t globalmem_write(struct file *filep, const char __user *buf, size_
         ret = count;
 
         printk(KERN_INFO "write %u from %lu\n", count, p);
+    }
+    for (i=0;i < DEVICE_NUM; i++){
+        if (&globalmem_devp[i] == dev){
+            printk(KERN_INFO "globalmem write index %d\n", i);
+            break;
+        }
     }
     return ret;
 }
@@ -119,8 +126,15 @@ static long globalmem_ioctl(struct file *filp, unsigned int cmd, unsigned long a
 
 static int globalmem_open(struct inode *inode, struct file *filp)
 {
+    int i;
     struct globalmem_dev *dev = container_of(inode->i_cdev, struct globalmem_dev, cdev);
     filp->private_data = dev;
+    for (i=0;i < DEVICE_NUM; i++){
+        if (&globalmem_devp[i] == dev){
+            printk(KERN_INFO "globalmem open %d\n", i);
+            break;
+        }
+    }
     return 0;
 }
 
