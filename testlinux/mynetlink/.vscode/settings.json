@@ -1,0 +1,10 @@
+{
+    "files.associations": {
+        "netlink.h": "c",
+        "capability.h": "c",
+        "skbuff.h": "c",
+        "export.h": "c",
+        "types.h": "c",
+        "socket.h": "c"
+    }
+}
