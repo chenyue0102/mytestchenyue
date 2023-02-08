@@ -1,0 +1,16 @@
+{% load myfilter %}
+<div>
+    <br>
+    url:{{url}}<br>
+    {% for topic in topics %}
+        <tr>
+            {% if  topic.text == 'bbbb'%}
+                <td>is bbbb:{{ topic.text | my_showbig }}</td><br>
+                <td>{{ topic.date_added }}</td><br>
+            {% else %}
+                <td>{{ topic.text }}</td><br>
+                <td>{{ topic.date_added }}</td><br>
+            {% endif %}
+        </tr>
+    {% endfor %}
+</div>

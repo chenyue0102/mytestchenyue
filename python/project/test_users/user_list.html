@@ -1,0 +1,91 @@
+<html>
+    <head>
+        <script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
+    </head>
+    <body>
+        {% csrf_token %}
+        <br>
+        <form>
+            <table>
+                <th>用户名</th>
+                <th>创建时间</th>
+                <th>操作</th>
+                {% for user in users %}
+                <tr>
+                    <td>{{user.user_name}}</td>
+                    <td>{{user.create_date}}</td>
+                    <td class="operate"><button type="button" id="btnCreate" class="btn btn-default margin-right " 
+                        onclick="onClickDelete('{{user.id}}', '{{user.user_name}}')">删除</button>
+                        <button type="button" onclick="onClickModify('{{user.id}}', '{{user.user_name}}')">修改</button>
+                    </td>
+                    <!--
+                    <td><a onclick="delete_user('{{user.id}}', '{{user.user_name}}')" class="btn btn-danger input-sm" href="/delete_user">删除</a></td>
+                    -->
+                </tr>
+            {% empty %}
+            {% endfor %}
+            </table>
+            <input type="button" id="save" value="提交">
+            
+            {% block scripts %}
+            <script type="text/javascript">
+                function getCookie(c_name)
+                {
+                    if (document.cookie.length > 0)
+                    {
+                        c_start = document.cookie.indexOf(c_name + "=");
+                        if (c_start != -1)
+                        {
+                            c_start = c_start + c_name.length + 1;
+                            c_end = document.cookie.indexOf(";", c_start);
+                            if (c_end == -1) c_end = document.cookie.length;
+                            return unescape(document.cookie.substring(c_start,c_end));
+                        }
+                    }
+                    return "";
+                }
+                function onClickModify(id, user_name){
+                    var url = window.location.pathname;
+                    var index = url.lastIndexOf('/', url.length -2)
+                    var newUrl = url.substring(0, index + 1) + "user_modify/" + "?user_id=" + id
+                    location = newUrl
+                }
+                function onClickDelete(id, user_name){
+                    var url = window.location.pathname;
+                    var index = url.lastIndexOf('/', url.length -2)
+                    var newUrl = url.substring(0, index + 1) + "user_delete/"
+                    //alert("xurl:" + newUrl)
+                    var r = confirm("delete:" + user_name + "?")
+                    if (r){
+                        
+                        $.ajax({
+                                beforeSend:function(){
+                                    var myCookie =getCookie("csrftoken");
+                                    //alert('beforeSend'+myCookie);
+                                },
+                                url:newUrl,
+                                type:'post',
+                                headers:{"X-CSRFToken": getCookie("csrftoken")},
+                                dataType:'JSON',
+                                data:JSON.stringify({"user_id":id, "user_name":user_name}),
+                                async:true,
+                                success:function(response){
+                                    //alert('delete success');
+                                    //location.href = response.redirect;
+                                    location.reload();
+                                },
+                               error:function(XMLHttpRequest, textStatus, errorThrown){
+                                alert("Status:" + textStatus + " error:" + errorThrown);
+                               }
+                            });
+                    }
+                    else{
+                        //alert('not delete');
+                    }
+                }
+            </script>
+            
+            {% endblock %}
+        </form>
+    </body>
+</html>

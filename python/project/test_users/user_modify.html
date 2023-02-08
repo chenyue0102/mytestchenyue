@@ -1,0 +1,66 @@
+<html>
+    <head>
+        <script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
+    </head>
+    <body>
+        <br>
+        <form id="f1" action="" method="post">
+            {% csrf_token %}
+            {{ form_obj.as_p }}
+            <input type="button" value="提交" onclick="onCliclModify()">
+            {% block scripts %}
+            <script type="text/javascript">
+                function getCookie(c_name)
+                {
+                    if (document.cookie.length > 0)
+                    {
+                        c_start = document.cookie.indexOf(c_name + "=");
+                        if (c_start != -1)
+                        {
+                            c_start = c_start + c_name.length + 1;
+                            c_end = document.cookie.indexOf(";", c_start);
+                            if (c_end == -1) c_end = document.cookie.length;
+                            return unescape(document.cookie.substring(c_start,c_end));
+                        }
+                    }
+                    return "";
+                }
+                function getFormData($form){
+                    var unindexed_array = $form.serializeArray();
+                    var indexed_array = {};
+
+                    $.map(unindexed_array, function(n, i){
+                        indexed_array[n['name']] = n['value'];
+                    });
+
+                    return indexed_array;
+                }
+                function onCliclModify(){
+                    var url = window.location.pathname;
+                    //alert("onCliclModify:" + url);
+                    var formData = getFormData($("#f1"));
+                    $.ajax({
+                        beforeSend:function(){
+                            //alert(url + JSON.stringify((formData)));
+                        },
+                        url:url,
+                        type:'post',
+                        headers:{"X-CSRFToken": getCookie("csrftoken")},
+                        //dataType:'JSON',  服务器返回的格式
+                        data:JSON.stringify(formData),
+                        async:true,
+                        success:function(response){
+                            //alert('delete success');
+                            //location.href = response.redirect;
+                            location = document.referrer;
+                        },
+                        error:function(XMLHttpRequest, textStatus, errorThrown){
+                            alert("Status:" + textStatus + " error:" + errorThrown);
+                        }
+                    })
+                }
+            </script>
+            {% endblock %}
+        </form>
+    </body>
+</html>
