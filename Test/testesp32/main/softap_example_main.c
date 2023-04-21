@@ -107,7 +107,8 @@ function websockettest() {\n \
         }\n \
         ws.onmessage = function(evt) {\n \
             var msg = evt.data;\n \
-            alert(\"接收到：\" + msg);\n \
+            var label = document.getElementById('txt');\n \
+            label.textContent = msg;\n \
         }\n \
         ws.onclose = function() {\n \
             alert(\"websocket关闭\");\n \
@@ -349,13 +350,18 @@ static httpd_handle_t start_webserver(void)
     ESP_LOGI(TAG, "Error starting server!");
     return NULL;
 }
-esp_timer_handle_t g_timer = 0;
+static int g_index = 0;
+static esp_timer_handle_t g_timer = 0;
 static void timer_callback(void* arg)
 {
     //esp_timer_delete(g_timer);
     esp_err_t ret = 0;
     httpd_ws_frame_t ws_pkt;
-    char* buf = "test text";
+    char buf[32] = "index:";
+    char num[16];
+
+    itoa(g_index++, num, 10);
+    strcat(buf, num);
 
     ESP_LOGE(TAG, "timer_callback");
     if (NULL == g_websocket_req) {
@@ -377,7 +383,7 @@ static void start_timer() {
         .arg = NULL,
         .name = "timer"
     };
-    const int TIMEOUT_US = 5 * 1000 * 1000;
+    const int TIMEOUT_US = 1 * 1000 * 1000;
     
     esp_timer_create(&timer_args, &g_timer);
     esp_timer_start_periodic(g_timer, TIMEOUT_US);
