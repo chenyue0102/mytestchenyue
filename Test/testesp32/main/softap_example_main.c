@@ -21,6 +21,9 @@
 #include "esp_netif.h"
 #include "esp_eth.h"
 #include <esp_http_server.h>
+#include "esp_timer.h"
+#include "esp_log.h"
+#include "esp_sleep.h"
 #if !CONFIG_HTTPD_WS_SUPPORT
 #error This example cannot be used unless HTTPD_WS_SUPPORT is enabled in esp-http-server component configuration
 #endif
@@ -87,6 +90,45 @@ void wifi_init_softap(void)
              EXAMPLE_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_PASS, EXAMPLE_ESP_WIFI_CHANNEL);
 }
 
+const char* g_url = "<!DOCTYPE HTML>\n \
+<html>\n \
+<head>\n \
+<meta charset = \"utf-8\" / >\n \
+<title>websocket test</title>\n \
+<script type=\"text/javascript\">\n \
+var ws; \n \
+function websockettest() {\n \
+    if (\"WebSocket\" in window) {\n \
+        //支持websocket\n \
+        alert(\"支持websocket\");\n \
+        ws = new WebSocket(\"ws://192.168.4.1/ws\");\n \
+        ws.onopen = function() {\n \
+            ws.send(\"abc\");\n \
+        }\n \
+        ws.onmessage = function(evt) {\n \
+            var msg = evt.data;\n \
+            alert(\"接收到：\" + msg);\n \
+        }\n \
+        ws.onclose = function() {\n \
+            alert(\"websocket关闭\");\n \
+        }\n \
+    }\n \
+    else {\n \
+        alert(\"不支持websocket\");\n \
+    }\n \
+}\n \
+window.onload = function() {\n \
+    websockettest();\n \
+}\n \
+</script>\n \
+</head>\n \
+<body>\n \
+<div>\n \
+<label id=\"txt\">label</label>\n \
+</div>\n \
+</body>\n \
+</html>";
+
 /* An HTTP GET handler */
 static esp_err_t hello_get_handler(httpd_req_t* req)
 {
@@ -151,7 +193,7 @@ static esp_err_t hello_get_handler(httpd_req_t* req)
 
     /* Send response with custom headers and body set as the
      * string passed in user context*/
-    const char* resp_str = (const char*)req->user_ctx;
+    const char* resp_str = (const char*)g_url;
     httpd_resp_send(req, resp_str, HTTPD_RESP_USE_STRLEN);
 
     /* After sending the HTTP response the old HTTP request
@@ -168,7 +210,7 @@ static const httpd_uri_t hello = {
     .handler = hello_get_handler,
     /* Let's pass response string in user
      * context to demonstrate it's usage */
-    .user_ctx = "Hello World!"
+    .user_ctx = NULL
 };
 
 /*
@@ -212,16 +254,27 @@ static esp_err_t trigger_async_send(httpd_handle_t handle, httpd_req_t* req)
  * This handler echos back the received ws data
  * and triggers an async send if certain message received
  */
+static httpd_handle_t*g_websocket_req = NULL;
+static int g_fd = 0;
 static esp_err_t echo_handler(httpd_req_t* req)
 {
     if (req->method == HTTP_GET) {
         ESP_LOGI(TAG, "Handshake done, the new connection was opened");
         return ESP_OK;
     }
+    g_websocket_req = req->handle;
+    g_fd = httpd_req_to_sockfd(req);
+   /* if (NULL == g_websocket_req) {
+        g_websocket_req = malloc(sizeof(httpd_req_t));
+    }
+    memcpy(g_websocket_req, req, sizeof(httpd_req_t));*/
     httpd_ws_frame_t ws_pkt;
     uint8_t* buf = NULL;
     memset(&ws_pkt, 0, sizeof(httpd_ws_frame_t));
     ws_pkt.type = HTTPD_WS_TYPE_TEXT;
+    if (NULL == req->aux) {
+        ESP_LOGE(TAG, "echo_handler NULL == req.aux");
+    }
     /* Set max_len = 0 to get the frame len */
     esp_err_t ret = httpd_ws_recv_frame(req, &ws_pkt, 0);
     if (ret != ESP_OK) {
@@ -258,6 +311,10 @@ static esp_err_t echo_handler(httpd_req_t* req)
         ESP_LOGE(TAG, "httpd_ws_send_frame failed with %d", ret);
     }
     free(buf);
+
+    if (NULL == req->aux) {
+        ESP_LOGE(TAG, "echo_handler NULL == req.aux2");
+    }
     return ret;
 }
 
@@ -292,6 +349,40 @@ static httpd_handle_t start_webserver(void)
     ESP_LOGI(TAG, "Error starting server!");
     return NULL;
 }
+esp_timer_handle_t g_timer = 0;
+static void timer_callback(void* arg)
+{
+    //esp_timer_delete(g_timer);
+    esp_err_t ret = 0;
+    httpd_ws_frame_t ws_pkt;
+    char* buf = "test text";
+
+    ESP_LOGE(TAG, "timer_callback");
+    if (NULL == g_websocket_req) {
+        return;
+    }
+    memset(&ws_pkt, 0, sizeof(httpd_ws_frame_t));
+    ws_pkt.type = HTTPD_WS_TYPE_TEXT;
+    ws_pkt.payload = (uint8_t*)buf;
+    ws_pkt.len = strlen(buf);
+    ret = httpd_ws_send_frame_async(g_websocket_req, g_fd, &ws_pkt);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "httpd_ws_send_frame failed with %d", ret);
+    }
+}
+
+static void start_timer() {
+    const esp_timer_create_args_t timer_args = {
+        .callback = &timer_callback,
+        .arg = NULL,
+        .name = "timer"
+    };
+    const int TIMEOUT_US = 5 * 1000 * 1000;
+    
+    esp_timer_create(&timer_args, &g_timer);
+    esp_timer_start_periodic(g_timer, TIMEOUT_US);
+}
+
 void app_main(void)
 {
     //Initialize NVS
@@ -307,4 +398,6 @@ void app_main(void)
 
     start_webserver();
     ESP_LOGI(TAG, "start_webserver");
+    start_timer();
+    ESP_LOGI(TAG, "start_timer");
 }
