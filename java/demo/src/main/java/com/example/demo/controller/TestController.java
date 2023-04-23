@@ -1,6 +1,5 @@
 package com.example.demo.controller;
 
-import org.apache.catalina.User;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,6 +13,7 @@ public class TestController {
         public String name;
         public int id;
     }
+
     List<UserInfo> mUserInfos;
     TestController(){
         mUserInfos = new ArrayList<>();
@@ -23,6 +23,12 @@ public class TestController {
             userInfo.name = "name" + String.valueOf(i+1);
             mUserInfos.add(userInfo);
         }
+    }
+
+    @GetMapping("/hello")
+    @ResponseStatus(HttpStatus.OK)
+    public String hello(){
+        return "hello";
     }
 
     @GetMapping("/users")

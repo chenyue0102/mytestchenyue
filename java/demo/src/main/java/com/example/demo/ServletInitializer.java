@@ -7,7 +7,6 @@ public class ServletInitializer extends SpringBootServletInitializer {
 
 	@Override
 	protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {
-		logger.debug("~~~~~~~~~~~~~configure");
 		return application.sources(DemoApplication.class);
 	}
 

@@ -12,10 +12,22 @@ sourceCompatibility = '17'
 repositories {
 	mavenCentral()
 }
+war{
+    archiveName = 'demo.war'
+}
+
+configurations {
+    mybatisGenerator
+}
 
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-logging'
+    implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+    implementation 'mysql:mysql-connector-java:8.0.32'
+    implementation 'org.springframework.boot:spring-boot-starter-parent:3.0.6'
+    implementation 'org.springframework.boot:spring-boot-starter-web:3.0.6'
+    implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.0'
 	providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
