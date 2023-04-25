@@ -12,14 +12,14 @@
     </select>
 
     <insert id="insertUser" parameterType="com.example.demo.entity.User">
-        insert into user(id,name) values(#(id),#(name))
+        insert into user(id,name) values(#{id},#{name})
     </insert>
 
     <update id="updateUser" parameterType="com.example.demo.entity.User">
-        update user set id=#(id),name=#(name) where id=#(id)
+        update user set id=#{id},name=#{name} where id=#{id}
     </update>
 
     <delete id="deleteUser" parameterType="int">
-        delete from user where id=#(id)
+        delete from user where id=#{id}
     </delete>
 </mapper>
