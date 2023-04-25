@@ -2,26 +2,32 @@ package com.example.demo.controller;
 
 import com.example.demo.dao.UserDao;
 import com.example.demo.entity.User;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import jakarta.annotation.Resource;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.logging.Logger;
 
-@RestController
+@Api(tags = "tag")
+@Controller
 public class UserController {
     @Resource
     UserDao userDao;
-    @GetMapping("/queryall")
+    @ApiOperation(value = "获取用户列表", notes = "")
+    @RequestMapping(value = "/queryall", method = RequestMethod.GET)
     public List<User> queryAll(){
         return userDao.findAllUsers();
     }
-
+/*
     @GetMapping("/insert")
     public Boolean insert(Integer id, String name){
         User user = new User();
         user.setId(id);
         user.setName(name);
+        Logger.getGlobal().warning("id:" + String.valueOf(id) + " name:" + name);
         return userDao.insertUser(user) > 0;
     }
 
@@ -37,4 +43,6 @@ public class UserController {
     public Boolean delete(Integer id){
         return userDao.deleteUser(id) > 0;
     }
+
+ */
 }

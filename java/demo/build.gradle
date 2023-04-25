@@ -21,13 +21,14 @@ configurations {
 }
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-web'
-	implementation 'org.springframework.boot:spring-boot-starter-logging'
-    implementation 'org.springframework.boot:spring-boot-starter-jdbc'
-    implementation 'mysql:mysql-connector-java:8.0.32'
-    implementation 'org.springframework.boot:spring-boot-starter-parent:3.0.6'
-    implementation 'org.springframework.boot:spring-boot-starter-web:3.0.6'
-    implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.0'
+	implementation 'org.springframework.boot:spring-boot-starter-web:2.7.5'
+	implementation 'org.springframework.boot:spring-boot-starter-logging:2.7.5'
+    implementation 'org.springframework.boot:spring-boot-starter-jdbc:2.7.5'
+    implementation 'org.springframework.boot:spring-boot-starter-parent:2.7.5'
+	implementation 'mysql:mysql-connector-java:8.0.32'
+    implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:2.3.0'
+	implementation 'io.springfox:springfox-swagger2:2.8.0'
+	implementation 'io.springfox:springfox-swagger-ui:2.8.0'
 	providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }

@@ -1,12 +1,14 @@
 package com.example.demo.controller;
 
-import org.springframework.http.HttpStatus;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @RestController
+@Api(value = "v1", tags = "tag")
 @RequestMapping("/test")
 public class TestController {
     static public class UserInfo{
@@ -25,12 +27,12 @@ public class TestController {
         }
     }
 
-    @GetMapping("/hello")
-    @ResponseStatus(HttpStatus.OK)
+    @RequestMapping(value = "/hello", method = RequestMethod.GET)
+    @ApiOperation(value = "hello", notes = "notes")
     public String hello(){
         return "hello";
     }
-
+/*
     @GetMapping("/users")
     @ResponseStatus(HttpStatus.OK)
     public Object getUsers(){
@@ -66,5 +68,5 @@ public class TestController {
         }
         mUserInfos.add(userInfo);
         return userInfo;
-    }
+    }*/
 }
