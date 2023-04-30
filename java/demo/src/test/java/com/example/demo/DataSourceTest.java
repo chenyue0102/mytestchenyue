@@ -15,7 +15,7 @@ public class DataSourceTest {
     @Test
     public void setDataSourceTest()throws SQLException{
         try{
-            Class.forName("com.mysql.jdbc.Driver");
+            Class.forName("com.mysql.cj.jdbc.Driver");
             String URL = "jdbc:mysql://localhost:3306/test?useUnicode=true&serverTimeZone=Asia/Shanghai&characterEncoding=utf8&autoReconnect=true&usesSSL=false&allowMultiQueries=true&useAffectedRows=true";
             Connection connection = DriverManager.getConnection(URL,"root", "root");
             //Connection connection = dataSource.getConnection();

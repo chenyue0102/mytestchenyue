@@ -1,72 +1,50 @@
 package com.example.demo.controller;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import com.example.demo.dao.UserDao;
+import com.example.demo.entity.User;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
+import javax.annotation.Resource;
 import java.util.List;
+import java.util.logging.Logger;
+
 
 @RestController
-@Api(value = "v1", tags = "tag")
-@RequestMapping("/test")
 public class TestController {
-    static public class UserInfo{
-        public String name;
-        public int id;
+    @GetMapping("/test")
+    public String test(){
+        return "test";
     }
 
-    List<UserInfo> mUserInfos;
-    TestController(){
-        mUserInfos = new ArrayList<>();
-        for (int i = 0;i < 2; i++){
-            UserInfo userInfo = new UserInfo();
-            userInfo.id = i+1;
-            userInfo.name = "name" + String.valueOf(i+1);
-            mUserInfos.add(userInfo);
-        }
+
+    @Resource
+    UserDao userDao;
+
+    //@ApiOperation(value = "获取用户列表", notes = "")
+    @RequestMapping(value = "/queryall", method = RequestMethod.GET)
+    public List<User> queryAll(){
+        return userDao.findAllUsers();
     }
 
-    @RequestMapping(value = "/hello", method = RequestMethod.GET)
-    @ApiOperation(value = "hello", notes = "notes")
-    public String hello(){
-        return "hello";
-    }
-/*
-    @GetMapping("/users")
-    @ResponseStatus(HttpStatus.OK)
-    public Object getUsers(){
-        return mUserInfos;
+    @GetMapping("/insert")
+    public Boolean insert(Integer id, String name){
+        User user = new User();
+        user.setId(id);
+        user.setName(name);
+        Logger.getGlobal().warning("id:" + String.valueOf(id) + " name:" + name);
+        return userDao.insertUser(user) > 0;
     }
 
-    @GetMapping("/users/{id}")
-    @ResponseStatus(HttpStatus.OK)
-    public Object getUser(@PathVariable("id") int id){
-        for (int i =0; i < mUserInfos.size();i++){
-            if (mUserInfos.get(i).id == id){
-                return mUserInfos.get(id);
-            }
-        }
-        return null;
+    @GetMapping("/update")
+    public Boolean update(Integer id, String name){
+        User user = new User();
+        user.setId(id);
+        user.setName(name);
+        return userDao.updateUser(user) > 0;
     }
 
-    @PostMapping("/users")
-    @ResponseStatus(HttpStatus.CREATED)
-    public Object addUser(@RequestBody UserInfo userInfo){
-        mUserInfos.add(userInfo);
-        return userInfo;
+    @GetMapping("/delete")
+    public Boolean delete(Integer id){
+        return userDao.deleteUser(id) > 0;
     }
-
-    @PutMapping("/users/{id}")
-    @ResponseStatus(HttpStatus.CREATED)
-    public Object editUser(@PathVariable("id") int id, @RequestBody UserInfo userInfo){
-        for (int i = 0; i < mUserInfos.size(); i++){
-            if (mUserInfos.get(i).id == id){
-                mUserInfos.set(i, userInfo);
-                return userInfo;
-            }
-        }
-        mUserInfos.add(userInfo);
-        return userInfo;
-    }*/
 }

@@ -1,6 +1,5 @@
 package com.example.demo.config;
 
-import io.swagger.annotations.ApiOperation;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import springfox.documentation.builders.ApiInfoBuilder;
@@ -11,7 +10,7 @@ import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spring.web.plugins.Docket;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
-//@Configuration
+@Configuration
 @EnableSwagger2
 public class Swagger2Config //implements WebMvcConfigurer
 {
@@ -21,8 +20,8 @@ public class Swagger2Config //implements WebMvcConfigurer
                 .enable(true)
                 .apiInfo(apiInfo())
                 .select()
-                .apis(RequestHandlerSelectors.withMethodAnnotation(ApiOperation.class))
-                //.apis(RequestHandlerSelectors.any())
+                //.apis(RequestHandlerSelectors.withMethodAnnotation(ApiOperation.class))
+                .apis(RequestHandlerSelectors.any())
                 //.apis(RequestHandlerSelectors.basePackage("com.example.demo.controller"))
                 .paths(PathSelectors.any())
                 .build();

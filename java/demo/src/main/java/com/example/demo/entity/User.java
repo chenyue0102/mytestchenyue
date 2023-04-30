@@ -3,11 +3,8 @@ package com.example.demo.entity;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
-@ApiModel("apimode")
 public class User {
-    @ApiModelProperty("id")
     private Integer id;
-    @ApiModelProperty("name")
     private String name;
 
     public Integer getId(){
