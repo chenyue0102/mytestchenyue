@@ -34,6 +34,11 @@ dependencies {
 	testAnnotationProcessor("org.projectlombok:lombok:1.18.22")
 	//加密算法库
 	implementation 'commons-codec:commons-codec:1.15'
+	//notempty注解等
+	implementation 'org.hibernate:hibernate-validator:8.0.0.Final'
+	implementation 'org.glassfish:javax.el:3.0.1-b12'
+	//json
+	implementation 'com.google.code.gson:gson:2.10.1'
 	//implementation 'com.spring4all:swagger-spring-boot-starter:2.0.2'
 	//implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.0.2'
 	providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'

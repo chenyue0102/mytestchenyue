@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.validation.Valid;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -57,7 +58,8 @@ public class TestController {
     @Autowired
     UserServiceImpl userService;
     @PostMapping("/login")
-    public Result<LoginResult> login(LoginRequest loginRequest){
+    @ApiOperation(value = "登录接口", notes = "返回token")
+    public Result<LoginResult> login(@RequestBody @Valid LoginRequest loginRequest){
         Result<LoginResult> resultResult = new Result<>();
         resultResult.setData(userService.login(loginRequest));
         return resultResult;
