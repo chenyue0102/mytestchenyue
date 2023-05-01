@@ -1,7 +1,7 @@
 plugins {
 	id 'java'
 	id 'war'
-	id 'org.springframework.boot' version '3.0.5'
+	id 'org.springframework.boot' version '2.7.11'
 	id 'io.spring.dependency-management' version '1.1.0'
 }
 
@@ -16,19 +16,26 @@ war{
     archiveName = 'demo.war'
 }
 
-configurations {
-    mybatisGenerator
-}
-
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-web:2.7.5'
-	implementation 'org.springframework.boot:spring-boot-starter-logging:2.7.5'
-    implementation 'org.springframework.boot:spring-boot-starter-jdbc:2.7.5'
-    implementation 'org.springframework.boot:spring-boot-starter-parent:2.7.5'
+	implementation('org.springframework.boot:spring-boot-starter-web'){
+		exclude group:'org.springframework.boot', module:'spring-boot-starter-tomcat'
+	}
+	implementation 'org.springframework.boot:spring-boot-starter-jetty'
 	implementation 'mysql:mysql-connector-java:8.0.32'
+	//定制sql操作类
     implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:2.3.0'
-	implementation 'io.springfox:springfox-swagger2:2.8.0'
-	implementation 'io.springfox:springfox-swagger-ui:2.8.0'
+	implementation 'io.springfox:springfox-swagger2:2.7.0'
+	implementation 'io.springfox:springfox-swagger-ui:2.7.0'
+	implementation 'org.projectlombok:lombok:1.18.26'
+	//data类可以自动设置setter与getter
+	compileOnly("org.projectlombok:lombok:1.18.22")
+	annotationProcessor("org.projectlombok:lombok:1.18.22")
+	testCompileOnly("org.projectlombok:lombok:1.18.22")
+	testAnnotationProcessor("org.projectlombok:lombok:1.18.22")
+	//加密算法库
+	implementation 'commons-codec:commons-codec:1.15'
+	//implementation 'com.spring4all:swagger-spring-boot-starter:2.0.2'
+	//implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.0.2'
 	providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }

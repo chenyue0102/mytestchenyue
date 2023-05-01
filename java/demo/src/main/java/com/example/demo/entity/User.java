@@ -1,25 +1,14 @@
 package com.example.demo.entity;
 
-import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import lombok.Data;
 
+@Data
 public class User {
+    @ApiModelProperty("用户id")
     private Integer id;
+
+    @ApiModelProperty("用户名称")
     private String name;
 
-    public Integer getId(){
-        return id;
-    }
-
-    public void setId(Integer id){
-        this.id = id;
-    }
-
-    public String getName(){
-        return name;
-    }
-
-    public void setName(String name){
-        this.name = name;
-    }
 }

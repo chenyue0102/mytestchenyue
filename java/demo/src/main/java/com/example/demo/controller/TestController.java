@@ -1,7 +1,13 @@
 package com.example.demo.controller;
 
 import com.example.demo.dao.UserDao;
+import com.example.demo.entity.LoginRequest;
+import com.example.demo.entity.LoginResult;
 import com.example.demo.entity.User;
+import com.example.demo.service.impl.UserServiceImpl;
+import com.example.demo.util.Result;
+import io.swagger.annotations.ApiOperation;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -20,7 +26,7 @@ public class TestController {
     @Resource
     UserDao userDao;
 
-    //@ApiOperation(value = "获取用户列表", notes = "")
+    @ApiOperation(value = "获取用户列表", notes = "")
     @RequestMapping(value = "/queryall", method = RequestMethod.GET)
     public List<User> queryAll(){
         return userDao.findAllUsers();
@@ -46,5 +52,14 @@ public class TestController {
     @GetMapping("/delete")
     public Boolean delete(Integer id){
         return userDao.deleteUser(id) > 0;
+    }
+
+    @Autowired
+    UserServiceImpl userService;
+    @PostMapping("/login")
+    public Result<LoginResult> login(LoginRequest loginRequest){
+        Result<LoginResult> resultResult = new Result<>();
+        resultResult.setData(userService.login(loginRequest));
+        return resultResult;
     }
 }
