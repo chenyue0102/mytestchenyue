@@ -1,6 +1,8 @@
 package com.example.demo.controller;
 
+import com.example.demo.annotation.TokenToUser;
 import com.example.demo.dao.UserDao;
+import com.example.demo.entity.AccessToken;
 import com.example.demo.entity.LoginRequest;
 import com.example.demo.entity.LoginResult;
 import com.example.demo.entity.User;
@@ -29,7 +31,7 @@ public class TestController {
 
     @ApiOperation(value = "获取用户列表", notes = "")
     @RequestMapping(value = "/queryall", method = RequestMethod.GET)
-    public List<User> queryAll(){
+    public List<User> queryAll(@TokenToUser AccessToken accessToken){
         return userDao.findAllUsers();
     }
 

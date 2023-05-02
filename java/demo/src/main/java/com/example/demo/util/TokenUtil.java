@@ -14,7 +14,7 @@ import java.util.logging.Logger;
 public class TokenUtil {
     public static final long EXPIRATION_SECOND = 60 * 60 * 24;
     private static long expirationTime = (System.currentTimeMillis() / 1000) + EXPIRATION_SECOND;
-    private static String uuid = UUID.randomUUID().toString();
+    private static String uuid = "87cb28bf-f183-4c8f-acd1-8aa9c7dbb784";//UUID.randomUUID().toString();
     private static Gson gson = new Gson();
     private static MessageDigest sha256;
 
@@ -65,5 +65,21 @@ public class TokenUtil {
             e.printStackTrace();
         }
         return ret;
+    }
+
+    public static AccessToken convert2AccessToken(String token){
+        AccessToken accessToken = null;
+        try{
+            int index = token.indexOf(".");
+            if (index < 0){
+                throw new Exception("not find dot");
+            }
+            String jsonBase64 = token.substring(0, index);
+            String json = new String(Base64.getDecoder().decode(jsonBase64));
+            accessToken = gson.fromJson(json, AccessToken.class);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return accessToken;
     }
 }
