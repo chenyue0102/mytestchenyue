@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>demo</title>
+    </head>
+    <body>
+        <div id="app">
+            <p>name: {{state.name}}</p>
+        </div>
+        <script src="https://cdn.bootcdn.net/ajax/libs/vue/3.1.5/vue.global.prod.min.js"></script>
+        <script>
+            const { createApp, reactive } = Vue;
+            const App = {
+                setup() {
+                    const state = reactive({
+                        name: 'testname'
+                    })
+                return {
+                    state
+                };
+            }
+        };
+        createApp(App).mount("#app");
+        </script>
+    </body>
+</html>
