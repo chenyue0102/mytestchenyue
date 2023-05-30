@@ -1,5 +1,5 @@
 <script setup>
-import { reactive, ref } from 'vue'
+import { provide, reactive, ref } from 'vue'
 import Child from './Child.vue'
 
 defineProps({
@@ -28,6 +28,7 @@ function change(){
 function padd(num){
   count.value += num
 }
+provide('sonName', '~hello world sonname~')
 </script>
 
 <template>

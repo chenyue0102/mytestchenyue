@@ -1,9 +1,28 @@
 <script setup>
+import {ref} from 'vue'
 import HelloWorld from './components/HelloWorld.vue'
+import Header from './components/Header.vue'
+import Footer from './components/Footer.vue'
+const current = ref('Header')
+const props = ref({text:'abc123'})
+const my_callback = (msg)=>{
+  props.value = {text:'weerw'}
+}
+const change = (name)=>{
+  current.value = name
+  if (name == 'Header'){
+    alert('callback' + name)
+    props.value={text:'def321'}
+  }
+}
 </script>
 
 <template>
   <div>
+    <component :is="current" v-bind="props" @setText="my_callback"></component>
+    <button @click="change('Header')">变成Header</button>
+    <button @click="change('Footer')">变成Footer</button>
+    <Header text="abc"/>
     <a href="https://vitejs.dev" target="_blank">
       <img src="/vite.svg" class="logo" alt="Vite logo" />
     </a>
@@ -12,8 +31,8 @@ import HelloWorld from './components/HelloWorld.vue'
     </a>
   </div>
   <HelloWorld msg="Vite + Vue" />
+  <Footer />
 </template>
-
 <style scoped>
 .logo {
   height: 6em;

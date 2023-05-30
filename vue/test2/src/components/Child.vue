@@ -1,12 +1,12 @@
 <script setup>
 import {computed, getCurrentInstance, reactive, readonly, ref, watchEffect, watch} from 'vue'
+import GrandSon from './GrandSon.vue'
 const name="Child"
 const ctx = getCurrentInstance()
 const props = defineProps({
     count:Number,
     add:Function,
 })
-
 const count2 = computed(()=>{
     return props.count + 1
 })
@@ -43,6 +43,7 @@ watch(()=>{
 })
 </script>
 <template>
+    <GrandSon>~GrandSon~</GrandSon>
     <p>count:{{count}}</p>
     <p>count2:{{count2}}</p>
     <p>text:{{state.text}} text2:{{text2}}</p>

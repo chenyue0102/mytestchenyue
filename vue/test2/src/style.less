@@ -4,11 +4,33 @@
 .box{
     .one{
         color:@primay;
+        /*&代表.title*/
+        &:hover{
+            font-size: 50px;
+        }
     }
     .two{
+        &::before{
+            content: 'abc|';
+        }
+        &::after{
+            content: '|def';
+        }
         color:@deepColor;
     }
     .three{
         color:@lightColor;
+    }
+}
+.component{
+    width: 300px;
+    @media (min-width: 600px){
+        width: 600px;
+        @media (min-resolution:192dpi){
+            background-color: green;
+        }
+        @media (min-width:1280px){
+            width:800px;
+        }
     }
 }
