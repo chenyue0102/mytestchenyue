@@ -4,6 +4,7 @@
 </template>
 <script setup>
 import {getCurrentInstance, reactive} from 'vue'
+//import moduleSession from '../state'
 const name = 'Header'
 const {appContext} = getCurrentInstance()
 let emit = defineEmits(["setText"])
@@ -22,7 +23,8 @@ eventBus.on('onHeaderText', (val)=>{
 })
 const onClick = ()=>{
     //alert("onClick")
-    ctx.emit('setText', 'asfsdf')
+    //moduleSession.setAccessToken('abc')
+    ctx.emit('setText', moduleSession.accessToken)
 }
 
 
