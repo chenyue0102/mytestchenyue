@@ -34,6 +34,9 @@ dependencies {
 	//notempty注解等
 	implementation 'org.hibernate:hibernate-validator:8.0.0.Final'
 
+	//json
+	implementation 'com.google.code.gson:gson:2.10.1'
+
 	providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
