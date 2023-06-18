@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xixi.observe.dao.PrivateKeyDao">
+    <resultMap id="PrivateKey" type="com.xixi.observe.entity.PrivateKey">
+        <result property="privateKey" column="private_key"/>
+        <result property="enableTime" column="enable_time"/>
+        <result property="expiration" column="expiration"/>
+    </resultMap>
+    <select id="getPrivateKey" resultMap="PrivateKey">
+        select private_key,enable_time,expiration from private_key where enable_time &lt;=#{enableTime} and #{expiration} &lt; expiration limit 1
+    </select>
+</mapper>

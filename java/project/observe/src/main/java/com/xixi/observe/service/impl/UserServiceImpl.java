@@ -5,6 +5,7 @@ import com.xixi.observe.entity.LoginRequest;
 import com.xixi.observe.entity.LoginResult;
 import com.xixi.observe.entity.LoginUser;
 import com.xixi.observe.entity.ServiceRandomResult;
+import com.xixi.observe.service.ErrorException;
 import com.xixi.observe.service.UserService;
 import com.xixi.observe.util.Result;
 import com.xixi.observe.util.StringUtil;
@@ -13,7 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -98,7 +98,7 @@ public class UserServiceImpl implements UserService {
             throw new ErrorException(Result.CODE_FAILED, Result.MSG_FAILED);
         }
         LoginResult loginResult = new LoginResult();
-        loginResult.setAccessToken(TokenUtil.genericAccessToken(loginUser.getId()));
+        loginResult.setAccessToken(TokenUtil.getInstance().genericAccessToken(loginUser.getId()));
         loginResult.setRefreshToken("refreshtoken");
         return loginResult;
     }

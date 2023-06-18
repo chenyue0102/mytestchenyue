@@ -12,3 +12,11 @@ CREATE TABLE `user_info`(
     `modify_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY(`id`)
 )CHARSET=utf8mb4;
+
+CREATE TABLE `private_key`(
+	`private_key` VARCHAR(4096) NOT NULL,
+	`enable_time` TIMESTAMP NOT NULL,
+	`expiration` TIMESTAMP NOT NULL,
+	INDEX(`enable_time`,`expiration`),
+	PRIMARY KEY(`enable_time`)
+)CHARSET=utf8mb4;

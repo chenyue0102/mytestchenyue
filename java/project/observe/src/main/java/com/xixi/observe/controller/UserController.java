@@ -3,7 +3,7 @@ package com.xixi.observe.controller;
 import com.xixi.observe.entity.LoginRequest;
 import com.xixi.observe.entity.LoginResult;
 import com.xixi.observe.entity.ServiceRandomResult;
-import com.xixi.observe.service.UserService;
+import com.xixi.observe.service.ErrorException;
 import com.xixi.observe.service.impl.UserServiceImpl;
 import com.xixi.observe.util.Result;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,7 +34,7 @@ public class UserController {
         try{
             LoginResult loginResult = userService.login(loginRequest);
             result.setData(loginResult);
-        }catch (UserService.ErrorException e){
+        }catch (ErrorException e){
             result.setCode(e.getCode());
             result.setMsg(e.getMsg());
         }
