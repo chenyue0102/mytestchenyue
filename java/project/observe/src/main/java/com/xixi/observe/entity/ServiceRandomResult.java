@@ -4,5 +4,5 @@ import lombok.Data;
 
 @Data
 public class ServiceRandomResult {
-    private int serviceRandom;
+    private String serviceRandom;
 }

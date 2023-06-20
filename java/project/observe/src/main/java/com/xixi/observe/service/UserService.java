@@ -6,7 +6,7 @@ import com.xixi.observe.entity.ServiceRandomResult;
 
 public interface UserService {
 
-    ServiceRandomResult getServiceRandom();
+    ServiceRandomResult getServiceRandom(String ip);
 
     LoginResult login(LoginRequest loginRequest)throws ErrorException;
 }

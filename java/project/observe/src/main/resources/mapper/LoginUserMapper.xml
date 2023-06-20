@@ -5,11 +5,11 @@
     <resultMap id="LoginUserResult" type="com.xixi.observe.entity.LoginUser">
         <result property="id" column="id"/>
         <result property="name" column="name"/>
-        <result property="loginNae" column="login_name"/>
+        <result property="loginName" column="login_name"/>
         <result property="password" column="password"/>
         <result property="state" column="state"/>
     </resultMap>
     <select id="getLoginUser" parameterType="string" resultMap="LoginUserResult">
-        select id, name, login_name password from user_info where login_name=#{loginName}
+        select id, name, login_name, password from user_info where login_name=#{loginName}
     </select>
 </mapper>

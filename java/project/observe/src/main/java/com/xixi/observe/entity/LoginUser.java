@@ -8,7 +8,7 @@ public class LoginUser {
 
     private String name;
 
-    private String loginNae;
+    private String loginName;
 
     private String password;
 

@@ -1,5 +1,6 @@
 package com.xixi.observe.controller;
 
+import com.xixi.observe.annotation.ClientIp;
 import com.xixi.observe.entity.LoginRequest;
 import com.xixi.observe.entity.LoginResult;
 import com.xixi.observe.entity.ServiceRandomResult;
@@ -9,6 +10,8 @@ import com.xixi.observe.util.Result;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.logging.Logger;
 
 @RestController
 public class UserController {
@@ -22,9 +25,10 @@ public class UserController {
 
     //请求随机数
     @GetMapping("/random")
-    public Result<ServiceRandomResult> getRandom(){
+    public Result<ServiceRandomResult> getRandom(@ClientIp String ip){
+        Logger.getGlobal().warning("clientip:" + ip);
         Result<ServiceRandomResult> result = new Result<>(Result.CODE_SUCCESS, Result.MSG_SUCCEEDED);
-        result.setData(userService.getServiceRandom());
+        result.setData(userService.getServiceRandom(ip));
         return result;
     }
 

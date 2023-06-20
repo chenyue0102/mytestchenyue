@@ -4,16 +4,19 @@ import com.xixi.observe.dao.PrivateKeyDao;
 import com.xixi.observe.entity.AccessToken;
 import com.xixi.observe.entity.PrivateKey;
 import com.xixi.observe.entity.RefreshToken;
+import com.xixi.observe.service.impl.UserServiceImpl;
 import com.xixi.observe.util.TokenUtil;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.sql.Timestamp;
-import java.util.logging.Logger;
 
 @SpringBootTest
 public class TokenTest {
+    private static final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
     private static final String privateKey = "MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDGS8la6Hu3h/Ny\n" +
             "+ezt1GYjG1msroBTOHA6TJP6Ed2yczgaahG2HPSinJyQ1aBQpjarVsljIqPuVRrY\n" +
             "XH14GLuF1Kh1k4Talp+l5rWaDbdUAqgirsAwEzIN3n9TZnWHdf/8oitkN2rjHdP5\n" +
@@ -42,41 +45,56 @@ public class TokenTest {
             "yIeLpS+CnowKVxm34pHZfkU=";
     @Test void testReadRSAKey(){
         String tmpPrivateKey = privateKey.replaceAll("\n", "");
-        TokenUtil.getInstance().setRSAKey(tmpPrivateKey);
+        TokenUtil.getInstance().setRSAKey(tmpPrivateKey, 1000);
     }
 
     @Test
     public void testAccessToken(){
         String tmpPrivateKey = privateKey.replaceAll("\n", "");
-        TokenUtil.getInstance().setRSAKey(tmpPrivateKey);
+        TokenUtil.getInstance().setRSAKey(tmpPrivateKey, 1000);
 
         String str = TokenUtil.getInstance().genericAccessToken(1);
         AccessToken accessToken = new AccessToken();
         boolean checkToken = TokenUtil.getInstance().checkAccessTokenAndConvert(str, accessToken);
-        Logger.getGlobal().warning("check:" + String.valueOf(checkToken));
+        logger.warn("check:" + String.valueOf(checkToken));
     }
 
     @Test void testRefreshToken(){
         String tmpPrivateKey = privateKey.replaceAll("\n", "");
-        TokenUtil.getInstance().setRSAKey(tmpPrivateKey);
+        TokenUtil.getInstance().setRSAKey(tmpPrivateKey, 1000);
 
         String str = TokenUtil.getInstance().genericRefreshToken(1);
         RefreshToken refreshToken = new RefreshToken();
         boolean checkToken = TokenUtil.getInstance().checkRefreshToken(str);
-        Logger.getGlobal().warning("check:" + String.valueOf(checkToken));
+        logger.warn("check:" + String.valueOf(checkToken));
     }
 
     @Autowired
     PrivateKeyDao privateKeyDao;
 
-    @Test void testReadToken(){
+    @Test
+    void testReadToken(){
         long l = 1577808000;//2020-1-1 0:0:0
         //long l = 1580486400;//2020-2-1 0:0:0
         l *= 1000;
         Timestamp enableTime = new Timestamp(l);
         PrivateKey privateKey1 = privateKeyDao.getPrivateKey(enableTime, enableTime);
-        Logger.getGlobal().warning("token:" + privateKey1.getPrivateKey()
+        logger.warn("token:" + privateKey1.getPrivateKey()
         + "enable:" + privateKey1.getEnableTime()
         + "exp:" + privateKey1.getExpiration());
+    }
+
+    @Test
+    void testRefreshToken2(){
+        long l = 1577808000;//2020-1-1 0:0:0
+        //long l = 1580486400;//2020-2-1 0:0:0
+        l *= 1000;
+        Timestamp enableTime = new Timestamp(l);
+        PrivateKey privateKey1 = privateKeyDao.getPrivateKey(enableTime, enableTime);
+        String tmp = privateKey1.getPrivateKey().replaceAll("\n", "");
+        TokenUtil.getInstance().setRSAKey(tmp, privateKey1.getExpiration().getTime() / 1000);
+        String token = "eyJ1c2VySWQiOjEsImV4cGlyYXRpb25UaW1lIjoxNzA0MDM4NDAwMDAwfQ==.TTFFVs/0882zcBgS4HnGS0T5fIYS/rg9oEWJYlJhIJUBmqszJqQbrUp8I/D+Rv1IhItfzF6E8dUKPnRLv+9fie01IQ3VrXPAyniLdK+MCq012JmCWn4qAnQkaOE0uNR1sj27egWfXqufIGYESomoSgW7kK4LRb6hQMclk22Nokv5BhRypFu4zW+Q+uHlhjNpoxXAg1pDeJhLS4aiq92sd7/a63xuHuWxINp3F84luTg0wmMlR9p/IfzzqO/d0T5Gca6tp8fTUCb4iSicgGG4rehCsW09QAnGtfoCjX7U+MOueHvJum60XzDU8g/LiVy1gFJbqA1anNW8h9DuQU46Rw==";
+        RefreshToken refreshToken = TokenUtil.getInstance().convert2RefreshToken(token);
+        logger.warn(refreshToken.toString());
     }
 }

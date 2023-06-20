@@ -11,7 +11,7 @@ public class LoginRequest {
     @NotEmpty
     private String passwordHash;
 
-    private int serverRandom;
+    private String serverRandom;
 
-    private int clientRandom;
+    private String clientRandom;
 }

@@ -151,7 +151,7 @@ public class TokenUtil {
         return token;
     }
 
-    public boolean checkRefreshToken(String token){
+    public boolean checkRefreshTokenAndConvert(String token, RefreshToken outRefreshToken){
         boolean ret = false;
         try{
             int index = token.indexOf(".");
@@ -171,9 +171,26 @@ public class TokenUtil {
             byte[]signEncode = Base64.getDecoder().decode(signBase64);
             byte[]signDecode = rsaDecrypt.doFinal(signEncode);
             ret = Arrays.equals(hash1, signDecode);
+            if (ret && null != outRefreshToken){
+                outRefreshToken.setUserId(refreshToken.getUserId());
+                outRefreshToken.setExpirationTime(refreshToken.getExpirationTime());
+            }
         }catch (Exception e){
             e.printStackTrace();
         }
         return ret;
+    }
+
+    public boolean checkRefreshToken(String token){
+        return checkRefreshTokenAndConvert(token, null);
+    }
+
+    public RefreshToken convert2RefreshToken(String token){
+        RefreshToken refreshToken = new RefreshToken();
+        if (checkRefreshTokenAndConvert(token, refreshToken)){
+            return refreshToken;
+        }else{
+            return null;
+        }
     }
 }
