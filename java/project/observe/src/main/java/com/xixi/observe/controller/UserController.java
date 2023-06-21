@@ -9,6 +9,7 @@ import com.xixi.observe.service.impl.UserServiceImpl;
 import com.xixi.observe.util.Result;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.logging.Logger;
@@ -33,7 +34,7 @@ public class UserController {
     }
 
     @GetMapping("/login")
-    public Result<LoginResult> login(LoginRequest loginRequest){
+    public Result<LoginResult> login(@RequestBody LoginRequest loginRequest){
         Result<LoginResult> result = new Result<>(Result.CODE_SUCCESS, Result.MSG_SUCCEEDED);
         try{
             LoginResult loginResult = userService.login(loginRequest);
