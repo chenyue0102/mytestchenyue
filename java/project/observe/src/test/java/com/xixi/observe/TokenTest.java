@@ -4,7 +4,7 @@ import com.xixi.observe.dao.PrivateKeyDao;
 import com.xixi.observe.entity.AccessToken;
 import com.xixi.observe.entity.PrivateKey;
 import com.xixi.observe.entity.RefreshToken;
-import com.xixi.observe.service.impl.UserServiceImpl;
+import com.xixi.observe.service.impl.UserInfoServiceImpl;
 import com.xixi.observe.util.TokenUtil;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -16,7 +16,7 @@ import java.sql.Timestamp;
 
 @SpringBootTest
 public class TokenTest {
-    private static final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
+    private static final Logger logger = LoggerFactory.getLogger(UserInfoServiceImpl.class);
     private static final String privateKey = "MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDGS8la6Hu3h/Ny\n" +
             "+ezt1GYjG1msroBTOHA6TJP6Ed2yczgaahG2HPSinJyQ1aBQpjarVsljIqPuVRrY\n" +
             "XH14GLuF1Kh1k4Talp+l5rWaDbdUAqgirsAwEzIN3n9TZnWHdf/8oitkN2rjHdP5\n" +

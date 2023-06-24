@@ -1,12 +1,9 @@
 package com.xixi.observe.service.impl;
 
-import com.xixi.observe.dao.LoginUserDao;
-import com.xixi.observe.entity.LoginRequest;
-import com.xixi.observe.entity.LoginResult;
-import com.xixi.observe.entity.LoginUser;
-import com.xixi.observe.entity.ServiceRandomResult;
+import com.xixi.observe.dao.UserInfoDao;
+import com.xixi.observe.entity.*;
 import com.xixi.observe.service.ErrorException;
-import com.xixi.observe.service.UserService;
+import com.xixi.observe.service.UserInfoService;
 import com.xixi.observe.util.Result;
 import com.xixi.observe.util.StringUtil;
 import com.xixi.observe.util.TokenUtil;
@@ -22,12 +19,12 @@ import java.util.List;
 import java.util.Random;
 
 @Service
-public class UserServiceImpl implements UserService {
-    private static final int SERVER_RANDOM_TIMEOUT_MS = 5000 * 5000;
-    private static final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
+public class UserInfoServiceImpl implements UserInfoService {
+    private static final int SERVER_RANDOM_TIMEOUT_MS = 5000 * 20;
+    private static final Logger logger = LoggerFactory.getLogger(UserInfoServiceImpl.class);
 
     @Autowired
-    LoginUserDao loginUserDao;
+    UserInfoDao userInfoDao;
 
     static class ServerRandomInfo
     {
@@ -38,7 +35,7 @@ public class UserServiceImpl implements UserService {
     private final Random random = new Random();
     private MessageDigest sha256Hash;
 
-    public UserServiceImpl() {
+    public UserInfoServiceImpl() {
         try{
             sha256Hash =  MessageDigest.getInstance("SHA-256");
         }catch (Exception e){
@@ -74,7 +71,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public LoginResult login(LoginRequest loginRequest, String ip) throws ErrorException {
         logger.warn("login ip:" + ip + " loginName:" + loginRequest.getLoginName());
-        LoginUser loginUser = loginUserDao.getLoginUser(loginRequest.getLoginName());
+        LoginUser loginUser = userInfoDao.getLoginUser(loginRequest.getLoginName());
         if (null == loginUser){
             logger.warn("null == loginUser");
             throw new ErrorException(Result.CODE_FAILED, Result.MSG_FAILED);
@@ -110,8 +107,13 @@ public class UserServiceImpl implements UserService {
             throw new ErrorException(Result.CODE_FAILED, Result.MSG_FAILED);
         }
         LoginResult loginResult = new LoginResult();
-        loginResult.setAccessToken(TokenUtil.getInstance().genericAccessToken(loginUser.getId()));
-        loginResult.setRefreshToken(TokenUtil.getInstance().genericRefreshToken(loginUser.getId()));
+        loginResult.setAccessToken(TokenUtil.getInstance().genericAccessToken(loginUser.getUserId()));
+        loginResult.setRefreshToken(TokenUtil.getInstance().genericRefreshToken(loginUser.getUserId()));
         return loginResult;
+    }
+
+    @Override
+    public UserInfo getUserInfo(int userId) {
+        return userInfoDao.getUserInfo(userId);
     }
 }

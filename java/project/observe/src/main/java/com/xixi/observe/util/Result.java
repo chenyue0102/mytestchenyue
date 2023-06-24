@@ -11,6 +11,9 @@ public class Result<T> implements Serializable {
     public static final int CODE_TOKEN_FAILED = -2;
     public static final String MSG_TOKEN_FAILED = "token failed";
 
+    public static final int CODE_PERMISSION_FAINED = -3;
+
+    public static final String MSG_PERMISSION_FAILED = "permission failed";
 
     private int code;
 

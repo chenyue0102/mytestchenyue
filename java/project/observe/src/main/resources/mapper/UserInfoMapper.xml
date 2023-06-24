@@ -2,14 +2,18 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.xixi.observe.dao.UserInfoDao">
-    <resultMap id="LoginUserResult" type="com.xixi.observe.entity.LoginUser">
+    <resultMap id="UserInfoResult" type="com.xixi.observe.entity.UserInfo">
         <result property="userId" column="user_id"/>
         <result property="name" column="name"/>
         <result property="loginName" column="login_name"/>
         <result property="password" column="password"/>
         <result property="state" column="state"/>
+        <result property="manager" column="manager"/>
+        <result property="createTime" column="create_time"/>
+        <result property="modifyTime" column="modify_time"/>
     </resultMap>
-    <select id="getLoginUser" parameterType="string" resultMap="LoginUserResult">
-        select user_id, name, login_name, password from user_info where login_name=#{loginName}
+    <select id="getUserInfo" parameterType="int" resultMap="UserInfoResult">
+        select user_id, name, login_name, password,state,manager, create_time,modify_time
+        from user_info where user_id=#{userId}
     </select>
 </mapper>
