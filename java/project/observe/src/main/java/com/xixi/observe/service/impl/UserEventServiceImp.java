@@ -32,7 +32,7 @@ public class UserEventServiceImp implements UserEventService {
         AccessToken accessToken = AccessTokenThreadLocal.get();
         if (0 == userId || userId != accessToken.getUserId()){
             UserInfo userInfo = userInfoDao.getUserInfo(accessToken.getUserId());
-            if (userInfo.getManager() != 0){
+            if (userInfo.getManager() == 0){
                 throw new ErrorException(Result.CODE_PERMISSION_FAINED, Result.MSG_PERMISSION_FAILED);
             }
         }
