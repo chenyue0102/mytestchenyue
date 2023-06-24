@@ -97,4 +97,16 @@ public class TokenTest {
         RefreshToken refreshToken = TokenUtil.getInstance().convert2RefreshToken(token);
         logger.warn(refreshToken.toString());
     }
+
+    @Test
+    void verifyAccessToken(){
+        String refreshToken = "eyJ1c2VySWQiOjEsImV4cGlyYXRpb25UaW1lIjoxNzA0MDM4NDAwMDAwfQ==.TTFFVs/0882zcBgS4HnGS0T5fIYS/rg9oEWJYlJhIJUBmqszJqQbrUp8I/D+Rv1IhItfzF6E8dUKPnRLv+9fie01IQ3VrXPAyniLdK+MCq012JmCWn4qAnQkaOE0uNR1sj27egWfXqufIGYESomoSgW7kK4LRb6hQMclk22Nokv5BhRypFu4zW+Q+uHlhjNpoxXAg1pDeJhLS4aiq92sd7/a63xuHuWxINp3F84luTg0wmMlR9p/IfzzqO/d0T5Gca6tp8fTUCb4iSicgGG4rehCsW09QAnGtfoCjX7U+MOueHvJum60XzDU8g/LiVy1gFJbqA1anNW8h9DuQU46Rw==";
+
+
+        String accessToken = "eyJ1c2VySWQiOjEsImV4cGlyYXRpb25UaW1lIjoxNjg3NTEyOTc3fQ==.7uy3/agstu738mhTBmMWmIvJHGnmv00/rETTB0BrZkk=";
+
+    }
+    // "accessToken": "eyJ1c2VySWQiOjEsImV4cGlyYXRpb25UaW1lIjoxNjg3NTA5MTI5fQ==.eYCZ1TYM0rEIo+yaoc7eInfMSQ3WI2Qv2UGazpMTdt4=",
+    // "refreshToken":
+
 }

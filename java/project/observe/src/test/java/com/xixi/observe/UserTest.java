@@ -17,7 +17,7 @@ public class UserTest {
         LoginRequest loginRequest = new LoginRequest();
         loginRequest.setLoginName("zhangsan");
         try{
-            LoginResult loginResult = userService.login(loginRequest);
+            LoginResult loginResult = userService.login(loginRequest, "");
         }catch (Exception e){
             e.printStackTrace();
         }

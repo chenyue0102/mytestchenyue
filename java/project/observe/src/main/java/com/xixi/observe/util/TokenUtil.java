@@ -3,6 +3,7 @@ package com.xixi.observe.util;
 import com.xixi.observe.entity.AccessToken;
 import com.google.gson.Gson;
 import com.xixi.observe.entity.RefreshToken;
+import org.slf4j.LoggerFactory;
 
 import javax.crypto.Cipher;
 import java.nio.charset.StandardCharsets;
@@ -18,6 +19,8 @@ import java.util.logging.Logger;
 public class TokenUtil {
     public static final long ACCESS_TOKEN_EXPIRATION_SECOND = 60 * 60 * 24;
     public static final long REFRESH_TOKEN_EXPIRATION_SECOND = 30 * 24 * 60 * 60;
+
+    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(TokenUtil.class);
     private static final TokenUtil instance = new TokenUtil();
 
     public static TokenUtil getInstance(){
@@ -90,12 +93,14 @@ public class TokenUtil {
         try{
             int index = token.indexOf(".");
             if (index < 0){
+                logger.warn("checkAccessTokenAndConvert not find dot");
                 throw new Exception("not find dot");
             }
             String jsonBase64 = token.substring(0, index);
             String json = new String(Base64.getDecoder().decode(jsonBase64));
             AccessToken accessToken = gson.fromJson(json, AccessToken.class);
             if ((System.currentTimeMillis() / 1000) > accessToken.getExpirationTime()){
+                logger.warn("checkAccessTokenAndConvert expiration");
                 throw new Exception("expiration");
             }
             String hashBase64 = token.substring(index + 1);
@@ -106,6 +111,8 @@ public class TokenUtil {
             if (ret && null != accessToken){
                 outAccessToken.setUserId(accessToken.getUserId());
                 outAccessToken.setExpirationTime(accessToken.getExpirationTime());
+            }else{
+                logger.warn("checkAccessTokenAndConvert check failed");
             }
         }catch (Exception e){
             e.printStackTrace();

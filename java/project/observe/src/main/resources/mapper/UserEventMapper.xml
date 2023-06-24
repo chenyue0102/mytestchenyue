@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xixi.observe.dao.UserEventDao">
+    <resultMap id="UserEventResult" type="com.xixi.observe.entity.UserEvent">
+        <result property="userId" column="user_id" />
+        <result property="eventId" column="event_id" />
+        <result property="timestamp" column="timestamp" />
+        <result property="data" column="data" />
+    </resultMap>
+    <insert id="insertUserEvent">
+        insert into user_event(user_id, event_id, timestamp, data)
+        values(#{userId},#{eventId},#{timestamp},#{data})
+    </insert>
+    <select id="findUserEvent" resultMap="UserEventResult">
+        select user_id,event_id,timestamp,data from user_event
+        where (#{userId}=0 or #{userId}=user_id)
+            and(#{eventId}=0 or #{eventId}=event_id)
+            and(#{startTime}=0 or #{startTime} &lt;= timestamp)
+            and(#{endTime}=0 or #{endTime} &gt;= timestamp)
+    </select>
+</mapper>

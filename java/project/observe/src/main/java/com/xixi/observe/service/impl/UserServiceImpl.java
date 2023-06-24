@@ -49,7 +49,7 @@ public class UserServiceImpl implements UserService {
     public ServiceRandomResult getServiceRandom(String ip) {
         int serverRandom = random.nextInt();
         ServiceRandomResult result = new ServiceRandomResult();
-        result.setServiceRandom(String.valueOf(serverRandom) + ip);
+        result.setServiceRandom(String.valueOf(serverRandom));
 
         long timestamp = System.currentTimeMillis();
         ServerRandomInfo serverRandomInfo = new ServerRandomInfo();
@@ -72,7 +72,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public LoginResult login(LoginRequest loginRequest) throws ErrorException {
+    public LoginResult login(LoginRequest loginRequest, String ip) throws ErrorException {
+        logger.warn("login ip:" + ip + " loginName:" + loginRequest.getLoginName());
         LoginUser loginUser = loginUserDao.getLoginUser(loginRequest.getLoginName());
         if (null == loginUser){
             logger.warn("null == loginUser");

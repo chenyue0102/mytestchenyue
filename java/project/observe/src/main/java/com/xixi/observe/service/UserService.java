@@ -8,5 +8,5 @@ public interface UserService {
 
     ServiceRandomResult getServiceRandom(String ip);
 
-    LoginResult login(LoginRequest loginRequest)throws ErrorException;
+    LoginResult login(LoginRequest loginRequest, String ip)throws ErrorException;
 }

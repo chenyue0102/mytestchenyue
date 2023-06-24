@@ -5,9 +5,12 @@ import java.io.Serializable;
 
 public class Result<T> implements Serializable {
     public static final int CODE_SUCCESS = 0;
-    public static final int CODE_FAILED = -1;
     public static final String MSG_SUCCEEDED = "succeeded";
+    public static final int CODE_FAILED = -1;
     public static final String MSG_FAILED = "failed";
+    public static final int CODE_TOKEN_FAILED = -2;
+    public static final String MSG_TOKEN_FAILED = "token failed";
+
 
     private int code;
 
