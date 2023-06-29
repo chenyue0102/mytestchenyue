@@ -109,4 +109,12 @@ public class TokenTest {
     // "accessToken": "eyJ1c2VySWQiOjEsImV4cGlyYXRpb25UaW1lIjoxNjg3NTA5MTI5fQ==.eYCZ1TYM0rEIo+yaoc7eInfMSQ3WI2Qv2UGazpMTdt4=",
     // "refreshToken":
 
+    @Test
+    void testRandomToken(){
+        long exp = (System.currentTimeMillis() / 1000) + 10;
+        String str = TokenUtil.getInstance().genericRandomToken(exp);
+        logger.warn("token:" + str);
+        boolean check = TokenUtil.getInstance().checkRandomToken(str);
+        logger.warn("check:" + check);
+    }
 }

@@ -6,6 +6,6 @@ import lombok.Data;
 public class RefreshToken {
     private int userId;
 
-    //时间戳，单位秒
+    //过期时间戳，单位秒
     private long expirationTime;
 }

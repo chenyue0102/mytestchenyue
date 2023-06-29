@@ -26,13 +26,6 @@ public class UserInfoServiceImpl implements UserInfoService {
     @Autowired
     UserInfoDao userInfoDao;
 
-    static class ServerRandomInfo
-    {
-        String serverRandom;
-        long timestamp;
-    }
-    private List<ServerRandomInfo> serverRandomInfoList = new LinkedList<>();
-    private final Random random = new Random();
     private MessageDigest sha256Hash;
 
     public UserInfoServiceImpl() {
@@ -44,27 +37,9 @@ public class UserInfoServiceImpl implements UserInfoService {
     }
     @Override
     public ServiceRandomResult getServiceRandom(String ip) {
-        int serverRandom = random.nextInt();
         ServiceRandomResult result = new ServiceRandomResult();
-        result.setServiceRandom(String.valueOf(serverRandom));
-
-        long timestamp = System.currentTimeMillis();
-        ServerRandomInfo serverRandomInfo = new ServerRandomInfo();
-        serverRandomInfo.serverRandom = result.getServiceRandom();
-        serverRandomInfo.timestamp = timestamp;
-        serverRandomInfoList.add(serverRandomInfo);
-
-        Iterator<ServerRandomInfo> iterator = serverRandomInfoList.iterator();
-        while (iterator.hasNext()){
-            ServerRandomInfo tmp = iterator.next();
-            if (tmp.timestamp + SERVER_RANDOM_TIMEOUT_MS < timestamp){
-                logger.warn("remove:" + tmp.serverRandom);
-                iterator.remove();
-            }else{
-                break;
-            }
-        }
-
+        long expTime = (System.currentTimeMillis() / 1000) + 10;
+        result.setServiceRandom(TokenUtil.getInstance().genericRandomToken(expTime));
         return result;
     }
 
@@ -76,20 +51,8 @@ public class UserInfoServiceImpl implements UserInfoService {
             logger.warn("null == loginUser");
             throw new ErrorException(Result.CODE_FAILED, Result.MSG_FAILED);
         }
-        boolean findServerRandom = false;
-        Iterator<ServerRandomInfo> iterator = serverRandomInfoList.iterator();
-        while (iterator.hasNext()){
-            ServerRandomInfo tmp = iterator.next();
-            if (tmp.serverRandom.equals(loginRequest.getServerRandom())){
-                iterator.remove();
-                findServerRandom = true;
-                break;
-            }else{
-                break;
-            }
-        }
-        if (!findServerRandom){
-            logger.warn("！findServerRandom" + loginRequest.getServerRandom());
+
+        if (!TokenUtil.getInstance().checkRandomToken(loginRequest.getServerRandom())){
             throw new ErrorException(Result.CODE_FAILED, Result.MSG_FAILED);
         }
 
