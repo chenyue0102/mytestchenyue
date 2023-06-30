@@ -125,10 +125,10 @@ void SimpleTcpServer::innerThreadProc()
 			assert(false);
 			break;
 		}
-		timeout.tv_sec = 0;
-		timeout.tv_usec = SELECT_TIMEOUT_MS * 1000 ;	//100毫秒
 		int rv = 0;
 		for (;;) {
+			timeout.tv_sec = 0;
+			timeout.tv_usec = SELECT_TIMEOUT_MS * 1000 ;	//100毫秒
 			FD_ZERO(&fd);
 			FD_SET(sListen, &fd);
 			rv = select(sListen + 1, &fd, NULL, NULL, &timeout);

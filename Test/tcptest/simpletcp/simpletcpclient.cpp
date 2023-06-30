@@ -174,10 +174,10 @@ void SimpleTcpClient::innerThreadProc()
 		if (selectCount == 0) {
 			selectCount = 1;
 		}
-		timeout.tv_sec = 0;
-		timeout.tv_usec = 100 * 1000;
 		bool connectSuccess = false;
 		for (int i = 0; i < selectCount; i++) {
+			timeout.tv_sec = 0;
+			timeout.tv_usec = 100 * 1000;
 			FD_ZERO(&fdWrite);
 			FD_SET(s, &fdWrite);
 			rv = select(s + 1, NULL, &fdWrite, NULL, &timeout);
