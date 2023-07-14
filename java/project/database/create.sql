@@ -10,7 +10,7 @@ CREATE TABLE `user_info`(
     `manager` TINYINT NOT NULL DEFAULT 0,
 	`create_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `modify_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY(`id`)
+    PRIMARY KEY(`user_id`)
 )CHARSET=utf8mb4;
 
 CREATE TABLE `private_key`(
@@ -19,7 +19,7 @@ CREATE TABLE `private_key`(
 	`enable_time` TIMESTAMP NOT NULL,
 	`expiration` TIMESTAMP NOT NULL,
 	INDEX(`enable_time`,`expiration`),
-	INDEX(`state`)
+	INDEX(`state`),
 	PRIMARY KEY(`enable_time`, `state`)
 )CHARSET=utf8mb4;
 
