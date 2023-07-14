@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.naming.Context;
+import javax.naming.InitialContext;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -26,8 +28,29 @@ public class UserController {
     UserEventServiceImp userEventService;
 
     @GetMapping("/test")
+    @NoAuthorization
     public String test(){
         return "test";
+    }
+
+    @GetMapping("inputparam")
+    @NoAuthorization
+    public String inputparam(){
+        //获取系统环境变量
+        String env = System.getenv("inputparam");
+        if (null == env){
+            try{
+                //获取tomcat 环境变量
+                InitialContext ctx = new InitialContext();
+                Context envCtx = (Context)ctx.lookup("java:comp/env");
+                String appEnv = (String)envCtx.lookup("inputparam");
+                env = appEnv;
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+
+        return env;
     }
 
     //请求随机数
