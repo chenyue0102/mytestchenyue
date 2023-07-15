@@ -37,6 +37,9 @@ dependencies {
 	//json
 	implementation 'com.google.code.gson:gson:2.10.1'
 
+	//配置解密类
+	implementation 'com.github.ulisesbocchio:jasypt-spring-boot-starter:2.1.1'
+
 	providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
