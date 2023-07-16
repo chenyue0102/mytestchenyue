@@ -1,0 +1,4 @@
+<Context>
+    <Environment name="spring.datasource.password" value="UiI+KEJ6Vem+y2z0FqSBlA==" type="java.lang.String"/>
+    <Environment name="spring.datasource.username" value="FGU3r1KHJJaSmSUP5HH20w==" type="java.lang.String"/>
+</Context>
