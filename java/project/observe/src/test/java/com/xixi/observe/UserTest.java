@@ -20,6 +20,9 @@ public class UserTest {
     void testLogin(){
         LoginRequest loginRequest = new LoginRequest();
         loginRequest.setLoginName("zhangsan");
+        loginRequest.setClientRandom("abcd");
+        loginRequest.setServerRandom("eyJyYW5kb21Ub2tlbiI6IjFkMGYxNWYzLTYzYTktNGQ1My04ODk2LTFjMmY0NjhiMDJiMSIsImV4cGlyYXRpb25UaW1lIjoxNjkwOTAzNTExfQ==.0te9jm+qrWMftbNJd79OKhhj6Pr64AJv42toP0Cn/eU=");
+        loginRequest.setPasswordHash("2e348c718da17da7eaab9030326295c3fe0e0580cf9780274b481489dd66a069");
         try{
             LoginResult loginResult = userService.login(loginRequest, "");
         }catch (Exception e){

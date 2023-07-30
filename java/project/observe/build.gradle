@@ -21,6 +21,9 @@ war{
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 
+	//web socket
+	implementation 'org.springframework.boot:spring-boot-starter-websocket'
+
 	implementation 'mysql:mysql-connector-java:8.0.32'
 	//定制sql操作类
 	implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:2.3.0'
@@ -30,6 +33,8 @@ dependencies {
 	annotationProcessor("org.projectlombok:lombok:1.18.22")
 	testCompileOnly("org.projectlombok:lombok:1.18.22")
 	testAnnotationProcessor("org.projectlombok:lombok:1.18.22")
+
+
 
 	//notempty注解等
 	implementation 'org.hibernate:hibernate-validator:8.0.0.Final'

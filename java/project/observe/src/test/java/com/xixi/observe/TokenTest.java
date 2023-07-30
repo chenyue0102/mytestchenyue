@@ -117,4 +117,11 @@ public class TokenTest {
         boolean check = TokenUtil.getInstance().checkRandomToken(str);
         logger.warn("check:" + check);
     }
+
+    @Test
+    void testAccessToken2(){
+        String token = "eyJ1c2VySWQiOjEsImV4cGlyYXRpb25UaW1lIjoxNjkwNzkzMDQ4fQ==.L//ZimiVzX6AKFzkp0xmqF8rmF8hmVPYbHxDtVcHraU=";
+        AccessToken accessToken = new AccessToken();
+        TokenUtil.getInstance().checkAccessTokenAndConvert(token, accessToken);
+    }
 }

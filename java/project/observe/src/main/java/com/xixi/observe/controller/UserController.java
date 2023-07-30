@@ -9,9 +9,11 @@ import com.xixi.observe.service.impl.UserInfoServiceImpl;
 import com.xixi.observe.util.AccessTokenThreadLocal;
 import com.xixi.observe.util.Result;
 import com.xixi.observe.util.TokenUtil;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.naming.Context;
@@ -21,6 +23,7 @@ import java.util.logging.Logger;
 
 @RestController
 public class UserController {
+    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(TokenUtil.class);
     @Autowired
     UserInfoServiceImpl userInfoService;
 
@@ -65,10 +68,16 @@ public class UserController {
 
     @PostMapping("/refreshtoken")
     @NoAuthorization
-    public Result<RefreshTokenResult> refreshToken(RefreshTokenRequest request){
+    public Result<RefreshTokenResult> refreshToken(@RequestBody RefreshTokenRequest request){
         RefreshToken refreshToken = new RefreshToken();
         Result<RefreshTokenResult> result = new Result(Result.CODE_SUCCESS, Result.MSG_SUCCEEDED);
         try{
+            logger.warn("refreshToken:" + request.getRefreshToken());
+            if (request.getRefreshToken().contains("+")){
+                logger.warn("contains +");
+            }else{
+                logger.warn("not contains +");
+            }
             if (TokenUtil.getInstance().checkRefreshTokenAndConvert(request.getRefreshToken(), refreshToken)){
                 String newAccessToken = TokenUtil.getInstance().genericAccessToken(refreshToken.getUserId());
                 RefreshTokenResult refreshTokenResult = new RefreshTokenResult();
@@ -79,6 +88,7 @@ public class UserController {
                 result.setMsg(Result.MSG_TOKEN_FAILED);
             }
         }catch (Exception e){
+            logger.warn("refreshToken exception");
             e.printStackTrace();
             result.setCode(Result.CODE_FAILED);
             result.setMsg(Result.MSG_FAILED);

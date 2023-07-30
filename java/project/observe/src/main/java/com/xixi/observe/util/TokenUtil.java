@@ -202,22 +202,30 @@ public class TokenUtil {
         boolean ret = false;
         try{
             do {
+                logger.warn("checkRefreshTokenAndConvert token:" + token);
                 int index = token.indexOf(".");
                 if (index < 0){
+                    logger.warn("checkRefreshTokenAndConvert index:" + index);
                     break;
                 }
                 String jsonBase64 = token.substring(0, index);
+                logger.warn("jsonBase64:" + jsonBase64);
                 byte[]jsonData = Base64.getDecoder().decode(jsonBase64);
                 String json = new String(jsonData);
+                logger.warn("json:" + json);
                 RefreshToken refreshToken = gson.fromJson(json, RefreshToken.class);
                 if ((System.currentTimeMillis() / 1000) > refreshToken.getExpirationTime()){
+                    logger.warn("checkRefreshTokenAndConvert timeout");
                     break;
                 }
                 byte []hash1 = sha256.digest(jsonData);
 
                 String signBase64 = token.substring(index + 1);
+                logger.warn("signBase64:" + signBase64);
                 byte[]signEncode = Base64.getDecoder().decode(signBase64);
+                logger.warn("signEncode:"+String.valueOf(signEncode));
                 byte[]signDecode = rsaDecrypt.doFinal(signEncode);
+                logger.warn(String.valueOf(signEncode) + String.valueOf(signDecode));
                 ret = Arrays.equals(hash1, signDecode);
                 if (ret && null != outRefreshToken){
                     outRefreshToken.setUserId(refreshToken.getUserId());
@@ -225,6 +233,7 @@ public class TokenUtil {
                 }
             }while (false);
         }catch (Exception e){
+            logger.warn("checkRefreshTokenAndConvert exception");
             e.printStackTrace();
         }
         return ret;

@@ -13,14 +13,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.security.MessageDigest;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Random;
 
 @Service
 public class UserInfoServiceImpl implements UserInfoService {
-    private static final int SERVER_RANDOM_TIMEOUT_MS = 5000 * 20;
+    private static final int SERVER_RANDOM_TIMEOUT_SECOND = 10;
     private static final Logger logger = LoggerFactory.getLogger(UserInfoServiceImpl.class);
 
     @Autowired
@@ -38,7 +34,7 @@ public class UserInfoServiceImpl implements UserInfoService {
     @Override
     public ServiceRandomResult getServiceRandom(String ip) {
         ServiceRandomResult result = new ServiceRandomResult();
-        long expTime = (System.currentTimeMillis() / 1000) + 10;
+        long expTime = (System.currentTimeMillis() / 1000) + SERVER_RANDOM_TIMEOUT_SECOND;
         result.setServiceRandom(TokenUtil.getInstance().genericRandomToken(expTime));
         return result;
     }
@@ -53,6 +49,7 @@ public class UserInfoServiceImpl implements UserInfoService {
         }
 
         if (!TokenUtil.getInstance().checkRandomToken(loginRequest.getServerRandom())){
+            logger.warn("checkRandomToken failed");
             throw new ErrorException(Result.CODE_FAILED, Result.MSG_FAILED);
         }
 
