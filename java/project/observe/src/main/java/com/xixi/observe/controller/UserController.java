@@ -7,6 +7,7 @@ import com.xixi.observe.service.ErrorException;
 import com.xixi.observe.service.impl.UserEventServiceImp;
 import com.xixi.observe.service.impl.UserInfoServiceImpl;
 import com.xixi.observe.util.AccessTokenThreadLocal;
+import com.xixi.observe.util.RedisUtil;
 import com.xixi.observe.util.Result;
 import com.xixi.observe.util.TokenUtil;
 import org.slf4j.LoggerFactory;
@@ -152,6 +153,13 @@ public class UserController {
             result.setMsg(e.getMsg());
         }
         return result;
+    }
+
+    @GetMapping("/getredis")
+    @NoAuthorization
+    public String getRedis(){
+        Object obj = RedisUtil.getInstance().get("key");
+        return obj != null ? obj.toString() : "null";
     }
 
 }

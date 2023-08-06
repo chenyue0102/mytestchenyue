@@ -34,7 +34,10 @@ dependencies {
 	testCompileOnly("org.projectlombok:lombok:1.18.22")
 	testAnnotationProcessor("org.projectlombok:lombok:1.18.22")
 
-
+	//redis
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis:2.7.14'
+	implementation 'org.springframework.data:spring-data-redis:2.7.14'
+	implementation 'org.apache.commons:commons-pool2:2.11.1'
 
 	//notempty注解等
 	implementation 'org.hibernate:hibernate-validator:8.0.0.Final'
