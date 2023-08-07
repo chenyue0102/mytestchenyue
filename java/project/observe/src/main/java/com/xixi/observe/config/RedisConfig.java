@@ -4,6 +4,7 @@ import com.xixi.observe.service.impl.UserInfoServiceImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
@@ -16,6 +17,7 @@ import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 @Configuration
+@EnableConfigurationProperties
 public class RedisConfig {
     private static final Logger logger = LoggerFactory.getLogger(UserInfoServiceImpl.class);
     @Autowired
