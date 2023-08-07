@@ -4,10 +4,10 @@ import com.xixi.observe.annotation.ClientIp;
 import com.xixi.observe.annotation.NoAuthorization;
 import com.xixi.observe.entity.*;
 import com.xixi.observe.service.ErrorException;
+import com.xixi.observe.service.impl.RedisServiceImp;
 import com.xixi.observe.service.impl.UserEventServiceImp;
 import com.xixi.observe.service.impl.UserInfoServiceImpl;
 import com.xixi.observe.util.AccessTokenThreadLocal;
-import com.xixi.observe.util.RedisUtil;
 import com.xixi.observe.util.Result;
 import com.xixi.observe.util.TokenUtil;
 import org.slf4j.LoggerFactory;
@@ -30,6 +30,9 @@ public class UserController {
 
     @Autowired
     UserEventServiceImp userEventService;
+
+    @Autowired
+    private RedisServiceImp redisService;
 
     @GetMapping("/test")
     @NoAuthorization
@@ -158,7 +161,7 @@ public class UserController {
     @GetMapping("/getredis")
     @NoAuthorization
     public String getRedis(){
-        Object obj = RedisUtil.getInstance().get("key");
+        Object obj = redisService.get("testkey");
         return obj != null ? obj.toString() : "null";
     }
 

@@ -18,14 +18,6 @@ public class RedisTest {
     private RedisServiceImp redisService;
 
     @Test
-    public void testRedisTemplate(){
-        RedisConfig config = new RedisConfig();
-        LettuceConnectionFactory factory = config.lettuceConnectionFactory();
-        RedisTemplate<String, Object> redisTemplate =  config.redisTemplate(factory);
-        logger.warn("redisTemplate:"+redisTemplate.toString());
-    }
-
-    @Test
     public void testWrite(){
         try{
             String key = "testkey";
