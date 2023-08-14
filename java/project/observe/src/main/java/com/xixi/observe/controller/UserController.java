@@ -126,6 +126,20 @@ public class UserController {
     public Result<LoginResult> login(LoginRequest loginRequest, @ClientIp String ip){
         Result<LoginResult> result = new Result<>(Result.CODE_SUCCESS, Result.MSG_SUCCEEDED);
         try{
+            if (null == loginRequest){
+                throw new ErrorException(Result.CODE_FAILED, Result.MSG_FAILED);
+            }
+            if (null == loginRequest.getVerifyCode() || null == loginRequest.getVerifyCodeUUID()){
+                throw new ErrorException(Result.CODE_FAILED, Result.MSG_FAILED);
+            }
+            Object obj = redisService.get(loginRequest.getVerifyCodeUUID());
+            if (!(obj instanceof String)){
+                throw new ErrorException(Result.CODE_VERIFY_CODE_EXPIRED, Result.MSG_VERIFY_CODE_EXPIRED);
+            }
+            String verifyCode = (String)obj;
+            if (verifyCode.equals(loginRequest.getVerifyCode())){
+                throw new ErrorException(Result.CODE_VERIFY_CODE_FAILED, Result.MSG_VERIFY_CODE_FAILED);
+            }
             LoginResult loginResult = userInfoService.login(loginRequest, ip);
             result.setData(loginResult);
         }catch (ErrorException e){

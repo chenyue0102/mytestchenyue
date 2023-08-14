@@ -15,6 +15,12 @@ public class Result<T> implements Serializable {
 
     public static final String MSG_PERMISSION_FAILED = "permission failed";
 
+    public static final int CODE_VERIFY_CODE_FAILED = -4;
+    public static final String MSG_VERIFY_CODE_FAILED = "verify code failed";
+
+    public static final int CODE_VERIFY_CODE_EXPIRED = -5;
+    public static final String MSG_VERIFY_CODE_EXPIRED = "verify code expired";
+
     private int code;
 
     private String msg;

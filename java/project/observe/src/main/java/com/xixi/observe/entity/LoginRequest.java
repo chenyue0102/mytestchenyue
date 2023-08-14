@@ -8,11 +8,21 @@ public class LoginRequest {
     @NotEmpty
     private String loginName;
 
+    //hash(password+serverRandom+clientRandom)
     @NotEmpty
     private String passwordHash;
 
-    //hash(password+serverRandom+clientRandom)
+    @NotEmpty
     private String serverRandom;
 
+    @NotEmpty
     private String clientRandom;
+
+    //验证码结果
+    @NotEmpty
+    private String verifyCode;
+
+    //验证码 uuid
+    @NotEmpty
+    private String verifyCodeUUID;
 }
