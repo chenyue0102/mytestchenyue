@@ -48,6 +48,11 @@ dependencies {
 	//配置解密类
 	implementation 'com.github.ulisesbocchio:jasypt-spring-boot-starter:2.1.1'
 
+	//验证码
+	implementation 'com.github.whvcse:easy-captcha:1.6.2'
+
+	implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.13.0'
+
 	providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }

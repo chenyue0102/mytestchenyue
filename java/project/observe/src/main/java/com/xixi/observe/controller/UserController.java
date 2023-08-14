@@ -1,5 +1,6 @@
 package com.xixi.observe.controller;
 
+import com.wf.captcha.base.Captcha;
 import com.xixi.observe.annotation.ClientIp;
 import com.xixi.observe.annotation.NoAuthorization;
 import com.xixi.observe.entity.*;
@@ -19,7 +20,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.naming.Context;
 import javax.naming.InitialContext;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 @RestController
@@ -33,6 +35,9 @@ public class UserController {
 
     @Autowired
     private RedisServiceImp redisService;
+
+    @Autowired
+    private LoginProperties loginProperties;
 
     @GetMapping("/test")
     @NoAuthorization
@@ -58,6 +63,21 @@ public class UserController {
         }
 
         return env;
+    }
+
+    @GetMapping("verifycode")
+    @NoAuthorization
+    public Object getVerifyCode(){
+        Captcha captcha = loginProperties.getCaptcha();
+        String uuid = "verify-code-" + UUID.randomUUID().toString();
+
+        String captchaText = captcha.text();
+        redisService.set(uuid, captchaText, 2, TimeUnit.MINUTES);
+        Map<String, Object> imgResult = new HashMap<String, Object>(2){{
+            put("img", captcha.toBase64());
+            put("uuid", uuid);
+        }};
+        return imgResult;
     }
 
     //请求随机数

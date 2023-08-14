@@ -5,6 +5,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.concurrent.TimeUnit;
+
 @Service
 public class RedisServiceImp implements RedisService {
     @Autowired
@@ -20,6 +22,18 @@ public class RedisServiceImp implements RedisService {
         boolean ret = false;
         try{
             redisTemplate.opsForValue().set(key, value);
+            ret = true;
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return ret;
+    }
+
+    @Override
+    public boolean set(String key, Object value, long timeout, TimeUnit unit) {
+        boolean ret = false;
+        try{
+            redisTemplate.opsForValue().set(key, value, timeout, unit);
             ret = true;
         }catch (Exception e){
             e.printStackTrace();
