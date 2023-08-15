@@ -24,6 +24,12 @@
 import { provide, reactive, ref } from 'vue'
 import {v4 as uuidv4} from 'uuid'
 import request from '../utils/request'
+import store from '../state'
+import router from "../router"
+
+defineProps({
+  msg: String,
+})
 
 const state = reactive({
     loginName:"",
@@ -42,37 +48,59 @@ function hex2a(arr){
     }
     return result;
 }
-function login(){
-    request({
+function buf2hex(buffer) { // buffer is an ArrayBuffer
+    return Array.prototype.map.call(new Uint8Array(buffer), x => ('00' + x.toString(16)).slice(-2)).join('');
+}
+function buf2Base64(buffer) {
+    return btoa(String.fromCharCode.apply(null, new Uint8Array(buffer)));
+}
+async function login(){
+    let res = await request({
         url:'/random',
         method:'get'
-    }).then(res =>{
-        let serviceRandom = res.data.data.serviceRandom;
-        let clientRandom = uuidv4();
-        let password = state.password + serviceRandom + clientRandom;
-        //alert(password)
-        const encoder = new TextEncoder();
-        let passwordHash = encoder.encode(password);
-        let strPasswordHash = hex2a(passwordHash)
-        //console.log(s)
-        var loginRequest = {
-            "loginName":state.loginName,
-            "passwordHash":strPasswordHash,
-            "serverRandom":serviceRandom,
-            "clientRandom":clientRandom,
-            "verifyCode":state.verifyCode,
-            "verifyCodeUUID":state.verifyCodeUUID
-        }
-        let str = JSON.stringify(loginRequest);
-        console.log(str)
-        request({
-            url:'login',
-            method:'get'
-        }).then(res =>{
-            let s = JSON.stringify(res);
-            console.log(s)
-        });
-    })
+    });
+    let serviceRandom = res.data.data.serviceRandom;
+    let clientRandom = uuidv4();
+    let password = state.loginPassword + serviceRandom + clientRandom;
+    //console.log(password)
+    //alert(serviceRandom);
+    const encoder = new TextEncoder();
+    let dt = encoder.encode(password);
+    let hash = await crypto.subtle.digest('SHA-256', dt);
+    //alert(hash)
+    //console.log(typeof(hash))
+    let strPasswordHash = buf2hex(hash)
+    //alert(strPasswordHash)
+    //console.log(s)
+    var loginRequest = {
+        "loginName":state.loginName,
+        "passwordHash":strPasswordHash,
+        "serverRandom":serviceRandom,
+        "clientRandom":clientRandom,
+        "verifyCode":state.verifyCode,
+        "verifyCodeUUID":state.uuid
+    }
+    let str = JSON.stringify(loginRequest);
+    //console.log(str)
+    let res2 = await request({
+        url:'/login',
+        method:'post',
+        data:str
+    });
+    let errorCode = res2.data.code;
+    let msg = res2.data.msg;
+    if (0 != errorCode){
+        alert(msg);
+        return;
+    }
+    let accessToken = res2.data.data.accessToken;
+    let refreshToken = res2.data.data.refreshToken;
+    //let s = JSON.stringify(res2);
+    console.log(accessToken + " " + refreshToken)  
+    //alert("goto helloworld")
+    store.commit('updateToken', [accessToken, refreshToken])
+    
+    router.push({path:'/', query:{msg:"helloworld"}})
 }
 function getCodeImg(){
     return request({

@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import store from '../state'
 
-defineProps<{ msg: string }>()
+defineProps({
+  msg: String,
+})
 
 const count = ref(0)
 </script>
@@ -9,6 +12,7 @@ const count = ref(0)
 <template>
   <h1>{{ msg }}</h1>
 
+  <h1>accessToken {{store.state.accessToken}}</h1>
   <div class="card">
     <button type="button" @click="count++">count is {{ count }}</button>
     <p>

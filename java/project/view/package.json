@@ -12,8 +12,11 @@
     "axios": "^1.4.0",
     "element-plus": "^2.3.9",
     "js-sha256": "^0.9.0",
+    "mitt": "^3.0.1",
     "uuid": "^9.0.0",
-    "vue": "^3.3.4"
+    "vue": "^3.3.4",
+    "vue-router": "^4.0.13",
+    "vuex-persistedstate": "^4.1.0"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^4.2.3",

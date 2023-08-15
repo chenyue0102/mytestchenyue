@@ -45,8 +45,8 @@ public class UserController {
         return "test";
     }
 
-    @GetMapping("inputparam")
-    @NoAuthorization
+    //@GetMapping("inputparam")
+    //@NoAuthorization
     public String inputparam(){
         //获取系统环境变量
         String env = System.getenv("inputparam");
@@ -121,23 +121,31 @@ public class UserController {
     }
 
     //RequestBody
-    @GetMapping("/login")
+    @PostMapping("/login")
     @NoAuthorization
-    public Result<LoginResult> login(LoginRequest loginRequest, @ClientIp String ip){
+    public Result<LoginResult> login(@RequestBody LoginRequest loginRequest, @ClientIp String ip){
         Result<LoginResult> result = new Result<>(Result.CODE_SUCCESS, Result.MSG_SUCCEEDED);
         try{
             if (null == loginRequest){
+                logger.warn("login null == loginRequest");
                 throw new ErrorException(Result.CODE_FAILED, Result.MSG_FAILED);
             }
             if (null == loginRequest.getVerifyCode() || null == loginRequest.getVerifyCodeUUID()){
+                logger.warn("login null == loginRequest.getVerifyCode()");
                 throw new ErrorException(Result.CODE_FAILED, Result.MSG_FAILED);
             }
             Object obj = redisService.get(loginRequest.getVerifyCodeUUID());
+            if (null == obj){
+                logger.warn("login null == obj");
+                throw new ErrorException(Result.CODE_VERIFY_CODE_EXPIRED, Result.MSG_VERIFY_CODE_EXPIRED);
+            }
             if (!(obj instanceof String)){
+                logger.warn("login !(obj instanceof String)" + obj.toString());
                 throw new ErrorException(Result.CODE_VERIFY_CODE_EXPIRED, Result.MSG_VERIFY_CODE_EXPIRED);
             }
             String verifyCode = (String)obj;
-            if (verifyCode.equals(loginRequest.getVerifyCode())){
+            if (!verifyCode.equals(loginRequest.getVerifyCode())){
+                logger.warn("login verifycode not equal:" + verifyCode + " " + loginRequest.getVerifyCode());
                 throw new ErrorException(Result.CODE_VERIFY_CODE_FAILED, Result.MSG_VERIFY_CODE_FAILED);
             }
             LoginResult loginResult = userInfoService.login(loginRequest, ip);
@@ -192,8 +200,8 @@ public class UserController {
         return result;
     }
 
-    @GetMapping("/getredis")
-    @NoAuthorization
+    //@GetMapping("/getredis")
+    //@NoAuthorization
     public String getRedis(){
         Object obj = redisService.get("testkey");
         return obj != null ? obj.toString() : "null";
