@@ -1,6 +1,7 @@
 package com.xixi.observe.util;
 
 
+import javax.servlet.http.PushBuilder;
 import java.io.Serializable;
 
 public class Result<T> implements Serializable {
@@ -11,18 +12,24 @@ public class Result<T> implements Serializable {
     public static final int CODE_TOKEN_FAILED = -2;
     public static final String MSG_TOKEN_FAILED = "token failed";
 
-    public static final int CODE_PERMISSION_FAINED = -3;
+    public static final int CODE_ACCESS_TOKEN_EXPIRED = -3;
+    public static final String MSG_ACCESS_TOKEN_EXPIRED = "access token expired";
 
-    public static final String MSG_PERMISSION_FAILED = "permission failed";
+    public static final int CODE_REFRESH_TOKEN_EXPIRED = -4;
+    public static final String MSG_REFRESH_TOKEN_EXPIRED =  "refresh token expired";
 
-    public static final int CODE_VERIFY_CODE_FAILED = -4;
+    public static final int CODE_VERIFY_CODE_FAILED = -5;
     public static final String MSG_VERIFY_CODE_FAILED = "verify code failed";
 
-    public static final int CODE_VERIFY_CODE_EXPIRED = -5;
+    public static final int CODE_VERIFY_CODE_EXPIRED = -6;
     public static final String MSG_VERIFY_CODE_EXPIRED = "verify code expired";
 
-    public static final int CODE_METHOD_FAILED = -6;
+    public static final int CODE_METHOD_FAILED = -7;
     public static final String MSG_METHOD_FAILED = "method failed";
+
+    public static final int CODE_PERMISSION_FAINED = -8;
+
+    public static final String MSG_PERMISSION_FAILED = "permission failed";
 
     private int code;
 

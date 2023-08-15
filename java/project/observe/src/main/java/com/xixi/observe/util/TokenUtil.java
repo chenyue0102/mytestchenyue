@@ -28,7 +28,6 @@ public class TokenUtil {
         return instance;
     }
 
-    private long accessTokenExpirationTime = (System.currentTimeMillis() / 1000) + ACCESS_TOKEN_EXPIRATION_SECOND;
     private String uuid = UUID.randomUUID().toString();
     private Gson gson = new Gson();
     private MessageDigest sha256;
@@ -38,7 +37,7 @@ public class TokenUtil {
     //rsa加密与解密
     private Cipher rsaEncrypt, rsaDecrypt;
 
-    private long refreshTokenExpirationTime = (System.currentTimeMillis() / 1000) + REFRESH_TOKEN_EXPIRATION_SECOND;
+    private long databaseRefreshTokenExpirationTime = (System.currentTimeMillis() / 1000) + REFRESH_TOKEN_EXPIRATION_SECOND;
 
     private TokenUtil(){
         try{
@@ -63,7 +62,7 @@ public class TokenUtil {
             rsaDecrypt = Cipher.getInstance("RSA");
             rsaDecrypt.init(Cipher.DECRYPT_MODE, publicKey);
 
-            this.refreshTokenExpirationTime = refreshTokenExpirationTime;
+            this.databaseRefreshTokenExpirationTime = refreshTokenExpirationTime;
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -87,8 +86,8 @@ public class TokenUtil {
         return token;
     }
 
-    public boolean checkRandomToken(String token){
-        boolean ret = false;
+    public int checkRandomToken(String token){
+        int ret = Result.CODE_TOKEN_FAILED;
         do {
             int index = token.indexOf(".");
             if (index < 0){
@@ -99,13 +98,17 @@ public class TokenUtil {
             String json = new String(jsonData);
             RandomToken randomToken = gson.fromJson(json, RandomToken.class);
             if (randomToken.getExpirationTime() < System.currentTimeMillis() / 1000){
+                ret = Result.CODE_TOKEN_FAILED;
                 break;
             }
             String hashBase64 = token.substring(index + 1);
             byte[]hashData = Base64.getDecoder().decode(hashBase64);
             String str = json + uuid;
             byte[]hashData2 = sha256.digest(str.getBytes(StandardCharsets.UTF_8));
-            ret = Arrays.equals(hashData, hashData2);
+            if (!Arrays.equals(hashData, hashData2)){
+                break;
+            }
+            ret = Result.CODE_SUCCESS;
         }while (false);
         return ret;
     }
@@ -114,6 +117,10 @@ public class TokenUtil {
     public String genericAccessToken(int id) {
         AccessToken accessToken = new AccessToken();
         accessToken.setUserId(id);
+        long accessTokenExpirationTime = (System.currentTimeMillis() / 1000) + ACCESS_TOKEN_EXPIRATION_SECOND;
+        if (accessTokenExpirationTime > databaseRefreshTokenExpirationTime){
+            accessTokenExpirationTime = databaseRefreshTokenExpirationTime;
+        }
         accessToken.setExpirationTime(accessTokenExpirationTime);
 
         String json = gson.toJson(accessToken);
@@ -130,8 +137,8 @@ public class TokenUtil {
         return token;
     }
 
-    public boolean checkAccessTokenAndConvert(String token, AccessToken outAccessToken){
-        boolean ret = false;
+    public int checkAccessTokenAndConvert(String token, AccessToken outAccessToken){
+        int ret = Result.CODE_TOKEN_FAILED;
         do{
             int index = token.indexOf(".");
             if (index < 0){
@@ -143,16 +150,17 @@ public class TokenUtil {
             AccessToken accessToken = gson.fromJson(json, AccessToken.class);
             if ((System.currentTimeMillis() / 1000) > accessToken.getExpirationTime()){
                 logger.warn("checkAccessTokenAndConvert expiration");
+                ret = Result.CODE_ACCESS_TOKEN_EXPIRED;
                 break;
             }
             String hashBase64 = token.substring(index + 1);
             byte[]hashData = Base64.getDecoder().decode(hashBase64);
             String str = json + uuid;
             byte[]hashData2 = sha256.digest(str.getBytes(StandardCharsets.UTF_8));
-            ret = Arrays.equals(hashData, hashData2);
-            if (ret && null != accessToken){
+            if (Arrays.equals(hashData, hashData2) && null != accessToken){
                 outAccessToken.setUserId(accessToken.getUserId());
                 outAccessToken.setExpirationTime(accessToken.getExpirationTime());
+                ret = Result.CODE_SUCCESS;
             }else{
                 logger.warn("checkAccessTokenAndConvert check failed");
             }
@@ -160,13 +168,13 @@ public class TokenUtil {
         return ret;
     }
 
-    public boolean checkAccessToken(String token){
+    public int checkAccessToken(String token){
        return checkAccessTokenAndConvert(token, null);
     }
 
     public AccessToken convert2AccessToken(String token){
         AccessToken accessToken = new AccessToken();
-        if (checkAccessTokenAndConvert(token, accessToken)){
+        if (Result.CODE_SUCCESS == checkAccessTokenAndConvert(token, accessToken)){
             return accessToken;
         }else{
             return null;
@@ -178,6 +186,10 @@ public class TokenUtil {
         String token = "";
         try{
             RefreshToken refreshToken = new RefreshToken();
+            long refreshTokenExpirationTime = (System.currentTimeMillis() / 1000) + REFRESH_TOKEN_EXPIRATION_SECOND;
+            if (refreshTokenExpirationTime > databaseRefreshTokenExpirationTime){
+                refreshTokenExpirationTime = databaseRefreshTokenExpirationTime;
+            }
             refreshToken.setExpirationTime(refreshTokenExpirationTime);
             refreshToken.setUserId(id);
 
@@ -198,8 +210,8 @@ public class TokenUtil {
         return token;
     }
 
-    public boolean checkRefreshTokenAndConvert(String token, RefreshToken outRefreshToken){
-        boolean ret = false;
+    public int checkRefreshTokenAndConvert(String token, RefreshToken outRefreshToken){
+        int ret = Result.CODE_TOKEN_FAILED;
         try{
             do {
                 logger.warn("checkRefreshTokenAndConvert token:" + token);
@@ -216,6 +228,7 @@ public class TokenUtil {
                 RefreshToken refreshToken = gson.fromJson(json, RefreshToken.class);
                 if ((System.currentTimeMillis() / 1000) > refreshToken.getExpirationTime()){
                     logger.warn("checkRefreshTokenAndConvert timeout");
+                    ret = Result.CODE_REFRESH_TOKEN_EXPIRED;
                     break;
                 }
                 byte []hash1 = sha256.digest(jsonData);
@@ -226,10 +239,10 @@ public class TokenUtil {
                 logger.warn("signEncode:"+String.valueOf(signEncode));
                 byte[]signDecode = rsaDecrypt.doFinal(signEncode);
                 logger.warn(String.valueOf(signEncode) + String.valueOf(signDecode));
-                ret = Arrays.equals(hash1, signDecode);
-                if (ret && null != outRefreshToken){
+                if (Arrays.equals(hash1, signDecode) && null != outRefreshToken){
                     outRefreshToken.setUserId(refreshToken.getUserId());
                     outRefreshToken.setExpirationTime(refreshToken.getExpirationTime());
+                    ret = Result.CODE_SUCCESS;
                 }
             }while (false);
         }catch (Exception e){
@@ -239,13 +252,13 @@ public class TokenUtil {
         return ret;
     }
 
-    public boolean checkRefreshToken(String token){
+    public int checkRefreshToken(String token){
         return checkRefreshTokenAndConvert(token, null);
     }
 
     public RefreshToken convert2RefreshToken(String token){
         RefreshToken refreshToken = new RefreshToken();
-        if (checkRefreshTokenAndConvert(token, refreshToken)){
+        if (Result.CODE_SUCCESS == checkRefreshTokenAndConvert(token, refreshToken)){
             return refreshToken;
         }else{
             return null;

@@ -48,7 +48,7 @@ public class UserInfoServiceImpl implements UserInfoService {
             throw new ErrorException(Result.CODE_FAILED, Result.MSG_FAILED);
         }
 
-        if (!TokenUtil.getInstance().checkRandomToken(loginRequest.getServerRandom())){
+        if (Result.CODE_SUCCESS != TokenUtil.getInstance().checkRandomToken(loginRequest.getServerRandom())){
             logger.warn("checkRandomToken failed");
             throw new ErrorException(Result.CODE_FAILED, Result.MSG_FAILED);
         }

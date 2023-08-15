@@ -2,6 +2,7 @@ package com.xixi.observe.config.handler;
 
 import com.xixi.observe.annotation.TokenToUser;
 import com.xixi.observe.entity.AccessToken;
+import com.xixi.observe.util.Result;
 import com.xixi.observe.util.TokenUtil;
 import org.springframework.core.MethodParameter;
 import org.springframework.stereotype.Component;
@@ -25,7 +26,7 @@ public class TokenResolver implements HandlerMethodArgumentResolver {
         if (parameter.getParameterAnnotation(TokenToUser.class) instanceof TokenToUser){
             String token = webRequest.getHeader("token");
 
-            if (null != token && TokenUtil.getInstance().checkAccessToken(token)){
+            if (null != token && Result.CODE_SUCCESS == TokenUtil.getInstance().checkAccessToken(token)){
                 AccessToken accessToken = TokenUtil.getInstance().convert2AccessToken(token);
                 return accessToken;
             }else{

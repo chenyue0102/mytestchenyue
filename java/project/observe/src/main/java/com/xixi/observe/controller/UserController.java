@@ -102,7 +102,7 @@ public class UserController {
             }else{
                 logger.warn("not contains +");
             }
-            if (TokenUtil.getInstance().checkRefreshTokenAndConvert(request.getRefreshToken(), refreshToken)){
+            if (Result.CODE_SUCCESS == TokenUtil.getInstance().checkRefreshTokenAndConvert(request.getRefreshToken(), refreshToken)){
                 String newAccessToken = TokenUtil.getInstance().genericAccessToken(refreshToken.getUserId());
                 RefreshTokenResult refreshTokenResult = new RefreshTokenResult();
                 refreshTokenResult.setAccessToken(newAccessToken);

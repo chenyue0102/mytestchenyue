@@ -2,6 +2,7 @@ package com.xixi.observe.config;
 
 import com.xixi.observe.entity.AccessToken;
 import com.xixi.observe.service.impl.UserInfoServiceImpl;
+import com.xixi.observe.util.Result;
 import com.xixi.observe.util.TokenUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,7 +52,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
             String token = serverHttpRequest.getServletRequest().getParameter("token");
             logger.warn("beforeHandshake:" + token);
             AccessToken accessToken = new AccessToken();
-            if (TokenUtil.getInstance().checkAccessTokenAndConvert(token, accessToken)){
+            if (Result.CODE_SUCCESS == TokenUtil.getInstance().checkAccessTokenAndConvert(token, accessToken)){
                 logger.warn("beforeHandshake" + "success");
                 attributes.put("token", accessToken);
                 return true;
