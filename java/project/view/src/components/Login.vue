@@ -57,7 +57,7 @@ function buf2Base64(buffer) {
 async function login(){
     let res = await request({
         url:'/random',
-        method:'get'
+        method:'post'
     });
     let serviceRandom = res.data.data.serviceRandom;
     let clientRandom = uuidv4();
@@ -105,7 +105,7 @@ async function login(){
 function getCodeImg(){
     return request({
         url:'/verifycode',
-        method:'get'
+        method:'post'
     })
 }
 

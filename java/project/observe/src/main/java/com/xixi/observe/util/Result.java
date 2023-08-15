@@ -21,6 +21,9 @@ public class Result<T> implements Serializable {
     public static final int CODE_VERIFY_CODE_EXPIRED = -5;
     public static final String MSG_VERIFY_CODE_EXPIRED = "verify code expired";
 
+    public static final int CODE_METHOD_FAILED = -6;
+    public static final String MSG_METHOD_FAILED = "method failed";
+
     private int code;
 
     private String msg;

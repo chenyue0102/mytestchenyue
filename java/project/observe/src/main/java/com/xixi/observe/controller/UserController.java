@@ -65,7 +65,7 @@ public class UserController {
         return env;
     }
 
-    @GetMapping("verifycode")
+    @PostMapping("/verifycode")
     @NoAuthorization
     public Object getVerifyCode(){
         Captcha captcha = loginProperties.getCaptcha();
@@ -81,7 +81,7 @@ public class UserController {
     }
 
     //请求随机数
-    @GetMapping("/random")
+    @PostMapping("/random")
     @NoAuthorization
     public Result<ServiceRandomResult> getRandom(@ClientIp String ip){
         Logger.getGlobal().warning("clientip:" + ip);
@@ -158,7 +158,7 @@ public class UserController {
     }
 
     @PostMapping("/uploadevent")
-    public Result uploadEvent(UserEventRequest userEventRequest){
+    public Result uploadEvent(@RequestBody UserEventRequest userEventRequest){
         Result result = new Result(Result.CODE_SUCCESS, Result.MSG_SUCCEEDED);
         try{
             if (null == userEventRequest){
