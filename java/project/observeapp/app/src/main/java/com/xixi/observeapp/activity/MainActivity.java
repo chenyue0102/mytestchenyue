@@ -5,6 +5,7 @@ import androidx.core.app.ActivityCompat;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.AssetManager;
 import android.hardware.Camera;
 import android.media.AudioDeviceInfo;
@@ -52,6 +53,12 @@ public class MainActivity extends AppCompatActivity {
                 Manifest.permission.ACCESS_WIFI_STATE,
                 Manifest.permission.READ_PHONE_STATE,
         }, 99);
+
+        findViewById(R.id.btn_login).setOnClickListener(v -> {
+            Intent intent = new Intent();
+            intent.setClass(this, LoginActivify.class);
+            startActivity(intent);
+        });
     }
 
 
