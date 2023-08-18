@@ -4,7 +4,9 @@ import com.xixi.observe.entity.AccessToken;
 import com.google.gson.Gson;
 import com.xixi.observe.entity.RandomToken;
 import com.xixi.observe.entity.RefreshToken;
+import com.xixi.observe.service.impl.RedisServiceImp;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.crypto.Cipher;
 import java.nio.charset.StandardCharsets;
@@ -33,6 +35,9 @@ public class TokenUtil {
     private MessageDigest sha256;
     private PublicKey publicKey;
     private PrivateKey privateKey;
+
+    @Autowired
+    private RedisServiceImp redisService;
 
     //rsa加密与解密
     private Cipher rsaEncrypt, rsaDecrypt;

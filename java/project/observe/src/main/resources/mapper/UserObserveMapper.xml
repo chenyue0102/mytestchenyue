@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xixi.observe.dao.UserObserveDao">
+    <resultMap id="UserObserveInfo" type="com.xixi.observe.entity.UserObserveInfo">
+        <result property="userId" column="user_id" />
+        <result property="observeUserId" column="observe_user_id"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+    <select id="findUserObserveInfo" resultMap="UserObserveInfo">
+        select user_id,observe_user_id,create_time from user_observe
+        where (#{userId}=0 or #{userId}=user_id)
+            and(#{observeUserId}=0 or #{observeUserId}=observe_user_id)
+    </select>
+</mapper>

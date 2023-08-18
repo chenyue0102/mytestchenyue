@@ -13,6 +13,17 @@ CREATE TABLE `user_info`(
     PRIMARY KEY(`user_id`)
 )CHARSET=utf8mb4;
 
+CREATE TABLE `user_observe`(
+	`user_id` INTEGER NOT NULL,
+	`observe_user_id` INTEGER NOT NULL,
+	`create_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	CONSTRAINT `fk_user_id` FOREIGN KEY(`user_id`) REFERENCES `user_info`(`user_id`),
+	CONSTRAINT `fk_observe_user_id` FOREIGN KEY(`observe_user_id`) REFERENCES `user_info`(`user_id`),
+	INDEX(`user_id`),
+	INDEX(`observe_user_id`),
+	PRIMARY KEY(`user_id`, `observe_user_id`)
+)CHARSET=utf8mb4;
+
 CREATE TABLE `private_key`(
 	`private_key` VARCHAR(4096) NOT NULL,
 	`state` INTEGER NOT NULL,
