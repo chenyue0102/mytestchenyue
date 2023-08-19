@@ -11,6 +11,7 @@ import com.xixi.observe.service.impl.UserInfoServiceImpl;
 import com.xixi.observe.util.AccessTokenThreadLocal;
 import com.xixi.observe.util.Result;
 import com.xixi.observe.util.TokenUtil;
+import lombok.Data;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -43,6 +44,19 @@ public class UserController {
     @NoAuthorization
     public String test(){
         return "test";
+    }
+    @Data
+    public static class TestJson{
+        private String text;
+    }
+    @GetMapping("/testjson")
+    @NoAuthorization
+    public Result<TestJson> testJson(){
+        Result<TestJson> jsonResult = new Result<>(Result.CODE_SUCCESS, Result.MSG_SUCCEEDED);
+        TestJson testJson = new TestJson();
+        testJson.text = "json";
+        jsonResult.setData(testJson);
+        return jsonResult;
     }
 
     //@GetMapping("inputparam")

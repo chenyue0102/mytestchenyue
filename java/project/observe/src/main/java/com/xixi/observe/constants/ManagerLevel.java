@@ -1,4 +1,4 @@
-﻿package com.xixi.observe.constants;
+package com.xixi.observe.constants;
 
 public class ManagerLevel {
     public static final int ML_NONE = 0;        //普通

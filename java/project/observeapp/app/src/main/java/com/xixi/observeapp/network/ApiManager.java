@@ -11,14 +11,14 @@ import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 
 public class ApiManager {
     public static final int TIMEOUT_SECOND = 10;
-    public static String BASE_URL = "";
     private static volatile ApiManager instance;
     private OkHttpClient okHttpClient;
 
     private Retrofit retrofit;
 
     private ApiManager(){
-
+        initOkHttp();
+        initRetrofit();
     }
 
     public static ApiManager getInstance(){
@@ -57,15 +57,17 @@ public class ApiManager {
     }
 
     private void initRetrofit(){
-        retrofit = new Retrofit.Builder()
-                .baseUrl(BASE_URL)
+        Retrofit.Builder builder = new Retrofit.Builder();
+        retrofit = builder
+                .baseUrl(Constants.BASE_URL)
                 .client(okHttpClient)
                 .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+                .addConverterFactory(JsonConverterFactory.create())
                 .build();
     }
 
-    public <T> getProxy(Class<T> tClass){
+    public <T> T getProxy(Class<T> tClass){
         T t = getInstance().retrofit.create(tClass);
-        return Proxy.newProxyInstance(tClass.getClassLoader(), new Class<?>[]{tClass}, new Proxy)
+        return t;
     }
 }

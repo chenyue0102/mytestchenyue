@@ -1,4 +1,4 @@
-﻿package com.xixi.observe.entity;
+package com.xixi.observe.entity;
 
 import lombok.Data;
 

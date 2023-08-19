@@ -7,6 +7,7 @@ import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.AssetManager;
+import android.database.Observable;
 import android.hardware.Camera;
 import android.media.AudioDeviceInfo;
 import android.media.AudioManager;
@@ -23,12 +24,23 @@ import android.view.WindowManager;
 import android.widget.TextView;
 
 
+import com.google.gson.Gson;
 import com.xixi.observeapp.R;
+import com.xixi.observeapp.bean.Result;
+import com.xixi.observeapp.bean.ServiceRandomResult;
+import com.xixi.observeapp.network.ApiManager;
+import com.xixi.observeapp.network.Constants;
+import com.xixi.observeapp.network.ObserveService;
 
 import java.io.FileOutputStream;
 import java.math.BigDecimal;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+
+import io.reactivex.Observer;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -59,7 +71,67 @@ public class MainActivity extends AppCompatActivity {
             intent.setClass(this, LoginActivify.class);
             startActivity(intent);
         });
+
+        findViewById(R.id.btn_test).setOnClickListener(v->onTest());
     }
 
+    private void onTest(){
+        try{
+            ObserveService observeService = ApiManager.getInstance().getProxy(ObserveService.class);
+            observeService.getTestJson()
+                    .subscribeOn(Schedulers.newThread())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(new Observer<Result<ObserveService.TestJson>>(){
+                        @Override
+                        public void onSubscribe(Disposable d) {
+                            Log.e(TAG, "onSubscribe");
+                        }
 
+                        @Override
+                        public void onNext(Result<ObserveService.TestJson> value) {
+                            Log.e(TAG, "onNext");
+                            Log.e(TAG, "result:" + value.getData().text);
+                        }
+
+                        @Override
+                        public void onError(Throwable e) {
+                            Log.e(TAG, "onError");
+                            e.printStackTrace();
+                        }
+
+                        @Override
+                        public void onComplete() {
+                            Log.e(TAG, "onComplete");
+                        }
+                    });
+            observeService.getServiceRandom()
+                    .subscribeOn(Schedulers.newThread())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(new Observer<Result<ServiceRandomResult>>() {
+                        @Override
+                        public void onSubscribe(Disposable d) {
+
+                        }
+
+                        @Override
+                        public void onNext(Result<ServiceRandomResult> value) {
+                            Log.e(TAG, "onNext ServiceRandomResult" );
+                            String json = new Gson().toJson(value);
+                            Log.e(TAG, "onNext:" + json);
+                        }
+
+                        @Override
+                        public void onError(Throwable e) {
+
+                        }
+
+                        @Override
+                        public void onComplete() {
+
+                        }
+                    });
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
 }

@@ -1,4 +1,4 @@
-﻿package com.xixi.observe.dao;
+package com.xixi.observe.dao;
 
 import com.xixi.observe.entity.UserObserveInfo;
 import org.apache.ibatis.annotations.Mapper;

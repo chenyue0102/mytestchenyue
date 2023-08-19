@@ -1,4 +1,4 @@
-﻿package com.xixi.observe.service.impl;
+package com.xixi.observe.service.impl;
 
 import com.xixi.observe.dao.UserObserveDao;
 import com.xixi.observe.entity.UserObserveInfo;

@@ -1,4 +1,4 @@
-﻿package com.xixi.observe.constants;
+package com.xixi.observe.constants;
 
 public class RedisConstant {
 }
