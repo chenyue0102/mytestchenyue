@@ -81,17 +81,20 @@ public class UserController {
 
     @PostMapping("/verifycode")
     @NoAuthorization
-    public Object getVerifyCode(){
+    public Result<VerifyCodeResult> getVerifyCode(){
+        Result<VerifyCodeResult> result = new Result<>(Result.CODE_SUCCESS, Result.MSG_SUCCEEDED);
         Captcha captcha = loginProperties.getCaptcha();
         String uuid = "verify-code-" + UUID.randomUUID().toString();
 
         String captchaText = captcha.text();
         redisService.set(uuid, captchaText, 2, TimeUnit.MINUTES);
-        Map<String, Object> imgResult = new HashMap<String, Object>(2){{
-            put("img", captcha.toBase64());
-            put("uuid", uuid);
-        }};
-        return imgResult;
+
+        VerifyCodeResult verifyCodeResult = new VerifyCodeResult();
+        verifyCodeResult.setImg(captcha.toBase64());
+        verifyCodeResult.setUuid(uuid);
+        result.setData(verifyCodeResult);
+
+        return result;
     }
 
     //请求随机数

@@ -4,23 +4,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import android.Manifest;
-import android.content.Context;
 import android.content.Intent;
-import android.content.res.AssetManager;
-import android.database.Observable;
-import android.hardware.Camera;
-import android.media.AudioDeviceInfo;
-import android.media.AudioManager;
-import android.media.MediaCodecInfo;
-import android.media.MediaCodecList;
-import android.media.MediaFormat;
-import android.media.MediaMuxer;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.util.Log;
-import android.view.Surface;
-import android.view.WindowManager;
 import android.widget.TextView;
 
 
@@ -29,13 +15,9 @@ import com.xixi.observeapp.R;
 import com.xixi.observeapp.bean.Result;
 import com.xixi.observeapp.bean.ServiceRandomResult;
 import com.xixi.observeapp.network.ApiManager;
-import com.xixi.observeapp.network.Constants;
 import com.xixi.observeapp.network.ObserveService;
 
-import java.io.FileOutputStream;
 import java.math.BigDecimal;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
 
 import io.reactivex.Observer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
@@ -68,7 +50,7 @@ public class MainActivity extends AppCompatActivity {
 
         findViewById(R.id.btn_login).setOnClickListener(v -> {
             Intent intent = new Intent();
-            intent.setClass(this, LoginActivify.class);
+            intent.setClass(this, LoginActivity.class);
             startActivity(intent);
         });
 

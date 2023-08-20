@@ -46,7 +46,8 @@ public class ApiManager {
                             .method(chain.request().method(), chain.request().body())
                             .build();
                     return chain.proceed(request);
-                });
+                })
+                .addInterceptor(new TokenInterceptor());
 
         HttpLoggingInterceptor httpLoggingInterceptor = new HttpLoggingInterceptor();
         httpLoggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
