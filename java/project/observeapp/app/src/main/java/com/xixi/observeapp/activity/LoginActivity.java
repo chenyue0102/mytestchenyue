@@ -18,9 +18,13 @@ import com.xixi.observeapp.bean.Result;
 import com.xixi.observeapp.bean.ServiceRandomResult;
 import com.xixi.observeapp.bean.VerifyCodeResult;
 import com.xixi.observeapp.network.ApiManager;
-import com.xixi.observeapp.network.Constants;
+import com.xixi.observeapp.constants.Constants;
 import com.xixi.observeapp.network.ObserveService;
+import com.xixi.observeapp.network.WebSocketClient;
+import com.xixi.observeapp.util.SpUtils;
+import com.xixi.observeapp.util.StringUtil;
 
+import java.security.MessageDigest;
 import java.util.UUID;
 
 import io.reactivex.Observer;
@@ -35,7 +39,10 @@ public class LoginActivity extends AppCompatActivity {
     EditText mServerAddress;
     EditText mLoginName;
     EditText mPassword;
+    EditText mEditVerifyCode;
     ImageView mVerifyCode;
+
+    String mUUID;
 
     ObserveService observeService;
 
@@ -49,6 +56,7 @@ public class LoginActivity extends AppCompatActivity {
         mLoginName = findViewById(R.id.et_login_name);
         mPassword = findViewById(R.id.et_password);
         mVerifyCode = findViewById(R.id.iv_verify_code);
+        mEditVerifyCode = findViewById(R.id.et_verify_code);
 
         observeService = ApiManager.getInstance().getProxy(ObserveService.class);
 
@@ -69,6 +77,7 @@ public class LoginActivity extends AppCompatActivity {
 
                     @Override
                     public void onNext(Result<VerifyCodeResult> value) {
+                        mUUID = value.getData().getUuid();
                         Log.w(TAG, value.getData().getUuid());
                         String base64 = value.getData().getImg();
                         byte[] decode = Base64.decode(base64.split(",")[1], Base64.DEFAULT);
@@ -100,7 +109,11 @@ public class LoginActivity extends AppCompatActivity {
 
                     @Override
                     public void onNext(Result<ServiceRandomResult> value) {
-                        onGetServiceRandom(value.getData());
+                        try{
+                            onGetServiceRandom(value.getData());
+                        }catch (Exception e){
+                            e.printStackTrace();
+                        }
                     }
 
                     @Override
@@ -114,10 +127,18 @@ public class LoginActivity extends AppCompatActivity {
                     }
                 });
     }
-    private void onGetServiceRandom(ServiceRandomResult serviceRandomResult){
+    private void onGetServiceRandom(ServiceRandomResult serviceRandomResult)throws Exception{
         String clientRandom = UUID.randomUUID().toString();
         LoginRequest request = new LoginRequest();
         request.setLoginName(mLoginName.getText().toString());
+        String str = mPassword.getText().toString() + serviceRandomResult.getServiceRandom() + clientRandom;
+        MessageDigest md = MessageDigest.getInstance("SHA-256");
+        byte []d= md.digest(str.getBytes());
+        request.setPasswordHash(StringUtil.byteArrayToHex(d));
+        request.setServerRandom(serviceRandomResult.getServiceRandom());
+        request.setClientRandom(clientRandom);
+        request.setVerifyCode(mEditVerifyCode.getText().toString());
+        request.setVerifyCodeUUID(mUUID);
         String json = mGson.toJson(request);
         RequestBody requestBody = RequestBody.create(MediaType.parse(Constants.HeaderContentType), json);
         observeService.login(requestBody)
@@ -132,7 +153,11 @@ public class LoginActivity extends AppCompatActivity {
                     @Override
                     public void onNext(Result<LoginResult> value) {
                         LoginResult loginResult = value.getData();
+                        SpUtils.putString(LoginActivity.this, Constants.ACCESS_TOKEN_NAME, loginResult.getAccessToken());
+                        SpUtils.putString(LoginActivity.this, Constants.REFRESH_TOKEN_NAME, loginResult.getRefreshToken());
                         Log.w(TAG, loginResult.getAccessToken());
+
+                        WebSocketClient.getInstance().init("ws://192.168.110.223:8080/observe/ws", loginResult.getAccessToken());
                     }
 
                     @Override

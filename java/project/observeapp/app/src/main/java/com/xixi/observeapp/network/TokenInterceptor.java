@@ -1,13 +1,19 @@
 package com.xixi.observeapp.network;
 
+import android.app.Application;
+import android.text.TextUtils;
 import android.util.Log;
 
 import com.google.gson.Gson;
+import com.xixi.observeapp.MyApplication;
 import com.xixi.observeapp.bean.RefreshTokenRequest;
 import com.xixi.observeapp.bean.RefreshTokenResult;
 import com.xixi.observeapp.bean.Result;
+import com.xixi.observeapp.constants.Constants;
+import com.xixi.observeapp.util.SpUtils;
 
 import org.json.JSONObject;
+import org.w3c.dom.Text;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -33,6 +39,11 @@ public class TokenInterceptor implements Interceptor {
         String json = response.body().string();
         if (isTokenExpired(json)){
             String newToken = getNewToken();
+            if (TextUtils.isEmpty(newToken)){
+                return response.newBuilder()
+                        .body(ResponseBody.create(response.body().contentType(), json))
+                        .build();
+            }
             Request newRequest = chain.request()
                     .newBuilder()
                     .header("token", newToken)
@@ -75,8 +86,11 @@ public class TokenInterceptor implements Interceptor {
                 .build();
         Gson gson = new Gson();
         RefreshTokenRequest refreshTokenRequest = new RefreshTokenRequest();
-        //refreshTokenRequest.setRefreshToken();
-        //refreshTokenRequest = "eyJ1c2VySWQiOjEsImV4cGlyYXRpb25UaW1lIjoxNzA0MDM4NDAwMDAwfQ==.TTFFVs/0882zcBgS4HnGS0T5fIYS/rg9oEWJYlJhIJUBmqszJqQbrUp8I/D+Rv1IhItfzF6E8dUKPnRLv+9fie01IQ3VrXPAyniLdK+MCq012JmCWn4qAnQkaOE0uNR1sj27egWfXqufIGYESomoSgW7kK4LRb6hQMclk22Nokv5BhRypFu4zW+Q+uHlhjNpoxXAg1pDeJhLS4aiq92sd7/a63xuHuWxINp3F84luTg0wmMlR9p/IfzzqO/d0T5Gca6tp8fTUCb4iSicgGG4rehCsW09QAnGtfoCjX7U+MOueHvJum60XzDU8g/LiVy1gFJbqA1anNW8h9DuQU46Rw==";
+        String refreshToken = SpUtils.getString(MyApplication.getContext(), Constants.REFRESH_TOKEN_NAME);
+        if (TextUtils.isEmpty(refreshToken)){
+            return "";
+        }
+        refreshTokenRequest.setRefreshToken(refreshToken);
         RequestBody requestBody = RequestBody.create(MediaType.parse(Constants.HeaderContentType), gson.toJson(refreshTokenRequest));
         Call<ResponseBody> call = (Call<ResponseBody>)retrofit.create(ObserveService.class).refreshToken(requestBody);
         String jsonText = call.execute().body().string();

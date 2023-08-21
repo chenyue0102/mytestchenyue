@@ -1,6 +1,7 @@
 package com.xixi.observeapp.network;
 
-import java.lang.reflect.Proxy;
+import com.xixi.observeapp.constants.Constants;
+
 import java.util.concurrent.TimeUnit;
 
 import okhttp3.OkHttpClient;

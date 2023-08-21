@@ -5,6 +5,7 @@ import com.xixi.observeapp.bean.RefreshTokenResult;
 import com.xixi.observeapp.bean.Result;
 import com.xixi.observeapp.bean.ServiceRandomResult;
 import com.xixi.observeapp.bean.VerifyCodeResult;
+import com.xixi.observeapp.constants.Constants;
 
 import io.reactivex.Observable;
 import okhttp3.RequestBody;
