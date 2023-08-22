@@ -58,8 +58,8 @@ dependencies {
     implementation 'org.hibernate:hibernate-validator:8.0.0.Final'
 
     //data类可以自动设置setter与getter
-    compileOnly 'org.projectlombok:lombok:1.18.22'
-    annotationProcessor 'org.projectlombok:lombok:1.18.22'
+    compileOnly 'org.projectlombok:lombok:1.18.28'
+    annotationProcessor 'org.projectlombok:lombok:1.18.28'
 
     implementation("org.greenrobot:eventbus:3.3.1")
 

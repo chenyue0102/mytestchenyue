@@ -2,9 +2,14 @@ package com.xixi.observeapp.activity;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.util.Base64;
 import android.util.Log;
 import android.widget.EditText;
@@ -21,6 +26,7 @@ import com.xixi.observeapp.network.ApiManager;
 import com.xixi.observeapp.constants.Constants;
 import com.xixi.observeapp.network.ObserveService;
 import com.xixi.observeapp.network.WebSocketClient;
+import com.xixi.observeapp.service.WebSocketService;
 import com.xixi.observeapp.util.SpUtils;
 import com.xixi.observeapp.util.StringUtil;
 
@@ -140,6 +146,7 @@ public class LoginActivity extends AppCompatActivity {
         request.setVerifyCode(mEditVerifyCode.getText().toString());
         request.setVerifyCodeUUID(mUUID);
         String json = mGson.toJson(request);
+        Log.e(TAG, json);
         RequestBody requestBody = RequestBody.create(MediaType.parse(Constants.HeaderContentType), json);
         observeService.login(requestBody)
                 .subscribeOn(Schedulers.newThread())
@@ -156,8 +163,8 @@ public class LoginActivity extends AppCompatActivity {
                         SpUtils.putString(LoginActivity.this, Constants.ACCESS_TOKEN_NAME, loginResult.getAccessToken());
                         SpUtils.putString(LoginActivity.this, Constants.REFRESH_TOKEN_NAME, loginResult.getRefreshToken());
                         Log.w(TAG, loginResult.getAccessToken());
-
-                        WebSocketClient.getInstance().init("ws://192.168.110.223:8080/observe/ws", loginResult.getAccessToken());
+                        bindService(value.getData());
+                        //WebSocketClient.getInstance().init("ws://192.168.1.108:8080/observe/ws", loginResult.getAccessToken());
                     }
 
                     @Override
@@ -170,5 +177,21 @@ public class LoginActivity extends AppCompatActivity {
 
                     }
                 });
+    }
+
+    private void bindService(LoginResult loginResult){
+        ServiceConnection serviceConnection = new ServiceConnection() {
+            @Override
+            public void onServiceConnected(ComponentName name, IBinder service) {
+                WebSocketService.MyBinder myBinder = (WebSocketService.MyBinder)service;
+            }
+
+            @Override
+            public void onServiceDisconnected(ComponentName name) {
+
+            }
+        };
+        Intent intent = new Intent(this, WebSocketService.class);
+        bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
     }
 }

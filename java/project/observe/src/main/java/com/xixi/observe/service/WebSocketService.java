@@ -3,11 +3,13 @@ package com.xixi.observe.service;
 import com.google.gson.Gson;
 import com.xixi.observe.entity.AccessToken;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -36,16 +38,18 @@ public class WebSocketService {
         }
     }
     @Data
-    public static class MsgBase{
+    public static class MsgBase implements Serializable {
         private int msgId;
         private int sourceId;
         private int destUserId;
     }
 
+    @EqualsAndHashCode(callSuper = true)
     @Data
     public static class MsgReqBase<T> extends MsgBase{
         private T data;
     }
+    @EqualsAndHashCode(callSuper = true)
     @Data
     public static class MsgAckBase<T> extends MsgBase{
         private boolean success;
@@ -58,6 +62,7 @@ public class WebSocketService {
         private String text;
     }
     public static final int MSG_SHOW_TIP_ACK = 1;
+    @EqualsAndHashCode(callSuper = true)
     @Data
     public static class MsgShowTipAck extends MsgBase{
         private boolean success;
