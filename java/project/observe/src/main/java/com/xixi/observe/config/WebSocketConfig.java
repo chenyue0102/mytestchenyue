@@ -1,9 +1,11 @@
 package com.xixi.observe.config;
 
 import com.xixi.observe.entity.AccessToken;
+import com.xixi.observe.service.WebSocketService;
 import com.xixi.observe.service.impl.UserInfoServiceImpl;
 import com.xixi.observe.util.Result;
 import com.xixi.observe.util.TokenUtil;
+import io.netty.buffer.ByteBuf;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
@@ -12,18 +14,17 @@ import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.http.server.ServletServerHttpRequest;
 import org.springframework.stereotype.Component;
-import org.springframework.web.socket.CloseStatus;
-import org.springframework.web.socket.TextMessage;
-import org.springframework.web.socket.WebSocketHandler;
-import org.springframework.web.socket.WebSocketSession;
+import org.springframework.web.socket.*;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
+import org.springframework.web.socket.handler.AbstractWebSocketHandler;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 
 import javax.annotation.Resource;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -49,7 +50,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
         public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response,
                                        WebSocketHandler webSocketHandler, Map<String, Object> attributes){
             ServletServerHttpRequest serverHttpRequest = (ServletServerHttpRequest) request;
-            String token = serverHttpRequest.getServletRequest().getParameter("token");
+            String token = serverHttpRequest.getServletRequest().getHeader("token");
             logger.warn("beforeHandshake:" + token);
             AccessToken accessToken = new AccessToken();
             if (Result.CODE_SUCCESS == TokenUtil.getInstance().checkAccessTokenAndConvert(token, accessToken)){
@@ -69,17 +70,19 @@ public class WebSocketConfig implements WebSocketConfigurer {
         }
     }
 
-    static class MyWebSocketHandler extends TextWebSocketHandler {
+    static class MyWebSocketHandler extends AbstractWebSocketHandler {
         private static final Logger logger = LoggerFactory.getLogger(UserInfoServiceImpl.class);
-        //key userid
-        private static ConcurrentHashMap<Integer, WebSocketSession> sessionPools = new ConcurrentHashMap<>();
+        private WebSocketService webSocketService = new WebSocketService();
 
         @Override
-        public void handleTextMessage(WebSocketSession session, TextMessage message) throws IOException {
-            logger.warn("handleTextMessage");
-            AccessToken accessToken = (AccessToken) session.getAttributes().get("token");
-            session.sendMessage(new TextMessage("recv:" + accessToken.getUserId()
-                    + message.getPayload()));
+        public void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
+            webSocketService.handleTextMessage(session, message);
+        }
+
+        @Override
+        public void handleBinaryMessage(WebSocketSession session, BinaryMessage message) throws Exception {
+            super.handleBinaryMessage(session, message);
+            webSocketService.handleBinaryMessage(session, message);
         }
 
         @Override
@@ -90,16 +93,13 @@ public class WebSocketConfig implements WebSocketConfigurer {
                 logger.warn("afterConnectionEstablished token failed");
                 return;
             }
-            AccessToken accessToken = (AccessToken)obj;
-            sessionPools.put(accessToken.getUserId(), session);
-            session.sendMessage(new TextMessage("afterConnectionEstablished"));
+            webSocketService.onClientConnected(session);
         }
 
         @Override
         public void afterConnectionClosed(WebSocketSession session, CloseStatus status)throws Exception{
             logger.warn("afterConnectionClosed");
-            AccessToken accessToken = (AccessToken)session.getAttributes().get("token");
-            sessionPools.remove(accessToken.getUserId());
+            webSocketService.onClientDisconnected(session);
         }
     }
 

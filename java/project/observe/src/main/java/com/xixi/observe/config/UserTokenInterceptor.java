@@ -37,11 +37,17 @@ public class UserTokenInterceptor implements HandlerInterceptor {
             HandlerMethod handlerMethod = (HandlerMethod)handler;
             String method = request.getMethod();
             if ("GET".equals(method)){
-                if (!handlerMethod.hasMethodAnnotation(GetMapping.class)){
-                    logger.warn("method failed:GET");
-                    code = Result.CODE_METHOD_FAILED;
-                    msg = Result.MSG_METHOD_FAILED;
-                    break;
+                String websocket = request.getHeader("Upgrade");
+                String upgrade = request.getHeader("Connection");
+                if ("websocket".equals(websocket) && "Upgrade".equals(upgrade)){
+                    //websocket握手请求
+                }else{
+                    if (!handlerMethod.hasMethodAnnotation(GetMapping.class)){
+                        logger.warn("method failed:GET");
+                        code = Result.CODE_METHOD_FAILED;
+                        msg = Result.MSG_METHOD_FAILED;
+                        break;
+                    }
                 }
             }else if  ("POST".equals(method)){
                 if (!handlerMethod.hasMethodAnnotation(PostMapping.class)){

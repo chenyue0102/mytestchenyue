@@ -14,6 +14,7 @@ import com.xixi.observe.util.TokenUtil;
 import lombok.Data;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
@@ -100,16 +102,18 @@ public class UserController {
     //请求随机数
     @PostMapping("/random")
     @NoAuthorization
-    public Result<ServiceRandomResult> getRandom(@ClientIp String ip){
+    @Async("AsyncConfig")
+    public CompletableFuture<Result<ServiceRandomResult>> getRandom(@ClientIp String ip){
         Logger.getGlobal().warning("clientip:" + ip);
         Result<ServiceRandomResult> result = new Result<>(Result.CODE_SUCCESS, Result.MSG_SUCCEEDED);
         result.setData(userInfoService.getServiceRandom(ip));
-        return result;
+        return CompletableFuture.completedFuture(result);
     }
 
     @PostMapping("/refreshtoken")
     @NoAuthorization
-    public Result<RefreshTokenResult> refreshToken(@RequestBody RefreshTokenRequest request){
+    @Async("AsyncConfig")
+    public CompletableFuture<Result<RefreshTokenResult>> refreshToken(@RequestBody RefreshTokenRequest request){
         RefreshToken refreshToken = new RefreshToken();
         Result<RefreshTokenResult> result = new Result(Result.CODE_SUCCESS, Result.MSG_SUCCEEDED);
         try{
@@ -134,7 +138,7 @@ public class UserController {
             result.setCode(Result.CODE_FAILED);
             result.setMsg(Result.MSG_FAILED);
         }
-        return result;
+        return CompletableFuture.completedFuture(result);
     }
 
     //RequestBody
