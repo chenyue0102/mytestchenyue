@@ -1,6 +1,5 @@
-﻿package com.xixi.observe;
+package com.xixi.observe;
 
-import com.xixi.observe.service.impl.UserEventServiceImp;
 import com.xixi.observe.service.impl.UserInfoServiceImpl;
 import com.xixi.observe.service.impl.UserObserveServiceImp;
 import org.junit.jupiter.api.Test;

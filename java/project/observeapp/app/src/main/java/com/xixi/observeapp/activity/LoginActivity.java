@@ -26,6 +26,7 @@ import com.xixi.observeapp.network.ApiManager;
 import com.xixi.observeapp.constants.Constants;
 import com.xixi.observeapp.network.ObserveService;
 import com.xixi.observeapp.network.WebSocketClient;
+import com.xixi.observeapp.service.WebSocketProcess;
 import com.xixi.observeapp.service.WebSocketService;
 import com.xixi.observeapp.util.SpUtils;
 import com.xixi.observeapp.util.StringUtil;
@@ -163,7 +164,7 @@ public class LoginActivity extends AppCompatActivity {
                         SpUtils.putString(LoginActivity.this, Constants.ACCESS_TOKEN_NAME, loginResult.getAccessToken());
                         SpUtils.putString(LoginActivity.this, Constants.REFRESH_TOKEN_NAME, loginResult.getRefreshToken());
                         Log.w(TAG, loginResult.getAccessToken());
-                        bindService(value.getData());
+                        startWebSocketService(value.getData());
                         //WebSocketClient.getInstance().init("ws://192.168.1.108:8080/observe/ws", loginResult.getAccessToken());
                     }
 
@@ -179,11 +180,13 @@ public class LoginActivity extends AppCompatActivity {
                 });
     }
 
-    private void bindService(LoginResult loginResult){
+    private void startWebSocketService(LoginResult loginResult){
         ServiceConnection serviceConnection = new ServiceConnection() {
             @Override
             public void onServiceConnected(ComponentName name, IBinder service) {
                 WebSocketService.MyBinder myBinder = (WebSocketService.MyBinder)service;
+                String accessToken = SpUtils.getString(LoginActivity.this, Constants.ACCESS_TOKEN_NAME);
+                myBinder.connect("ws://192.168.110.223:8080/observe/ws", accessToken);
             }
 
             @Override

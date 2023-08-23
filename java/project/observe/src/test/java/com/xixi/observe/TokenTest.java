@@ -55,7 +55,7 @@ public class TokenTest {
 
         String str = TokenUtil.getInstance().genericAccessToken(1);
         AccessToken accessToken = new AccessToken();
-        boolean checkToken = TokenUtil.getInstance().checkAccessTokenAndConvert(str, accessToken);
+        int checkToken = TokenUtil.getInstance().checkAccessTokenAndConvert(str, accessToken);
         logger.warn("check:" + String.valueOf(checkToken));
     }
 
@@ -65,7 +65,7 @@ public class TokenTest {
 
         String str = TokenUtil.getInstance().genericRefreshToken(1);
         RefreshToken refreshToken = new RefreshToken();
-        boolean checkToken = TokenUtil.getInstance().checkRefreshToken(str);
+        int checkToken = TokenUtil.getInstance().checkRefreshToken(str);
         logger.warn("check:" + String.valueOf(checkToken));
     }
 
@@ -114,7 +114,7 @@ public class TokenTest {
         long exp = (System.currentTimeMillis() / 1000) + 10;
         String str = TokenUtil.getInstance().genericRandomToken(exp);
         logger.warn("token:" + str);
-        boolean check = TokenUtil.getInstance().checkRandomToken(str);
+        int check = TokenUtil.getInstance().checkRandomToken(str);
         logger.warn("check:" + check);
     }
 

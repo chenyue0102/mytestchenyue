@@ -2,20 +2,21 @@ package com.xixi.observe.service;
 
 import com.google.gson.Gson;
 import com.xixi.observe.entity.AccessToken;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import com.xixi.observe.entity.WSProtocol;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
-import java.io.Serializable;
 import java.util.HashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Service
 public class WebSocketService {
+    private static final Logger logger = LoggerFactory.getLogger(WebSocketService.class);
     private Gson mGson = new Gson();
     private Lock mLock = new ReentrantLock();
     private HashMap<Integer, WebSocketSession> mSessionMap = new HashMap<>();
@@ -36,37 +37,6 @@ public class WebSocketService {
         }finally {
             mLock.unlock();
         }
-    }
-    @Data
-    public static class MsgBase implements Serializable {
-        private int msgId;
-        private int sourceId;
-        private int destUserId;
-    }
-
-    @EqualsAndHashCode(callSuper = true)
-    @Data
-    public static class MsgReqBase<T> extends MsgBase{
-        private T data;
-    }
-    @EqualsAndHashCode(callSuper = true)
-    @Data
-    public static class MsgAckBase<T> extends MsgBase{
-        private boolean success;
-        private T data;
-    }
-
-    public static final int MSG_SHOW_TIP_REQ = 1;
-    @Data
-    public static class MsgShowTipReq{
-        private String text;
-    }
-    public static final int MSG_SHOW_TIP_ACK = 1;
-    @EqualsAndHashCode(callSuper = true)
-    @Data
-    public static class MsgShowTipAck extends MsgBase{
-        private boolean success;
-        private String text;
     }
 
     public void handleTextMessage(WebSocketSession session, TextMessage message){
@@ -96,25 +66,29 @@ public class WebSocketService {
             }
         }
         mSessionMap.put(userId, session);
+        logger.warn("websocket:" + userId + " connected");
     }
 
     private void innerOnClientDisconnected(WebSocketSession session){
         AccessToken accessToken = (AccessToken)session.getAttributes().get("token");
         mSessionMap.remove(accessToken.getUserId());
+        logger.warn("websocket:" + accessToken.getUserId() + " disconnected");
     }
 
     private void innerHandleTextMessage(WebSocketSession session, TextMessage message)throws Exception{
         String text = message.getPayload();
-        MsgBase msgBase = mGson.fromJson(text, MsgBase.class);
-        WebSocketSession destSession = mSessionMap.get(msgBase.destUserId);
-        if (null == destSession && (msgBase.getMsgId() % 2) == 1){
-            MsgAckBase msgAckBase = new MsgAckBase();
-            msgAckBase.setMsgId(msgBase.getMsgId() + 1);
-            msgAckBase.setDestUserId(msgBase.getSourceId());
-            msgAckBase.setSourceId(-1);
-            msgAckBase.setSuccess(false);
-            String json = mGson.toJson(msgAckBase);
-            session.sendMessage(new TextMessage(json));
+        WSProtocol.MsgBase msgBase = mGson.fromJson(text, WSProtocol.MsgBase.class);
+        WebSocketSession destSession = mSessionMap.get(msgBase.getDestUserId());
+        if (null == destSession){
+            if ((msgBase.getMsgId() % 2) == 1){
+                WSProtocol.MsgAckBase msgAckBase = new WSProtocol.MsgAckBase();
+                msgAckBase.setMsgId(msgBase.getMsgId() + 1);
+                msgAckBase.setDestUserId(msgBase.getSourceId());
+                msgAckBase.setSourceId(-1);
+                msgAckBase.setSuccess(false);
+                String json = mGson.toJson(msgAckBase);
+                session.sendMessage(new TextMessage(json));
+            }
         }else{
             destSession.sendMessage(message);
         }

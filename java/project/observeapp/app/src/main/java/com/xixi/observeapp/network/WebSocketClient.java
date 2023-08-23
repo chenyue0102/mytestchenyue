@@ -5,6 +5,7 @@ import android.util.Log;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Logger;
 
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
@@ -39,6 +40,7 @@ public class WebSocketClient {
 
     public void init(String serverAddress, String token){
         try{
+            Log.w(TAG, "init:" + serverAddress);
             mLock.lock();
             innerDestroy();
             innerInit(serverAddress, token);
@@ -54,6 +56,17 @@ public class WebSocketClient {
         }finally {
             mLock.unlock();
         }
+    }
+
+    public WebSocket getWebSocket(){
+        WebSocket tmp = null;
+        try{
+            mLock.lock();
+            tmp = mWebSocket;
+        }finally {
+            mLock.unlock();
+        }
+        return tmp;
     }
 
     public void sendMsg(String msg){
@@ -99,6 +112,7 @@ public class WebSocketClient {
             super.onOpen(webSocket, response);
             try{
                 mLock.lock();
+                Log.w(TAG, "onOpen");
                 if (null != mCallback) {
                     mCallback.onOpen(webSocket, response);
                 }
@@ -151,6 +165,7 @@ public class WebSocketClient {
             super.onClosed(webSocket, code, reason);
             try{
                 mLock.lock();
+                Log.w(TAG, "onClosed");
                 if (null != mCallback){
                     mCallback.onClosed(webSocket, code, reason);
                 }
@@ -163,7 +178,10 @@ public class WebSocketClient {
         public void onFailure(WebSocket webSocket, Throwable t, Response response) {
             super.onFailure(webSocket, t, response);
             try{
+                t.printStackTrace();
+                Log.w(TAG, response.toString());
                 mLock.lock();
+                Log.w(TAG, "onFailure");
                 if (null != mCallback){
                     mCallback.onFailure(webSocket, t, response);
                 }
