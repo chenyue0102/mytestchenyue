@@ -21,6 +21,7 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 import org.springframework.web.socket.handler.AbstractWebSocketHandler;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 import org.springframework.web.socket.server.HandshakeInterceptor;
+import org.springframework.web.socket.server.standard.ServletServerContainerFactoryBean;
 
 import javax.annotation.Resource;
 import java.io.IOException;
@@ -41,6 +42,14 @@ public class WebSocketConfig implements WebSocketConfigurer {
                 .addHandler(myHandler(), "/ws")
                 .setAllowedOrigins("*")
                 .addInterceptors(myHandshakeInterceptor);
+    }
+    @Bean
+    public ServletServerContainerFactoryBean createWebSocketContainer(){
+        ServletServerContainerFactoryBean containerFactoryBean = new ServletServerContainerFactoryBean();
+        containerFactoryBean.setMaxTextMessageBufferSize(512000);
+        containerFactoryBean.setMaxBinaryMessageBufferSize(51200);
+        containerFactoryBean.setMaxSessionIdleTimeout(1000L * 60 * 1);
+        return containerFactoryBean;
     }
 
     @Component

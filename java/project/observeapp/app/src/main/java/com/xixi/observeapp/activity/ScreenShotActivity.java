@@ -80,7 +80,7 @@ public class ScreenShotActivity extends AppCompatActivity {
                 DisplayMetrics metrics = new DisplayMetrics();
                 getWindowManager().getDefaultDisplay().getMetrics(metrics);
 
-                imageReader = ImageReader.newInstance(metrics.widthPixels, metrics.heightPixels, PixelFormat.RGBA_8888, 1);
+                imageReader = ImageReader.newInstance(metrics.widthPixels, metrics.heightPixels, PixelFormat.RGBA_8888, 2);
                 virtualDisplay = mediaProjection.createVirtualDisplay("screencapture", metrics.widthPixels, metrics.heightPixels,
                         metrics.densityDpi, DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR, imageReader.getSurface(), null, null);
 
@@ -104,17 +104,21 @@ public class ScreenShotActivity extends AppCompatActivity {
             String text = null;
             int width = 0, height = 0;
             if (null != image){
-                ByteBuffer buffer = image.getPlanes()[0].getBuffer();
-                byte[] bytes = new byte[buffer.remaining()];
-                buffer.get(bytes);
-                Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length, null);
+                width = image.getWidth();
+                height = image.getHeight();
+                Image.Plane[] planes = image.getPlanes();
+                ByteBuffer buffer = planes[0].getBuffer();
+                int pixelStride = planes[0].getPixelStride();
+                int rowStride = planes[0].getRowStride();
+                int rowPadding = rowStride - pixelStride * width;
+                Bitmap bitmap = Bitmap.createBitmap(width + rowPadding / pixelStride, height, Bitmap.Config.ARGB_8888);
+                bitmap.copyPixelsFromBuffer(buffer);
+                image.close();
                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                 bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream);
                 byte []data = outputStream.toByteArray();
                 text = new String(Base64.encode(data, Base64.DEFAULT));
                 text = "data:image/png;base64," + text;
-                width = image.getWidth();
-                height = image.getHeight();
             }
             myBinder.setScreenCaptureResult(width, height, text);
         }

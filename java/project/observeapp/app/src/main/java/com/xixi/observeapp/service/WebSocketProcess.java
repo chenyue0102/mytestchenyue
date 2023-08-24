@@ -87,10 +87,11 @@ public class WebSocketProcess extends okhttp3.WebSocketListener {
         WSProtocol.MsgAckBase<T> ack = new WSProtocol.MsgAckBase<T>();
         ack.setMsgId(req.getMsgId() + 1);
         ack.setSourceId(req.getDestUserId());
-        ack.setDestUserId(req.getDestUserId());
+        ack.setDestUserId(req.getSourceId());
         ack.setSuccess(success);
         ack.setData(ackData);
         String json = mGson.toJson(ack);
+        Log.w(TAG, json);
         webSocket.send(json);
     }
 
@@ -120,5 +121,6 @@ public class WebSocketProcess extends okhttp3.WebSocketListener {
         ack.setHeight(height);
         sendMsg(webSocket, mScreenCaptureReq, ack, null != img);
         mScreenCaptureReq = null;
+        Log.w(TAG, "onScreenCaptureResult" + width);
     }
 }
