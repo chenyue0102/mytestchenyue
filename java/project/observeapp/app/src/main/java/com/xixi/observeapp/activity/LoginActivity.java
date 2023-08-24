@@ -139,7 +139,7 @@ public class LoginActivity extends AppCompatActivity {
         LoginRequest request = new LoginRequest();
         request.setLoginName(mLoginName.getText().toString());
         String str = mPassword.getText().toString() + serviceRandomResult.getServiceRandom() + clientRandom;
-        MessageDigest md = MessageDigest.getInstance("SHA-256");
+        MessageDigest md = MessageDigest.getInstance("SHA-512");
         byte []d= md.digest(str.getBytes());
         request.setPasswordHash(StringUtil.byteArrayToHex(d));
         request.setServerRandom(serviceRandomResult.getServiceRandom());

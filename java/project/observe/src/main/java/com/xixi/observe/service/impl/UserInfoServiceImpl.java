@@ -22,11 +22,11 @@ public class UserInfoServiceImpl implements UserInfoService {
     @Autowired
     UserInfoDao userInfoDao;
 
-    private MessageDigest sha256Hash;
+    private MessageDigest sha512Hash;
 
     public UserInfoServiceImpl() {
         try{
-            sha256Hash =  MessageDigest.getInstance("SHA-256");
+            sha512Hash =  MessageDigest.getInstance("SHA-512");
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -59,7 +59,7 @@ public class UserInfoServiceImpl implements UserInfoService {
 
         logger.warn("alltext:" + allText);
         byte b[] = allText.getBytes();
-        byte hash[] = sha256Hash.digest(b);
+        byte hash[] = sha512Hash.digest(b);
         String passwordHash = StringUtil.byteArrayToHex(hash);
 
         if (!passwordHash.equals(loginRequest.getPasswordHash())){

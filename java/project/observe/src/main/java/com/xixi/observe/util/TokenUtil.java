@@ -32,7 +32,7 @@ public class TokenUtil {
 
     private String uuid = UUID.randomUUID().toString();
     private Gson gson = new Gson();
-    private MessageDigest sha256;
+    private MessageDigest sha512;
     private PublicKey publicKey;
     private PrivateKey privateKey;
 
@@ -46,7 +46,7 @@ public class TokenUtil {
 
     private TokenUtil(){
         try{
-            sha256 = MessageDigest.getInstance("SHA-256");
+            sha512 = MessageDigest.getInstance("SHA-512");
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -81,7 +81,7 @@ public class TokenUtil {
         String json = gson.toJson(randomToken);
 
         String str = json + uuid;
-        byte[] hash = sha256.digest(str.getBytes(StandardCharsets.UTF_8));
+        byte[] hash = sha512.digest(str.getBytes(StandardCharsets.UTF_8));
 
         byte[]jsonBase64 = Base64.getEncoder().encode(json.getBytes(StandardCharsets.UTF_8));
         byte[]hashBase64 = Base64.getEncoder().encode(hash);
@@ -109,7 +109,7 @@ public class TokenUtil {
             String hashBase64 = token.substring(index + 1);
             byte[]hashData = Base64.getDecoder().decode(hashBase64);
             String str = json + uuid;
-            byte[]hashData2 = sha256.digest(str.getBytes(StandardCharsets.UTF_8));
+            byte[]hashData2 = sha512.digest(str.getBytes(StandardCharsets.UTF_8));
             if (!Arrays.equals(hashData, hashData2)){
                 break;
             }
@@ -118,7 +118,7 @@ public class TokenUtil {
         return ret;
     }
 
-    //String = Base64(Json(AccessToken)).Base64(SHA256(Json(AccessToken)+uuid)))
+    //String = Base64(Json(AccessToken)).Base64(sha512(Json(AccessToken)+uuid)))
     public String genericAccessToken(int id) {
         AccessToken accessToken = new AccessToken();
         accessToken.setUserId(id);
@@ -132,7 +132,7 @@ public class TokenUtil {
         byte[] jsonBase64 = Base64.getEncoder().encode(json.getBytes(StandardCharsets.UTF_8));
 
         String str = json + uuid;
-        byte[] hash = sha256.digest(str.getBytes(StandardCharsets.UTF_8));
+        byte[] hash = sha512.digest(str.getBytes(StandardCharsets.UTF_8));
         byte[] hashBase64 = Base64.getEncoder().encode(hash);
 
         String str1 = new String(jsonBase64);
@@ -161,7 +161,7 @@ public class TokenUtil {
             String hashBase64 = token.substring(index + 1);
             byte[]hashData = Base64.getDecoder().decode(hashBase64);
             String str = json + uuid;
-            byte[]hashData2 = sha256.digest(str.getBytes(StandardCharsets.UTF_8));
+            byte[]hashData2 = sha512.digest(str.getBytes(StandardCharsets.UTF_8));
             if (Arrays.equals(hashData, hashData2) && null != accessToken){
                 outAccessToken.setUserId(accessToken.getUserId());
                 outAccessToken.setExpirationTime(accessToken.getExpirationTime());
@@ -186,7 +186,7 @@ public class TokenUtil {
         }
     }
 
-    //String=Base64(Json(RefreshToken)).Base64(RSAPrivate(SHA256(Json(RefreshToken))))
+    //String=Base64(Json(RefreshToken)).Base64(RSAPrivate(sha512(Json(RefreshToken))))
     public String genericRefreshToken(int id){
         String token = "";
         try{
@@ -202,7 +202,7 @@ public class TokenUtil {
             byte[] jsonByte = json.getBytes(StandardCharsets.UTF_8);
             byte[] jsonBase64 = Base64.getEncoder().encode(jsonByte);
 
-            byte[]hashData = sha256.digest(jsonByte);
+            byte[]hashData = sha512.digest(jsonByte);
             byte[] sign = rsaEncrypt.doFinal(hashData);
             byte[] signBase64 = Base64.getEncoder().encode(sign);
 
@@ -236,7 +236,7 @@ public class TokenUtil {
                     ret = Result.CODE_REFRESH_TOKEN_EXPIRED;
                     break;
                 }
-                byte []hash1 = sha256.digest(jsonData);
+                byte []hash1 = sha512.digest(jsonData);
 
                 String signBase64 = token.substring(index + 1);
                 logger.warn("signBase64:" + signBase64);

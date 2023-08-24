@@ -124,4 +124,12 @@ public class TokenTest {
         AccessToken accessToken = new AccessToken();
         TokenUtil.getInstance().checkAccessTokenAndConvert(token, accessToken);
     }
+
+    @Test
+    void testGetRefreshToken(){
+        String refreshToken = TokenUtil.getInstance().genericRefreshToken(1);
+        RefreshToken refreshToken1 = new RefreshToken();
+        int b = TokenUtil.getInstance().checkRefreshTokenAndConvert(refreshToken, refreshToken1);
+        logger.warn(refreshToken);
+    }
 }
