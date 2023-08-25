@@ -67,11 +67,11 @@ public class UserInfoServiceImpl implements UserInfoService {
             throw new ErrorException(Result.CODE_FAILED, Result.MSG_FAILED);
         }
 
-
-
         LoginResult loginResult = new LoginResult();
         loginResult.setAccessToken(TokenUtil.getInstance().genericAccessToken(loginUser.getUserId()));
         loginResult.setRefreshToken(TokenUtil.getInstance().genericRefreshToken(loginUser.getUserId()));
+        loginResult.setUserId(loginUser.getUserId());
+        loginResult.setName(loginUser.getName());
         return loginResult;
     }
 

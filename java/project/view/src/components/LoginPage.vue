@@ -66,7 +66,7 @@ async function login(){
     //alert(serviceRandom);
     const encoder = new TextEncoder();
     let dt = encoder.encode(password);
-    let hash = await crypto.subtle.digest('SHA-256', dt);
+    let hash = await crypto.subtle.digest('SHA-512', dt);
     //alert(hash)
     //console.log(typeof(hash))
     let strPasswordHash = buf2hex(hash)
@@ -111,8 +111,9 @@ function getCodeImg(){
 
 function getCode(){
     getCodeImg().then(res => {
-        state.verifyCodeUrl = res.data.img
-        state.uuid = res.data.uuid
+        state.verifyCodeUrl = res.data.data.img
+        state.uuid = res.data.data.uuid
+        console.log("a")
     })
 }
 getCode()
