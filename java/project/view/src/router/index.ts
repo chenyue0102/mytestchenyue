@@ -1,7 +1,7 @@
 import {createRouter, createWebHistory} from 'vue-router'
 const router = createRouter({
     //使用createWebHistory，去掉url中井号
-    history:createWebHistory(),//createWebHashHistory(),
+    history:createWebHistory(process.env.BASE_URL),//createWebHashHistory(),
     routes:[
         {
             path:'/',
