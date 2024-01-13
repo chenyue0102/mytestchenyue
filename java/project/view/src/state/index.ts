@@ -8,7 +8,7 @@ export default new Vuex.Store({
         refreshToken:''
     },
     mutations:{
-        updateToken(state, [accessToken, refreshToken]){
+        updateToken(state : any, [accessToken, refreshToken]){
             state.accessToken = accessToken;
             state.refreshToken = refreshToken;
         }

@@ -27,7 +27,7 @@ async function uploadevent(){
     data:str
   });
 
- // console.log(res.data)
+  console.log(res.data)
 }
 </script>
 

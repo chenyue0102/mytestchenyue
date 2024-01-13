@@ -29,7 +29,7 @@ public class Result<T> implements Serializable {
 
     public static final int CODE_PERMISSION_FAINED = -8;
 
-    public static final String MSG_PERMISSION_FAILED = "permission failed";
+    public static final String MSG_PERMISSION_FAINED = "permission failed";
 
     private int code;
 
@@ -68,6 +68,38 @@ public class Result<T> implements Serializable {
 
     public void setData(T data){
         this.data = data;
+    }
+
+    public static String getMsgByCode(int code){
+        String msg = "";
+        switch (code){
+            case Result.CODE_TOKEN_FAILED:
+                msg = Result.MSG_TOKEN_FAILED;
+                break;
+            case Result.CODE_ACCESS_TOKEN_EXPIRED:
+                msg = Result.MSG_ACCESS_TOKEN_EXPIRED;
+                break;
+            case Result.CODE_REFRESH_TOKEN_EXPIRED:
+                msg = Result.MSG_REFRESH_TOKEN_EXPIRED;
+                break;
+            case CODE_VERIFY_CODE_FAILED:
+                msg = MSG_VERIFY_CODE_FAILED;
+                break;
+            case CODE_VERIFY_CODE_EXPIRED:
+                msg = MSG_VERIFY_CODE_EXPIRED;
+                break;
+            case CODE_METHOD_FAILED:
+                msg = MSG_METHOD_FAILED;
+                break;
+            case CODE_PERMISSION_FAINED:
+                msg = MSG_PERMISSION_FAINED;
+                break;
+            case Result.CODE_FAILED:
+            default:
+                msg = Result.MSG_FAILED;
+                break;
+        }
+        return msg;
     }
 
     @Override

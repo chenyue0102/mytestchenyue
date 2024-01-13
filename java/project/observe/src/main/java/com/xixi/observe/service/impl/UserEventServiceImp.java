@@ -33,7 +33,7 @@ public class UserEventServiceImp implements UserEventService {
         if (0 == userId || userId != accessToken.getUserId()){
             UserInfo userInfo = userInfoDao.getUserInfo(accessToken.getUserId());
             if (userInfo.getManager() == 0){
-                throw new ErrorException(Result.CODE_PERMISSION_FAINED, Result.MSG_PERMISSION_FAILED);
+                throw new ErrorException(Result.CODE_PERMISSION_FAINED, Result.MSG_PERMISSION_FAINED);
             }
         }
         return userEventDao.findUserEvent(userId, eventId, startTime, endTime);

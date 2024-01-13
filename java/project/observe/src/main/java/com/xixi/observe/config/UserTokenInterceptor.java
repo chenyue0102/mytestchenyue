@@ -81,20 +81,7 @@ public class UserTokenInterceptor implements HandlerInterceptor {
                     AccessTokenThreadLocal.set(accessToken);
                 }else{
                     logger.warn("check token failed:" + token);
-                    switch (code){
-                        case Result.CODE_TOKEN_FAILED:
-                            msg = Result.MSG_TOKEN_FAILED;
-                            break;
-                        case Result.CODE_ACCESS_TOKEN_EXPIRED:
-                            msg = Result.MSG_ACCESS_TOKEN_EXPIRED;
-                            break;
-                        case Result.CODE_REFRESH_TOKEN_EXPIRED:
-                            msg = Result.MSG_REFRESH_TOKEN_EXPIRED;
-                            break;
-                        default:
-                            msg = Result.MSG_TOKEN_FAILED;
-                            break;
-                    }
+                    msg = Result.getMsgByCode(code);
                     break;
                 }
             }

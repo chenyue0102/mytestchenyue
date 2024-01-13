@@ -1,5 +1,6 @@
 package com.xixi.observe.config;
 
+import com.google.gson.Gson;
 import com.xixi.observe.entity.AccessToken;
 import com.xixi.observe.service.WebSocketService;
 import com.xixi.observe.service.impl.UserInfoServiceImpl;
@@ -10,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.http.server.ServletServerHttpRequest;
@@ -25,6 +27,7 @@ import org.springframework.web.socket.server.standard.ServletServerContainerFact
 
 import javax.annotation.Resource;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -48,7 +51,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
         ServletServerContainerFactoryBean containerFactoryBean = new ServletServerContainerFactoryBean();
         containerFactoryBean.setMaxTextMessageBufferSize(512000);
         containerFactoryBean.setMaxBinaryMessageBufferSize(51200);
-        containerFactoryBean.setMaxSessionIdleTimeout(1000L * 60 * 1);
+        containerFactoryBean.setMaxSessionIdleTimeout(1000L * 60 * 10);
         return containerFactoryBean;
     }
 
@@ -58,18 +61,46 @@ public class WebSocketConfig implements WebSocketConfigurer {
         @Override
         public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response,
                                        WebSocketHandler webSocketHandler, Map<String, Object> attributes){
-            ServletServerHttpRequest serverHttpRequest = (ServletServerHttpRequest) request;
-            String token = serverHttpRequest.getServletRequest().getHeader("token");
-            logger.warn("beforeHandshake:" + token);
-            AccessToken accessToken = new AccessToken();
-            if (Result.CODE_SUCCESS == TokenUtil.getInstance().checkAccessTokenAndConvert(token, accessToken)){
-                logger.warn("beforeHandshake" + "success");
-                attributes.put("token", accessToken);
-                return true;
-            }else{
-                logger.warn("beforeHandshake" + "failed");
-                return false;
+            boolean ret = false;
+            int code = Result.CODE_FAILED;
+            String msg = Result.MSG_FAILED;
+
+            do {
+                ServletServerHttpRequest serverHttpRequest = (ServletServerHttpRequest) request;
+                String token = serverHttpRequest.getServletRequest().getHeader("token");
+                if (null == token || "".equals(token)){
+                    //javascript websocket中传递token字段
+                    //token = serverHttpRequest.getServletRequest().getHeader("Sec-WebSocket-Protocol");
+                    token = serverHttpRequest.getServletRequest().getParameter("token");
+                }
+                if (null == token || "".equals(token)){
+                    logger.warn("beforeHandshake: token is null");
+                    break;
+                }
+                logger.warn("beforeHandshake:" + token);
+                AccessToken accessToken = new AccessToken();
+                if (Result.CODE_SUCCESS == (code = TokenUtil.getInstance().checkAccessTokenAndConvert(token, accessToken))){
+                    logger.warn("beforeHandshake" + "success");
+                    attributes.put("token", accessToken);
+                    ret = true;
+                }else{
+                    logger.warn("beforeHandshake" + "failed");
+                    break;
+                }
+            }while (false);
+
+            if (!ret){
+                try{
+                    OutputStream outputStream = response.getBody();
+                    Result result = new Result(code, msg);
+                    String json = new Gson().toJson(result);
+                    outputStream.write(json.getBytes());
+                    outputStream.flush();
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
             }
+            return ret;
         }
 
         @Override

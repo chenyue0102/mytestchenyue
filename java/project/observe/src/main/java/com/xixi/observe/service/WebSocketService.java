@@ -77,6 +77,11 @@ public class WebSocketService {
 
     private void innerHandleTextMessage(WebSocketSession session, TextMessage message)throws Exception{
         String text = message.getPayload();
+        if (WSProtocol.PING.equals(text)){
+            session.sendMessage(new TextMessage(WSProtocol.PONG));
+            return;
+        }
+
         WSProtocol.MsgBase msgBase = mGson.fromJson(text, WSProtocol.MsgBase.class);
         WebSocketSession destSession = mSessionMap.get(msgBase.getDestUserId());
         if (null == destSession){

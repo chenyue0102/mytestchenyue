@@ -6,6 +6,8 @@ import lombok.EqualsAndHashCode;
 import java.io.Serializable;
 
 public class WSProtocol {
+    public static final String PING = "ping";
+    public static final String PONG = "pong";
     @Data
     public static class MsgBase implements Serializable {
         private int msgId;

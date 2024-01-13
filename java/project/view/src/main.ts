@@ -3,7 +3,7 @@ import './style.css'
 
 import App from './App.vue'
 import ElementPlus from 'element-plus'
-import store from './state'
+//import store from './state'
 import router from './router'
 import mitt from 'mitt'
 
@@ -26,7 +26,7 @@ import mitt from 'mitt'
 // })
 
 const app = createApp(App)
-app.config.globalProperties.$bus = new mitt()
+app.config.globalProperties.$bus = new (mitt as any)()
 app.use(ElementPlus)
 app.use(router)
 app.mount('#app')
