@@ -1,0 +1,1 @@
+void __attribute((visibility("default"))) call1(void);
